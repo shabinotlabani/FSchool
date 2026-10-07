@@ -1,0 +1,31 @@
+@model ReportsViewModel
+@using _2Korriku.Services
+@{ViewData["Title"] = "Borxhet dhe stoku"; var total = Model.StudentsWithDebt.Sum(x => x.Balance);}
+<link rel="stylesheet" href="~/css/operations.css" asp-append-version="true" />
+<div class="page-heading"><div><p class="eyebrow">FC 2 KORRIKU / RAPORTET</p><h1>Borxhet dhe stoku</h1><p>Gjendja aktuale më @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</p></div><a asp-action="Index" class="btn btn-outline-primary">Hyrjet dhe shpenzimet →</a></div>
+<div class="operations-metrics"><div><span>Borxhi i lojtarëve të shfaqur</span><strong>@total.ToString("N2") €</strong></div><div><span>Lojtarë me borxh</span><strong>@Model.StudentsWithDebt.Count</strong></div><div><span>@(Model.Stock == "all" ? "Rekuizita aktive" : "Rekuizita në / nën minimum")</span><strong>@Model.LowStockProducts.Count</strong></div></div>
+<section class="panel operations-panel mb-4">
+    <div class="operations-heading"><div><h2>Borxhet e lojtarëve</h2></div><a asp-action="PrintDebts" asp-route-search="@Model.Search" class="btn btn-primary">Printo borxhet / PDF</a></div>
+    <form method="get" class="operations-search"><input name="stock" value="@Model.Stock" type="hidden" /><label for="debt-search" class="visually-hidden">Kërko lojtar, prind, telefon ose ekip</label><input id="debt-search" name="search" value="@Model.Search" class="form-control" placeholder="Kërko lojtar, prind, telefon ose ekip…" type="search" /><button class="btn btn-outline-primary">Kërko</button>@if(!string.IsNullOrWhiteSpace(Model.Search)){<a asp-action="Operations" asp-route-stock="@Model.Stock" class="btn btn-outline-secondary">Pastro</a>}</form>
+    <div class="table-responsive"><table class="table operations-table align-middle mb-0"><thead><tr><th>Nr.</th><th>Lojtari</th><th>Ekipi</th><th>Prindi / telefoni</th><th class="text-end">Borxhi (€)</th><th></th></tr></thead><tbody>
+    @{var number = 0;}
+    @foreach(var item in Model.StudentsWithDebt){number++;<tr><td class="text-secondary">@number</td><td><a asp-controller="Payments" asp-action="Account" asp-route-id="@item.Student.Id">@item.Student.FullName</a>@if(!item.Student.IsActive){<small>Joaktiv</small>}</td><td>@(item.Student.TrainingTeam?.Name ?? "Pa ekip")</td><td>@(item.Student.ParentName ?? "—")<small>@item.Student.ParentPhone</small></td><td class="text-end operations-debt">@item.Balance.ToString("N2")</td><td><a asp-controller="Payments" asp-action="Account" asp-route-id="@item.Student.Id" class="btn btn-sm btn-outline-primary">Kartela</a></td></tr>}
+    @if(Model.StudentsWithDebt.Count == 0){<tr><td colspan="6" class="p-4 text-center text-secondary">@(string.IsNullOrWhiteSpace(Model.Search) ? "Nuk ka borxhe të regjistruara." : "Nuk u gjetën lojtarë me borxh për këtë kërkim.")</td></tr>}
+    </tbody><tfoot><tr><th colspan="4">Gjithsej · @Model.StudentsWithDebt.Count lojtarë</th><th class="text-end">@total.ToString("N2") €</th><td></td></tr></tfoot></table></div>
+</section>
+<section class="panel operations-panel">
+    <div class="operations-heading"><div><h2>Rekuizitat sipas madhësive</h2></div><div class="d-flex gap-2 flex-wrap"><a asp-action="Operations" asp-route-search="@Model.Search" asp-route-stock="low" class="btn @(Model.Stock == "low" ? "btn-primary" : "btn-outline-primary")">Stok i ulët</a><a asp-action="Operations" asp-route-search="@Model.Search" asp-route-stock="all" class="btn @(Model.Stock == "all" ? "btn-primary" : "btn-outline-primary")">Të gjitha</a></div></div>
+    <div class="table-responsive"><table class="table operations-table align-middle mb-0"><thead><tr><th>Rekuizita</th><th>Madhësia / numri : sasia</th><th class="text-end">Gjithsej</th><th class="text-end">Minimumi</th><th>Gjendja</th></tr></thead><tbody>
+    @foreach(var product in Model.LowStockProducts)
+    {
+        var residual = product.CurrentStock - product.Variants.Sum(v => v.CurrentStock); var lowSizes = product.Variants.Any(v => v.IsActive && v.CurrentStock <= product.MinimumStock);
+        <tr><td><a asp-controller="Products" asp-action="Card" asp-route-id="@product.Id">@product.Name</a><small>@product.CategoryId</small>@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-controller="Products" asp-action="Edit" asp-route-id="@product.Id" class="d-inline-block mt-1">Ndrysho</a>}</td><td><div class="operations-sizes">
+        @foreach(var size in product.Variants.Where(v => (v.IsActive || v.CurrentStock != 0) && (Model.Stock == "all" || v.CurrentStock <= product.MinimumStock)).OrderBy(v => v.Id)){<span class="@(size.CurrentStock <= 0 ? "operations-size-empty" : "")">@size.Size: <b>@size.CurrentStock.ToString("0.##")</b></span>}
+        @if(product.Variants.Count > 0 && residual != 0){<span>Pa madhësi të caktuar: <b>@residual.ToString("0.##")</b></span>}
+        @if(product.Variants.Count == 0){<span>@(product.Size ?? "Pa madhësi"): <b>@product.CurrentStock.ToString("0.##")</b></span>}
+        @if(product.CurrentStock == 0 && product.Variants.Count > 0 && product.Variants.All(v => !v.IsActive && v.CurrentStock == 0)){<span class="text-secondary">Pa sasi në stok</span>}
+        </div></td><td class="text-end"><strong>@product.CurrentStock.ToString("0.##")</strong><small>@product.UnitName</small></td><td class="text-end">@product.MinimumStock.ToString("0.##")</td><td><span class="operations-status @(product.CurrentStock <= 0 ? "empty" : (product.CurrentStock <= product.MinimumStock || lowSizes) ? "low" : "good")">@(product.CurrentStock < 0 ? "Stok negativ" : product.CurrentStock == 0 ? "Pa stok" : lowSizes ? "Madhësi në / nën minimum" : product.CurrentStock <= product.MinimumStock ? "Stok i ulët" : "Në stok")</span></td></tr>
+    }
+    @if(Model.LowStockProducts.Count == 0){<tr><td colspan="5" class="p-4 text-center text-secondary">@(Model.Stock == "low" ? "Nuk ka rekuizita në ose nën stokun minimal." : "Nuk ka rekuizita aktive.")</td></tr>}
+    </tbody></table></div>
+</section>

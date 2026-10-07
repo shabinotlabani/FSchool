@@ -1,0 +1,30 @@
+@model FieldBookingCancelModel
+@{ViewData["Title"] = "Anulo terminin privat"; var booking = Model.Booking!;}
+
+<div class="page-heading mt-3"><div><p class="eyebrow">ANULIM REZERVIMI</p><h1>Anulo terminin privat</h1><p>@booking.CustomerName · @booking.FootballField?.Name · @booking.Date.ToString("dd.MM.yyyy") · @booking.StartsAt.ToString("HH:mm")–@booking.EndsAt.ToString("HH:mm")</p></div></div>
+<section class="panel p-4">
+<div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+@if(booking.IsCancelled)
+{
+    <p>Ky termin është anuluar tashmë.</p>
+}
+else if(booking.Paid > 0)
+{
+    <p>Termini ka @booking.Paid.ToString("N2") € pagesa aktive. Anuloni dhe ktheni fillimisht pagesat përpara anulimit të terminit.</p>
+    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary">Shiko pagesat</a>
+}
+else
+{
+    <p><strong>Ky termin nuk ka pagesa aktive.</strong> Anulimi liron fushën dhe heq detyrimin e papaguar. Rezervimi ruhet në historik.</p>
+    <form asp-action="Cancel" method="post">
+        <input asp-for="Id" type="hidden" /><input asp-for="Revision" type="hidden" />
+        <label asp-for="Reason" class="form-label">Arsyeja e anulimit</label>
+        <input asp-for="Reason" class="form-control mb-3" maxlength="200" placeholder="p.sh. Klienti e anuloi rezervimin" required />
+        <div class="d-flex gap-2"><button class="btn btn-danger">Konfirmo anulimin</button></div>
+    </form>
+}
+</section>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.Id"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

@@ -1,0 +1,5 @@
+@model List<TrainingTeam>
+@{ViewData["Title"]="Ekipet dhe orari im"; string[] days=["","E hënë","E martë","E mërkurë","E enjte","E premte","E shtunë","E diel"];}
+<div class="page-heading"><div><p class="eyebrow">PORTALI I TRAJNERIT</p><h1>Ekipet dhe orari im</h1></div></div>
+@if(Model.Count==0){<div class="panel p-4">Ende nuk ju është caktuar ekip. Kontaktoni administratorin e klubit.</div>}
+@foreach(var team in Model){<section class="panel p-4 mb-3"><div class="d-flex justify-content-between gap-3"><div><h2>@team.Name</h2><p>@team.MinAge–@team.MaxAge vjet · @(team.FootballField?.Name ?? team.Location) @(team.IsActive?"":"· Ekip joaktiv")</p></div><a asp-action="Team" asp-route-id="@team.Id" class="btn btn-outline-primary align-self-start">Shiko lojtarët</a></div><ul class="mb-0">@foreach(var session in team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt)){<li>@days[session.Day] · @session.StartsAt.ToString("HH:mm")–@session.EndsAt.ToString("HH:mm")</li>}</ul></section>}

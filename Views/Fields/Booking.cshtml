@@ -1,0 +1,23 @@
+@model FieldBookingEditModel
+@{ViewData["Title"] = Model.Id == 0 ? "Termin privat i ri" : "Ndrysho terminin";}
+<div class="page-heading mt-3"><div><p class="eyebrow">REZERVIM PRIVAT</p><h1>@ViewData["Title"]</h1></div></div>
+<form asp-action="Booking" method="post" class="panel p-4">
+<input asp-for="Id" type="hidden" /><input asp-for="Revision" type="hidden" /><input asp-for="RequestId" type="hidden" />
+<div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<div class="row g-3">
+<div class="col-md-6"><label asp-for="CustomerName" class="form-label">Emri i klientit / grupit</label><input asp-for="CustomerName" class="form-control" maxlength="100" required /></div>
+<div class="col-md-6"><label asp-for="Phone" class="form-label">Telefoni (opsionale)</label><input asp-for="Phone" type="tel" class="form-control" maxlength="40" /></div>
+<div class="col-md-6"><label asp-for="FootballFieldId" class="form-label">Fusha</label><select asp-for="FootballFieldId" class="form-select" required><option value="">Zgjidhni fushën</option>@foreach(var field in Model.Fields){<option value="@field.Id">@field.Name @(field.IsActive ? "" : "(Joaktive)")</option>}</select></div>
+<div class="col-md-6"><label asp-for="Date" class="form-label">@(Model.Id == 0 ? "Data e parë" : "Data")</label><input asp-for="Date" type="date" asp-format="{0:yyyy-MM-dd}" min="2000-01-01" max="2099-12-31" class="form-control" required /></div>
+@if(Model.Id == 0){<div class="col-md-6"><label asp-for="Weeks" class="form-label">Numri i javëve</label><input asp-for="Weeks" type="number" min="1" max="52" step="1" class="form-control" required /><small class="text-secondary">1 = vetëm një termin. 5 = pesë termine, një çdo javë në të njëjtën ditë dhe orar.</small></div><div class="col-12"><p id="booking-repeat-preview" class="text-secondary mb-0" aria-live="polite"></p></div>}else{<p class="text-secondary">Ndryshimet vlejnë vetëm për këtë termin; javët e tjera ruhen veçmas.</p>}<div class="col-md-6"><label asp-for="StartsAt" class="form-label">Ora e fillimit</label><input asp-for="StartsAt" type="time" asp-format="{0:HH:mm}" step="60" class="form-control" required /></div>
+<div class="col-md-6"><label asp-for="EndsAt" class="form-label">Ora e përfundimit</label><input asp-for="EndsAt" type="time" asp-format="{0:HH:mm}" step="60" class="form-control" required /></div>
+<div class="col-md-6"><label asp-for="Price" class="form-label">Çmimi për një termin (€)</label><input asp-for="Price" type="number" min="0" max="999999.99" step="0.01" class="form-control" required /><small class="text-secondary">Pas ruajtjes mund të arkëtoni të plotë ose pjesërisht.</small></div><div class="col-12"><label asp-for="Notes" class="form-label">Shënime (opsionale)</label><textarea asp-for="Notes" class="form-control" rows="3" maxlength="500"></textarea></div>
+</div>
+<p class="text-secondary mt-3">Termini privat rezervon fushën për këtë datë dhe orar. Zgjidhni një orar pa stërvitje ekipesh ose rezervime të tjera private.</p>
+<div class="d-flex gap-2 mt-4"><button class="btn btn-primary">Ruaj terminin</button></div>
+</form>
+
+@section Scripts{<script src="~/js/field-booking.js" asp-append-version="true"></script>}
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-from="@Model.Date.ToString("yyyy-MM-dd")" asp-route-fieldId="@(Model.FootballFieldId > 0 ? Model.FootballFieldId : (int?)null)"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

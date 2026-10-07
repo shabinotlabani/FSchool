@@ -1,0 +1,9 @@
+@model PersonalPaymentModel
+@{ViewData["Title"]="Arkëtim për trajnim personal";}
+<div class="page-heading"><div><h1>Arkëto trajnimin personal</h1><p>@Model.Charge?.PersonalTraining?.Student?.FullName · @Model.Charge?.Description</p></div></div>
+<form method="post" class="panel p-4"><input asp-for="ChargeId" type="hidden"/><input asp-for="RequestId" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div><p>Borxh i mbetur: <strong>@Model.Charge?.Due.ToString("N2") €</strong></p>
+<label asp-for="Amount" class="form-label">Arkëto tani (€)</label><input asp-for="Amount" type="number" step="0.01" min="0.01" class="form-control mb-3" required/>
+<label asp-for="PaymentMethod" class="form-label">Mënyra e pagesës</label><select asp-for="PaymentMethod" class="form-select mb-3"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select><label asp-for="Notes" class="form-label">Shënim</label><textarea asp-for="Notes" class="form-control mb-3" maxlength="250"></textarea>@if(Model.Charge?.Due>0){<button class="btn btn-primary">Ruaj dhe hap arkëtimin</button>} </form>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.Charge?.PersonalTrainingId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

@@ -1,0 +1,64 @@
+@model CreateIssueModel
+@using System.Globalization
+@{ ViewData["Title"] = "Dalje e re"; }
+
+<div class="page-heading mt-3"><div><p class="eyebrow">DORËZIM REKUIZITASH</p><h1>Dalje për lojtarin</h1></div></div>
+<form method="post" id="issue-form" data-auto-payment="@(Context.Request.Method == "GET" ? "true" : "false")">
+<input asp-for="RequestId" type="hidden"/>
+<div asp-validation-summary="All" class="alert alert-danger"></div>
+<section class="panel p-4 mb-3 player-picker" aria-labelledby="player-picker-title">
+<h2 id="player-picker-title" class="h5 mb-3">Kujt ia dorëzoni rekuizitat?</h2>
+<input asp-for="StudentId" type="hidden" />
+<div id="player-search-area">
+    <label for="player-search" class="form-label">Gjeni lojtarin</label>
+    <input id="player-search" class="form-control form-control-lg" type="search" autocomplete="off" placeholder="Shkruani emrin, mbiemrin ose telefonin…" aria-describedby="player-search-status" required />
+    <p id="player-search-status" class="small text-secondary mt-2 mb-2" role="status" aria-live="polite">Shkruani për të kërkuar, pastaj klikoni lojtarin.</p>
+    <ul id="player-search-results" class="player-search-results" aria-label="Lojtarët e gjetur"></ul>
+</div>
+<div id="selected-player" class="selected-player" hidden>
+    <div><span class="eyebrow">LOJTARI I ZGJEDHUR</span><strong id="selected-player-name" class="d-block"></strong><span id="selected-player-details" class="small text-secondary"></span></div>
+    <button id="change-player" type="button" class="btn btn-outline-primary">Ndrysho lojtarin</button>
+</div>
+<span asp-validation-for="StudentId" class="text-danger"></span>
+<noscript><p class="text-danger">Aktivizoni JavaScript për të kërkuar dhe zgjedhur lojtarin.</p></noscript>
+</section>
+<section class="panel p-4 mb-3">
+<div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"><h2>Rekuizitat që dorëzohen</h2><button type="button" id="add-line" class="btn btn-outline-primary">+ Shto rekuizitë</button></div>
+
+<div id="issue-lines">
+@for(var i=0;i<Model.Lines.Count;i++){
+<article class="issue-line">
+    <div class="d-flex align-items-center justify-content-between mb-3"><h3 class="h6 mb-0">Rekuizita <span class="line-number">@(i+1)</span></h3><button type="button" class="btn btn-sm btn-outline-danger remove-line">Hiq</button></div>
+    <input asp-for="Lines[i].ProductId" data-line-field="ProductId" type="hidden" />
+    <div class="product-search-area">
+        <label for="issue-product-search-@i" class="form-label product-search-label">Gjeni rekuizitën</label>
+        <input id="issue-product-search-@i" class="form-control product-search" type="search" autocomplete="off" placeholder="Shkruani emrin e rekuizitës ose madhësinë…" aria-describedby="issue-product-status-@i" required />
+        <p id="issue-product-status-@i" class="product-search-status small text-secondary mt-2 mb-2" role="status" aria-live="polite">Shkruani për të kërkuar rekuizitën.</p>
+        <ul class="product-search-results player-search-results" aria-label="Rekuizitat e gjetura"></ul>
+    </div>
+    <div class="selected-product mb-3" hidden><div><strong class="selected-product-name d-block"></strong><small class="selected-product-info text-secondary"></small></div><button type="button" class="btn btn-sm btn-outline-primary change-product">Ndrysho rekuizitën</button></div>
+    <div class="row g-3 align-items-start mt-1">
+        <div class="col-md-4"><label asp-for="Lines[i].ProductVariantId" data-line-label="ProductVariantId" class="form-label">Madhësia / stoku</label><select asp-for="Lines[i].ProductVariantId" data-line-field="ProductVariantId" class="form-select line-variant" required><option value="">Zgjidhni madhësinë</option>@foreach(var variant in Model.Products.Where(p=>p.Id==Model.Lines[i].ProductId).SelectMany(p=>p.Variants).Where(v=>v.IsActive).OrderBy(v=>v.Id)){<option value="@variant.Id">@variant.Size · stok @variant.CurrentStock.ToString("0.##")</option>}</select></div>
+        <div class="col-6 col-md-2"><label asp-for="Lines[i].Quantity" data-line-label="Quantity" class="form-label">Sasia</label><input asp-for="Lines[i].Quantity" data-line-field="Quantity" class="form-control quantity" type="number" min="0.01" max="1000000" step="0.01" required /></div>
+        <div class="col-6 col-md-3"><label asp-for="Lines[i].UnitPrice" data-line-label="UnitPrice" class="form-label">Çmimi / njësi (€)</label><input asp-for="Lines[i].UnitPrice" data-line-field="UnitPrice" class="form-control unit-price" type="number" min="0" max="999999999" step="0.01" required /><small class="list-price-hint text-secondary d-block mt-1"></small><button type="button" class="btn btn-link btn-sm p-0 reset-price" hidden>Kthe çmimin e listës</button></div>
+        <div class="col-md-3"><span class="form-label d-block">Totali i rreshtit</span><strong class="line-total issue-line-total">0.00 €</strong></div>
+    </div>
+</article>
+}
+</div>
+</section>
+<section class="panel p-4 mb-4"><div class="row g-4"><div class="col-md-7">
+@if(User.IsInRole(Roles.Admin)){<label class="d-flex gap-2 align-items-center mb-3"><input asp-for="WaivePayment"/> Liro plotësisht nga pagesa (0 €)</label>}
+<div id="waiver-fields"><label asp-for="WaiverReason" class="form-label">Arsyeja e lirimit</label><input asp-for="WaiverReason" maxlength="200" class="form-control mb-3"/></div>
+<label asp-for="Notes" class="form-label">Shënim <span id="note-required">(i detyrueshëm për lirim)</span></label><textarea asp-for="Notes" maxlength="400" rows="3" class="form-control"></textarea>
+</div><div class="col-md-5"><p>Vlera e rekuizitave: <strong id="gross">0.00 €</strong></p><p>Për pagesë pas lirimit: <strong id="net">0.00 €</strong></p><label asp-for="AmountPaid" class="form-label">Arkëto tani (€)</label><div class="input-group mb-3"><input asp-for="AmountPaid" type="number" min="0" step="0.01" class="form-control" required/><button type="button" id="pay-full" class="btn btn-outline-primary">Shuma e plotë</button></div><label asp-for="PaymentMethod" class="form-label">Mënyra e pagesës</label><select asp-for="PaymentMethod" class="form-select mb-3"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select><p>Borxhi i mbetur: <strong id="due">0.00 €</strong></p></div></div></section>
+<div class="d-flex gap-3"><button type="submit" class="btn btn-primary">Ruaj daljen</button></div>
+</form>
+<script id="variant-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Products.SelectMany(p=>p.Variants.Where(v=>v.IsActive).OrderBy(v=>v.Id).Select(v=>new { id=v.Id, productId=p.Id, size=v.Size, stock=v.CurrentStock, price=v.PurchasePrice, unit=p.UnitName }))))</script>
+<script id="issue-product-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Products.Select(p => new { id = p.Id, name = p.Name, code = p.Code, unit = p.UnitName, price = p.SalePrice.ToString("0.00", CultureInfo.InvariantCulture) })))</script>
+<script id="player-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Students.Select(s => new { id = s.Id, name = s.FullName, parent = s.ParentName, phone = s.ParentPhone, birthDate = s.DateOfBirth.ToString("dd.MM.yyyy") })))</script>
+@section Scripts{<script src="~/js/issue-player-search.js" asp-append-version="true"></script><script src="~/js/issue-lines.js" asp-append-version="true"></script>}
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

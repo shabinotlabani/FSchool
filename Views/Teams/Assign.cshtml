@@ -1,0 +1,9 @@
+@model ChangeStudentTeamModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Cakto ekipin";}
+<div class="page-heading"><div><p class="eyebrow">@Model.Student!.FullName · @TeamService.Age(Model.Student.DateOfBirth) VJEÇ</p><h1>Cakto ose ndrysho ekipin</h1><p>Ekipi aktual: @(Model.Student.TrainingTeam?.Name??"Pa ekip")</p></div></div>
+<form method="post" class="panel p-4"><input asp-for="StudentId" type="hidden"/><input asp-for="ExpectedTeamId" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div><label asp-for="TeamId" class="form-label">Ekipi i ri</label><select asp-for="TeamId" class="form-select mb-3"><option value="">Pa ekip / largo nga ekipi aktual</option>@if(Model.Student.TrainingTeamId.HasValue&&!Model.Options.Any(o=>o.Team.Id==Model.Student.TrainingTeamId)){<option value="@Model.Student.TrainingTeamId">@(Model.Student.TrainingTeam?.Name) · ekipi aktual</option>}@foreach(var o in Model.Options){<option value="@o.Team.Id" disabled="@(o.FreePlaces==0)">@o.Team.Name · @o.FreePlaces vende · @string.Join("; ",o.Team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{TeamService.DayName(s.Day)} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"))</option>}</select><label asp-for="Reason" class="form-label">Arsyeja e caktimit / transferimit</label><input asp-for="Reason" class="form-control mb-4" maxlength="200" required/><button class="btn btn-primary">Ruaj caktimin</button></form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-controller="Payments" asp-action="Account" asp-route-id="@Model.StudentId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

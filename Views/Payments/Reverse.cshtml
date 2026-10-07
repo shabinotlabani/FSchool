@@ -1,0 +1,8 @@
+@model ReverseBillingModel
+@{ ViewData["Title"] = "Korrigjim financiar"; }
+<div class="player-registration mx-auto"><div class="page-heading"><div><h1>Korrigjim financiar</h1><p>@Model.Description</p></div></div>
+<form asp-action="@ViewData["Action"]" method="post" class="card p-4 billing-form"><input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger" role="alert"></div><label asp-for="Reason" class="form-label">Arsyeja e korrigjimit *</label><textarea asp-for="Reason" maxlength="200" rows="3" class="form-control" required></textarea><div class="d-flex justify-content-end gap-2 mt-4"><button class="btn btn-danger" type="submit">Konfirmo korrigjimin</button></div></form></div>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Account" asp-route-id="@Model.StudentId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

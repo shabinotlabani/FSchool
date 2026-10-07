@@ -1,0 +1,4 @@
+@model FamilyRegistrationModel
+<div id="family-tariff-choice" class="mb-4"><label asp-for="FeePlanId" class="form-label">Tarifa e familjes së re</label><select asp-for="FeePlanId" class="form-select" required>
+@foreach(var plan in Model.Plans.Where(p=>p.IsActive)){<option value="@plan.Id">@plan.Name · @plan.PriceLabel</option>}
+</select></div>

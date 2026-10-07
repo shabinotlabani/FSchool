@@ -1,0 +1,23 @@
+@model Sale
+@using _2Korriku.Services
+@{ Layout = "_PrintLayout"; ViewData["Title"] = "Fletëdalje · " + Model.InvoiceNumber; }
+<div class="print-toolbar"><a asp-action="Details" asp-route-id="@Model.Id">← Kthehu te dalja</a><button onclick="window.print()">Printo · A4</button></div>
+<p class="print-help">A4, shkalla 100%, pa titujt e shfletuesit. Priteni fletën në mes. Gjendja e pagesës më @BillingClock.Today.ToString("dd.MM.yyyy").</p>
+@{ var batches = Model.Details.OrderBy(d=>d.Id).Chunk(3).ToArray(); if(batches.Length==0) batches = new SaleDetail[][] { [] }; }
+@for(var page=0;page<batches.Length;page++){
+<main class="duplex-sheet issue-sheet">
+@foreach(var label in new[]{"KOPJA PËR PALËN","KOPJA PËR SHKOLLËN"}){
+<section class="payment-copy compact-copy issue-copy">
+<header class="document-header"><div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="Logo e FC 2 Korriku"/><div><strong>FC 2 KORRIKU</strong><span>SHKOLLA E FUTBOLLIT</span><small>Prishtinë · 1957</small></div></div><div class="document-heading"><span class="copy-label">@label</span><h1>@(Model.WaiverReason != null ? "Fletëdalje pa pagesë" : "Fletëdalje / Arkëtim")</h1><strong>@Model.InvoiceNumber · @(page+1)/@batches.Length</strong></div></header><div class="document-rule"></div>
+<div class="document-metadata"><div><label>Lojtari · ID @Model.StudentId</label><strong>@(Model.PlayerName ?? Model.Student?.FullName ?? Model.CustomerName)</strong></div><div><label>Data e daljes</label><strong>@BillingClock.LocalDate(Model.Date).ToString("dd.MM.yyyy")</strong></div><div><label>Prindi / kujdestari</label><span>@(Model.ParentName ?? Model.Student?.ParentName ?? "—")</span></div><div><label>Dokumenti</label><span>Dorëzim rekuizitash</span></div></div>
+<table class="document-table"><thead><tr><th>Rekuizita / madhësia</th><th>Sasia</th><th>Çmimi €</th><th>Vlera €</th></tr></thead><tbody>@foreach(var d in batches[page]){<tr><td>@(d.ProductName ?? d.Product?.Name) · @(d.ProductName != null ? d.ProductSize : d.Product?.Size)</td><td>@d.Quantity.ToString("0.##") @d.UnitName</td><td>@d.Price.ToString("N2")</td><td>@d.Total.ToString("N2")</td></tr>}</tbody></table>
+@if(page==batches.Length-1){<div class="issue-totals"><span>Vlera <b>@Model.Total.ToString("N2") €</b></span><span>Lirim <b>@Model.Discount.ToString("N2") €</b></span><span>Për pagesë <b>@Model.GrandTotal.ToString("N2") €</b></span><span>Arkëtuar <b>@Model.AmountPaid.ToString("N2") €</b></span><span>Borxh <b>@Model.Due.ToString("N2") €</b></span></div>
+@if(Model.WaiverReason != null){<p class="document-notes"><strong>LIRUAR NGA PAGESA · Arsyeja:</strong> @Model.WaiverReason</p>}@if(Model.Notes != null){<p class="document-notes"><strong>Shënim:</strong> @Model.Notes</p>}}
+else{<p class="document-explanation">Vazhdon në faqen tjetër. Shumat përmbledhëse dhe shënimet janë në faqen e fundit.</p>}
+<p class="document-explanation">Dorëzimi ruhet në kartelën e lojtarit. Arkëtimet individuale kanë dëftesën e tyre. Gjendja më @BillingClock.Today.ToString("dd.MM.yyyy").</p>
+<div class="document-signatures"><div><span>Dorëzoi / administrata</span><strong>@(Model.User == null ? "Administrata" : (Model.User.FirstName + " " + Model.User.LastName).Trim())</strong><i></i><small>Nënshkrimi / vula</small></div><div><span>Pranoi / lojtari ose prindi</span><strong>@(Model.ParentName ?? " ")</strong><i></i><small>Nënshkrimi</small></div></div><footer class="document-footer"><span>FC 2 Korriku · @Model.InvoiceNumber</span><span>@label · Faqja @(page+1)/@batches.Length</span></footer>
+</section>
+@if(label=="KOPJA PËR PALËN"){<div class="cut-line"><span>PRITET NË MES</span></div>}
+}
+</main>
+}

@@ -1,0 +1,10 @@
+@model TreasuryEntry
+@{ Layout = "_PrintLayout"; ViewData["Title"] = Model.Label; }
+<div class="print-toolbar"><a asp-action="Details" asp-route-id="@Model.Id">← Mbrapa</a><button type="button" onclick="window.print()">Printo A4 / PDF</button></div>
+<main class="stock-sheet"><header class="document-header"><div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku" /><div><strong>FC 2 KORRIKU</strong><span>ARKAT</span></div></div><div class="document-heading"><h1>@Model.Label</h1><strong>@Model.Number</strong></div></header><div class="document-rule"></div>
+@if(Model.CancelledAt.HasValue){<div class="cancelled-notice">ANULUAR · @Model.CancellationReason</div>}
+<div class="document-metadata"><div><label>Data</label><strong>@Model.Date.ToString("dd.MM.yyyy")</strong></div><div><label>Arka</label><strong>@(Model.Method == "Cash" ? "Cash" : "Bankë")</strong></div>@if(Model.Kind == TreasuryEntry.Withdrawal){<div><label>Pronari</label><strong>@Model.Owner</strong></div>}</div>
+<table class="document-table"><thead><tr><th>Përshkrimi</th><th>Shuma (€)</th></tr></thead><tbody><tr><td>@Model.Label</td><td>@Model.Amount.ToString("N2")</td></tr></tbody></table>
+@if(!string.IsNullOrWhiteSpace(Model.Notes)){<p>@Model.Notes</p>}
+<div class="document-signatures"><div><span>Regjistroi</span><strong>@Model.CreatedBy?.UserName</strong><i></i><small>Nënshkrimi</small></div>@if(Model.Kind == TreasuryEntry.Withdrawal){<div><span>Pranoi</span><strong>@Model.Owner</strong><i></i><small>Nënshkrimi i pronarit</small></div>}</div>
+<footer class="document-footer"><span>FC 2 Korriku</span><span>@Model.Number</span></footer></main>

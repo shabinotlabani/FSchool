@@ -1,0 +1,7 @@
+@model ExpenseCancelModel
+@{ViewData["Title"]="Anulo shpenzimin";}
+<div class="page-heading"><div><h1>Anulo shpenzimin</h1><p>@Model.Expense?.Number · @Model.Expense?.Description · @Model.Expense?.Amount.ToString("N2") €</p></div></div>
+<form method="post" class="panel p-4"><input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div><label asp-for="Reason" class="form-label">Arsyeja e anulimit *</label><textarea asp-for="Reason" class="form-control mb-3" required maxlength="200"></textarea><button class="btn btn-danger">Konfirmo anulimin</button> </form>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.Id"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

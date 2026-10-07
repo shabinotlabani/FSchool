@@ -1,0 +1,9 @@
+@model CoachDirectoryModel
+@{ViewData["Title"]="Trajnerët";}
+<div class="page-heading"><div><p class="eyebrow">STAFI SPORTIV</p><h1>Trajnerët</h1></div>@if(User.IsInRole(Roles.Admin)){<a asp-controller="Users" asp-action="Create" asp-route-role="@Roles.Coach" class="btn btn-primary">Regjistro trajner</a>}</div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<form method="get" class="d-flex gap-2 mb-4"><input name="search" value="@ViewData["Search"]" class="form-control" placeholder="Kërko emër, email ose telefon" aria-label="Kërko trajner"/><button class="btn btn-primary">Kërko</button><a asp-action="Index" class="btn btn-outline-secondary">Pastro</a></form>
+<div class="panel table-responsive"><table class="table align-middle"><thead><tr><th>Trajneri</th><th>Kontakti</th><th>Ekipet</th><th>Statusi</th><th></th></tr></thead><tbody>
+@foreach(var coach in Model.Coaches){<tr><td><strong>@coach.FirstName @coach.LastName</strong><div class="text-secondary small">@coach.Specialization</div></td><td>@coach.Email<br/>@coach.PhoneNumber</td><td>@foreach(var assignment in Model.Assignments.Where(x=>x.UserId==coach.Id)){<a class="d-block" asp-action="Team" asp-route-id="@assignment.TrainingTeamId">@assignment.TrainingTeam!.Name</a>}@if(!Model.Assignments.Any(x=>x.UserId==coach.Id)){<span class="text-secondary">Pa ekip të caktuar</span>}</td><td>@(_2Korriku.Services.UserAdministrationService.IsDisabled(coach)?"Joaktiv":"Aktiv")</td><td>@if(User.IsInRole(Roles.Admin)){<a asp-controller="Users" asp-action="Edit" asp-route-id="@coach.Id">Menaxho</a>}</td></tr>}
+@if(Model.Coaches.Count==0){<tr><td colspan="5">Nuk u gjet asnjë trajner.</td></tr>}
+</tbody></table></div>

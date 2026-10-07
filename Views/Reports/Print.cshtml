@@ -1,0 +1,7 @@
+@model CashReportModel
+@using _2Korriku.Services
+@{Layout="_PrintLayout";ViewData["Title"]="Raporti financiar";}
+<div class="print-toolbar"><a asp-action="Index" asp-route-from="@Model.Filter.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.Filter.To?.ToString("yyyy-MM-dd")">← Kthehu te raporti</a><button onclick="window.print()">Printo A4</button></div>
+<main class="stock-sheet"><header class="document-header"><div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku"/><div><strong>FC 2 KORRIKU</strong><span>EVIDENCA FINANCIARE</span></div></div><div class="document-heading"><span class="copy-label">RAPORTI FINANCIAR</span><h1>Hyrjet dhe shpenzimet</h1><strong>@Model.Filter.From?.ToString("dd.MM.yyyy") — @Model.Filter.To?.ToString("dd.MM.yyyy")</strong></div></header><div class="document-rule"></div>
+<partial name="_CashSummary" model="Model"/>
+<footer class="document-footer"><span>FC 2 Korriku · Raporti financiar</span><span>Gjeneruar @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</span></footer></main>

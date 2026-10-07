@@ -1,0 +1,35 @@
+@model PersonalTrainingCreateModel
+@using _2Korriku.Services
+@using System.Globalization
+@{ViewData["Title"]="Regjistro trajnim personal";}
+<div class="page-heading"><div><p class="eyebrow">TRAJNIM SHTESË</p><h1>Trajnim personal</h1></div></div>
+<form method="post" id="issue-form"><input asp-for="RequestId" type="hidden"/><input asp-for="ExpectedRate" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div>
+<section class="panel p-4 mb-3 player-picker" aria-labelledby="player-picker-title">
+<h2 id="player-picker-title" class="h5 mb-3">Për cilin lojtar është trajnimi?</h2>
+<input asp-for="StudentId" type="hidden" />
+<div id="player-search-area">
+    <label for="player-search" class="form-label">Gjeni lojtarin</label>
+    <input id="player-search" class="form-control form-control-lg" type="search" autocomplete="off" placeholder="Shkruani emrin, mbiemrin ose telefonin…" aria-describedby="player-search-status" required />
+    <p id="player-search-status" class="small text-secondary mt-2 mb-2" role="status" aria-live="polite">Shkruani për të kërkuar, pastaj klikoni lojtarin.</p>
+    <ul id="player-search-results" class="player-search-results" aria-label="Lojtarët e gjetur"></ul>
+</div>
+<div id="selected-player" class="selected-player" hidden>
+    <div><span class="eyebrow">LOJTARI I ZGJEDHUR</span><strong id="selected-player-name" class="d-block"></strong><span id="selected-player-details" class="small text-secondary"></span></div>
+    <button id="change-player" type="button" class="btn btn-outline-primary">Ndrysho lojtarin</button>
+</div>
+<span asp-validation-for="StudentId" class="text-danger"></span>
+<noscript><p class="text-danger">Aktivizoni JavaScript për të kërkuar dhe zgjedhur lojtarin.</p></noscript>
+</section>
+<section class="panel p-4 mb-3">
+<label asp-for="PersonalTariffId" class="form-label">Tarifa personale</label><select asp-for="PersonalTariffId" class="form-select mb-3" required><option value="">Zgjidhni tarifën</option>@foreach(var t in Model.Tariffs){<option value="@t.Id" data-price="@t.Amount.ToString("0.00",CultureInfo.InvariantCulture)" data-mode="@t.Mode">@t.Name · @t.ModeLabel · @t.Amount.ToString("N2") €</option>}</select>
+@if(Model.Tariffs.Count==0){<p class="text-danger">Administratori duhet të shtojë fillimisht një tarifë personale.</p>}
+
+<div class="row g-3"><div class="col-md-4"><label asp-for="StartsOn" class="form-label">Data e seancës / fillimit</label><input asp-for="StartsOn" type="date" class="form-control" required/></div><div class="col-md-4"><label asp-for="Coach" class="form-label">Trajneri</label><input asp-for="Coach" class="form-control" maxlength="150"/></div><div class="col-md-4"><label asp-for="Location" class="form-label">Vendi</label><input asp-for="Location" class="form-control" maxlength="200"/></div></div>
+<div class="d-flex justify-content-between align-items-center border-top pt-4 mt-4 mb-3"><h2 class="h5 mb-0">Ditët dhe oraret e stërvitjeve</h2><button id="add-session" type="button" class="btn btn-outline-primary">+ Shto seancë</button></div><div class="table-responsive"><table class="table"><thead><tr><th>Dita</th><th>Fillimi</th><th>Përfundimi</th><th></th></tr></thead><tbody id="sessions">@for(var i=0;i<Model.Sessions.Count;i++){<tr><td><select asp-for="Sessions[i].Day" data-session-field="Day" class="form-select" required>@for(var day=1;day<=7;day++){<option value="@day">@TeamService.DayName(day)</option>}</select></td><td><input asp-for="Sessions[i].StartsAt" data-session-field="StartsAt" type="time" asp-format="{0:HH:mm}" class="form-control" step="60" required/></td><td><input asp-for="Sessions[i].EndsAt" data-session-field="EndsAt" type="time" asp-format="{0:HH:mm}" class="form-control" step="60" required/></td><td><button type="button" class="btn btn-outline-danger remove-session" aria-label="Hiq seancën">×</button></td></tr>}</tbody></table></div>
+<label asp-for="Notes" class="form-label">Shënime</label><textarea asp-for="Notes" class="form-control mb-3" maxlength="400"></textarea></section>
+<button class="btn btn-primary" disabled="@(Model.Tariffs.Count==0)">Ruaj trajnimin</button> </form>
+<script id="player-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Students.Select(s=>new{id=s.Id,name=s.FullName,parent=s.ParentName,phone=s.ParentPhone,birthDate=s.DateOfBirth.ToString("dd.MM.yyyy")})))</script>
+@section Scripts{<script src="~/js/issue-player-search.js" asp-append-version="true"></script><script src="~/js/team-editor.js" asp-append-version="true"></script><script src="~/js/personal-training.js" asp-append-version="true"></script>}
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

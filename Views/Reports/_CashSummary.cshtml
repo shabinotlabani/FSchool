@@ -1,0 +1,34 @@
+@model CashReportModel
+@{var columns=Model.HasOtherMethod?7:6; var receipts=Model.Movements.Where(x=>x.Group!=TreasuryEntry.OpeningGroup).ToList(); var expenses=Model.Movements.Where(x=>x.Group=="Shpenzime").ToList();}
+<link rel="stylesheet" href="~/css/cash-report.css" asp-append-version="true" />
+<h2 class="h5 stock-print-category">Hyrjet nga arkëtimet</h2>
+<div class="table-responsive"><table class="table document-table cash-report-table cash-breakdown"><thead><tr><th>Burimi</th><th>Arkëtime bruto (€)</th><th>Anulime (€)</th><th>Cash neto (€)</th><th>Bankë neto (€)</th>@if(Model.HasOtherMethod){<th>Tjetër neto (€)</th>}<th>Gjithsej neto (€)</th></tr></thead><tbody>
+@foreach(var r in Model.IncomeRows){var rows=Model.Movements.Where(x=>x.Group==r.Name).ToList();<tr><td>@r.Name</td><td>@r.Gross.ToString("N2")</td><td class="cash-reversed">@r.Reversed.ToString("N2")</td><td>@rows.Where(x=>x.Method=="Cash").Sum(x=>x.Income).ToString("N2")</td><td>@rows.Where(x=>x.Method=="Bank").Sum(x=>x.Income).ToString("N2")</td>@if(Model.HasOtherMethod){<td>@rows.Where(x=>x.Method=="Other").Sum(x=>x.Income).ToString("N2")</td>}<td>@r.Net.ToString("N2")</td></tr>}
+</tbody><tfoot><tr><th>GJITHSEJ HYRJE</th><td>@Model.IncomeRows.Sum(x=>x.Gross).ToString("N2")</td><td class="cash-reversed">@Model.IncomeRows.Sum(x=>x.Reversed).ToString("N2")</td><td>@receipts.Where(x=>x.Method=="Cash").Sum(x=>x.Income).ToString("N2")</td><td>@receipts.Where(x=>x.Method=="Bank").Sum(x=>x.Income).ToString("N2")</td>@if(Model.HasOtherMethod){<td>@receipts.Where(x=>x.Method=="Other").Sum(x=>x.Income).ToString("N2")</td>}<td><strong>@Model.Income.ToString("N2")</strong></td></tr></tfoot></table></div>
+<h2 class="h5 stock-print-category mt-4">Daljet sipas kategorive dhe nënkategorive</h2>
+<div class="table-responsive"><table class="table document-table cash-report-table cash-breakdown"><thead><tr><th>Kategoria / nënkategoria</th><th>Shpenzuar bruto (€)</th><th>Anulime (€)</th><th>Cash neto (€)</th><th>Bankë neto (€)</th>@if(Model.HasOtherMethod){<th>Tjetër neto (€)</th>}<th>Gjithsej neto (€)</th></tr></thead><tbody>
+@foreach(var group in Model.Movements.Where(x=>x.Group=="Shpenzime").GroupBy(x=>x.Category).OrderBy(x=>x.Key)){
+<tr class="cash-category"><th>@group.Key</th><td>@group.Where(x=>x.Outgoing>0).Sum(x=>x.Outgoing).ToString("N2")</td><td class="cash-reversed">@((-group.Where(x=>x.Outgoing<0).Sum(x=>x.Outgoing)).ToString("N2"))</td><td>@group.Where(x=>x.Method=="Cash").Sum(x=>x.Outgoing).ToString("N2")</td><td>@group.Where(x=>x.Method=="Bank").Sum(x=>x.Outgoing).ToString("N2")</td>@if(Model.HasOtherMethod){<td>@group.Where(x=>x.Method=="Other").Sum(x=>x.Outgoing).ToString("N2")</td>}<td>@group.Sum(x=>x.Outgoing).ToString("N2")</td></tr>
+@foreach(var sub in group.GroupBy(x=>x.Subcategory).OrderBy(x=>x.Key)){<tr class="cash-subcategory"><td>↳ @(sub.Key??"Pa nënkategori")</td><td>@sub.Where(x=>x.Outgoing>0).Sum(x=>x.Outgoing).ToString("N2")</td><td class="cash-reversed">@((-sub.Where(x=>x.Outgoing<0).Sum(x=>x.Outgoing)).ToString("N2"))</td><td>@sub.Where(x=>x.Method=="Cash").Sum(x=>x.Outgoing).ToString("N2")</td><td>@sub.Where(x=>x.Method=="Bank").Sum(x=>x.Outgoing).ToString("N2")</td>@if(Model.HasOtherMethod){<td>@sub.Where(x=>x.Method=="Other").Sum(x=>x.Outgoing).ToString("N2")</td>}<td>@sub.Sum(x=>x.Outgoing).ToString("N2")</td></tr>}}
+@if(!Model.Movements.Any(x=>x.Group=="Shpenzime")){<tr><td colspan="@columns">Nuk ka shpenzime në këtë periudhë.</td></tr>}
+</tbody><tfoot><tr><th>GJITHSEJ SHPENZIME</th><td>@expenses.Where(x=>x.Outgoing>0).Sum(x=>x.Outgoing).ToString("N2")</td><td class="cash-reversed">@((-expenses.Where(x=>x.Outgoing<0).Sum(x=>x.Outgoing)).ToString("N2"))</td><td>@expenses.Where(x=>x.Method=="Cash").Sum(x=>x.Outgoing).ToString("N2")</td><td>@expenses.Where(x=>x.Method=="Bank").Sum(x=>x.Outgoing).ToString("N2")</td>@if(Model.HasOtherMethod){<td>@expenses.Where(x=>x.Method=="Other").Sum(x=>x.Outgoing).ToString("N2")</td>}<td><strong>@expenses.Sum(x=>x.Outgoing).ToString("N2")</strong></td></tr></tfoot></table></div>
+@if(Model.Movements.Any(x=>x.Group==TreasuryEntry.OpeningGroup || x.Group==TreasuryEntry.WithdrawalGroup)){
+<h2 class="h5 stock-print-category mt-4">Gjendja fillestare dhe tërheqjet e pronarit</h2>
+<div class="table-responsive"><table class="table document-table cash-report-table cash-breakdown"><thead><tr><th>Veprimi</th><th>Bruto (€)</th><th>Anulime (€)</th><th>Cash neto (€)</th><th>Bankë neto (€)</th>@if(Model.HasOtherMethod){<th>Tjetër neto (€)</th>}<th>Gjithsej neto (€)</th></tr></thead><tbody>
+@foreach(var name in new[]{TreasuryEntry.OpeningGroup,TreasuryEntry.WithdrawalGroup}){
+    var entries=Model.Movements.Where(x=>x.Group==name).ToList();
+    if(entries.Count==0){continue;}
+    <tr><td>@name</td><td>@entries.Where(x=>x.Income+x.Outgoing>0).Sum(x=>x.Income+x.Outgoing).ToString("N2")</td><td class="cash-reversed">@((-entries.Where(x=>x.Income+x.Outgoing<0).Sum(x=>x.Income+x.Outgoing)).ToString("N2"))</td><td>@entries.Where(x=>x.Method=="Cash").Sum(x=>x.Income+x.Outgoing).ToString("N2")</td><td>@entries.Where(x=>x.Method=="Bank").Sum(x=>x.Income+x.Outgoing).ToString("N2")</td>@if(Model.HasOtherMethod){<td>0.00</td>}<td>@entries.Sum(x=>x.Income+x.Outgoing).ToString("N2")</td></tr>
+}
+</tbody></table></div>
+}
+<h2 class="h5 stock-print-category mt-4">Gjendja e cash-it dhe bankës</h2>
+<div class="table-responsive"><table class="table document-table cash-report-table cash-balances"><thead><tr><th>Përmbledhja</th>@foreach(var m in Model.MethodBalances){<th>@m.Name (€)</th>}<th>Gjithsej (€)</th></tr></thead><tbody>
+<tr><th>Gjendja në fillim</th>@foreach(var m in Model.MethodBalances){<td>@m.Opening.ToString("N2")</td>}<td>@Model.Opening.ToString("N2")</td></tr>
+@if(Model.Movements.Any(x=>x.Group==TreasuryEntry.OpeningGroup)){
+<tr><th>Gjendje fillestare e regjistruar (neto)</th>@foreach(var m in Model.MethodBalances){<td>@m.InitialFunds.ToString("N2")</td>}<td>@Model.InitialFunds.ToString("N2")</td></tr>
+}
+<tr><th>Hyrjet neto</th>@foreach(var m in Model.MethodBalances){<td>@m.Income.ToString("N2")</td>}<td>@Model.Income.ToString("N2")</td></tr>
+<tr><th>Daljet neto</th>@foreach(var m in Model.MethodBalances){<td>@m.Outgoing.ToString("N2")</td>}<td>@Model.Outgoing.ToString("N2")</td></tr>
+<tr><th>Diferenca e periudhës</th>@foreach(var m in Model.MethodBalances){<td>@m.Net.ToString("N2")</td>}<td>@Model.Net.ToString("N2")</td></tr>
+</tbody><tfoot><tr><th>GJENDJA NË FUND</th>@foreach(var m in Model.MethodBalances){<td><strong>@m.Closing.ToString("N2")</strong></td>}<td><strong>@Model.Closing.ToString("N2")</strong></td></tr></tfoot></table></div>

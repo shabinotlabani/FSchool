@@ -1,0 +1,17 @@
+@model FamilyPayment
+@using _2Korriku.Services
+@{ Layout = "_PrintLayout"; ViewData["Title"] = $"Dëftesa familjare FAM-{Model.Id:000000}"; }
+<div class="print-toolbar"><a asp-action="Family" asp-route-id="@Model.FamilyId">← Familja</a><button onclick="window.print()">Printo dëftesën</button></div>
+<main class="stock-sheet">
+<h1>FC 2 Korriku</h1><h2>Dëftesë e pagesës familjare</h2>
+<p><strong>FAM-@Model.Id.ToString("000000")</strong> · @BillingClock.LocalDate(Model.PaymentDate).ToString("dd.MM.yyyy")</p>
+<h3>@Model.FamilyName</h3>
+@if(Model.CancelledAt.HasValue){<div class="cancelled-notice">ANULUAR · @Model.CancellationReason</div>}
+<table class="document-table"><thead><tr><th>Lojtari</th><th>Pagesa mujore</th></tr></thead><tbody>
+@foreach(var payment in Model.Payments.OrderBy(p => p.StudentId)){<tr><td>@payment.Student?.FullName</td><td>@payment.Amount.ToString("N2") €</td></tr>}
+</tbody><tfoot><tr><th>Gjithsej</th><td><strong>@Model.Amount.ToString("N2") €</strong></td></tr></tfoot></table>
+<p>Mënyra e pagesës: @BillingService.MethodLabel(Model.PaymentMethod)</p>
+@if(!string.IsNullOrWhiteSpace(Model.Notes)){<p>@Model.Notes</p>}
+<p>Regjistruar nga: @Model.CreatedByUser?.FirstName @Model.CreatedByUser?.LastName</p>
+<div class="document-signatures"><div><span>Prindi / kujdestari</span><i></i></div><div><span>Administrata</span><i></i></div></div>
+</main>

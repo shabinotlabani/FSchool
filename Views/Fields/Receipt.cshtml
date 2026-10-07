@@ -1,0 +1,8 @@
+﻿@model FieldPayment
+@using _2Korriku.Services
+@{Layout="_PrintLayout";ViewData["Title"]="Dëftesë " + Model.Number;}
+<div class="print-toolbar"><a asp-action="Details" asp-route-id="@Model.FieldBookingId">← Termini privat</a><button type="button" onclick="window.print()">Printo A4 / Ruaj PDF</button></div>
+<main class="stock-sheet"><header class="document-header"><div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku" /><div><strong>FC 2 KORRIKU</strong><span>TERMINET PRIVATE</span></div></div><div class="document-heading"><span class="copy-label">DËFTESË ARKËTIMI</span><h1>@Model.Number</h1><strong>@TimeZoneInfo.ConvertTimeFromUtc(Model.CreatedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</strong></div></header><div class="document-rule"></div>
+@if(Model.CancelledAt.HasValue){<p class="cancelled-notice">E ANULUAR më @TimeZoneInfo.ConvertTimeFromUtc(Model.CancelledAt.Value,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm") · @Model.CancellationReason</p>}
+<table class="document-table"><thead><tr><th>Përshkrimi</th><th>Shuma (€)</th></tr></thead><tbody><tr><td>@Model.Description</td><td>@Model.Amount.ToString("N2")</td></tr></tbody><tfoot><tr><th>Gjithsej arkëtuar</th><td>@Model.Amount.ToString("N2") €</td></tr></tfoot></table>
+<p class="document-notes">Mënyra e pagesës: @BillingService.MethodLabel(Model.Method)</p><p class="document-notes">Regjistruar nga: @Model.Actor?.UserName</p><footer class="document-footer"><span>FC 2 Korriku · Arkëtim për termin privat #@Model.FieldBookingId</span></footer></main>

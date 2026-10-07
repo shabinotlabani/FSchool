@@ -1,0 +1,11 @@
+@model Expense
+@using _2Korriku.Services
+@{ViewData["Title"]=Model.Number;}
+<div class="page-heading mt-3"><div><p class="eyebrow">DËFTESË SHPENZIMI</p><h1>@Model.Number</h1><p>@Model.Date.ToString("dd.MM.yyyy") · @Model.CategoryLabel</p></div><a asp-action="Print" asp-route-id="@Model.Id" class="btn btn-primary">Printo dokumentin</a></div>
+<partial name="~/Views/Payments/_BillingNotice.cshtml"/>
+<section class="panel p-4"><table class="table"><tbody><tr><th>Përshkrimi</th><td>@Model.Description</td></tr><tr><th>Përfituesi / furnitori</th><td>@(Model.Recipient??"—")</td></tr><tr><th>Shuma</th><td><strong>@Model.Amount.ToString("N2") €</strong></td></tr><tr><th>Mënyra</th><td>@BillingService.MethodLabel(Model.Method)</td></tr><tr><th>Dokumenti i jashtëm</th><td>@(Model.DocumentNumber??"—")</td></tr><tr><th>Shënime</th><td>@Model.Notes</td></tr><tr><th>Regjistruar nga</th><td>@Model.CreatedBy?.UserName · @TimeZoneInfo.ConvertTimeFromUtc(Model.CreatedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</td></tr>
+@if(Model.CancelledAt.HasValue){<tr class="text-danger"><th>Anuluar</th><td>@Model.CancellationReason<br/>@Model.CancelledBy?.UserName · @TimeZoneInfo.ConvertTimeFromUtc(Model.CancelledAt.Value,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</td></tr>}</tbody></table>
+@if(User.IsInRole(Roles.Admin)&&!Model.CancelledAt.HasValue){<a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger">Anulo me arsye</a>}</section>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

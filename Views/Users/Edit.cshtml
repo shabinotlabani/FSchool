@@ -1,0 +1,16 @@
+@model UserEditModel
+@{var isNew=string.IsNullOrEmpty(Model.Id);ViewData["Title"]=Model.Role==Roles.Coach ? (isNew?"Regjistro trajner":"Menaxho trajnerin") : (isNew?"Shfrytëzues i ri":"Menaxho shfrytëzuesin");}
+<div class="page-heading mt-3"><div><p class="eyebrow">LLOGARIA DHE LEJET</p><h1>@ViewData["Title"]</h1></div></div>
+<form asp-action="Save" method="post" class="panel p-4" style="max-width:850px"><input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div><div class="row g-3"><div class="col-md-6"><label asp-for="FirstName" class="form-label">Emri</label><input asp-for="FirstName" class="form-control" maxlength="100" required/></div><div class="col-md-6"><label asp-for="LastName" class="form-label">Mbiemri</label><input asp-for="LastName" class="form-control" maxlength="100" required/></div><div class="col-md-8"><label asp-for="Email" class="form-label">Emaili për hyrje</label><input asp-for="Email" type="email" class="form-control" maxlength="256" autocomplete="off" required/></div><div class="col-md-4"><label asp-for="Role" class="form-label">Roli</label><select asp-for="Role" class="form-select" data-coach-role="@Roles.Coach">@foreach(var role in Roles.All){<option value="@role">@role</option>}</select></div><div class="col-md-6"><label asp-for="Phone" class="form-label">Telefoni</label><input asp-for="Phone" class="form-control" maxlength="50"/></div><div class="col-md-6" data-coach-fields hidden="@(Model.Role != Roles.Coach)"><label asp-for="Specialization" class="form-label">Specializimi / licenca e trajnerit</label><input asp-for="Specialization" class="form-control" maxlength="150"/></div>
+<div class="col-12" id="coach-teams" data-coach-fields hidden="@(Model.Role != Roles.Coach)"><h2>Ekipet e trajnerit</h2>
+@if(Model.Teams.Count==0){<p>Nuk ka ekipe. Krijojini te Ekipet dhe oraret, pastaj caktojini këtu.</p>}
+@foreach(var team in Model.Teams){<label class="d-flex gap-2 mb-2"><input type="checkbox" name="TeamIds" value="@team.Id" checked="@Model.TeamIds.Contains(team.Id)"/> @team.Name · @team.MinAge–@team.MaxAge vjet @(team.IsActive ? "" : "(joaktiv)")</label>}</div>
+<div class="col-12"><label class="d-flex align-items-center gap-2"><input asp-for="IsActive"/> Llogari aktive</label></div><div class="col-12"><hr/><h2>@(isNew ? "Fjalëkalimi" : "Ndrysho fjalëkalimin")</h2></div><div class="col-md-6"><label asp-for="Password" class="form-label">@(isNew ? "Fjalëkalimi" : "Fjalëkalimi i ri (opsional)")</label><input asp-for="Password" type="password" class="form-control" autocomplete="new-password" minlength="6" maxlength="100" required="@isNew"/></div><div class="col-md-6"><label asp-for="ConfirmPassword" class="form-label">Përsëritni fjalëkalimin</label><input asp-for="ConfirmPassword" type="password" class="form-control" autocomplete="new-password" maxlength="100" required="@isNew"/></div></div><div class="d-flex gap-3 mt-4"><button class="btn btn-primary">Ruaj shfrytëzuesin</button></div></form>
+
+@section Scripts {
+    <script src="~/js/user-form.js" asp-append-version="true"></script>
+}
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

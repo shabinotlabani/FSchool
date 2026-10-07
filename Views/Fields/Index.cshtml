@@ -1,0 +1,37 @@
+@model FieldScheduleModel
+@using _2Korriku.Services
+@{ ViewData["Title"] = "Fushat dhe terminet"; var writer = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator); }
+<link rel="stylesheet" href="~/css/fields.css" asp-append-version="true" />
+<div class="page-heading"><div><p class="eyebrow">FC 2 KORRIKU / FUSHAT</p><h1>Fushat dhe terminet</h1><p>Stërvitjet e ekipeve dhe rezervimet private në një kalendar.</p></div><div class="d-flex gap-2 flex-wrap"><a asp-action="Manage" class="btn btn-outline-primary">Menaxho fushat</a>@if(writer){<a asp-action="Booking" asp-route-fieldId="@Model.FieldId" class="btn btn-primary">+ Termin privat</a>}</div></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<form method="get" class="panel p-3 mb-4 d-flex gap-3 flex-wrap align-items-end">
+    <div><label for="from" class="form-label">Java nga data</label><input id="from" name="from" type="date" value="@Model.From.ToString("yyyy-MM-dd")" min="2000-01-01" max="2099-12-31" class="form-control" required /></div>
+    <div><label for="fieldId" class="form-label">Fusha</label><select id="fieldId" name="fieldId" class="form-select"><option value="">Të gjitha fushat</option>@foreach(var field in Model.Fields){<option value="@field.Id" selected="@(Model.FieldId == field.Id)">@field.Name @(field.IsActive ? "" : "(Joaktive)")</option>}</select></div>
+    <label class="d-flex gap-2 align-items-center mb-2"><input type="checkbox" name="includeCancelled" value="true" checked="@Model.IncludeCancelled" /> Përfshi të anuluarat</label>
+    <button class="btn btn-primary">Shfaq orarin</button><a asp-action="Index" asp-route-fieldId="@Model.FieldId" class="btn btn-outline-secondary">Sot</a>
+</form>
+@if(Model.UnassignedTeams > 0){<p class="field-notice">@Model.UnassignedTeams ekipe aktive ende pa fushë. <a asp-controller="Teams" asp-action="Index">Caktoni fushën te ekipet</a> që të shfaqen këtu.</p>}
+<div class="field-week-heading"><h2>@Model.From.ToString("dd.MM.yyyy") – @Model.To.ToString("dd.MM.yyyy")</h2><div class="d-flex gap-2">@if(Model.From.AddDays(-7).Year >= 2000){<a asp-action="Index" asp-route-from="@Model.From.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-fieldId="@Model.FieldId" asp-route-includeCancelled="@Model.IncludeCancelled" class="btn btn-outline-secondary">← Java e kaluar</a>}@if(Model.From.AddDays(7).Year <= 2099){<a asp-action="Index" asp-route-from="@Model.From.AddDays(7).ToString("yyyy-MM-dd")" asp-route-fieldId="@Model.FieldId" asp-route-includeCancelled="@Model.IncludeCancelled" class="btn btn-outline-secondary">Java tjetër →</a>}</div></div>
+<div class="field-legend"><span class="field-kind team">Ekipet · orar i përbashkët i lejuar</span><span class="field-kind private">Terminet private · fusha e rezervuar</span></div>
+<div class="field-calendar-scroll"><div class="field-calendar">
+@for(var offset = 0; offset < 7; offset++)
+{
+    var date = Model.From.AddDays(offset); var items = Model.Items.Where(i => i.Date == date).ToList();
+    <section class="field-day @(date == BillingClock.Today ? "is-today" : "")">
+        <header><h3>@TeamService.DayName(((int)date.DayOfWeek + 6) % 7 + 1)</h3><span>@date.ToString("dd.MM")</span></header>
+        <div class="field-day-items">
+        @foreach(var item in items)
+        {
+            <article class="field-event @(item.TeamId.HasValue ? "team" : "private") @(item.IsCancelled ? "cancelled" : "")">
+                <time>@item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</time><span class="field-event-location">@item.FieldName</span>
+                @if(item.TeamId.HasValue){<a asp-controller="Teams" asp-action="Details" asp-route-id="@item.TeamId">@item.Name</a><small>Stërvitje ekipi</small>}
+                else{<a asp-action="Details" asp-route-id="@item.BookingId">@item.Name</a><small>@(item.IsCancelled ? "I anuluar" : "Termin privat")</small>@if(!item.IsCancelled){<small>@(item.Due > 0 ? "Mbetur: " + item.Due.Value.ToString("N2") + " €" : "I paguar / pa detyrim")</small>}}
+                @if(writer && item.CanCancel){<a asp-action="Cancel" asp-route-id="@item.BookingId" class="text-danger mt-2">Anulo terminin</a>}
+            </article>
+        }
+        @if(items.Count == 0){<p class="field-empty">Pa termine</p>}
+        @if(writer){<a asp-action="Booking" asp-route-date="@date.ToString("yyyy-MM-dd")" asp-route-fieldId="@Model.FieldId" class="field-add">+ Rezervo</a>}
+        </div>
+    </section>
+}
+</div></div>

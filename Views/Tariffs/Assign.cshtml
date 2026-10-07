@@ -1,0 +1,10 @@
+@model AssignFeeModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Kategoria e pagesës";}
+<div class="page-heading mt-3"><div><p class="eyebrow">@Model.Student!.FullName</p><h1>Cakto kategorinë e pagesës</h1></div></div>
+<form method="post" class="panel p-4" style="max-width:750px"><input asp-for="StudentId" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div><p>Për paketën familjare ose largim nga ajo: <a asp-controller="Families" asp-action="Index">Menaxho familjet →</a></p><label asp-for="FeePlanId" class="form-label">Kategoria</label><select asp-for="FeePlanId" class="form-select mb-3">@foreach(var p in Model.Plans.Where(p=>!p.IsFamily)){<option value="@p.Id">@p.Name</option>}</select><p class="text-secondary">Aplikohet çmimi i kategorisë që do të jetë në fuqi për secilin muaj. <a asp-action="Index">Shih çmimet dhe historikun</a>.</p><label asp-for="EffectiveMonth" class="form-label">Vlen nga muaji</label><input asp-for="EffectiveMonth" type="month" class="form-control mb-3" min="@TariffService.NextMonth.ToString("yyyy-MM")" required/><label asp-for="Reason" class="form-label">Arsyeja</label><input asp-for="Reason" class="form-control mb-3" maxlength="200" required/><label asp-for="Notes" class="form-label">Shënim (i detyrueshëm për lirim)</label><textarea asp-for="Notes" class="form-control mb-3" maxlength="400"></textarea><button class="btn btn-primary">Ruaj kategorinë</button></form>
+@section Scripts{<script>const plan=document.querySelector('#FeePlanId'),note=document.querySelector('#Notes');function requiredNote(){note.required=plan.value==='3';}plan.addEventListener('change',requiredNote);requiredNote();</script>}
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-controller="Payments" asp-action="Account" asp-route-id="@Model.StudentId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

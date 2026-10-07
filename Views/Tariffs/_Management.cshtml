@@ -1,0 +1,8 @@
+@model FeePlanIndexModel
+<div class="d-flex gap-2 mb-4"><a asp-action="Create" class="btn btn-primary">+ Tarifë mujore</a><a asp-action="Create" asp-route-family="true" class="btn btn-outline-primary">+ Tarifë familjare</a></div>
+<section class="panel mb-4"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Tarifa</th><th>Lloji</th><th>Çmimi</th><th>Statusi</th><th>Veprime</th></tr></thead><tbody>
+@foreach(var plan in Model.Plans){<tr><td>@plan.Name</td><td>@(plan.IsFamily?"Familjare":plan.IsWaiver?"Lirim":"Mujore")</td><td>@plan.PriceLabel</td><td>@(plan.IsActive?"Aktive":"E hequr")</td><td><div class="d-flex gap-2 flex-wrap">
+@if(plan.IsActive && !plan.IsWaiver){<a asp-action="Price" asp-route-id="@plan.Id" class="btn btn-sm btn-outline-primary">Ndrysho çmimin</a>}
+<form asp-action="SetActive" method="post"><input type="hidden" name="id" value="@plan.Id"/><input type="hidden" name="active" value="@((!plan.IsActive).ToString().ToLowerInvariant())"/><button class="btn btn-sm @(plan.IsActive?"btn-outline-danger":"btn-outline-success")">@(plan.IsActive?"Hiq nga përdorimi":"Aktivizo")</button></form>
+</div></td></tr>}
+</tbody></table></div></section>

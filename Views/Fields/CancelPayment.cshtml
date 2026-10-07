@@ -1,0 +1,8 @@
+@model FieldPaymentCancelModel
+@{ViewData["Title"] = "Anulo pagesën e terminit";}
+<div class="page-heading mt-3"><h1>Anulo pagesën e terminit</h1></div>
+<form asp-action="CancelPayment" method="post" class="panel p-4"><input asp-for="Id" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div><p><strong>@Model.Payment!.Number · @Model.Payment.Amount.ToString("N2") €</strong></p><p>@Model.Payment.Description</p><p>Anulimi zbritet nga arka sot dhe rihap detyrimin e terminit. Kryejeni vetëm për korrigjim ose pasi t'ia ktheni shumën klientit.</p><label asp-for="Reason" class="form-label">Arsyeja e anulimit</label><input asp-for="Reason" class="form-control mb-3" maxlength="200" required /><button class="btn btn-danger">Konfirmo anulimin e pagesës</button></form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.Payment!.FieldBookingId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

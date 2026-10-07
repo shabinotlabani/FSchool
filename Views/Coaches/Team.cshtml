@@ -1,0 +1,10 @@
+@model TrainingTeam
+@{ViewData["Title"]=Model.Name;string[] days=["","E hënë","E martë","E mërkurë","E enjte","E premte","E shtunë","E diel"];}
+<div class="page-heading mt-3"><div><h1>@Model.Name</h1><p>@Model.MinAge–@Model.MaxAge vjet · @(Model.FootballField?.Name ?? Model.Location) @(Model.IsActive?"":"· Ekip joaktiv")</p></div></div>
+<section class="panel p-4 mb-4"><h2>Orari i stërvitjeve</h2><ul>@foreach(var session in Model.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt)){<li>@days[session.Day] · @session.StartsAt.ToString("HH:mm")–@session.EndsAt.ToString("HH:mm")</li>}</ul></section>
+<h2>Lojtarët aktivë</h2><form method="get" class="d-flex gap-2 mb-3"><input type="hidden" name="id" value="@Model.Id"/><input name="search" value="@ViewData["Search"]" class="form-control" placeholder="Kërko lojtarin me emër" aria-label="Kërko lojtar"/><button class="btn btn-primary">Kërko</button><a asp-action="Team" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Pastro</a></form>
+<div class="panel table-responsive"><table class="table"><thead><tr><th>Lojtari</th><th>Datëlindja</th><th>Prindi / kujdestari</th><th>Telefoni</th></tr></thead><tbody>@foreach(var student in Model.Students.OrderBy(s=>s.LastName).ThenBy(s=>s.FirstName)){<tr><td>@student.FullName</td><td>@student.DateOfBirth.ToString("dd.MM.yyyy")</td><td>@student.ParentName</td><td>@student.ParentPhone</td></tr>}@if(Model.Students.Count==0){<tr><td colspan="4">Nuk u gjet asnjë lojtar aktiv.</td></tr>}</tbody></table></div>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

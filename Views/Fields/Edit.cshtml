@@ -1,0 +1,14 @@
+@model FieldEditModel
+@{ViewData["Title"] = Model.Id == 0 ? "Fushë e re" : "Ndrysho fushën";}
+<div class="page-heading mt-3"><h1>@ViewData["Title"]</h1></div>
+<form asp-action="Edit" method="post" class="panel p-4">
+<input asp-for="Id" type="hidden" /><input asp-for="Revision" type="hidden" />
+<div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<div class="row g-3"><div class="col-md-6"><label asp-for="Name" class="form-label">Emri i fushës</label><input asp-for="Name" class="form-control" maxlength="100" required placeholder="p.sh. Fusha 1" /></div><div class="col-md-6"><label asp-for="Location" class="form-label">Vendndodhja (opsionale)</label><input asp-for="Location" class="form-control" maxlength="200" /></div><div class="col-12"><label asp-for="Notes" class="form-label">Shënime</label><textarea asp-for="Notes" class="form-control" maxlength="500" rows="3"></textarea></div><div class="col-12"><label class="d-flex gap-2"><input asp-for="IsActive" /> Fushë aktive për ekipe dhe rezervime</label></div></div>
+<p class="text-secondary mt-3">Para çaktivizimit duhet të zhvendosen ekipet aktive dhe të zhvendosen ose anulohen terminet e ardhshme.</p>
+<div class="d-flex gap-2 mt-4"><button class="btn btn-primary">Ruaj fushën</button></div>
+</form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Manage"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

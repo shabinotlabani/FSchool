@@ -1,0 +1,42 @@
+@model SeasonalPaymentModel
+@using _2Korriku.Services
+@{ ViewData["Title"] = "Pagesë sezonale"; }
+<div class="player-registration mx-auto">
+
+<div class="page-heading mt-3"><div><p class="eyebrow">PAGESA SEZONALE</p><h1>Një pagesë, disa muaj të mbuluar</h1><p>@Model.StudentName</p></div></div>
+
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<form asp-action="Seasonal" method="get" class="card p-4 mb-4">
+    <input type="hidden" name="studentId" value="@Model.StudentId" />
+    <div class="row g-3 align-items-end">
+        <div class="col-md-5"><label for="season-start" class="form-label">Fillimi i sezonit</label><input id="season-start" name="startMonth" value="@Model.StartMonth" type="month" min="@TariffService.CurrentMonth.ToString("yyyy-MM")" max="@TariffService.CurrentMonth.AddMonths(24).ToString("yyyy-MM")" class="form-control" required /></div>
+        <div class="col-md-4"><label for="season-months" class="form-label">Paketa</label><select id="season-months" name="months" class="form-select"><option value="6" selected="@(Model.Months == 6)">6 muaj · 1 muaj zbritje</option><option value="12" selected="@(Model.Months == 12)">12 muaj · 2 muaj zbritje</option></select></div>
+        <div class="col-md-3"><button type="submit" class="btn btn-dark w-100">Llogarit sezonin</button></div>
+    </div>
+</form>
+@if(Model.Quote is SeasonalQuote quote){
+<section class="panel p-4 mb-4" aria-label="Përllogaritja e sezonit">
+    <h2>@quote.Start.ToString("MM.yyyy") – @quote.End.ToString("MM.yyyy")</h2>
+    <div class="table-responsive"><table class="table"><tbody>
+        <tr><th>Tarifa mujore e ruajtur</th><td class="text-end">@quote.Rate.ToString("N2") €</td></tr>
+        <tr><th>@quote.Months muaj gjithsej</th><td class="text-end">@quote.Gross.ToString("N2") €</td></tr>
+        <tr><th>Zbritja · @quote.FreeMonths muaj</th><td class="text-end text-success">− @quote.Discount.ToString("N2") €</td></tr>
+        <tr class="fw-bold"><th>Për t’u arkëtuar</th><td class="text-end fs-4">@quote.Total.ToString("N2") €</td></tr>
+    </tbody></table></div>
+    <p class="text-secondary mb-0">@quote.PaidMonths muajt e parë mbulohen nga pagesa; @quote.FreeMonths muajt e fundit shënohen me zbritje sezonale. Faturat krijohen çdo muaj. Borxhet jashtë kësaj periudhe paguhen veçmas. Sezoni ka muaj kalendarikë të pandryshueshëm dhe nuk zgjatet automatikisht gjatë mungesave.</p>
+</section>
+<form asp-action="Seasonal" method="post" class="card p-4">
+    <input asp-for="StudentId" type="hidden" /><input asp-for="RequestId" type="hidden" /><input asp-for="StartMonth" type="hidden" /><input asp-for="Months" type="hidden" /><input asp-for="ExpectedRate" type="hidden" />
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="PaymentDate" class="form-label">Data e pagesës</label><input asp-for="PaymentDate" type="date" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+        <div class="col-md-6"><label asp-for="PaymentMethod" class="form-label">Mënyra e pagesës</label><select asp-for="PaymentMethod" class="form-select"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select></div>
+        <div class="col-12"><label asp-for="Notes" class="form-label">Shënim / referencë bankare</label><textarea asp-for="Notes" class="form-control" rows="2" maxlength="250"></textarea></div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4"><button type="submit" class="btn btn-primary">Arkëto @quote.Total.ToString("N2") € dhe ruaj sezonin</button></div>
+</form>
+}
+</div>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Account" asp-route-id="@Model.StudentId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

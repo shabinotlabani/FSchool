@@ -1,0 +1,13 @@
+@model List<ExpenseCategory>
+@{ViewData["Title"]="Kategoritë e shpenzimeve";}
+<div class="page-heading"><div><p class="eyebrow">ORGANIZIMI I SHPENZIMEVE</p><h1>Kategoritë dhe nënkategoritë</h1></div><a asp-action="Category" class="btn btn-primary">+ Kategori kryesore</a></div>
+<partial name="~/Views/Payments/_BillingNotice.cshtml"/>
+
+<section class="panel p-4 mt-3"><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Kategoria / nënkategoria</th><th>Statusi</th><th>Veprimet</th></tr></thead><tbody>
+@foreach(var c in Model.Where(x=>x.ParentId==null)){<tr class="table-light"><td><strong>@c.Name</strong></td><td>@(c.IsActive?"Aktive":"Joaktive")</td><td><a asp-action="Category" asp-route-id="@c.Id">Ndrysho</a> @if(c.IsActive){<a asp-action="Category" asp-route-parentId="@c.Id" class="ms-3">+ Nënkategori</a>}</td></tr>
+@foreach(var sub in Model.Where(x=>x.ParentId==c.Id)){<tr><td class="ps-4">↳ @sub.Name</td><td>@(sub.IsActive&&c.IsActive?"Aktive":"Joaktive")</td><td><a asp-action="Category" asp-route-id="@sub.Id">Ndrysho</a></td></tr>}}
+@if(Model.Count==0){<tr><td colspan="3">Krijoni kategorinë e parë. Më pas mund t’i shtoni nënkategori.</td></tr>}
+</tbody></table></div></section>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

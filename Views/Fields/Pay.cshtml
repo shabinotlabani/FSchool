@@ -1,0 +1,13 @@
+@model FieldPaymentModel
+@using _2Korriku.Services
+@{ViewData["Title"] = "Pagesa e terminit privat";}
+
+<div class="page-heading mt-3"><div><p class="eyebrow">ARKËTIM</p><h1>Pagesa e terminit privat</h1><p>@Model.Booking!.CustomerName · @Model.Booking.FootballField?.Name · @Model.Booking.Date.ToString("dd.MM.yyyy") · @Model.Booking.StartsAt.ToString("HH:mm")–@Model.Booking.EndsAt.ToString("HH:mm")</p></div></div>
+<form asp-action="Pay" method="post" class="panel p-4"><input asp-for="BookingId" type="hidden" /><input asp-for="Revision" type="hidden" /><input asp-for="RequestId" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<p>Çmimi: <strong>@Model.Booking.Price.ToString("N2") €</strong> · Paguar: <strong>@Model.Booking.Paid.ToString("N2") €</strong> · Mbetur: <strong>@Model.Booking.Due.ToString("N2") €</strong></p>
+<div class="row g-3"><div class="col-md-6"><label asp-for="Amount" class="form-label">Shuma për arkëtim (€)</label><input asp-for="Amount" class="form-control" type="number" min="0.01" step="0.01" max="@Model.Booking.Due.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)" required /></div><div class="col-md-6"><label asp-for="Method" class="form-label">Mënyra e pagesës</label><select asp-for="Method" class="form-select"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select></div></div>
+<p class="text-secondary mt-3">Regjistroni vetëm shumën e pranuar. Pagesa regjistrohet me datën e sotme, @BillingClock.Today.ToString("dd.MM.yyyy").</p><button class="btn btn-primary mt-2">Regjistro pagesën dhe hap dëftesën</button></form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.BookingId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

@@ -1,0 +1,7 @@
+@model PlayerBillingModel
+@if(Model.CurrentFamilyId.HasValue){
+    <a asp-action="Family" asp-route-id="@Model.CurrentFamilyId" class="btn btn-primary">Pagesa familjare</a>
+}else{
+    <a asp-action="Register" asp-route-studentId="@Model.Student.Id" class="btn btn-primary">+ Pagesë mujore</a>
+    <a asp-action="Seasonal" asp-route-studentId="@Model.Student.Id" class="btn btn-outline-primary">+ Pagesë sezonale</a>
+}

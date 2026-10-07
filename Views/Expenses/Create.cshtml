@@ -1,0 +1,26 @@
+@model ExpenseCreateModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Shpenzim i ri";}
+
+<div class="page-heading mt-3"><div><p class="eyebrow">MJETET E SHKOLLËS</p><h1>Regjistro shpenzim</h1></div>@if(User.IsInRole(Roles.Admin)){<a asp-action="Categories" class="btn btn-outline-primary">Menaxho kategoritë</a>}</div>
+<form method="post" class="panel p-4"><input asp-for="RequestId" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<div class="row g-3">
+<div class="col-md-6"><label asp-for="CategoryId" class="form-label">Kategoria *</label><select asp-for="CategoryId" class="form-select" required><option value="">Zgjidhni kategorinë</option>@foreach(var c in Model.Categories.Where(x=>x.ParentId==null)){<option value="@c.Id">@c.Name</option>}</select></div>
+<div class="col-md-6"><label asp-for="SubcategoryId" class="form-label">Nënkategoria</label><select asp-for="SubcategoryId" class="form-select"><option value="">Pa nënkategori</option>@foreach(var c in Model.Categories.Where(x=>x.ParentId==Model.CategoryId)){<option value="@c.Id">@c.Name</option>}</select></div>
+<div class="col-md-8"><label asp-for="Description" class="form-label">Për çfarë është shpenzimi? *</label><input asp-for="Description" class="form-control" required maxlength="200" placeholder="P.sh. Paga e muajit tetor ose blerje topash"/></div>
+<div class="col-md-4"><label asp-for="Date" class="form-label">Data e pagesës *</label><input asp-for="Date" type="date" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required/></div>
+<div class="col-md-6"><label asp-for="Recipient" class="form-label">Përfituesi / furnitori</label><input asp-for="Recipient" class="form-control" maxlength="150" placeholder="Emri i personit ose biznesit"/></div>
+<div class="col-md-6"><label asp-for="DocumentNumber" class="form-label">Nr. i faturës / dokumentit (nëse ka)</label><input asp-for="DocumentNumber" class="form-control" maxlength="100"/></div>
+<div class="col-md-6"><label asp-for="Amount" class="form-label">Shuma e paguar (€) *</label><input asp-for="Amount" type="number" step="0.01" min="0.01" max="999999999.99" class="form-control" required/><small class="d-block text-secondary mt-2">Mjete të disponueshme sot: <strong>@Model.Available.ToString("N2") €</strong>. Shuma kontrollohet përsëri gjatë ruajtjes.</small></div>
+<div class="col-md-6"><label asp-for="Method" class="form-label">Mënyra e pagesës</label><select asp-for="Method" class="form-select"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select></div>
+<div class="col-12"><label asp-for="Notes" class="form-label">Shënime</label><textarea asp-for="Notes" class="form-control" maxlength="500" rows="2"></textarea></div>
+</div>
+
+@if(!Model.Categories.Any(x=>x.ParentId==null)){<p class="text-danger">Administratori duhet të krijojë së pari kategoritë e shpenzimeve.</p>}
+<button class="btn btn-primary" disabled="@(!Model.Categories.Any(x=>x.ParentId==null))">Ruaj shpenzimin</button> 
+</form>
+<script id="expense-categories" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Categories.Where(x=>x.ParentId.HasValue).Select(x=>new{id=x.Id,parentId=x.ParentId,name=x.Name})))</script>
+@section Scripts{<script src="~/js/expense-form.js" asp-append-version="true"></script>}
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

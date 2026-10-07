@@ -1,0 +1,12 @@
+@model TreasuryEntry
+@using _2Korriku.Services
+@{ ViewData["Title"] = Model.Label; }
+<div class="page-heading"><div><h1>@Model.Label</h1><p>@Model.Number</p></div><div class="d-flex gap-2"><a asp-action="Print" asp-route-id="@Model.Id" class="btn btn-outline-primary">Printo / PDF</a>@if(User.IsInRole(Roles.Admin) && !Model.CancelledAt.HasValue){<a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger">Anulo regjistrimin</a>}</div></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<section class="panel p-4"><dl class="row mb-0"><dt class="col-sm-4">Data</dt><dd class="col-sm-8">@Model.Date.ToString("dd.MM.yyyy")</dd><dt class="col-sm-4">Arka</dt><dd class="col-sm-8">@(Model.Method == "Cash" ? "Cash" : "Bankë")</dd><dt class="col-sm-4">Shuma</dt><dd class="col-sm-8 fw-bold">@Model.Amount.ToString("N2") €</dd>
+@if(Model.Kind == TreasuryEntry.Withdrawal){<dt class="col-sm-4">Pronari</dt><dd class="col-sm-8">@Model.Owner</dd>}
+@if(!string.IsNullOrWhiteSpace(Model.Notes)){<dt class="col-sm-4">Shënim</dt><dd class="col-sm-8">@Model.Notes</dd>}
+<dt class="col-sm-4">Regjistroi</dt><dd class="col-sm-8">@Model.CreatedBy?.UserName · @TimeZoneInfo.ConvertTimeFromUtc(Model.CreatedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</dd>
+@if(Model.CancelledAt.HasValue){<dt class="col-sm-4 text-danger">Anuluar</dt><dd class="col-sm-8">@Model.CancelledBy?.UserName · @TimeZoneInfo.ConvertTimeFromUtc(Model.CancelledAt.Value, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")<br />@Model.CancellationReason</dd>}
+</dl></section>
+@section PageNavigation { <a asp-action="Index" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a> }

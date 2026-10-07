@@ -1,0 +1,13 @@
+﻿@model ReportsViewModel
+@using _2Korriku.Services
+@{Layout="_PrintLayout";ViewData["Title"]="Raporti i borxheve";var number=0;}
+<link rel="stylesheet" href="~/css/operations.css" asp-append-version="true" />
+<div class="print-toolbar"><a asp-action="Operations" asp-route-search="@Model.Search">← Kthehu te borxhet</a><button type="button" onclick="window.print()">Printo A4 / Ruaj PDF</button></div>
+<main class="stock-sheet debt-print-sheet"><header class="document-header"><div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku" /><div><strong>FC 2 KORRIKU</strong><span>EVIDENCA E DETYRIMEVE</span></div></div><div class="document-heading"><span class="copy-label">RAPORTI I BORXHEVE</span><h1>Borxhet e lojtarëve</h1><strong>@TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</strong></div></header><div class="document-rule"></div>
+<p>@Model.StudentsWithDebt.Count lojtarë me borxh · Gjithsej: <strong>@Model.StudentsWithDebt.Sum(x => x.Balance).ToString("N2") €</strong></p>
+@if(!string.IsNullOrWhiteSpace(Model.Search)){<p class="document-notes">Kërkimi: @Model.Search</p>}
+<table class="document-table debt-print-table"><thead><tr><th>Nr.</th><th>Lojtari</th><th>Ekipi</th><th>Prindi / telefoni</th><th>Borxhi (€)</th></tr></thead><tbody>
+@foreach(var item in Model.StudentsWithDebt){number++;<tr><td>@number</td><td>@item.Student.FullName @if(!item.Student.IsActive){<small> (Joaktiv)</small>}</td><td>@(item.Student.TrainingTeam?.Name ?? "Pa ekip")</td><td>@item.Student.ParentName<br />@item.Student.ParentPhone</td><td>@item.Balance.ToString("N2")</td></tr>}
+@if(Model.StudentsWithDebt.Count == 0){<tr><td colspan="5">Nuk ka lojtarë me borxh për këtë raport.</td></tr>}
+</tbody><tfoot><tr><th colspan="4">Gjithsej</th><td><strong>@Model.StudentsWithDebt.Sum(x => x.Balance).ToString("N2") €</strong></td></tr></tfoot></table>
+<footer class="document-footer"><span>FC 2 Korriku · Borxhet e lojtarëve</span><span>Gjendja në momentin e gjenerimit</span></footer></main>

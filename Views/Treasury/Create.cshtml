@@ -1,0 +1,13 @@
+@model TreasuryCreateModel
+@using _2Korriku.Services
+@{ var opening = Model.Kind == TreasuryEntry.Opening; ViewData["Title"] = opening ? "Gjendja fillestare e arkës" : "Tërheqje nga pronari"; }
+<div class="page-heading"><h1>@ViewData["Title"]</h1></div>
+<div class="d-flex gap-4 flex-wrap mb-3">@foreach(var balance in Model.Balances.Where(x => x.Method is "Cash" or "Bank")){<span>@balance.Name: <strong>@balance.Closing.ToString("N2") €</strong></span>}</div>
+<form asp-action="Create" method="post" class="panel p-4" style="max-width:800px"><input asp-for="RequestId" type="hidden" /><input asp-for="Kind" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<div class="row g-3"><div class="col-md-6"><label asp-for="Method" class="form-label">Arka</label><select asp-for="Method" class="form-select"><option value="Cash">Cash</option><option value="Bank">Bankë</option></select></div>
+<div class="col-md-6"><label asp-for="Date" class="form-label">Data</label><input asp-for="Date" type="date" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required /></div>
+<div class="col-md-6"><label asp-for="Amount" class="form-label">@(opening ? "Gjendja para lëvizjeve të regjistruara (€)" : "Shuma e tërheqjes (€)")</label><input asp-for="Amount" type="number" min="@(opening ? "0" : "0.01")" max="999999999.99" step="0.01" class="form-control" required /></div>
+@if(!opening){<div class="col-md-6"><label asp-for="Owner" class="form-label">Emri i pronarit</label><input asp-for="Owner" class="form-control" maxlength="150" required /></div>}
+<div class="col-12"><label asp-for="Notes" class="form-label">Shënim</label><textarea asp-for="Notes" class="form-control" maxlength="500" rows="3"></textarea></div></div>
+<button type="submit" class="btn btn-primary mt-4">@(opening ? "Ruaj gjendjen fillestare" : "Regjistro tërheqjen")</button></form>
+@section PageNavigation { <a asp-action="Index" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a> }

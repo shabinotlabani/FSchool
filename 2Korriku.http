@@ -1,0 +1,6 @@
+@_2Korriku_HostAddress = http://localhost:5181
+
+GET {{_2Korriku_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

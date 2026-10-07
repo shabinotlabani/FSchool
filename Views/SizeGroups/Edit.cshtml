@@ -1,0 +1,8 @@
+@model SizeGroup
+@{ViewData["Title"]=Model.Id==0?"Grup i ri madhësish":"Ndrysho grupin";}
+<h1 class="mt-3">@ViewData["Title"]</h1>
+<form asp-action="Save" method="post" class="panel p-4"><input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div><label asp-for="Name" class="form-label">Emri i grupit</label><input asp-for="Name" class="form-control mb-3" required maxlength="100" placeholder="p.sh. Qorape"/><label asp-for="Sizes" class="form-label">Madhësitë, të ndara me presje</label><textarea asp-for="Sizes" class="form-control" rows="3" required maxlength="2000" placeholder="6, 8, 10, 12, 14, S, M, L, XL, XXL"></textarea><label class="d-flex gap-2 mb-4"><input asp-for="IsActive"/> Grup aktiv</label><button class="btn btn-primary">Ruaj grupin</button></form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

@@ -1,0 +1,12 @@
+@model PersonalActionModel
+@{string op=ViewBag.Operation;ViewData["Title"]=op switch{"Stop"=>"Ndërprit paketën mujore","Cancel"=>"Anulo trajnimin","Waive"=>"Liro nga pagesa",_=>"Kthe lirimin"};}
+<div class="page-heading"><div><h1>@ViewData["Title"]</h1><p>@(Model.Training?.Student?.FullName??Model.Charge?.PersonalTraining?.Student?.FullName) · @(Model.Training?.Name??Model.Charge?.Description)</p></div></div>
+<form method="post" class="panel p-4"><input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><input name="operation" value="@op" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
+@if(op=="Stop"){<label asp-for="EndMonth" class="form-label">Muaji i fundit që tarifohet</label><input asp-for="EndMonth" type="month" class="form-control mb-3" required/>}
+
+
+<label asp-for="Reason" class="form-label">Arsyeja</label><input asp-for="Reason" class="form-control mb-3" maxlength="200" required/><label asp-for="Notes" class="form-label">Shënim</label><textarea asp-for="Notes" class="form-control mb-3" maxlength="400" required="@(op=="Waive")"></textarea>
+<button class="btn btn-primary">Ruaj veprimin</button> </form>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@(Model.Training?.Id??Model.Charge?.PersonalTrainingId)"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

@@ -1,0 +1,12 @@
+@model StockEntry
+@using _2Korriku.Services
+@{ ViewData["Title"] = "Dokument hyrjeje"; }
+<div class="page-heading mt-3"><div><p class="eyebrow">HYRJE NË STOK</p><h1>@Model.DocumentNumber</h1><p>@BillingClock.LocalDate(Model.Date).ToString("dd.MM.yyyy") · @(Model.SupplierName ?? "Pa furnitor të shënuar")</p></div><div class="d-flex gap-2">@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-action="Receive" class="btn btn-outline-primary">+ Hyrje tjetër</a>}<a asp-action="PrintEntry" asp-route-id="@Model.Id" class="btn btn-primary">Printo hyrjen</a></div></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success" role="status">@message</div>}
+<section class="panel"><div class="panel-heading"><div><h2>Rekuizitat e pranuara</h2><p>Dokumenti i furnitorit: @(Model.SupplierInvoiceNo ?? "—")</p></div><strong>@Model.TotalAmount.ToString("N2") €</strong></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Rekuizita</th><th>Madhësia</th><th>Sasia</th><th>Çmimi i blerjes</th><th>Vlera</th></tr></thead><tbody>
+@foreach(var detail in Model.Details.OrderBy(d => d.Id)){<tr><td><a asp-action="Card" asp-route-id="@detail.ProductId">@(detail.DisplayName)</a></td><td>@(detail.DisplaySize ?? "—")</td><td>@detail.Quantity.ToString("0.##") @detail.UnitName</td><td>@detail.UnitPrice.ToString("N2") €</td><td>@detail.Total.ToString("N2") €</td></tr>}
+</tbody></table></div><div class="p-4"><p>@Model.Notes</p><small class="text-secondary">Regjistruar nga @(Model.CreatedByUser?.UserName ?? "Administrata") më @TimeZoneInfo.ConvertTimeFromUtc(Model.CreatedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm").</small></div></section>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Entries"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

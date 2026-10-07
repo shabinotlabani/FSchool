@@ -1,0 +1,11 @@
+@model List<PersonalTariff>
+@{ViewData["Title"]="Tarifat e trajnimeve personale";}
+<div class="page-heading"><div><p class="eyebrow">SHËRBIME SHTESË</p><h1>Tarifat personale</h1></div><a asp-action="Tariff" class="btn btn-primary">+ Shto tarifë</a></div>
+
+<section class="panel p-4 mt-3"><table class="table"><thead><tr><th>Tarifa</th><th>Lloji</th><th>Çmimi</th><th>Statusi</th><th></th></tr></thead><tbody>
+@foreach(var t in Model){<tr><td><strong>@t.Name</strong><small class="d-block">@t.Notes</small></td><td>@t.ModeLabel</td><td>@t.Amount.ToString("N2") €</td><td>@(t.IsActive?"Aktive":"Joaktive")</td><td><a asp-action="Tariff" asp-route-id="@t.Id">Ndrysho</a></td></tr>}
+@if(Model.Count==0){<tr><td colspan="5">Shtoni tarifën e parë, p.sh. trajnim individual për seancë ose paketë mujore.</td></tr>}
+</tbody></table></section>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

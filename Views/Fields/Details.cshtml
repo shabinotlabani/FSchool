@@ -1,0 +1,22 @@
+@model FieldBooking
+@using _2Korriku.Services
+@{ViewData["Title"] = "Termini privat #" + Model.Id; var writer = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator);}
+
+<div class="page-heading mt-3"><div><p class="eyebrow">TERMIN PRIVAT #@Model.Id · @(Model.IsCancelled ? "I ANULUAR" : "I REZERVUAR")</p><h1>@Model.CustomerName</h1><p>@Model.FootballField?.Name · @Model.Date.ToString("dd.MM.yyyy") · @Model.StartsAt.ToString("HH:mm")–@Model.EndsAt.ToString("HH:mm")</p></div>@if(writer && !Model.IsCancelled){<div class="d-flex gap-2 flex-wrap"><a asp-action="Booking" asp-route-id="@Model.Id" class="btn btn-primary">Ndrysho terminin</a>@if(Model.Paid == 0){<a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger">Anulo terminin</a>}</div>}</div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<section class="panel p-4 mb-4"><h2 class="h5">Detajet e rezervimit</h2><dl class="row mb-0"><dt class="col-sm-3">Telefoni</dt><dd class="col-sm-9">@(Model.Phone ?? "—")</dd><dt class="col-sm-3">Shënime</dt><dd class="col-sm-9">@(Model.Notes ?? "—")</dd>@if(Model.IsCancelled){<dt class="col-sm-3">Arsyeja e anulimit</dt><dd class="col-sm-9">@Model.CancellationReason</dd>}</dl></section>
+<section class="panel p-4 mb-4"><div class="d-flex justify-content-between flex-wrap gap-3"><div><h2 class="h5">Pagesat</h2><p>Çmimi: <strong>@Model.Price.ToString("N2") €</strong> · Paguar: <strong>@Model.Paid.ToString("N2") €</strong> · Mbetur: <strong>@Model.Due.ToString("N2") €</strong></p></div>@if(writer && !Model.IsCancelled && Model.Due > 0){<a asp-action="Pay" asp-route-id="@Model.Id" class="btn btn-primary align-self-start">Arkëto pagesën</a>}</div>
+<div class="table-responsive"><table class="table"><thead><tr><th>Dëftesa</th><th>Data</th><th>Mënyra</th><th>Shuma</th><th>Statusi</th><th></th></tr></thead><tbody>@foreach(var payment in Model.Payments.OrderByDescending(p => p.Id)){<tr><td><a asp-action="Receipt" asp-route-id="@payment.Id">@payment.Number</a></td><td>@TimeZoneInfo.ConvertTimeFromUtc(payment.CreatedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</td><td>@BillingService.MethodLabel(payment.Method)</td><td>@payment.Amount.ToString("N2") €</td><td>@(payment.CancelledAt.HasValue ? "E anuluar" : "E arkëtuar")</td><td>@if(writer && !payment.CancelledAt.HasValue){<a asp-action="CancelPayment" asp-route-id="@payment.Id">Anulo pagesën</a>}</td></tr>}@if(Model.Payments.Count == 0){<tr><td colspan="6">Ende pa pagesa.</td></tr>}</tbody></table></div></section>
+<section class="panel p-4 mb-4"><h2 class="h5">Historiku i terminit</h2>@foreach(var change in Model.Changes.OrderByDescending(c => c.Id)){<div class="border-bottom py-3"><p class="mb-1">@change.Description</p><small class="text-secondary">@TimeZoneInfo.ConvertTimeFromUtc(change.CreatedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm") · @(change.Actor?.UserName ?? "Sistemi")</small></div>}</section>
+@if(writer && !Model.IsCancelled && Model.Paid > 0){<p class="text-secondary">Për të anuluar terminin, anuloni dhe ktheni fillimisht pagesat aktive më sipër.</p>}
+@if(ViewData["SeriesBookings"] is List<FieldBooking> series)
+{
+    <section class="panel p-4 mt-4"><h2 class="h5">Terminet e këtij rezervimi javor</h2><p>Çdo javë ka pagesat e veta. Ndryshimi ose anulimi i një termini nuk ndryshon javët e tjera.</p><div class="table-responsive"><table class="table"><thead><tr><th>Data / orari</th><th>Fusha</th><th>Çmimi</th><th>Paguar</th><th>Mbetur</th><th>Statusi</th><th></th></tr></thead><tbody>
+    @foreach(var item in series){<tr><td>@item.Date.ToString("dd.MM.yyyy") · @item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</td><td>@item.FootballField?.Name</td><td>@item.Price.ToString("N2") €</td><td>@item.Paid.ToString("N2") €</td><td>@item.Due.ToString("N2") €</td><td>@(item.IsCancelled ? "I anuluar" : "I rezervuar")</td><td><a asp-action="Details" asp-route-id="@item.Id">Hap terminin</a></td></tr>}
+    </tbody></table></div></section>
+}
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-from="@Model.Date.ToString("yyyy-MM-dd")" asp-route-fieldId="@Model.FootballFieldId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

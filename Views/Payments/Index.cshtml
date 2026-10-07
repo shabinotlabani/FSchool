@@ -1,0 +1,21 @@
+@model BillingIndexModel
+@{ ViewData["Title"] = "Pagesat dhe arkëtimet"; var selectedMonth = new DateTime(Model.Year, Model.Month, 1); }
+<a asp-controller="PersonalTraining" asp-action="Index" class="btn btn-outline-primary mb-3">Pagesat e trajnimeve personale →</a>
+<div class="page-heading"><div><p class="eyebrow">FINANCAT E SHKOLLËS</p><h1>Pagesat dhe arkëtimet</h1></div>
+@if(User.IsInRole(Roles.Admin)){<form asp-action="Generate" method="post"><button class="btn btn-primary" type="submit">Përditëso faturat</button></form>}</div>
+<partial name="_BillingNotice" />
+
+<form method="get" class="search-panel billing-filter" role="search">
+    <div><label for="bill-month" class="form-label">Muaji</label><select id="bill-month" name="month" class="form-select">@for(var m = 1; m <= 12; m++){<option value="@m" selected="@(m == Model.Month)">@(new DateTime(2000, m, 1).ToString("MMMM", System.Globalization.CultureInfo.GetCultureInfo("sq-AL")))</option>}</select></div>
+    <div><label for="bill-year" class="form-label">Viti</label><input id="bill-year" name="year" type="number" min="2000" max="9998" value="@Model.Year" class="form-control" /></div>
+    <div class="billing-search"><label for="bill-search" class="form-label">Lojtari</label><input id="bill-search" type="search" name="search" value="@Model.Search" class="form-control" placeholder="Emri, mbiemri ose telefoni" /></div>
+    <div class="form-check form-switch mb-2"><input id="bill-unpaid" class="form-check-input" type="checkbox" role="switch" name="unpaidOnly" value="true" checked="@Model.UnpaidOnly" onchange="this.form.requestSubmit()" /><label class="form-check-label fw-semibold" for="bill-unpaid">Vetëm të papaguarit</label></div>
+    <button type="submit" class="btn btn-dark">Shfaq faturat</button><a asp-action="Index" asp-route-unpaidOnly="@Model.UnpaidOnly" class="btn btn-outline-secondary">Muaji aktual</a>
+</form>
+
+<section class="panel"><div class="panel-heading"><h2>@selectedMonth.ToString("MMMM yyyy", System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</h2><span class="results-caption">@(Model.UnpaidOnly ? "Vetëm faturat me borxh të mbetur" : "Gjendja sipas pagesave dhe lirimeve aktuale")</span></div>
+<div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Lojtari / fatura</th><th>Tarifa</th><th>Lirim / zbritje</th><th>Mbuluar</th><th>Borxh</th><th>Statusi</th><th>Veprime</th></tr></thead><tbody>
+<partial name="_FamilyRows" model="Model.Families"/>
+@foreach(var invoice in Model.Invoices){<tr><td><a asp-action="Account" asp-route-id="@invoice.Student.Id" class="fw-semibold">@invoice.Student.FullName</a><small class="balance-caption">@invoice.Number</small>@if(invoice.Period.ProrationDescription != null){<small class="balance-caption">@invoice.Period.ProrationDescription</small>}</td><td>@invoice.Amount.ToString("N2") €</td><td>@invoice.Exempted.ToString("N2") €</td><td>@invoice.Paid.ToString("N2") €</td><td class="@(invoice.Due > 0 ? "text-danger" : "text-success")">@invoice.Due.ToString("N2") €</td><td><span class="status-pill @invoice.StatusClass">@invoice.Status</span></td><td><div class="billing-actions"><a asp-action="Invoice" asp-route-id="@invoice.Period.Id">Fletëpagesa</a>@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-action="Register" asp-route-studentId="@invoice.Student.Id">Paguaj</a>}@if(User.IsInRole(Roles.Admin) && invoice.CanExempt){<a asp-action="Exempt" asp-route-id="@invoice.Period.Id">Liro</a>}</div></td></tr>}
+@if(!Model.Invoices.Any() && !Model.Families.Any()){<tr><td colspan="7" class="text-center text-secondary py-5">@(Model.UnpaidOnly ? "Nuk ka borxhe të papaguara për muajin dhe kërkimin e zgjedhur." : "Nuk ka fatura për këtë muaj ose kërkim. Për muajin aktual, administratori mund të përdorë “Përditëso faturat”.")</td></tr>}
+</tbody></table></div></section>

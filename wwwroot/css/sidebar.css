@@ -1,0 +1,56 @@
+.app-sidebar {
+    width: 238px;
+    padding: 22px 14px 16px;
+    background: linear-gradient(180deg, #202d60 0%, #182344 100%);
+    border-right: 1px solid #ffffff12;
+    box-shadow: 4px 0 24px #15213b0a;
+    scrollbar-width: thin;
+    scrollbar-color: #52618a transparent;
+}
+.app-sidebar .sidebar-content { gap: 0; min-height: min-content; }
+.app-sidebar .side-navigation { gap: 5px; }
+.app-sidebar .side-navigation + .side-navigation {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid #ffffff14;
+}
+.app-sidebar .side-link {
+    min-height: 43px;
+    padding: 11px 13px;
+    gap: 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #c8d1e7;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: background-color .16s ease, color .16s ease, border-color .16s ease;
+}
+.app-sidebar .side-link .icon { width: 19px; height: 19px; flex-shrink: 0; opacity: .8; }
+.app-sidebar .side-link:hover { background: #ffffff0d; border-color: #ffffff0c; color: #fff; }
+.app-sidebar .side-link.is-active {
+    background: #f3f5fc;
+    border-color: #fff;
+    color: #23356b;
+    font-weight: 650;
+    box-shadow: 0 3px 10px #0b153320;
+}
+.app-sidebar .side-link.is-active .icon { opacity: 1; }
+.app-sidebar .nav-dot { width: 5px; height: 5px; background: #5269aa; }
+.app-sidebar .side-link:focus-visible,
+.app-sidebar .logout-button:focus-visible,
+.app-sidebar .menu-toggle:focus-visible { outline: 2px solid #b9caff; outline-offset: 3px; }
+.app-sidebar .sidebar-account { margin-top: auto; padding: 20px 10px 8px; border-top: 0; }
+.app-sidebar .account-avatar { width: 30px; height: 30px; border-radius: 9px; background: #ffffff10; color: #e4eaff; font-size: 12px; }
+.app-sidebar .account-details strong { font-size: 12px; font-weight: 500; }
+.app-sidebar .account-details span { display: none; }
+.app-sidebar .logout-button { padding: 10px 13px; width: 100%; border-radius: 9px; font-size: 12px; color: #adbcd9; }
+.app-sidebar .logout-button:hover { background: #ffffff0b; color: #fff; }
+@media (min-width: 761px) { .app-workspace { margin-left: 238px; } }
+@media (max-width: 760px) {
+    .app-sidebar { width: 100%; padding: 12px 16px; border-right: 0; border-bottom: 1px solid #ffffff14; }
+    .app-sidebar .menu-toggle { min-height: 40px; font-size: 13px; padding: 8px 13px; border-radius: 9px; }
+    .app-sidebar .sidebar-content { padding-top: 14px; }
+    .app-sidebar .sidebar-account { margin-top: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .app-sidebar .side-link { transition: none; } }

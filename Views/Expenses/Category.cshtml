@@ -1,0 +1,15 @@
+@model ExpenseCategoryModel
+@using _2Korriku.Services
+@{ViewData["Title"]=Model.Id==0?"Kategori e re":"Ndrysho kategorinë";}
+<div class="page-heading"><h1>@ViewData["Title"]</h1></div>
+<form method="post" class="panel p-4"><input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div>
+<label asp-for="ParentId" class="form-label">Vendosja</label>
+@if(Model.Id==0){<select asp-for="ParentId" class="form-select mb-3"><option value="">Kategori kryesore</option>@foreach(var p in Model.Parents){<option value="@p.Id">Nënkategori te @p.Name</option>}</select>}else{<input asp-for="ParentId" type="hidden"/><p>@(Model.ParentId.HasValue?"Nënkategori te "+Model.Parents.FirstOrDefault(x=>x.Id==Model.ParentId)?.Name:"Kategori kryesore")</p>}
+<label asp-for="Name" class="form-label">Emri</label><input asp-for="Name" class="form-control mb-3" required maxlength="100" placeholder="P.sh. Pagat ose emri i punonjësit"/>
+<label class="d-flex gap-2 mb-3"><input asp-for="IsActive"/> Aktive për shpenzime të reja</label>
+@if(Model.Id!=0){<label asp-for="Reason" class="form-label">Arsyeja e ndryshimit</label><input asp-for="Reason" class="form-control mb-3" required maxlength="200"/>}
+<button class="btn btn-primary">Ruaj kategorinë</button> </form>
+@if(Model.History.Count>0){<section class="panel p-4 mt-4"><h2 class="h5">Historiku i ndryshimeve</h2><table class="table"><thead><tr><th>Data / autori</th><th>Para</th><th>Pas</th><th>Arsyeja</th></tr></thead><tbody>@foreach(var h in Model.History){using var before=System.Text.Json.JsonDocument.Parse(h.Before);using var after=System.Text.Json.JsonDocument.Parse(h.After);<tr><td>@TimeZoneInfo.ConvertTimeFromUtc(h.CreatedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")<small class="d-block">@h.Actor?.UserName</small></td><td>@before.RootElement.GetProperty("Name").GetString()</td><td>@after.RootElement.GetProperty("Name").GetString() · @(after.RootElement.GetProperty("IsActive").GetBoolean()?"Aktive":"Joaktive")</td><td>@h.Reason</td></tr>}</tbody></table></section>}
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Categories"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

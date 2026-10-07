@@ -1,0 +1,17 @@
+bin/
+obj/
+.vscode/
+.idea/
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal
+*.log
+.env
+appsettings.Local.json
+.vs/
+appsettings.json
+appsettings.Development.json
+*.pfx
+*.p12

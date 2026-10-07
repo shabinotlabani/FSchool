@@ -1,0 +1,17 @@
+@model PersonalTariffModel
+@{ViewData["Title"]=Model.Id==0?"Tarifë e re personale":"Ndrysho tarifën";}
+<div class="page-heading"><h1>@ViewData["Title"]</h1></div>
+<form method="post" class="panel p-4"><input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
+<label asp-for="Name" class="form-label">Emri i tarifës</label><input asp-for="Name" class="form-control mb-3" required maxlength="100"/>
+<label asp-for="Mode" class="form-label">Mënyra e tarifimit</label>
+@if(Model.Id==0){<select asp-for="Mode" class="form-select mb-3"><option value="Session">Për seancë</option><option value="Monthly">Paketë mujore</option></select>}else{<input asp-for="Mode" type="hidden"/><p>@(Model.Mode=="Monthly"?"Paketë mujore":"Për seancë")</p>}
+<label asp-for="Amount" class="form-label">Çmimi (€)</label><input asp-for="Amount" type="number" min="0.01" step="0.01" class="form-control mb-3" required/>
+<label class="d-flex gap-2 mb-3"><input asp-for="IsActive"/> Aktive për regjistrime të reja</label>
+<label asp-for="Notes" class="form-label">Shënime</label><textarea asp-for="Notes" class="form-control mb-3" maxlength="400"></textarea>
+@if(Model.Id!=0){<label asp-for="Reason" class="form-label">Arsyeja e ndryshimit</label><input asp-for="Reason" class="form-control mb-3" required maxlength="200"/>}
+
+<button class="btn btn-primary">Ruaj tarifën</button> </form>
+@if(Model.History.Count>0){<section class="panel p-4 mt-4"><h2 class="h5">Historiku i tarifës</h2><div class="table-responsive"><table class="table"><thead><tr><th>Data / autori</th><th>Çmimi para</th><th>Çmimi pas</th><th>Gjendja pas</th><th>Arsyeja</th></tr></thead><tbody>@foreach(var h in Model.History){using var snapshot=System.Text.Json.JsonDocument.Parse(h.Snapshot);var before=snapshot.RootElement.GetProperty("Before");var after=snapshot.RootElement.GetProperty("After");<tr><td>@TimeZoneInfo.ConvertTimeFromUtc(h.CreatedAt,_2Korriku.Services.BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")<small class="d-block">@h.Actor?.UserName</small></td><td>@before.GetProperty("Amount").GetDecimal().ToString("N2") €</td><td>@after.GetProperty("Amount").GetDecimal().ToString("N2") €</td><td>@(after.GetProperty("IsActive").GetBoolean()?"Aktive":"Joaktive")</td><td>@h.Reason</td></tr>}</tbody></table></div></section>}
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Tariffs"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

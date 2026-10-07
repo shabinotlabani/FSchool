@@ -1,0 +1,9 @@
+@model ProductSizesModel
+@{ViewData["Title"]="Madhësitë e rekuizitës";}
+<div class="page-heading mt-3"><div><p class="eyebrow">MADHËSITË DHE NUMRAT</p><h1>@Model.Product!.Name</h1><p>Stoku mbahet veçmas për Çdo madhësi. Njësia: @Model.Product.UnitName.</p></div></div>
+<form method="post" class="panel p-4"><input asp-for="ProductId" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div><h2 class="h5">Madhësitë ekzistuese</h2><div class="row g-2 mb-4">@foreach(var v in Model.Product.Variants.OrderBy(v=>v.Id)){<div class="col-md-3"><label class="border rounded p-3 d-flex gap-2"><input type="checkbox" name="ActiveIds" value="@v.Id" checked="@Model.ActiveIds.Contains(v.Id)"/> <span><strong>@v.Size</strong><small class="d-block">Stok: @v.CurrentStock.ToString("0.##") @Model.Product.UnitName.ToLower()</small></span></label></div>}</div><label for="size-template" class="form-label">Shto madhësitë e një grupi</label><select id="size-template" class="form-select mb-3"><option value="">Zgjidhni grupin (opsionale)</option>@foreach(var g in Model.Groups){<option value="@g.Sizes">@g.Name — @g.Sizes</option>}</select><label asp-for="NewSizes" class="form-label">Madhësi të reja, të ndara me presje</label><textarea asp-for="NewSizes" class="form-control mb-3" maxlength="2000" rows="2" placeholder="p.sh. XS, XXXL"></textarea><button class="btn btn-primary">Ruaj madhësitë</button></form>
+@section Scripts{<script>document.querySelector('#size-template').addEventListener('change',e=>{if(e.target.value)document.querySelector('#NewSizes').value=e.target.value;});</script>}
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Card" asp-route-id="@Model.ProductId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

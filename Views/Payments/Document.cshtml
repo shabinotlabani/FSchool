@@ -1,0 +1,12 @@
+﻿@model PaymentDocumentModel
+@{ Layout = "_PrintLayout"; ViewData["Title"] = Model.Title; }
+<div class="print-toolbar"><a asp-controller="Payments" asp-action="Account" asp-route-id="@Model.Student.Id">← Kartela e lojtarit</a><div><span>A4 · dy kopje · prerje në mes</span><button type="button" onclick="window.print()">Printo dokumentin</button></div></div>
+@if(TempData["Success"] is string message){<p class="screen-notice">@message</p>}
+<p class="print-help">Printoni në A4, shkalla 100%, pa titujt dhe fundfaqet e shfletuesit. Secila gjysmë ka të njëjtin numër dokumenti.</p>
+<main class="duplex-sheet">
+    @{ Model.CopyLabel = "KOPJA PËR PALËN"; }
+    <partial name="~/Views/Payments/_PaymentCopy.cshtml" model="Model"/>
+    <div class="cut-line" aria-hidden="true"><span>✂ &nbsp; PRITET NË MES</span></div>
+    @{ Model.CopyLabel = "KOPJA PËR SHKOLLËN"; }
+    <partial name="~/Views/Payments/_PaymentCopy.cshtml" model="Model"/>
+</main>

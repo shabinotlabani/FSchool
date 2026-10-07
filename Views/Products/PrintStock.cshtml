@@ -1,0 +1,69 @@
+@model StockOverviewModel
+@using _2Korriku.Services
+@{
+    Layout = "_PrintLayout";
+    ViewData["Title"] = "Stoku sipas madhësive";
+    var f = Model.Filter;
+    var rows = Model.Rows.Where(r => f.Stock == "low" || r.Closing != 0)
+        .OrderBy(r => r.Product.CategoryId).ThenBy(r => r.Product.Name).ThenBy(r => r.Product.Id).ToList();
+    var number = 0;
+}
+<link rel="stylesheet" href="~/css/stock-sizes.css" asp-append-version="true" />
+<div class="print-toolbar">
+    <a asp-action="Index" asp-route-search="@f.Search" asp-route-category="@f.Category" asp-route-status="@f.Status" asp-route-stock="@f.Stock" asp-route-display="@f.Display" asp-route-from="@f.From.ToString("yyyy-MM-dd")" asp-route-to="@f.To.ToString("yyyy-MM-dd")">← Kthehu te stoku</a>
+    <button type="button" onclick="window.print()">Printo A4 / Ruaj PDF</button>
+</div>
+<main class="stock-sheet stock-size-sheet">
+    <header class="document-header">
+        <div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku" /><div><strong>FC 2 KORRIKU</strong><span>MAGAZINA</span></div></div>
+        <div class="document-heading"><span class="copy-label">RAPORTI I STOKUT</span><h1>Stoku sipas madhësive</h1><strong>Gjendja më @f.To.ToString("dd.MM.yyyy")</strong></div>
+    </header>
+    <div class="document-rule"></div>
+    <p class="stock-print-filters">Kategoria: @(f.Category ?? "Të gjitha") · Kërkimi: @(f.Search ?? "—") · Rekuizitat: @(f.Status == "active" ? "Aktive" : f.Status == "inactive" ? "Joaktive" : "Të gjitha") · Stoku: @(f.Stock == "low" ? "I ulët" : f.Stock == "empty" ? "Pa stok / negativ" : "Të gjitha")</p>
+    <p class="stock-print-summary"><strong>@rows.Count rekuizita</strong><span>@(f.Stock == "low" ? "Përfshihen madhësitë aktive me zero për furnizim." : "Rekuizitat dhe madhësitë me sasi zero nuk shfaqen.")</span></p>
+    @if (rows.Any(r => r.UndatedStock != 0))
+    {
+        <p class="document-notes">* Gjendja përfshin stok bazë pa datë. Për datat historike, verifikoni kartelën e rekuizitës.</p>
+    }
+    @if (rows.Count > 0)
+    {
+        <table class="stock-classic-table">
+            <colgroup><col class="stock-col-number" /><col class="stock-col-product" /><col class="stock-col-category" /><col class="stock-col-sizes" /><col class="stock-col-total" /></colgroup>
+            <thead><tr><th scope="col">Nr.</th><th scope="col">Rekuizita</th><th scope="col">Kategoria</th><th scope="col">Madhësia / numri : sasia</th><th scope="col">Gjithsej</th></tr></thead>
+            <tbody>
+            @foreach (var row in rows)
+            {
+                number++;
+                <tr>
+                    <td>@number</td>
+                    <th scope="row">@row.Product.Name @(row.UndatedStock != 0 ? "*" : "") @if (!row.Product.IsActive) {<small> · Joaktiv</small>}</th>
+                    <td>@row.Product.CategoryId</td>
+                    <td class="stock-classic-sizes">
+                        @if (row.Sizes.Count > 0)
+                        {
+                            @foreach (var size in row.Sizes.Where(s => s.Closing != 0 || (f.Stock == "low" && s.Variant.IsActive)))
+                            {
+                                <span>@size.Variant.Size: <b>@size.Closing.ToString("0.##")</b></span>
+                            }
+                            @if (row.UnassignedStock != 0)
+                            {
+                                <span>Pa madhësi të caktuar: <b>@row.UnassignedStock.ToString("0.##")</b></span>
+                            }
+                        }
+                        else
+                        {
+                            <span>@(row.Product.Size ?? "Pa madhësi"): <b>@row.Closing.ToString("0.##")</b></span>
+                        }
+                    </td>
+                    <td class="stock-classic-total"><strong>@row.Closing.ToString("0.##")</strong><small>@row.Product.UnitName</small></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Nuk ka rekuizita për filtrat e zgjedhur.</p>
+    }
+    <footer class="document-footer"><span>FC 2 Korriku · Raporti i magazinës</span><span>Gjeneruar @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</span></footer>
+</main>

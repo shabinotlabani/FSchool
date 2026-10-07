@@ -1,0 +1,15 @@
+@model ExemptInvoiceModel
+@{ ViewData["Title"] = "Lirim nga tarifa"; }
+<div class="player-registration mx-auto"><div class="page-heading mt-3"><div><h1>Lirim nga tarifa mujore</h1><p>@Model.Invoice!.Student.FullName · @Model.Invoice.MonthLabel · @Model.Invoice.Number</p></div></div>
+<div class="billing-note">Tarifa origjinale: <strong>@Model.Invoice.Amount.ToString("N2") €</strong></div>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(Model.Invoice.CanExempt){
+<form asp-action="Exempt" method="post" class="card p-4 billing-form"><input asp-for="PeriodId" type="hidden"/>
+<div class="row g-3"><div class="col-md-6"><label asp-for="ExemptionType" class="form-label">Lloji i lirimit *</label><select asp-for="ExemptionType" class="form-select"><option value="Sickness">Sëmundje</option><option value="Vacation">Pushime</option></select></div><div class="col-md-6"><label asp-for="Amount" class="form-label">Shuma që lirohet (€) *</label><input asp-for="Amount" type="number" step="0.01" min="0.01" class="form-control" required/></div><div class="col-12"><label asp-for="Reason" class="form-label">Arsyeja *</label><input asp-for="Reason" class="form-control" maxlength="200" placeholder="p.sh. Pushim gjatë gjithë muajit" required/></div><div class="col-12"><label asp-for="Notes" class="form-label">Shënime shtesë</label><textarea asp-for="Notes" rows="3" maxlength="1000" class="form-control"></textarea></div></div>
+<div class="d-flex justify-content-end gap-2"><button type="submit" class="btn btn-primary">Aprovo lirimin</button></div></form>
+}
+</div>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Account" asp-route-id="@Model.Invoice!.Student.Id"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

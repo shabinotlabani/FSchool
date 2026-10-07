@@ -1,0 +1,4 @@
+@model FamilyEditModel
+<div class="mb-4"><label asp-for="FeePlanId" class="form-label">Tarifa familjare</label><select asp-for="FeePlanId" class="form-select" required>
+@foreach(var plan in Model.Plans){<option value="@plan.Id">@plan.Name · @plan.PriceLabel @(plan.IsActive?"":"(e hequr)")</option>}
+</select></div>

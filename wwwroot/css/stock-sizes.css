@@ -1,0 +1,22 @@
+﻿.stock-size-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:12px;font-variant-numeric:tabular-nums;color:#243553}
+.stock-size-table th,.stock-size-table td{padding:7px 10px;border-bottom:1px solid #dde2ea;text-align:left;overflow-wrap:anywhere}
+.stock-size-table th:last-child,.stock-size-table td:last-child{text-align:right;width:38%}
+.stock-size-table thead th{font-size:10px;color:#56657c;background:#f3f5f8;font-weight:600}
+.stock-size-table tbody td:last-child{font-weight:700}
+.stock-size-table tfoot th,.stock-size-table tfoot td{font-weight:700;border-top:2px solid #a9b4c5;border-bottom:0}
+.stock-print-filters{font-size:7.5pt;line-height:1.4;overflow-wrap:anywhere;color:#46536a;margin:6px 0}
+.stock-print-summary{display:flex;justify-content:space-between;gap:12px;font-size:8pt;margin:8px 0}
+.stock-classic-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9pt;color:#202938;margin-top:10px;font-variant-numeric:tabular-nums}
+.stock-classic-table th,.stock-classic-table td{border:1px solid #b9c1cc;padding:5px 7px;text-align:left;vertical-align:top;overflow-wrap:anywhere;line-height:1.4}
+.stock-classic-table thead th{background:#eef1f5;font-size:8pt;font-weight:700;border-bottom:2px solid #67758a}
+.stock-classic-table tbody th{font-weight:600}
+.stock-classic-table small{font-size:7pt;font-weight:400}
+.stock-col-number{width:5%}.stock-col-product{width:29%}.stock-col-category{width:16%}.stock-col-sizes{width:39%}.stock-col-total{width:11%}
+.stock-classic-sizes span{display:inline-block;margin-right:9px;max-width:100%}
+.stock-classic-table .stock-classic-total{text-align:right}
+.stock-classic-total small{display:block}
+.stock-classic-table thead{display:table-header-group}
+.stock-classic-table tr{break-inside:avoid;page-break-inside:avoid}
+.stock-size-sheet .document-notes{font-size:7pt;margin:6px 0}
+@media print{.stock-classic-table thead th{print-color-adjust:exact;-webkit-print-color-adjust:exact}.stock-size-sheet .document-footer{break-inside:avoid}}
+@media screen and (max-width:600px){.stock-size-sheet{width:auto;padding:16px;margin:8px}.stock-size-sheet .document-header{flex-wrap:wrap}.stock-size-sheet .document-heading{max-width:100%;text-align:left}.stock-print-summary{flex-wrap:wrap}.stock-classic-table th,.stock-classic-table td{padding:4px}.stock-classic-table{font-size:8pt}}

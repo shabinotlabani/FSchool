@@ -1,0 +1,20 @@
+@model CreateTariffModel
+@{ ViewData["Title"] = Model.IsFamily ? "Tarifë familjare e re" : "Tarifë mujore e re"; }
+<div class="page-heading mt-3"><h1>@ViewData["Title"]</h1></div>
+<form method="post" class="panel p-4" style="max-width:750px">
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<label asp-for="Name" class="form-label">Emri i tarifës</label><input asp-for="Name" class="form-control mb-3" maxlength="100" required/>
+<label asp-for="IsFamily" class="form-label">Lloji</label><select asp-for="IsFamily" class="form-select mb-3"><option value="false">Mujore</option><option value="true">Familjare</option></select>
+<label asp-for="Amount" class="form-label">Çmimi për lojtar / fëmijët e parë (€)</label><input asp-for="Amount" type="number" min="0.01" max="999999.99" step="0.01" class="form-control mb-3" required/>
+<div id="family-tariff-fields" hidden="@(!Model.IsFamily)">
+<label asp-for="FamilyFirstCount" class="form-label">Numri i fëmijëve me çmimin e parë</label><input asp-for="FamilyFirstCount" type="number" min="1" max="20" class="form-control mb-3"/>
+<label asp-for="FamilyAdditionalAmount" class="form-label">Çmimi për çdo fëmijë shtesë (€)</label><input asp-for="FamilyAdditionalAmount" type="number" min="0.01" max="999999.99" step="0.01" class="form-control mb-3"/>
+<label class="d-flex gap-2 mb-3"><input asp-for="SingleUsesStandard"/> Për një fëmijë të vetëm përdor tarifën bazë mujore</label>
+</div>
+<button class="btn btn-primary">Shto tarifën</button> 
+</form>
+@section Scripts{<script src="~/js/tariff-form.js" asp-append-version="true"></script>}
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

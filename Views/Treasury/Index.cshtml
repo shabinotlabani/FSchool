@@ -1,0 +1,20 @@
+@model TreasuryIndexModel
+@using _2Korriku.Services
+@{ ViewData["Title"] = "Arkat"; }
+<div class="page-heading"><h1>Arkat</h1><div class="d-flex gap-2 flex-wrap">@if(User.IsInRole(Roles.Admin)){<a asp-action="Create" asp-route-kind="Withdrawal" class="btn btn-primary">Tërheqje nga pronari</a>}<a asp-controller="Reports" asp-action="Index" class="btn btn-outline-primary">Raporti financiar</a></div></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<div class="row g-3 mb-4">
+@foreach(var balance in Model.Balances.Where(x => x.Method is "Cash" or "Bank")){
+    var opening = Model.Openings.SingleOrDefault(x => x.Method == balance.Method);
+    <div class="col-md-6"><section class="panel p-4"><h2>@balance.Name</h2><div class="fs-2 fw-bold mb-3">@balance.Closing.ToString("N2") €</div><div class="d-flex gap-2 flex-wrap align-items-center">
+    @if(opening != null){<a asp-action="Details" asp-route-id="@opening.Id" class="btn btn-outline-secondary">Gjendja fillestare: @opening.Amount.ToString("N2") €</a><span class="text-secondary">@opening.Date.ToString("dd.MM.yyyy")</span>}
+    else if(User.IsInRole(Roles.Admin)){<a asp-action="Create" asp-route-kind="Opening" asp-route-method="@balance.Method" class="btn btn-outline-primary">Vendos gjendjen fillestare</a>}
+    else{<span class="text-secondary">Pa gjendje fillestare të regjistruar</span>}
+    </div></section></div>
+}
+</div>
+<form method="get" class="panel p-3 mb-4"><div asp-validation-summary="All" class="text-danger" role="alert"></div><div class="d-flex gap-3 flex-wrap align-items-end"><div><label for="From" class="form-label">Nga data</label><input id="From" name="From" value="@Model.Filter.From?.ToString("yyyy-MM-dd")" type="date" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required /></div><div><label for="To" class="form-label">Deri në datë</label><input id="To" name="To" value="@Model.Filter.To?.ToString("yyyy-MM-dd")" type="date" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required /></div><button class="btn btn-primary">Shfaq historikun</button></div></form>
+<section class="panel p-4"><h2>Historiku i arkave</h2><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Data</th><th>Dokumenti</th><th>Veprimi</th><th>Arka</th><th>Pronari</th><th class="text-end">Shuma (€)</th><th>Statusi</th></tr></thead><tbody>
+@foreach(var entry in Model.Entries){<tr><td>@entry.Date.ToString("dd.MM.yyyy")</td><td><a asp-action="Details" asp-route-id="@entry.Id">@entry.Number</a></td><td>@entry.Label</td><td>@(entry.Method == "Bank" ? "Bankë" : "Cash")</td><td>@(entry.Owner ?? "—")</td><td class="text-end">@entry.Amount.ToString("N2")</td><td>@(entry.CancelledAt.HasValue ? "Anuluar" : "Aktiv")</td></tr>}
+@if(Model.Entries.Count == 0){<tr><td colspan="7">Nuk ka regjistrime për këtë periudhë.</td></tr>}
+</tbody></table></div></section>

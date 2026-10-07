@@ -1,0 +1,8 @@
+@model TreasuryCancelModel
+@{ ViewData["Title"] = "Anulo regjistrimin e arkës"; }
+<div class="page-heading"><h1>@ViewData["Title"]</h1></div>
+<section class="panel p-4"><p><strong>@Model.Entry!.Number · @Model.Entry.Label · @Model.Entry.Amount.ToString("N2") € · @(Model.Entry.Method == "Cash" ? "Cash" : "Bankë")</strong></p>
+@if(Model.Entry.CancelledAt.HasValue){<p class="text-danger">Ky regjistrim është anuluar.</p>}
+else{<form asp-action="Cancel" method="post"><input asp-for="Id" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div><label asp-for="Reason" class="form-label">Arsyeja e anulimit</label><textarea asp-for="Reason" class="form-control mb-3" maxlength="200" required></textarea><button type="submit" class="btn btn-danger">Konfirmo anulimin</button></form>}
+</section>
+@section PageNavigation { <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a> }

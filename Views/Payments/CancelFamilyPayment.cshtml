@@ -1,0 +1,12 @@
+@model ReverseBillingModel
+@{ ViewData["Title"] = "Anulo pagesën familjare"; }
+<div class="page-heading"><div><h1>Anulo pagesën familjare</h1><p>@Model.Description</p></div></div>
+<form asp-action="CancelFamilyPayment" method="post" class="panel p-4">
+<input asp-for="Id" type="hidden"/><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<label asp-for="Reason" class="form-label">Arsyeja</label><textarea asp-for="Reason" maxlength="200" class="form-control" required></textarea>
+<div class="d-flex gap-3 mt-4"><button class="btn btn-danger">Anulo gjithë pagesën e familjes</button></div>
+</form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Family" asp-route-id="@ViewData["FamilyId"]"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

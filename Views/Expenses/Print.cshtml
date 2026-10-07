@@ -1,0 +1,16 @@
+﻿@model Expense
+@using _2Korriku.Services
+@{Layout="_PrintLayout";ViewData["Title"]="Dëftesë shpenzimi";}
+<div class="print-toolbar"><a asp-action="Details" asp-route-id="@Model.Id">← Shpenzimi</a><button onclick="window.print()">Printo A4</button></div>
+<main class="duplex-sheet">
+@for(var copy=0;copy<2;copy++){
+<section class="payment-copy compact-copy @(Model.CancelledAt.HasValue?"cancelled-copy":"")">
+<header class="document-header"><div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku"/><div><strong>FC 2 KORRIKU</strong><span>EVIDENCA E SHPENZIMEVE</span></div></div><div class="document-heading"><span class="copy-label">@(copy==0?"KOPJA PËR PALËN":"KOPJA PËR SHKOLLËN")</span><h1>Dëftesë shpenzimi</h1><strong>@Model.Number</strong></div></header><div class="document-rule"></div>
+@if(Model.CancelledAt.HasValue){<div class="cancelled-notice">ANULUAR · @Model.CancellationReason</div>}
+<div class="document-metadata"><div><label>Data</label><strong>@Model.Date.ToString("dd.MM.yyyy")</strong></div><div><label>Përfituesi / furnitori</label><strong>@(Model.Recipient??"—")</strong></div><div><label>Kategoria / nënkategoria</label><span>@Model.CategoryLabel</span></div><div><label>Mënyra e pagesës / dokumenti</label><span>@BillingService.MethodLabel(Model.Method) · @(Model.DocumentNumber??"—")</span></div></div>
+<table class="document-table"><thead><tr><th>Përshkrimi</th><th>Shuma (€)</th></tr></thead><tbody><tr><td>@Model.Description</td><td>@Model.Amount.ToString("N2")</td></tr></tbody><tfoot><tr><th>GJITHSEJ SHPENZIM</th><td>@Model.Amount.ToString("N2") €</td></tr></tfoot></table>
+@if(!string.IsNullOrWhiteSpace(Model.Notes)){<p class="document-notes">Shënim: @Model.Notes</p>}
+<div class="document-signatures"><div><span>Përgatiti</span><strong>@Model.CreatedBy?.UserName</strong><i></i><small>Nënshkrimi / vula</small></div><div><span>Pranoi pagesën</span><strong>@(Model.Recipient??" ")</strong><i></i><small>Nënshkrimi</small></div></div><footer class="document-footer"><span>FC 2 Korriku · Shpenzimet</span><span>@Model.Number</span></footer></section>
+@if(copy==0){<div class="cut-line"><span>✂ PRITET NË MES</span></div>}
+}
+</main>

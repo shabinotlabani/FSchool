@@ -1,0 +1,13 @@
+@model List<FootballField>
+@{ViewData["Title"] = "Menaxhimi i fushave";}
+
+<div class="page-heading mt-3"><div><p class="eyebrow">ADMINISTRIMI</p><h1>Fushat e futbollit</h1></div>@if(User.IsInRole(Roles.Admin)){<a asp-action="Edit" class="btn btn-primary">+ Fushë e re</a>}</div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<section class="panel"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Fusha</th><th>Vendndodhja</th><th>Shënime</th><th>Statusi</th><th></th></tr></thead><tbody>
+@foreach(var field in Model){<tr><td><strong>@field.Name</strong></td><td>@field.Location</td><td>@field.Notes</td><td>@(field.IsActive ? "Aktive" : "Joaktive")</td><td><div class="d-flex gap-3"><a asp-action="Index" asp-route-fieldId="@field.Id">Orari</a>@if(User.IsInRole(Roles.Admin)){<a asp-action="Edit" asp-route-id="@field.Id">Ndrysho</a>}</div></td></tr>}
+@if(Model.Count == 0){<tr><td colspan="5">Nuk ka fusha të regjistruara.</td></tr>}
+</tbody></table></div></section>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

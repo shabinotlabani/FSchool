@@ -1,0 +1,9 @@
+@model FeePriceModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Ndrysho çmimin";}
+<div class="page-heading mt-3"><div><p class="eyebrow">@Model.PlanName</p><h1>Planifiko çmimin e ri</h1></div></div>
+<form method="post" class="panel p-4" style="max-width:700px"><input asp-for="FeePlanId" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div><label asp-for="Amount" class="form-label">@(Model.IsFamily?"Çmimi për fëmijët e parë (€)":"Çmimi për lojtar / muaj (€)")</label><input asp-for="Amount" class="form-control mb-3" type="number" min="0.01" max="999999.99" step="0.01" required/>@if(Model.IsFamily){<label asp-for="FamilyFirstCount" class="form-label">Sa fëmijë me çmimin e parë?</label><input asp-for="FamilyFirstCount" class="form-control mb-3" type="number" min="1" max="20" required/><label asp-for="FamilyAdditionalAmount" class="form-label">Çmimi për çdo fëmijë pas tyre (€)</label><input asp-for="FamilyAdditionalAmount" class="form-control mb-3" type="number" min="0.01" max="999999.99" step="0.01" required/><label class="d-flex gap-2 mb-3"><input asp-for="SingleUsesStandard"/> Kur mbetet vetëm një fëmijë, përdor tarifën normale mujore</label>}<label asp-for="EffectiveMonth" class="form-label">Vlen nga muaji</label><input asp-for="EffectiveMonth" class="form-control mb-3" type="month" min="@TariffService.NextMonth.ToString("yyyy-MM")" required/><label asp-for="Reason" class="form-label">Arsyeja e ndryshimit</label><textarea asp-for="Reason" class="form-control mb-3" maxlength="200" required></textarea><button class="btn btn-primary">Ruaj çmimin</button></form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

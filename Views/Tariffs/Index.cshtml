@@ -1,0 +1,11 @@
+@model FeePlanIndexModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Tarifat mujore";}
+<a asp-controller="PersonalTraining" asp-action="Tariffs" class="btn btn-outline-primary mb-3">Tarifat e trajnimeve personale →</a>
+<div class="page-heading"><div><p class="eyebrow">ADMINISTRIMI · ÇMIMET</p><h1>Tarifat mujore</h1></div><a asp-controller="Families" asp-action="Index" class="btn btn-primary">Familjet dhe paketat →</a></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<partial name="_Management" model="Model"/>
+
+<section class="panel"><div class="panel-heading"><h2>Historiku dhe ndryshimet e planifikuara</h2></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Kategoria</th><th>Çmimi</th><th>Nga muaji</th><th>Gjendja</th><th>Arsyeja</th><th>Autori / data</th></tr></thead><tbody>
+@foreach(var p in Model.History){var superseded=Model.History.Any(x=>x.FeePlanId==p.FeePlanId && x.EffectiveMonth==p.EffectiveMonth && x.Id>p.Id);var current=Model.History.Where(x=>x.FeePlanId==p.FeePlanId && x.EffectiveMonth<=TariffService.CurrentMonth).OrderByDescending(x=>x.EffectiveMonth).ThenByDescending(x=>x.Id).FirstOrDefault()?.Id==p.Id;<tr><td>@p.FeePlan!.Name</td><td>@if(p.FeePlan!.IsFamily){<span>@((p.FamilyFirstAmount??40).ToString("N2")) € / @((p.FamilyAdditionalAmount??35).ToString("N2")) €</span><small class="d-block">@p.FamilyFirstCount të parët / të tjerët</small>}else{@p.Amount.ToString("N2")<span> €</span>}</td><td>@(p.EffectiveMonth.Year==2000?"Baza fillestare":p.EffectiveMonth.ToString("MM.yyyy"))</td><td>@(superseded?"Zëvendësuar":current?"Në fuqi":p.EffectiveMonth>TariffService.CurrentMonth?"Planifikuar":"Historik")</td><td>@p.Reason</td><td>@(p.CreatedByUser?.UserName??"Konfigurimi fillestar")<small class="balance-caption">@TimeZoneInfo.ConvertTimeFromUtc(p.CreatedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</small></td></tr>}
+</tbody></table></div></section>

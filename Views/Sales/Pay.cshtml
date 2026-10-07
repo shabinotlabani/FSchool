@@ -1,0 +1,8 @@
+@model IssuePaymentModel
+@{ ViewData["Title"] = "Arkëtim për rekuizita"; }
+<div class="page-heading"><div><p class="eyebrow">@Model.Sale!.InvoiceNumber</p><h1>Arkëtim për rekuizita</h1><p>@(Model.Sale.PlayerName ?? Model.Sale.Student?.FullName) · Borxhi i mbetur: @Model.Sale.Due.ToString("N2") €</p></div></div>
+<form method="post" class="panel p-4" style="max-width:650px"><input asp-for="SaleId" type="hidden"/><input asp-for="RequestId" type="hidden"/><div asp-validation-summary="All" class="alert alert-danger"></div><label asp-for="Amount" class="form-label">Shuma (€)</label><input asp-for="Amount" class="form-control mb-3" type="number" min="0.01" step="0.01" required/><label asp-for="PaymentMethod" class="form-label">Mënyra e pagesës</label><select asp-for="PaymentMethod" class="form-select mb-3"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select><label asp-for="Notes" class="form-label">Shënim</label><textarea asp-for="Notes" class="form-control mb-4" maxlength="250"></textarea><button class="btn btn-primary">Ruaj dhe hap arkëtimin</button></form>
+
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.SaleId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

@@ -1,0 +1,19 @@
+﻿@model DashboardViewModel
+@{ ViewData["Title"] = "Përmbledhja"; }
+@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator))
+{
+    <div class="d-flex justify-content-end mb-4"><a class="btn btn-primary" asp-controller="Students" asp-action="Create"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Regjistro lojtar</a></div>
+}
+
+<div class="dashboard-columns">
+    <section class="panel"><div class="panel-heading"><div><h2>Lojtarët e fundit</h2><p>Anëtarët më të rinj të shkollës</p></div><a asp-controller="Students" asp-action="Index" class="text-link">Shiko të gjithë <span aria-hidden="true">→</span></a></div>
+        @if (Model.RecentStudents.Any()) {
+            <div class="activity-list">@foreach(var student in Model.RecentStudents) {<div class="activity-row"><span class="person-avatar" aria-hidden="true">@(string.IsNullOrWhiteSpace(student.FirstName) ? "L" : student.FirstName[..1].ToUpperInvariant())</span><div class="activity-description"><strong>@student.FullName</strong><small>Regjistruar më @student.RegistrationDate.ToString("dd.MM.yyyy")</small></div><span class="status-pill @(student.IsActive ? "status-active" : "status-inactive")">@(student.IsActive ? "Aktiv" : "Joaktiv")</span></div>}</div>
+        } else {<div class="empty-panel"><span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-players" /></svg></span><strong>Ekipi fillon këtu</strong><p>Regjistroni lojtarin e parë të shkollës.</p>@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-controller="Students" asp-action="Create" class="text-link">+ Regjistro lojtar</a>}</div>}
+    </section>
+    <section class="panel"><div class="panel-heading"><div><h2>Detyrimet e lojtarëve</h2><p>Pesë bilancet më të larta të papaguara</p></div><a asp-controller="Reports" asp-action="Operations" class="icon-link" aria-label="Shiko raportet"><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg></a></div>
+        @if(Model.Stats.StudentsWithHighestOutstandingDebt.Any()) {<div class="activity-list">@foreach(var student in Model.Stats.StudentsWithHighestOutstandingDebt) {<div class="activity-row"><span class="person-avatar debt-avatar" aria-hidden="true"><svg class="icon"><use href="#i-wallet" /></svg></span><div class="activity-description"><strong>@student.StudentName</strong><small>Detyrim i papaguar</small></div><strong class="debt-amount">@student.Balance.ToString("N2") €</strong></div>}</div>}
+        else {<div class="empty-panel"><span class="empty-icon tint-green"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg></span><strong>Asnjë detyrim i papaguar</strong><p>Lojtarët nuk kanë borxhe të regjistruara.</p></div>}
+    </section>
+</div>
+<section class="daily-strip" aria-label="Aktiviteti i sotëm"><div><span class="daily-icon"><svg class="icon" aria-hidden="true"><use href="#i-chart" /></svg></span><div><strong>Aktiviteti i shkollës</strong><small>Një vështrim i shpejtë mbi ditën tuaj</small></div></div><div><strong>@Model.Stats.PaymentsToday</strong><span>pagesa sot</span></div><div><strong>@Model.Stats.SalesToday</strong><span>dalje sot</span></div><a asp-controller="Payments" asp-action="Index" class="btn btn-outline-primary">Regjistro pagesë <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg></a></section>

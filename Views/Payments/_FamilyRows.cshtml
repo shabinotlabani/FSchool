@@ -1,0 +1,13 @@
+@model List<FamilyInvoiceGroup>
+@foreach(var group in Model){
+<tr class="table-light">
+    <td><a asp-action="Family" asp-route-id="@group.Family.Id" class="fw-semibold">@group.Family.Name</a><span class="badge text-bg-secondary ms-2">Familje</span>
+    @foreach(var invoice in group.Invoices){<small class="balance-caption"><a asp-action="Account" asp-route-id="@invoice.Student.Id">@invoice.Student.FullName</a> · @invoice.Number</small>}</td>
+    <td>@group.Invoices.Sum(i => i.Amount).ToString("N2") €</td>
+    <td>@group.Invoices.Sum(i => i.Exempted).ToString("N2") €</td>
+    <td>@group.Invoices.Sum(i => i.Paid).ToString("N2") €</td>
+    <td class="@(group.Due > 0 ? "text-danger" : "text-success")">@group.Due.ToString("N2") €</td>
+    <td><span class="status-pill @(group.Due > 0 ? "billing-unpaid" : "status-active")">@(group.Due > 0 ? "E papaguar" : "E paguar")</span></td>
+    <td><a asp-action="Family" asp-route-id="@group.Family.Id">@(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator) ? "Paguaj familjen" : "Kartela familjare")</a></td>
+</tr>
+}

@@ -1,0 +1,67 @@
+/* Palette sampled from the original club SVG. The artwork is used unchanged. */
+:root {
+    --club-blue: #2c3f93;
+    --club-yellow: #ffee12;
+    --club-deep: #233276;
+    --navy: var(--club-deep);
+    --yellow: var(--club-yellow);
+    --bs-primary: var(--club-blue);
+}
+.brand-logo { display: block; height: auto; object-fit: contain; flex-shrink: 0; }
+.app-brand { gap: 11px; font-size: 15px; letter-spacing: .7px; }
+.app-brand .brand-logo { width: 46px; }
+.app-brand small { color: #d3dbff; font-size: 8px; letter-spacing: 1.65px; }
+.app-sidebar { background: linear-gradient(165deg, var(--club-blue), var(--club-deep)); border-right: 3px solid var(--club-yellow); }
+.nav-caption { color: #c1cbef; }
+.side-link { color: #e1e6fa; }
+.side-link:hover { background: #ffffff12; }
+.side-link.is-active { background: var(--club-yellow); color: var(--club-deep); box-shadow: 0 4px 15px #14205420; }
+.sidebar-note { border-color: #ffffff25; background: #ffffff05; }
+.sidebar-note p, .account-details span, .logout-button { color: #cad3f4; }
+.account-avatar { background: #ffffff16; color: var(--club-yellow); }
+.app-topbar { border-top: 3px solid var(--club-blue); }
+.btn-primary { --bs-btn-hover-bg: #f1df00; --bs-btn-hover-border-color: #f1df00; --bs-btn-active-bg: #e1d100; --bs-btn-active-border-color: #e1d100; --bs-btn-color: var(--club-deep); }
+.btn-outline-primary { --bs-btn-color: var(--club-blue); --bs-btn-hover-bg: var(--club-blue); --bs-btn-hover-border-color: var(--club-blue); }
+.btn-dark { --bs-btn-bg: var(--club-blue); --bs-btn-border-color: var(--club-blue); --bs-btn-hover-bg: var(--club-deep); --bs-btn-hover-border-color: var(--club-deep); }
+.dashboard-hero { background: var(--club-blue); border-bottom: 4px solid var(--club-yellow); }
+.dashboard-hero::before { content: ""; position: absolute; inset: 0 0 0 48%; background: repeating-linear-gradient(90deg, transparent 0, transparent 60px, #ffee1209 60px, #ffee1209 102px); transform: skewX(-14deg); pointer-events: none; }
+.hero-tag, .hero-link { color: var(--club-yellow); }
+.hero-copy p { color: #d1d9f6; }
+.hero-identity { position: absolute; right: 11%; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.hero-identity .brand-logo { width: 124px; filter: drop-shadow(0 12px 20px #101d3040); }
+.hero-identity span { font-size: 8px; letter-spacing: 3px; font-weight: 600; color: #e3e8ff; }
+.tint-blue, .person-avatar { color: var(--club-blue); background: #eef0fb; }
+.tint-gold, .search-emblem { color: var(--club-blue); background: #fffcdc; }
+.debt-avatar { background: #fdf1f1; color: #c48386; }
+.text-link, .billing-actions a, .player-cell a { color: var(--club-blue); }
+.search-input-wrap:focus-within, .form-control:focus, .form-select:focus { border-color: var(--club-blue); box-shadow: 0 0 0 3px #2c3f9315; }
+.search-panel { border-top: 3px solid var(--club-blue); }
+.invoice-brand { display: flex; align-items: center; gap: 19px; }
+.invoice-brand .brand-logo { width: 58px; }
+.invoice-brand h1 { color: var(--club-blue); margin-bottom: 0; }
+.invoice-paper > hr { border: 0; height: 3px; background: var(--club-blue); opacity: 1; }
+.invoice-paper .table thead th { background: #f0f2fc; color: var(--club-blue); }
+/* Login uses the same crest and club palette. */
+.club-panel { background: var(--club-blue); border-right: 4px solid var(--club-yellow); }
+.club-panel::before { width: auto; height: auto; border-radius: 0; inset: 0; background: repeating-linear-gradient(90deg, transparent 0, transparent 80px, #ffee1205 80px, #ffee1205 133px); }
+.club-brand .brand-logo { width: 72px; }
+.brand-name { font-size: 21px; letter-spacing: 1px; }
+.brand-name small { color: #d4dcfa; letter-spacing: 2.7px; }
+.club-message { margin-top: 65px; }
+.club-message h1 em, .club-panel .eyebrow, .club-footer b { color: var(--club-yellow); }
+.club-panel .eyebrow span, .player { background: var(--club-yellow); }
+.club-message p, .club-footer { color: #d0d8f5; }
+.pitch { opacity: .8; }
+.pitch-line, .halfway, .centre, .penalty, .goal { border-color: #8290c7; }
+.welcome-icon { color: var(--club-blue); background: #fffcdc; border-color: #ede7a2; }
+.submit-button { background: var(--club-yellow); color: var(--club-deep); }
+.submit-button:hover { background: #f1df00; }
+.field input:focus { border-color: var(--club-blue); box-shadow: 0 0 0 3px #2c3f9315; }
+.remember input { accent-color: var(--club-blue); }
+@media (min-width: 1600px) { .hero-identity .brand-logo { width: 142px; }.club-message { margin-top: 100px; } }
+@media (max-width: 1000px) { .brand-name { font-size: 17px; }.club-brand { gap: 12px; }.club-brand .brand-logo { width: 61px; } }
+@media (max-width: 960px) { .hero-identity { right: 6%; }.hero-identity .brand-logo { width: 95px; }.hero-identity span { font-size: 7px; letter-spacing: 1.5px; } }
+@media (max-width: 760px) { .app-sidebar { border-right: 0; border-bottom: 3px solid var(--club-yellow); }.app-brand .brand-logo { width: 34px; }.app-topbar { border-top: 0; }.app-brand { font-size: 15px; } }
+@media (max-width: 700px) { .club-panel { border-right: 0; border-bottom: 4px solid var(--club-yellow); }.club-brand .brand-logo { width: 45px; }.club-message { margin-top: 25px; }.brand-name { font-size: 19px; }.brand-name small { font-size: 8px; }.invoice-paper { padding: 23px; }.invoice-brand .brand-logo { width: 46px; } }
+@media (max-width: 520px) { .hero-identity { display: none; }.dashboard-hero::before { inset-inline-start: 35%; }.hero-copy { width: 100%; } }
+@media print { .invoice-paper { border-top: 0; }.invoice-brand .brand-logo { width: 58px; print-color-adjust: exact; }.invoice-paper > hr { print-color-adjust: exact; } }

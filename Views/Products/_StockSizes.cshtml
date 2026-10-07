@@ -1,0 +1,22 @@
+﻿@model StockSummaryRow
+<table class="stock-size-table">
+    <thead><tr><th>Madhësia / numri</th><th>Sasia</th></tr></thead>
+    <tbody>
+    @if (Model.Sizes.Count > 0)
+    {
+        @foreach (var size in Model.Sizes)
+        {
+            <tr><td>@size.Variant.Size</td><td>@size.Closing.ToString("0.##")</td></tr>
+        }
+        @if (Model.UnassignedStock != 0)
+        {
+            <tr><td>Pa madhësi të caktuar</td><td>@Model.UnassignedStock.ToString("0.##")</td></tr>
+        }
+    }
+    else
+    {
+        <tr><td>@(Model.Product.Size ?? "Pa madhësi")</td><td>@Model.Closing.ToString("0.##")</td></tr>
+    }
+    </tbody>
+    <tfoot><tr><th>Gjithsej</th><td>@Model.Closing.ToString("0.##") @Model.Product.UnitName</td></tr></tfoot>
+</table>

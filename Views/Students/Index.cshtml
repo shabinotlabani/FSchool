@@ -1,0 +1,21 @@
+@model List<StudentListItem>
+@{ ViewData["Title"] = "Lojtarët"; var search = ViewData["Search"] as string; }
+<div class="page-heading"><div><p class="eyebrow">EKIPI YNË</p><h1>Lojtarët</h1></div>@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a class="btn btn-primary" asp-action="Create"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Regjistro lojtar të ri</a>}</div>
+@if (TempData["Success"] is string message) {<div class="alert alert-success" role="status">@message</div>}
+<section class="search-panel" aria-labelledby="search-heading">
+    <div class="search-intro"><span class="search-emblem"><svg class="icon" aria-hidden="true"><use href="#i-search" /></svg></span><div><h2 id="search-heading">Gjej lojtarin</h2></div></div>
+    <form method="get" asp-action="Index" class="player-search" role="search" aria-label="Kërkimi i lojtarëve">
+        <div class="search-input-wrap"><svg class="icon" aria-hidden="true"><use href="#i-search" /></svg><label for="player-search" class="visually-hidden">Emri, mbiemri, prindi ose telefoni</label><input id="player-search" type="search" name="search" value="@search" placeholder="Shkruaj emrin e lojtarit…" autocomplete="off" /></div>
+        <button type="submit" class="btn btn-dark">Kërko lojtar <svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg></button>
+    </form>
+    <div class="search-hint">@if (!string.IsNullOrWhiteSpace(search)){<a asp-action="Index" class="text-link">Pastro kërkimin ×</a>}</div>
+</section>
+<section class="panel players-panel" aria-labelledby="players-heading">
+    <div class="panel-heading"><div class="results-heading"><h2 id="players-heading">@(string.IsNullOrWhiteSpace(search) ? "Lista e lojtarëve" : "Rezultatet e kërkimit")</h2><span class="count-pill">@Model.Count</span></div><span class="results-caption">@(string.IsNullOrWhiteSpace(search) ? "Të gjithë lojtarët e regjistruar" : $"Për: “{search}”")</span></div>
+    <div class="table-responsive"><table class="table player-table align-middle mb-0"><thead><tr><th>Lojtari</th><th>Prindi / kujdestari</th><th>Telefoni</th><th>Tarifa mujore</th><th>Bilanci</th><th>Statusi</th><th></th></tr></thead><tbody>
+    @if (Model.Count == 0) {
+        <tr><td colspan="7"><div class="empty-panel"><span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-search" /></svg></span><strong>@(string.IsNullOrWhiteSpace(search) ? "Ende nuk ka lojtarë" : "Nuk u gjet asnjë lojtar")</strong><p>@(string.IsNullOrWhiteSpace(search) ? "Shtoni anëtarin e parë të ekipit tuaj." : "Provoni një emër tjetër ose kërkoni me numër telefoni.")</p>@if(string.IsNullOrWhiteSpace(search)){@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-action="Create" class="text-link">+ Regjistro lojtar</a>}}else{<a asp-action="Index" class="text-link">Shiko të gjithë lojtarët →</a>}</div></td></tr>
+    }
+    @foreach (var item in Model) {<tr><td><div class="player-cell"><span class="person-avatar" aria-hidden="true">@(string.IsNullOrWhiteSpace(item.Student.FirstName) ? "L" : item.Student.FirstName[..1].ToUpperInvariant())</span><div><a asp-controller="Payments" asp-action="Account" asp-route-id="@item.Student.Id" class="fw-semibold">@item.Student.FullName</a><small>Datëlindja: @item.Student.DateOfBirth.ToString("dd.MM.yyyy")</small><small>Ekipi: @(item.Student.TrainingTeam?.Name ?? "Pa ekip")</small></div></div></td><td>@(item.Student.ParentName ?? "—")</td><td class="phone-cell">@(item.Student.ParentPhone ?? "—")</td><td class="amount-cell">@item.Student.MonthlyFee.ToString("N2") €<small class="balance-caption">@item.FeePlanName</small></td><td><span class="amount-cell @(item.Balance > 0 ? "text-danger" : item.Balance < 0 ? "text-success" : "text-muted")">@item.Balance.ToString("N2") €</span><small class="balance-caption">@(item.Balance > 0 ? "Borxh" : item.Balance < 0 ? "Parapagim" : "Pa detyrime")</small></td><td><span class="status-pill @(item.Student.IsActive ? "status-active" : "status-inactive")">@(item.Student.IsActive ? "Aktiv" : "Joaktiv")</span></td><td>@if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){<a asp-action="Edit" asp-route-id="@item.Student.Id" class="btn btn-sm btn-outline-primary">Edito</a>}</td></tr>}
+    </tbody></table></div>
+</section>
