@@ -91,7 +91,7 @@ if (initializeDatabase)
 {
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
-    await DbInitializer.SeedAsync(app.Services, requireAdmin: true);
+    await DbInitializer.SeedAsync(app.Services);
     app.Logger.LogInformation("Database structure and initial administrator are ready.");
     if (migrateOnly) return;
 }

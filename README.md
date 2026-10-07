@@ -25,10 +25,8 @@ Set these variables on the application service:
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (use the actual database service name) |
 | `PORT` | `8080` |
 | `ASPNETCORE_FORWARDEDHEADERS_ENABLED` | `true` |
-| `ADMIN_EMAIL` | Your administrator email |
-| `ADMIN_PASSWORD` | A unique strong password with uppercase, lowercase and digits |
 
-Railway reads `railway.json`, builds the Docker image, and runs `dotnet 2Korriku.dll --migrate` before starting the app. This creates/updates the schema and creates the first administrator. An invalid configuration stops deployment. Subsequent deployments retain data and never reset administrator passwords. Remove `ADMIN_PASSWORD` after the first successful deployment.
+Railway reads `railway.json`, builds the Docker image, and runs `dotnet 2Korriku.dll --migrate` before starting the app. This creates/updates the schema and creates the initial administrator requested by the owner (`labinot.shabani@gmail.com`) using a stored Identity password hash. `ADMIN_EMAIL` and `ADMIN_PASSWORD` are no longer used and can be removed from Railway. Subsequent deployments retain data and never reset administrator passwords. Change the initial password through user management after first login.
 
 Production startup also applies any pending migrations before seeding roles or accepting requests. A fresh database therefore works even if Railway's pre-deploy configuration is skipped. Startup does not reset tables or import local data.
 

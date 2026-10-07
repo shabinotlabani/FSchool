@@ -64,10 +64,14 @@ try
         else if (process.ExitCode != 0) Console.WriteLine(captured.Replace(testSettings.ConnectionString, "[connection]").Replace(source.Password ?? "", "[redacted]").Replace(password, "[redacted]"));
         return process.ExitCode;
     }
-    Check(await Migrate(null, "Set ADMIN_EMAIL and ADMIN_PASSWORD") != 0, "First deployment fails clearly without administrator credentials");
-    Check(await Migrate("weak", "Administrator setup failed") != 0, "Invalid administrator password fails deployment");
-    Check(await WithDb(db => db.Users.CountAsync()) == 0, "Failed setup leaves no partial administrator");
-    Check(await Migrate(password) == 0, "Production pre-deploy creates schema and administrator on a fresh database");
+    Check(await Migrate(null) == 0, "Fresh deployment creates the default administrator without ADMIN_PASSWORD");
+    var initialAdmin = await WithDb(db => db.Users.SingleAsync());
+    Check(initialAdmin.Email == "labinot.shabani@gmail.com", "Initial administrator uses the requested owner email");
+    var verificationPassword = Environment.GetEnvironmentVariable("TEST_BOOTSTRAP_PASSWORD")
+        ?? throw new InvalidOperationException("Set TEST_BOOTSTRAP_PASSWORD to verify the initial login.");
+    Check(new PasswordHasher<ApplicationUser>().VerifyHashedPassword(initialAdmin, initialAdmin.PasswordHash!, verificationPassword)
+        != PasswordVerificationResult.Failed, "Requested initial password verifies against the stored Identity hash");
+    Check(await Migrate("weak") == 0, "Legacy invalid ADMIN_PASSWORD no longer blocks startup");
     Check(await WithDb(db => db.Users.CountAsync()) == 1 && await WithDb(db => db.UserRoles.CountAsync()) == 1, "Exactly one administrator is created");
     Check(await WithDb(db => db.Students.CountAsync()) == 0 && await WithDb(db => db.Payments.CountAsync()) == 0
         && await WithDb(db => db.Products.CountAsync()) == 0 && await WithDb(db => db.TreasuryEntries.CountAsync()) == 0
@@ -85,7 +89,7 @@ try
     var freshSettings = new NpgsqlConnectionStringBuilder(testSettings.ConnectionString) { Database = freshDatabase };
     var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
     listener.Start(); var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port; listener.Stop();
-    var start = StartInfo(password, false);
+    var start = StartInfo("weak", false);
     start.Environment["ConnectionStrings__DefaultConnection"] = freshSettings.ConnectionString;
     start.Environment["PORT"] = port.ToString();
     start.Environment["ASPNETCORE_FORWARDEDHEADERS_ENABLED"] = "true";
