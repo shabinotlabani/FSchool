@@ -30,6 +30,8 @@ Set these variables on the application service:
 
 Railway reads `railway.json`, builds the Docker image, and runs `dotnet 2Korriku.dll --migrate` before starting the app. This creates/updates the schema and creates the first administrator. An invalid configuration stops deployment. Subsequent deployments retain data and never reset administrator passwords. Remove `ADMIN_PASSWORD` after the first successful deployment.
 
+Production startup also applies any pending migrations before seeding roles or accepting requests. A fresh database therefore works even if Railway's pre-deploy configuration is skipped. Startup does not reset tables or import local data.
+
 Generate a public domain in Settings → Networking with target port 8080. Railway terminates HTTPS; the forwarded-headers variable is intended for this proxy-hosted deployment. Use a single application replica. Container replacement may require users to log in again because authentication keys are not stored on a persistent volume.
 
 References: [Railway pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-command), [config as code](https://docs.railway.com/config-as-code/reference).

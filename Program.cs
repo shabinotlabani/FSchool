@@ -84,13 +84,16 @@ if (!string.IsNullOrWhiteSpace(port))
 
 var app = builder.Build();
 
-if (migrateOnly)
+// Production must be able to start against a new database even when the host
+// skips its pre-deploy command. EF applies only migrations not yet recorded.
+var initializeDatabase = migrateOnly || app.Environment.IsProduction();
+if (initializeDatabase)
 {
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
     await DbInitializer.SeedAsync(app.Services, requireAdmin: true);
     app.Logger.LogInformation("Database structure and initial administrator are ready.");
-    return;
+    if (migrateOnly) return;
 }
 
 if (app.Environment.IsDevelopment())
@@ -119,7 +122,7 @@ try
 {
     using (var scope = app.Services.CreateScope())
     {
-        await DbInitializer.SeedAsync(scope.ServiceProvider);
+        if (!initializeDatabase) await DbInitializer.SeedAsync(scope.ServiceProvider);
     }
 }
 catch (Exception ex)

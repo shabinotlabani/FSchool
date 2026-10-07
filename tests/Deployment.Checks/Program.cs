@@ -76,10 +76,17 @@ try
     var originalHash = await WithDb(db => db.Users.Select(x => x.PasswordHash).SingleAsync());
     Check(await Migrate("Different-Aa9!" + Guid.NewGuid().ToString("N")) == 0 && await Migrate(null) == 0, "Redeploy works after bootstrap password is changed or removed");
     Check(await WithDb(db => db.Users.Select(x => x.PasswordHash).SingleAsync()) == originalHash && await WithDb(db => db.Users.CountAsync()) == 1, "Redeploy never resets credentials or duplicates administrator");
-    // Start the actual published application in Production, not a test host.
+    // Start on a SECOND empty database without ever running --migrate there.
+    // This reproduces a Railway deployment where pre-deploy was skipped.
+    var freshDatabase = testDatabase + "_startup";
+    await using (var createFresh = new NpgsqlCommand($"CREATE DATABASE \"{freshDatabase}\"", admin)) await createFresh.ExecuteNonQueryAsync();
+    try
+    {
+    var freshSettings = new NpgsqlConnectionStringBuilder(testSettings.ConnectionString) { Database = freshDatabase };
     var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
     listener.Start(); var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port; listener.Stop();
-    var start = StartInfo(null, false);
+    var start = StartInfo(password, false);
+    start.Environment["ConnectionStrings__DefaultConnection"] = freshSettings.ConnectionString;
     start.Environment["PORT"] = port.ToString();
     start.Environment["ASPNETCORE_FORWARDEDHEADERS_ENABLED"] = "true";
     using var web = System.Diagnostics.Process.Start(start)!;
@@ -88,7 +95,7 @@ try
     {
         using var client = new HttpClient { BaseAddress = new Uri($"http://127.0.0.1:{port}"), Timeout = TimeSpan.FromSeconds(2) };
         var ready = false;
-        for (var i = 0; i < 60 && !web.HasExited; i++)
+        for (var i = 0; i < 180 && !web.HasExited; i++)
         {
             try { ready = (await client.GetAsync("/health")).IsSuccessStatusCode; }
             catch (HttpRequestException) { }
@@ -97,6 +104,15 @@ try
             await Task.Delay(250);
         }
         Check(ready, "Published Production app responds to Railway healthcheck on PORT");
+        await using var freshConnection = new NpgsqlConnection(freshSettings.ConnectionString);
+        await freshConnection.OpenAsync();
+        await using var count = new NpgsqlCommand("SELECT (SELECT COUNT(*) FROM \"AspNetUsers\"), (SELECT COUNT(*) FROM \"AspNetRoles\"), (SELECT COUNT(*) FROM \"Students\"), (SELECT COUNT(*) FROM \"Payments\"), (SELECT COUNT(*) FROM \"Products\")", freshConnection);
+        await using (var reader = await count.ExecuteReaderAsync())
+        {
+            await reader.ReadAsync();
+            Check(reader.GetInt64(0) == 1 && reader.GetInt64(1) == Roles.All.Length, "Normal Production startup creates Identity tables and administrator without pre-deploy");
+            Check(reader.GetInt64(2) == 0 && reader.GetInt64(3) == 0 && reader.GetInt64(4) == 0, "Startup migration imports no operational data");
+        }
         var login = await client.GetAsync("/Identity/Account/Login");
         Check(login.IsSuccessStatusCode && (await login.Content.ReadAsStringAsync()).Contains("__RequestVerificationToken"), "Production login form renders with antiforgery protection");
         Check((await client.GetAsync("/Identity/Account/Register")).StatusCode == System.Net.HttpStatusCode.NotFound, "Public account registration remains disabled");
@@ -105,6 +121,12 @@ try
     {
         if (!web.HasExited) web.Kill(true);
         await web.WaitForExitAsync(); await webOutput; await webError;
+    }
+    }
+    finally
+    {
+        await using var dropFresh = new NpgsqlCommand($"DROP DATABASE \"{freshDatabase}\" WITH (FORCE)", admin);
+        await dropFresh.ExecuteNonQueryAsync();
     }
     Console.WriteLine("All deployment checks passed.");
 }
