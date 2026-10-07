@@ -5,7 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-var builder = WebApplication.CreateBuilder(args);
+var migrateOnly = args.Contains("--migrate", StringComparer.Ordinal);
+var builder = WebApplication.CreateBuilder(args.Where(x => x != "--migrate").ToArray());
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -14,6 +15,8 @@ var configuredConnectionString = builder.Configuration.GetConnectionString("Defa
     ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
 var localFallbackConnectionString = "Host=localhost;Port=5432;Database=postgres;Username=postgres;Password=postgres";
+if (!builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(configuredConnectionString))
+    throw new InvalidOperationException("Set DATABASE_URL or ConnectionStrings__DefaultConnection before starting the application.");
 var connectionString = string.IsNullOrWhiteSpace(configuredConnectionString)
     ? localFallbackConnectionString
     : configuredConnectionString;
@@ -28,7 +31,7 @@ if (!string.IsNullOrWhiteSpace(connectionString) && connectionString.StartsWith(
     connectionString = ConvertDatabaseUrl(connectionString);
 }
 
-if (!string.IsNullOrWhiteSpace(connectionString) && connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase) && connectionString.Contains("localhost", StringComparison.OrdinalIgnoreCase)
+if (builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(connectionString) && connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase) && connectionString.Contains("localhost", StringComparison.OrdinalIgnoreCase)
     && !connectionString.Contains("Database=2korriku", StringComparison.OrdinalIgnoreCase))
 {
     try
@@ -81,6 +84,15 @@ if (!string.IsNullOrWhiteSpace(port))
 
 var app = builder.Build();
 
+if (migrateOnly)
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
+    await DbInitializer.SeedAsync(app.Services, requireAdmin: true);
+    app.Logger.LogInformation("Database structure and initial administrator are ready.");
+    return;
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -112,6 +124,7 @@ try
 }
 catch (Exception ex)
 {
+    if (!app.Environment.IsDevelopment()) throw;
     app.Logger.LogWarning(ex, "Database seeding was skipped because the PostgreSQL server is not available yet. The app will still start.");
 }
 
@@ -147,10 +160,10 @@ static string ConvertDatabaseUrl(string databaseUrl)
     var builder = new NpgsqlConnectionStringBuilder
     {
         Host = uri.Host,
-        Port = uri.Port,
-        Database = uri.AbsolutePath.Trim('/'),
-        Username = uri.UserInfo.Split(':')[0],
-        Password = uri.UserInfo.Contains(':') ? uri.UserInfo.Split(':', 2)[1] : string.Empty,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Database = Uri.UnescapeDataString(uri.AbsolutePath.Trim('/')),
+        Username = Uri.UnescapeDataString(uri.UserInfo.Split(':')[0]),
+        Password = uri.UserInfo.Contains(':') ? Uri.UnescapeDataString(uri.UserInfo.Split(':', 2)[1]) : string.Empty,
         SslMode = SslMode.Require
     };
 

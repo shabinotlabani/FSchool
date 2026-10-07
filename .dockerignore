@@ -7,3 +7,11 @@ README.md
 **/*.user
 **/*.suo
 **/*.db
+.vs/
+tests/
+appsettings.json
+appsettings.Development.json
+appsettings.Local.json
+.env
+**/*.pfx
+**/*.p12
