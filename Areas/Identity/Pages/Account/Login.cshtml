@@ -11,35 +11,17 @@
     <meta name="theme-color" content="#2c3f93" />
     <title>Hyr në llogari · 2 Korriku</title>
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
     <link rel="icon" type="image/svg+xml" href="~/images/fc-2-korriku.svg" asp-append-version="true" />
 </head>
 <body>
     <main class="login-shell">
-        <section class="club-panel" aria-label="Shkolla e futbollit 2 Korriku">
-            <a href="~/" class="club-brand" aria-label="2 Korriku, faqja kryesore">
-                <img class="brand-logo" src="~/images/fc-2-korriku.svg" asp-append-version="true" alt="" width="72" height="102" />
-                <span class="brand-name">FC 2 KORRIKU<small>PRISHTINË · 1957</small></span>
-            </a>
-            <div class="club-message">
-                <span class="eyebrow"><span></span> NJË EKIP. NJË QËLLIM.</span>
-                <h1>Talenti rritet.<br /><em>Ekipi fiton.</em></h1>
-                <p>Çdo stërvitje, çdo hap, çdo sukses.<br />Gjithçka nis me përkushtim.</p>
-            </div>
-            <div class="pitch" aria-hidden="true">
-                <div class="pitch-line"><i class="halfway"></i><i class="centre"></i><i class="penalty left"></i><i class="penalty right"></i><i class="goal left"></i><i class="goal right"></i></div>
-                <span class="player p1"></span><span class="player p2"></span><span class="player p3"></span><span class="player p4"></span><span class="player p5"></span>
-            </div>
-            <div class="club-footer"><span>DISIPLINË</span><b>·</b><span>PASION</span><b>·</b><span>BASHKËPUNIM</span></div>
-        </section>
         <section class="form-panel" aria-labelledby="login-title">
-            <div class="portal-label"><span></span> PORTALI I MENAXHIMIT</div>
+            <a href="~/" class="login-brand" aria-label="FC 2 Korriku">
+                <img src="~/images/fc-2-korriku.svg" asp-append-version="true" alt="Stema e FC 2 Korriku" width="64" height="90" />
+                <span>FC 2 KORRIKU<small>Portali i menaxhimit</small></span>
+            </a>
             <div class="form-content">
-                <div class="welcome-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5M4 12h11m-4-4 4 4-4 4" /></svg>
-                </div>
-                <h2 id="login-title">Mirë se u kthyet!</h2>
-                <p class="intro">Hyni në llogarinë tuaj për të vazhduar.</p>
+                <h1 id="login-title">Hyr në llogari</h1>
                 <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
                     <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
                     <div class="field">
