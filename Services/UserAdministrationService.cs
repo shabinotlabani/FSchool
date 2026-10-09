@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
 using Microsoft.AspNetCore.Identity;
@@ -27,6 +27,7 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         Validator.ValidateObject(input, new ValidationContext(input), true);
         await using var transaction = await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2004)");
+        await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         var actor = await users.FindByIdAsync(actorId) ?? throw new InvalidOperationException("Hyni përsëri në llogari.");
         await db.Entry(actor).ReloadAsync();
         if (IsDisabled(actor) || !await users.IsInRoleAsync(actor, Roles.Admin)) throw new InvalidOperationException("Vetëm administratori mund të menaxhojë shfrytëzuesit.");
@@ -39,9 +40,9 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
             var admins = await users.GetUsersInRoleAsync(Roles.Admin);
             if (!admins.Any(a => a.Id != user.Id && !IsDisabled(a))) throw new InvalidOperationException("Duhet të mbetet së paku një administrator aktiv.");
         }
-        var selectedTeams = input.Role == Roles.Coach ? input.TeamIds.Distinct().ToList() : new List<int>();
-        if (selectedTeams.Count > 100 || await db.TrainingTeams.CountAsync(t=>selectedTeams.Contains(t.Id)) != selectedTeams.Count)
-            throw new InvalidOperationException("Një nga ekipet nuk ekziston. Hapeni formularin përsëri.");
+        if (!isNew && (!input.IsActive || input.Role != Roles.Coach)
+            && await db.TrainingTeams.AnyAsync(t=>t.CoachId==user.Id || t.AssistantCoachId==user.Id))
+            throw new InvalidOperationException("Zëvendësoni trajnerin në ekipet përkatëse para çaktivizimit ose ndryshimit të rolit.");
         var email = input.Email.Trim();
         var duplicate = await users.FindByEmailAsync(email);
         if (duplicate != null && duplicate.Id != user.Id) throw new InvalidOperationException("Ky email është përdorur nga një llogari tjetër.");
@@ -62,10 +63,6 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         }
         // Existing sessions must re-authenticate after permission or account changes.
         Check(await users.UpdateSecurityStampAsync(user));
-        var oldTeams = await db.CoachTeams.Where(x=>x.UserId==user.Id).ToListAsync();
-        db.CoachTeams.RemoveRange(oldTeams.Where(x=>!selectedTeams.Contains(x.TrainingTeamId)));
-        foreach(var teamId in selectedTeams.Where(id=>!oldTeams.Any(x=>x.TrainingTeamId==id)))
-            db.CoachTeams.Add(new CoachTeam { UserId=user.Id, TrainingTeamId=teamId });
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
         logger.LogInformation("User administration: actor {ActorId}, target {UserId}, role {Role}, active {Active}, created {Created}", actorId, user.Id, input.Role, input.IsActive, isNew);

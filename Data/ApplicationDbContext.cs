@@ -6,6 +6,9 @@ namespace _2Korriku.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<TeamAttendance> TeamAttendances => Set<TeamAttendance>();
+    public DbSet<AttendancePlayer> AttendancePlayers => Set<AttendancePlayer>();
+    public DbSet<AttendanceChange> AttendanceChanges => Set<AttendanceChange>();
     public DbSet<TreasuryEntry> TreasuryEntries => Set<TreasuryEntry>();
     public DbSet<FootballField> FootballFields => Set<FootballField>();
     public DbSet<FieldPayment> FieldPayments => Set<FieldPayment>();
@@ -56,6 +59,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<TeamAttendance>().HasIndex(x=>new{x.TrainingTeamId,x.Date}).IsUnique();
+        builder.Entity<TeamAttendance>().Property(x=>x.Revision).IsConcurrencyToken();
+        builder.Entity<TeamAttendance>().HasOne(x=>x.TrainingTeam).WithMany().HasForeignKey(x=>x.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<TeamAttendance>().HasOne(x=>x.SavedBy).WithMany().HasForeignKey(x=>x.SavedById).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<AttendancePlayer>().HasIndex(x=>new{x.TeamAttendanceId,x.StudentId}).IsUnique();
+        builder.Entity<AttendancePlayer>().HasOne(x=>x.TeamAttendance).WithMany(x=>x.Players).HasForeignKey(x=>x.TeamAttendanceId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<AttendancePlayer>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<AttendanceChange>().HasOne(x=>x.TeamAttendance).WithMany().HasForeignKey(x=>x.TeamAttendanceId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<AttendanceChange>().HasOne(x=>x.Actor).WithMany().HasForeignKey(x=>x.ActorId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<TrainingTeam>().HasOne(t=>t.Coach).WithMany().HasForeignKey(t=>t.CoachId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<TrainingTeam>().HasOne(t=>t.AssistantCoach).WithMany().HasForeignKey(t=>t.AssistantCoachId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<TreasuryEntry>().HasIndex(x => x.RequestId).IsUnique();
         builder.Entity<TreasuryEntry>().HasIndex(x => x.Date);
         builder.Entity<TreasuryEntry>().HasIndex(x => x.Method).IsUnique().HasFilter("\"Kind\" = 'Opening' AND \"CancelledAt\" IS NULL");

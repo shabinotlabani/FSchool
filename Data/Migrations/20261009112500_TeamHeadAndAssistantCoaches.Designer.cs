@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using _2Korriku.Data;
@@ -11,9 +12,11 @@ using _2Korriku.Data;
 namespace _2Korriku.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261009112500_TeamHeadAndAssistantCoaches")]
+    partial class TeamHeadAndAssistantCoaches
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -233,69 +236,6 @@ namespace _2Korriku.Data.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("_2Korriku.Models.AttendanceChange", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActorId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Snapshot")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TeamAttendanceId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ActorId");
-
-                    b.HasIndex("TeamAttendanceId");
-
-                    b.ToTable("AttendanceChanges");
-                });
-
-            modelBuilder.Entity("_2Korriku.Models.AttendancePlayer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Present")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("StudentName")
-                        .IsRequired()
-                        .HasMaxLength(201)
-                        .HasColumnType("character varying(201)");
-
-                    b.Property<int>("TeamAttendanceId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudentId");
-
-                    b.HasIndex("TeamAttendanceId", "StudentId")
-                        .IsUnique();
-
-                    b.ToTable("AttendancePlayers");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.CoachTeam", b =>
@@ -2251,46 +2191,6 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("StudentTransactions");
                 });
 
-            modelBuilder.Entity("_2Korriku.Models.TeamAttendance", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CoachRole")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<Guid>("Revision")
-                        .IsConcurrencyToken()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("SavedById")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("TrainingTeamId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SavedById");
-
-                    b.HasIndex("TrainingTeamId", "Date")
-                        .IsUnique();
-
-                    b.ToTable("TeamAttendances");
-                });
-
             modelBuilder.Entity("_2Korriku.Models.TeamChange", b =>
                 {
                     b.Property<int>("Id")
@@ -2532,44 +2432,6 @@ namespace _2Korriku.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("_2Korriku.Models.AttendanceChange", b =>
-                {
-                    b.HasOne("_2Korriku.Models.ApplicationUser", "Actor")
-                        .WithMany()
-                        .HasForeignKey("ActorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("_2Korriku.Models.TeamAttendance", "TeamAttendance")
-                        .WithMany()
-                        .HasForeignKey("TeamAttendanceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Actor");
-
-                    b.Navigation("TeamAttendance");
-                });
-
-            modelBuilder.Entity("_2Korriku.Models.AttendancePlayer", b =>
-                {
-                    b.HasOne("_2Korriku.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("_2Korriku.Models.TeamAttendance", "TeamAttendance")
-                        .WithMany("Players")
-                        .HasForeignKey("TeamAttendanceId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Student");
-
-                    b.Navigation("TeamAttendance");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.CoachTeam", b =>
@@ -3156,25 +3018,6 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("_2Korriku.Models.TeamAttendance", b =>
-                {
-                    b.HasOne("_2Korriku.Models.ApplicationUser", "SavedBy")
-                        .WithMany()
-                        .HasForeignKey("SavedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("_2Korriku.Models.TrainingTeam", "TrainingTeam")
-                        .WithMany()
-                        .HasForeignKey("TrainingTeamId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("SavedBy");
-
-                    b.Navigation("TrainingTeam");
-                });
-
             modelBuilder.Entity("_2Korriku.Models.TeamChange", b =>
                 {
                     b.HasOne("_2Korriku.Models.ApplicationUser", "Actor")
@@ -3284,11 +3127,6 @@ namespace _2Korriku.Data.Migrations
             modelBuilder.Entity("_2Korriku.Models.StockEntry", b =>
                 {
                     b.Navigation("Details");
-                });
-
-            modelBuilder.Entity("_2Korriku.Models.TeamAttendance", b =>
-                {
-                    b.Navigation("Players");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.TrainingTeam", b =>

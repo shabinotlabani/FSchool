@@ -15,7 +15,7 @@
         (Controller: "Treasury", Label: "Arkat", Icon: "wallet"),
         (Controller: "Reports", Label: "Raportet", Icon: "chart")
     };
-    if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Ekipet dhe orari im", Icon: "calendar") };
+    if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Prezenca dhe ekipet", Icon: "calendar") };
     var accountName = User.Identity?.Name?.Split('@')[0] ?? "Llogaria";
 }
 <!DOCTYPE html>

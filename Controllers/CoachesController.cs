@@ -9,14 +9,17 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles=Roles.Read+","+Roles.Coach)]
 public class CoachesController(ApplicationDbContext db, UserManager<ApplicationUser> users) : Controller
 {
- public async Task<IActionResult> Index(string? search)
+ public async Task<IActionResult> Index(string? search,string? coachRole)
  {
   if(User.IsInRole(Roles.Coach))
   {
    var id=User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-   var teams=await db.CoachTeams.AsNoTracking().Where(x=>x.UserId==id)
-    .Select(x=>x.TrainingTeam!).Include(t=>t.FootballField).Include(t=>t.Sessions).OrderBy(t=>t.Name).ToListAsync();
-   return View("Portal",teams);
+   if(coachRole==null)return View("RoleChoice");
+   if(coachRole is not ("head" or "assistant"))return BadRequest();
+   ViewData["CoachRole"]=coachRole;
+   var teams=await db.TrainingTeams.AsNoTracking().Where(t=>t.IsActive && (coachRole=="head"?t.CoachId:t.AssistantCoachId)==id)
+    .Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).OrderBy(t=>t.Name).ToListAsync();
+   return View("Portal",_2Korriku.Services.CoachSchedule.Order(teams,DateTime.UtcNow));
   }
   ViewData["Search"]=search;
   var coaches=(await users.GetUsersInRoleAsync(Roles.Coach)).OrderBy(x=>x.FirstName).ThenBy(x=>x.LastName).ToList();
@@ -27,7 +30,7 @@ public class CoachesController(ApplicationDbContext db, UserManager<ApplicationU
  public async Task<IActionResult> Team(int id,string? search)
  {
   if(User.IsInRole(Roles.Coach) && !await db.CoachTeams.AnyAsync(x=>x.UserId==User.FindFirstValue(ClaimTypes.NameIdentifier)&&x.TrainingTeamId==id)) return NotFound();
-  var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.FootballField).Include(t=>t.Sessions).Include(t=>t.Students.Where(s=>s.IsActive)).SingleOrDefaultAsync(t=>t.Id==id);
+  var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).Include(t=>t.Students.Where(s=>s.IsActive)).SingleOrDefaultAsync(t=>t.Id==id);
   if(team==null)return NotFound();
   ViewData["Search"]=search;
   if(!string.IsNullOrWhiteSpace(search))team.Students=team.Students.Where(s=>s.FullName.Contains(search.Trim(),StringComparison.OrdinalIgnoreCase)).ToList();

@@ -1,0 +1,6 @@
+@model TrainingTeam
+<dl class="row mb-3 mt-3">
+    <dt class="col-sm-5">Trajneri</dt><dd class="col-sm-7">@(Model.Coach == null ? "Pa caktuar" : $"{Model.Coach.FirstName} {Model.Coach.LastName}")</dd>
+    <dt class="col-sm-5">Ndihmëstrajneri</dt><dd class="col-sm-7">@(Model.AssistantCoach == null ? "Pa caktuar" : $"{Model.AssistantCoach.FirstName} {Model.AssistantCoach.LastName}")</dd>
+</dl>
+@if(Model.CoachId == null || Model.AssistantCoachId == null){<p class="text-danger small">Duhet të caktohen trajneri dhe ndihmëstrajneri.</p>}

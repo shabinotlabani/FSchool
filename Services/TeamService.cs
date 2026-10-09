@@ -17,7 +17,7 @@ public class TeamService(ApplicationDbContext db)
     }
     public async Task<List<TeamOption>> OptionsAsync(DateOnly? birth=null,bool includeInactive=false,int? excludingStudentId=null)
     {
-        var query=db.TrainingTeams.AsNoTracking().Include(t=>t.FootballField).Include(t=>t.Sessions).AsQueryable();
+        var query=db.TrainingTeams.AsNoTracking().Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).AsQueryable();
         if(!includeInactive)query=query.Where(t=>t.IsActive);
         if(birth.HasValue)
         {
@@ -32,7 +32,14 @@ public class TeamService(ApplicationDbContext db)
     {
         Validator.ValidateObject(input,new ValidationContext(input),true);
         foreach(var session in input.Sessions)Validator.ValidateObject(session,new ValidationContext(session),true);
-        await using var tx=await db.Database.BeginTransactionAsync();await db.Database.ExecuteSqlRawAsync(LockSql);
+        await using var tx=await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2004)");
+        await db.Database.ExecuteSqlRawAsync(LockSql);
+        var coachIds = new[] { input.CoachId!, input.AssistantCoachId! };
+        var coaches = await db.Users.AsNoTracking().Where(u=>coachIds.Contains(u.Id)
+            && db.UserRoles.Any(ur=>ur.UserId==u.Id && db.Roles.Any(r=>r.Id==ur.RoleId && r.Name==Roles.Coach))).ToListAsync();
+        if(coaches.Count!=2 || coaches.Any(UserAdministrationService.IsDisabled))
+            throw new InvalidOperationException("Zgjidhni dy trajnerë të ndryshëm me llogari aktive.");
         var name=input.Name.Trim();var normalized=name.ToUpperInvariant();
         if(await db.TrainingTeams.AnyAsync(t=>t.Id!=input.Id&&t.Name.ToUpper()==normalized))throw new InvalidOperationException("Ekziston një ekip me këtë emër.");
         var team=input.Id==0?new TrainingTeam():await db.TrainingTeams.Include(t=>t.Sessions).SingleOrDefaultAsync(t=>t.Id==input.Id)??throw new InvalidOperationException("Ekipi nuk u gjet.");
@@ -57,12 +64,18 @@ public class TeamService(ApplicationDbContext db)
             db.TrainingSessions.RemoveRange(team.Sessions);team.Sessions.Clear();
         }
         team.FootballFieldId=input.FootballFieldId;
+        team.CoachId=input.CoachId;team.AssistantCoachId=input.AssistantCoachId;
         team.Name=name;team.MinAge=input.MinAge;team.MaxAge=input.MaxAge;team.Capacity=input.Capacity;team.IsActive=input.IsActive;team.Location=input.Location?.Trim();team.Notes=input.Notes?.Trim();team.Revision=Guid.NewGuid();
         foreach(var row in input.Sessions)team.Sessions.Add(new(){Day=row.Day,StartsAt=row.StartsAt!.Value,EndsAt=row.EndsAt!.Value});
         if(input.Id==0)db.TrainingTeams.Add(team);
         await db.SaveChangesAsync();
+        var assignments=await db.CoachTeams.Where(x=>x.TrainingTeamId==team.Id).ToListAsync();
+        db.CoachTeams.RemoveRange(assignments.Where(x=>!coachIds.Contains(x.UserId)));
+        foreach(var coachId in coachIds.Where(id=>!assignments.Any(x=>x.UserId==id)))
+            db.CoachTeams.Add(new CoachTeam{TrainingTeamId=team.Id,UserId=coachId});
+        var staff = string.Join(" · ", coachIds.Select((id,index)=>$"{(index==0?"Trajner":"Ndihmëstrajner")}: {coaches.Single(c=>c.Id==id).FirstName} {coaches.Single(c=>c.Id==id).LastName}"));
         var schedule=(field != null ? field.Name + " · " : "Pa fushë · ")+string.Join("; ",team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{DayName(s.Day)} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"));
-        db.TeamChanges.Add(new(){TrainingTeamId=team.Id,ActorId=actor,Reason=input.Id==0?"Krijimi i ekipit":input.Reason!.Trim(),Snapshot=$"{team.Name} · {team.MinAge}–{team.MaxAge} vjeç · maksimumi {team.Capacity} lojtarë · {(team.IsActive?"Aktiv":"Joaktiv")} · {team.Location} · {schedule} · {team.Notes}"});
+        db.TeamChanges.Add(new(){TrainingTeamId=team.Id,ActorId=actor,Reason=input.Id==0?"Krijimi i ekipit":input.Reason!.Trim(),Snapshot=$"{team.Name} · {team.MinAge}–{team.MaxAge} vjeç · maksimumi {team.Capacity} lojtarë · {(team.IsActive?"Aktiv":"Joaktiv")} · {staff} · {team.Location} · {schedule} · {team.Notes}"});
         await db.SaveChangesAsync();await tx.CommitAsync();return team.Id;
     }
     public async Task<TrainingTeam?> ValidatePlacementAsync(int? teamId,DateOnly birth,int? excludingStudentId=null)

@@ -1,0 +1,44 @@
+@model AttendanceModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Prezenca · "+Model.TeamName;}
+<link rel="stylesheet" href="~/css/attendance.css" asp-append-version="true"/>
+<div class="attendance-page">
+<div class="page-heading"><div><h1>@Model.TeamName</h1><p>@Model.FieldName · @(Model.CoachRole=="head"?"Trajner":"Ndihmëstrajner")</p></div></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success" role="status">@message</div>}
+@if(Model.SavedAt.HasValue){<p class="text-secondary">Ruajtur nga @Model.SavedBy · @TimeZoneInfo.ConvertTimeFromUtc(Model.SavedAt.Value,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</p>}
+<p id="attendance-lock" class="text-secondary small" hidden="@(!Model.IsLocked)">Vetëm lexim · Afati për ndryshim ka përfunduar.</p>
+<form method="post" asp-action="Save" id="attendance-form" data-editable-until="@Model.EditableUntil?.ToString("O")">
+<input asp-for="TeamId" type="hidden"/><input asp-for="CoachRole" type="hidden"/><input asp-for="Date" type="hidden" value="@Model.Date?.ToString("yyyy-MM-dd")"/><input asp-for="Revision" type="hidden"/><input asp-for="RosterToken" type="hidden"/>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(!ViewData.ModelState.IsValid){<a asp-action="Index" asp-route-teamId="@Model.TeamId" asp-route-coachRole="@Model.CoachRole" asp-route-date="@Model.Date?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary mb-3">Rihap listën e fundit</a>}
+@for(var i=0;i<Model.Players.Count;i++){
+<div class="attendance-row panel" data-player role="group" aria-labelledby="player-name-@i">
+<div class="attendance-player-header"><h2 class="attendance-player-name" id="player-name-@i"><span class="attendance-number">@(i+1).</span> @Model.Players[i].Name
+@if(Model.Players[i].Debt>0){<span class="attendance-player-debt" aria-label="Borxh @Model.Players[i].Debt.ToString("N2") euro">@Model.Players[i].Debt.ToString("N2")</span>}
+@if(!string.IsNullOrWhiteSpace(Model.Players[i].Notes)){
+<span class="attendance-player-note">· @Model.Players[i].Notes</span>
+}
+</h2>
+<details class="player-history">
+<summary aria-label="Historiku i prezencës për @Model.Players[i].Name">Historiku</summary>
+<div class="player-history-content">
+<strong class="player-history-title">2 javët e fundit</strong>
+@{var entries=Model.History.Where(h=>h.Players.Any(p=>p.StudentId==Model.Players[i].StudentId)).ToList();}
+@if(entries.Count==0){<p class="text-secondary mb-0">Nuk ka prezencë të regjistruar.</p>}
+@foreach(var entry in entries){var present=entry.Players.Single(p=>p.StudentId==Model.Players[i].StudentId).Present;
+<div class="player-history-entry"><time>@entry.Date.ToString("dd.MM.yyyy")</time><span class="@(present?"history-present":"history-absent")">@(present?"✓ Prezent":"− Mungon")</span></div>
+}
+</div>
+</details></div>
+<input asp-for="Players[i].StudentId" type="hidden"/>
+<div class="attendance-options">
+<input asp-for="Players[i].Present" type="radio" value="true" id="present-@i" disabled="@Model.IsLocked" required/><label for="present-@i" class="present-option">✓ Prezent</label>
+<input asp-for="Players[i].Present" type="radio" value="false" id="absent-@i" disabled="@Model.IsLocked" required/><label for="absent-@i" class="absent-option">− Mungon</label>
+</div></div>}
+@if(Model.Players.Count==0){<div class="panel p-4">Ekipi nuk ka lojtarë aktivë.</div>}
+else if(!Model.IsLocked){<div class="attendance-save panel"><div id="attendance-count" role="status" aria-live="polite"></div><div class="attendance-save-actions"><button type="button" id="next-unmarked" class="btn btn-outline-secondary" hidden>I pashënuari tjetër</button><button type="submit" class="btn btn-primary">Ruaj prezencën</button></div><small id="attendance-dirty" hidden>Ndryshime të paruajtura</small></div>}
+</form>
+
+</div>
+@section PageNavigation { @if(User.IsInRole(Roles.Coach)){<a class="btn btn-outline-secondary app-back-button" asp-controller="Coaches" asp-action="Index" asp-route-coachRole="@Model.CoachRole"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}else{<a class="btn btn-outline-secondary app-back-button" asp-controller="Teams" asp-action="Details" asp-route-id="@Model.TeamId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>} }
+@section Scripts {<script src="~/js/attendance.js" asp-append-version="true"></script>}

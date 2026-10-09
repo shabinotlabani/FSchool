@@ -22,15 +22,20 @@ public class TeamsController(ApplicationDbContext db,TeamService teams):Controll
     }
     public async Task<IActionResult> Details(int id)
     {
-        var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.FootballField).Include(t=>t.Sessions).Include(t=>t.Students).SingleOrDefaultAsync(t=>t.Id==id);if(team==null)return NotFound();
+        var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).Include(t=>t.Students).SingleOrDefaultAsync(t=>t.Id==id);if(team==null)return NotFound();
         return View(new TeamDetailsModel{Team=team,History=await db.TeamChanges.AsNoTracking().Include(c=>c.Actor).Where(c=>c.TrainingTeamId==id).OrderByDescending(c=>c.Id).ToListAsync(),MembershipHistory=await db.StudentTeamChanges.AsNoTracking().Include(c=>c.Student).Include(c=>c.Actor).Where(c=>c.FromTeamId==id||c.ToTeamId==id).OrderByDescending(c=>c.Id).ToListAsync()});
     }
-    private async Task FieldChoices(TeamEditModel model) => model.Fields = await db.FootballFields.AsNoTracking().Where(f => f.IsActive || f.Id == model.FootballFieldId).OrderBy(f => f.Name).ToListAsync();
+    private async Task FieldChoices(TeamEditModel model)
+    {
+        model.Fields = await db.FootballFields.AsNoTracking().Where(f => f.IsActive || f.Id == model.FootballFieldId).OrderBy(f => f.Name).ToListAsync();
+        var coaches = await db.Users.AsNoTracking().Where(u=>db.UserRoles.Any(ur=>ur.UserId==u.Id && db.Roles.Any(r=>r.Id==ur.RoleId && r.Name==Roles.Coach))).OrderBy(u=>u.FirstName).ThenBy(u=>u.LastName).ToListAsync();
+        model.Coaches = coaches.Where(u=>!UserAdministrationService.IsDisabled(u)).ToList();
+    }
     [HttpGet,Authorize(Roles=Roles.Admin)]public async Task<IActionResult> Create(){var model=new TeamEditModel();await FieldChoices(model);return View("Edit",model);}
     [HttpGet,Authorize(Roles=Roles.Admin)]public async Task<IActionResult> Edit(int id)
     {
         var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.Sessions).SingleOrDefaultAsync(t=>t.Id==id);if(team==null)return NotFound();
-        var model = new TeamEditModel{FootballFieldId=team.FootballFieldId,Id=id,Revision=team.Revision,Name=team.Name,MinAge=team.MinAge,MaxAge=team.MaxAge,Capacity=team.Capacity,IsActive=team.IsActive,Location=team.Location,Notes=team.Notes,Sessions=team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>new TrainingSessionInput{Day=s.Day,StartsAt=s.StartsAt,EndsAt=s.EndsAt}).ToList()};await FieldChoices(model);return View(model);
+        var model = new TeamEditModel{CoachId=team.CoachId,AssistantCoachId=team.AssistantCoachId,FootballFieldId=team.FootballFieldId,Id=id,Revision=team.Revision,Name=team.Name,MinAge=team.MinAge,MaxAge=team.MaxAge,Capacity=team.Capacity,IsActive=team.IsActive,Location=team.Location,Notes=team.Notes,Sessions=team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>new TrainingSessionInput{Day=s.Day,StartsAt=s.StartsAt,EndsAt=s.EndsAt}).ToList()};await FieldChoices(model);return View(model);
     }
     [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Admin)]public async Task<IActionResult> Save(TeamEditModel model)
     {

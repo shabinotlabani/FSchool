@@ -5,6 +5,10 @@ namespace _2Korriku.Models;
 
 public class TrainingTeam
 {
+    public string? CoachId { get; set; }
+    public ApplicationUser? Coach { get; set; }
+    public string? AssistantCoachId { get; set; }
+    public ApplicationUser? AssistantCoach { get; set; }
     public int? FootballFieldId { get; set; }
     public FootballField? FootballField { get; set; }
     public int Id { get; set; }
@@ -61,6 +65,9 @@ public class TrainingSessionInput
 }
 public class TeamEditModel : IValidatableObject
 {
+    [Required(ErrorMessage="Zgjidhni trajnerin kryesor.")] public string? CoachId { get; set; }
+    [Required(ErrorMessage="Zgjidhni ndihmëstrajnerin.")] public string? AssistantCoachId { get; set; }
+    [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever] public List<ApplicationUser> Coaches { get; set; } = [];
     [Range(1, int.MaxValue)] public int? FootballFieldId { get; set; }
     public List<FootballField> Fields { get; set; } = [];
     public int Id { get; set; }
@@ -76,6 +83,7 @@ public class TeamEditModel : IValidatableObject
     public List<TrainingSessionInput> Sessions { get; set; } = [new(){Day=1},new(){Day=2},new(){Day=4}];
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
+        if(!string.IsNullOrEmpty(CoachId) && CoachId == AssistantCoachId) yield return new("Trajneri dhe ndihmëstrajneri duhet të jenë persona të ndryshëm.");
         if(MinAge>MaxAge)yield return new("Mosha minimale nuk mund të jetë mbi moshën maksimale.");
         if(Id!=0&&string.IsNullOrWhiteSpace(Reason))yield return new("Shkruani arsyen e ndryshimit.");
         if(Sessions==null||Sessions.Count is <1 or >14){yield return new("Vendosni nga 1 deri në 14 seanca javore.");yield break;}
