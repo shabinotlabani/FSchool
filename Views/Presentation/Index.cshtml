@@ -1,0 +1,15 @@
+@model DemoImport
+@{ViewData["Title"]="Të dhënat e prezantimit";}
+<div class="page-heading"><h1>Të dhënat DEMO</h1></div>
+<div class="panel p-4">
+@if(Model!=null){
+<div class="alert alert-success" role="status">Importi DEMO është përfunduar.</div>
+<p><strong>@Model.Students lojtarë · @Model.Teams ekipe</strong></p>
+<a asp-controller="Students" asp-action="Index" asp-route-search="DEMO" class="btn btn-primary">Shiko lojtarët DEMO</a>
+<a asp-controller="Reports" asp-action="Reasons" asp-route-search="DEMO" class="btn btn-outline-primary">Shiko raportet</a>
+}else{
+<p>18 lojtarë, 2 familje, 4 trajnerë, 3 ekipe, pagesa, prezenca, rekuizita, trajnime personale dhe termine private.</p>
+<p>Të gjitha shënohen DEMO. Importi kryhet vetëm një herë dhe shton të dhëna fiktive në raportet financiare.</p>
+<form method="post" asp-action="Import"><button type="submit" class="btn btn-primary">Shto të dhënat DEMO</button></form>
+}
+</div>
