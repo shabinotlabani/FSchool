@@ -316,6 +316,26 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("CoachTeams");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.DemoImport", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Students")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Teams")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DemoImports");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.Expense", b =>
                 {
                     b.Property<int>("Id")

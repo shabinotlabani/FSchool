@@ -6,6 +6,7 @@ namespace _2Korriku.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<DemoImport> DemoImports => Set<DemoImport>();
     public DbSet<TeamAttendance> TeamAttendances => Set<TeamAttendance>();
     public DbSet<PendingBankPayment> PendingBankPayments => Set<PendingBankPayment>();
     public DbSet<AttendancePlayer> AttendancePlayers => Set<AttendancePlayer>();

@@ -385,6 +385,16 @@ try
     db.ChangeTracker.Clear();
     await billing.GenerateDueFeesAsync(asOf:TariffService.NextMonth);
     Check((await billing.GetInvoicesAsync(advancePlayer.Id)).Single(x=>x.Period.Year==TariffService.NextMonth.Year&&x.Period.Month==TariffService.NextMonth.Month).Due==0,"The next monthly invoice is automatically covered by the advance");
+    var realPlayers=await db.Students.CountAsync();
+    await DbInitializer.SeedAsync(provider);
+    Check(await PresentationDemo.SeedAsync(provider),"Presentation data imports successfully into isolated database");
+    db.ChangeTracker.Clear();
+    Check(await db.Students.CountAsync()==realPlayers+18&&await db.DemoImports.CountAsync()==1,"Demo import adds exactly 18 fictional players and one completion marker");
+    Check(!await PresentationDemo.SeedAsync(provider)&&await db.Students.CountAsync()==realPlayers+18,"Repeated demo import makes no duplicates");
+    Check(await db.Products.CountAsync(x=>x.Code.StartsWith("DEMO-"))==4&&await db.PersonalTrainings.CountAsync(x=>x.Notes==PresentationDemo.Note)==3,"Demo includes stock and personal trainings");
+    Check(await db.PendingBankPayments.AnyAsync(x=>x.Student!.LastName=="DEMO"&&x.ReviewedAt==null),"Demo retains pending bank payments for presentation");
+    var demoReport=await new ReasonReportService(db).LoadAsync(new(),search:"DEMO");
+    Check(demoReport.Rows.Any(x=>x.Action=="Anulim")&&demoReport.Rows.Any(x=>x.Action=="Lirim"),"Demo fills cancellation and waiver reports");
 }
 finally
 {

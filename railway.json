@@ -5,6 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
+    "startCommand": "dotnet 2Korriku.dll --seed-presentation",
     "preDeployCommand": ["dotnet 2Korriku.dll --migrate"],
     "healthcheckPath": "/health",
     "healthcheckTimeout": 120,

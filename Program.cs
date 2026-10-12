@@ -6,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
 var migrateOnly = args.Contains("--migrate", StringComparer.Ordinal);
-var builder = WebApplication.CreateBuilder(args.Where(x => x != "--migrate").ToArray());
+var seedPresentation = args.Contains("--seed-presentation", StringComparer.Ordinal);
+var builder = WebApplication.CreateBuilder(args.Where(x => x != "--migrate" && x != "--seed-presentation").ToArray());
 
 builder.Configuration.AddEnvironmentVariables();
 
@@ -92,6 +93,8 @@ if (initializeDatabase)
     using var scope = app.Services.CreateScope();
     await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
     await DbInitializer.SeedAsync(app.Services);
+    if(seedPresentation && app.Environment.IsProduction())
+        app.Logger.LogInformation("Presentation demo import created: {Created}",await PresentationDemo.SeedAsync(app.Services));
     app.Logger.LogInformation("Database structure and initial administrator are ready.");
     if (migrateOnly) return;
 }
