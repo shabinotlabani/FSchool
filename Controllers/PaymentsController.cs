@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
@@ -12,6 +12,16 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles = Roles.Read)]
 public class PaymentsController(ApplicationDbContext db, BillingService billing) : Controller
 {
+    private IActionResult AfterPayment(string? returnUrl)
+    {
+        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+        {
+            var path=returnUrl.Split('?', '#')[0].TrimEnd('/');
+            var root=Request.PathBase.Value??"";
+            if(path.Equals(root+"/Payments",StringComparison.OrdinalIgnoreCase)||path.Equals(root+"/Payments/Index",StringComparison.OrdinalIgnoreCase))return LocalRedirect(returnUrl);
+        }
+        return RedirectToAction(nameof(Index));
+    }
     private string ActorId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("Hyni përsëri në llogari.");
     private static string StaffName(ApplicationUser? user)
     {
@@ -34,18 +44,32 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
             .GroupBy(i => byStudent[i.Student.Id].FamilyId!.Value)
             .Select(g => new FamilyInvoiceGroup { Family = byStudent[g.First().Student.Id].Family!, Invoices = g.ToList() }).ToList();
         invoices = invoices.Where(i => !byStudent.ContainsKey(i.Student.Id)).ToList();
+        var otherDebts=await new OtherDebtService(db).LoadAsync();
+        var rows=families.Select(f=>new BillingGridRow{Family=f.Family,Invoices=f.Invoices,Students=f.Invoices.Select(i=>i.Student).ToList()})
+            .Concat(invoices.Select(i=>new BillingGridRow{Invoices=[i],Students=[i.Student]})).ToList();
+        var debtIds=otherDebts.Select(x=>x.StudentId).Distinct().ToList();
+        var debtStudents=await db.Students.AsNoTracking().Where(x=>debtIds.Contains(x.Id)).ToDictionaryAsync(x=>x.Id);
+        foreach(var debt in otherDebts){
+            var family=byStudent.GetValueOrDefault(debt.StudentId)?.Family;
+            var row=rows.FirstOrDefault(x=>family!=null?x.Family?.Id==family.Id:x.Family==null&&x.Students.Any(s=>s.Id==debt.StudentId));
+            if(row==null){row=new BillingGridRow{Family=family};rows.Add(row);}
+            if(!row.Students.Any(x=>x.Id==debt.StudentId))row.Students.Add(debtStudents[debt.StudentId]);
+            row.OtherDebts.Add(debt);
+        }
         if (!string.IsNullOrWhiteSpace(search))
         {
             foreach (var term in search.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
             {
-                invoices = invoices.Where(i => i.Student.FullName.Contains(term, StringComparison.OrdinalIgnoreCase) || (i.Student.ParentPhone?.Contains(term) ?? false)).ToList();
-                families = families.Where(f => f.Family.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || (f.Family.Phone?.Contains(term) ?? false) || f.Invoices.Any(i => i.Student.FullName.Contains(term, StringComparison.OrdinalIgnoreCase)
-                    || (i.Student.ParentPhone?.Contains(term) ?? false))).ToList();
+                rows=rows.Where(r=>r.Name.Contains(term,StringComparison.OrdinalIgnoreCase)||(r.Family?.Phone?.Contains(term)??false)||r.Students.Any(s=>s.FullName.Contains(term,StringComparison.OrdinalIgnoreCase)||(s.ParentPhone?.Contains(term)??false))).ToList();
             }
         }
-        if (unpaidOnly) { invoices = invoices.Where(i => i.Due > 0).ToList(); families = families.Where(f => f.Due > 0).ToList(); }
-        return View(new BillingIndexModel { Year = y, Month = m, Search = search?.Trim(), UnpaidOnly = unpaidOnly,
+        var pendingBank=await db.PendingBankPayments.AsNoTracking().Where(x=>x.ReviewedAt==null).Select(x=>new{x.StudentId,x.Kind,x.TargetId,x.Amount}).ToListAsync();
+        foreach(var row in rows)row.PendingBankAmount=pendingBank.Where(p=>p.StudentId.HasValue&&row.Students.Any(s=>s.Id==p.StudentId)||p.Kind=="Family"&&row.Family!=null&&p.TargetId==row.Family.Id).Sum(p=>p.Amount);
+        if(unpaidOnly)rows=rows.Where(r=>r.TotalDue>0).ToList();
+        invoices=rows.Where(r=>r.Family==null).SelectMany(r=>r.Invoices).ToList();
+        families=rows.Where(r=>r.Family!=null).Select(r=>new FamilyInvoiceGroup{Family=r.Family!,Invoices=r.Invoices}).ToList();
+        await new MonthlyAttendanceService(db).PopulateAsync(invoices.Concat(families.SelectMany(f=>f.Invoices)),y,m);
+        return View(new BillingIndexModel { Rows=rows.OrderBy(r=>r.Name).ToList(),OtherDebts=rows.SelectMany(r=>r.OtherDebts).ToList(), Year = y, Month = m, Search = search?.Trim(), UnpaidOnly = unpaidOnly,
             Families = families.OrderBy(f => f.Family.Name).ToList(), Invoices = invoices.OrderBy(i => i.Student.LastName).ThenBy(i => i.Student.FirstName).ToList() });
     }
 
@@ -80,11 +104,11 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         return View("Document", new PaymentDocumentModel { Number = invoice.Number, Date = BillingClock.LocalDate(period.GeneratedAt), Student = account.Student, Description = invoice.MonthLabel, Amount = invoice.Amount, Exempted = invoice.Exempted, Paid = invoice.Paid, Due = invoice.Due, PreparedBy = preparedBy, Notes = string.Join(" · ", new[] { period.ProrationDescription, period.FeePlanName, period.FeeReason, period.FeeNotes, "Gjendja më " + BillingClock.Today.ToString("dd.MM.yyyy") }.Where(s => !string.IsNullOrWhiteSpace(s))) });
     }
 
-    public async Task<IActionResult> Receipt(int id)
+    public async Task<IActionResult> Receipt(int id, string? returnUrl = null)
     {
         var payment = await db.Payments.AsNoTracking().Include(p => p.Student).Include(p => p.CreatedByUser).Include(p => p.Sale).Include(p=>p.PersonalCharge).SingleOrDefaultAsync(p => p.Id == id);
         if (payment == null) return NotFound();
-        if (payment.FamilyPaymentId.HasValue) return RedirectToAction(nameof(FamilyReceipt), new { id = payment.FamilyPaymentId });
+        if (payment.FamilyPaymentId.HasValue) return RedirectToAction(nameof(FamilyReceipt), new { id = payment.FamilyPaymentId, returnUrl });
         return View("Document", new PaymentDocumentModel { IsReceipt = true, ServiceDescription = payment.PersonalCharge?.Description, SaleNumber = payment.Sale?.InvoiceNumber, IsCancelled = payment.IsCancelled, CancellationReason = payment.CancellationReason, Number = $"ARK-{BillingClock.LocalDate(payment.PaymentDate).Year}-{payment.Id:000000}", Date = BillingClock.LocalDate(payment.PaymentDate), Student = payment.Student!, Amount = payment.Amount, SeasonalDescription = payment.SeasonalStartMonth.HasValue ? payment.SeasonalLabel : null, SeasonalGross = payment.SeasonalRate * payment.SeasonalMonths ?? 0, SeasonalDiscount = payment.SeasonalRate * (payment.SeasonalMonths / 6) ?? 0, Method = BillingService.MethodLabel(payment.PaymentMethod), Notes = payment.Notes, PreparedBy = StaffName(payment.CreatedByUser) });
     }
 
@@ -100,8 +124,9 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
-    public async Task<IActionResult> Seasonal(SeasonalPaymentModel model)
+    public async Task<IActionResult> Seasonal(SeasonalPaymentModel model, string? returnUrl = null)
     {
+        ViewData["PaymentReturnUrl"]=returnUrl;
         var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(s => s.Id == model.StudentId);
         if (student == null) return NotFound();
         model.StudentName = student.FullName;
@@ -109,41 +134,50 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         {
             try
             {
+                if(model.PaymentMethod=="Bank"){await new BankVerificationService(db).QueueSeasonal(model,ActorId);TempData["Success"]="Pagesa bankare u ruajt në pritje. Borxhi mbetet deri në konfirmim.";return AfterPayment(returnUrl);}
                 var id = await billing.RegisterSeasonalAsync(model, ActorId);
                 TempData["Success"] = "Pagesa sezonale u ruajt. Muajt e mbuluar dhe zbritja ruhen në historik.";
-                return RedirectToAction(nameof(Receipt), new { id });
+                TempData["PaymentReceiptId"]=id; return AfterPayment(returnUrl);
             }
             catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError(string.Empty, ex.Message); }
+        }
+        try{model.Quote=await billing.QuoteSeasonalAsync(new SeasonalPaymentModel{StudentId=model.StudentId,StartMonth=model.StartMonth,Months=model.Months});}
+        catch(Exception ex)when(ex is InvalidOperationException or ValidationException){
+            if(!ModelState.Values.SelectMany(x=>x.Errors).Any(x=>x.ErrorMessage==ex.Message))ModelState.AddModelError("",ex.Message);
         }
         return View(model);
     }
 
     [HttpGet, Authorize(Roles = Roles.Write)]
-    public async Task<IActionResult> Register(int? studentId)
+    public async Task<IActionResult> Register(int? studentId, string? returnUrl = null)
     {
         if (!studentId.HasValue) return RedirectToAction(nameof(Index));
         var familyId = await billing.CurrentFamilyIdAsync(studentId.Value);
-        if (familyId.HasValue) return RedirectToAction(nameof(Family), new { id = familyId });
+        if (familyId.HasValue) return RedirectToAction(nameof(Family), new { id = familyId, returnUrl });
         var account = await billing.GetAccountAsync(studentId.Value);
         if (account == null) return NotFound();
-        return View(new RegisterPaymentModel { StudentId = account.Student.Id, StudentName = account.Student.FullName, Balance = account.MonthlyDue > 0 ? account.MonthlyDue : account.MonthlyBalance + account.SeasonalReserve, Amount = account.MonthlyDue > 0 ? account.MonthlyDue : null });
+        var automatic=await db.PendingBankPayments.Where(x=>x.Kind=="Monthly"&&x.StudentId==studentId&&x.IsAutomatic&&x.ReviewedAt==null).SumAsync(x=>x.Amount);
+        return View(new RegisterPaymentModel { AutomaticBankAmount=automatic, PaymentMethod = account.Student.PreferredPaymentMethod, StudentId = account.Student.Id, StudentName = account.Student.FullName, Balance = account.MonthlyDue > 0 ? account.MonthlyDue : account.MonthlyBalance + account.SeasonalReserve, Amount = account.MonthlyDue > 0 ? account.MonthlyDue : null });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
-    public async Task<IActionResult> Register(RegisterPaymentModel model)
+    public async Task<IActionResult> Register(RegisterPaymentModel model, string? returnUrl = null)
     {
+        ViewData["PaymentReturnUrl"]=returnUrl;
         var familyId = await billing.CurrentFamilyIdAsync(model.StudentId);
-        if (familyId.HasValue) return RedirectToAction(nameof(Family), new { id = familyId });
+        if (familyId.HasValue) return RedirectToAction(nameof(Family), new { id = familyId, returnUrl });
         var account = await billing.GetAccountAsync(model.StudentId);
         if (account == null) return NotFound();
         model.StudentName = account.Student.FullName;
+        model.AutomaticBankAmount=await db.PendingBankPayments.Where(x=>x.Kind=="Monthly"&&x.StudentId==model.StudentId&&x.IsAutomatic&&x.ReviewedAt==null).SumAsync(x=>x.Amount);
         model.Balance = account.MonthlyDue > 0 ? account.MonthlyDue : account.MonthlyBalance + account.SeasonalReserve;
         if (!ModelState.IsValid) return View(model);
         try
         {
+            if(model.PaymentMethod=="Bank"){if(model.AutomaticBankAmount<=0)await new BankVerificationService(db).QueueMonthly(model,ActorId);TempData["Success"]="Pagesa bankare u ruajt në pritje. Borxhi mbetet deri në konfirmim.";return AfterPayment(returnUrl);}
             var receiptId = await billing.RegisterPaymentAsync(model, ActorId);
             TempData["Success"] = "Pagesa u ruajt. U mbuluan fillimisht faturat më të vjetra; teprica mbetet parapagim.";
-            return RedirectToAction(nameof(Receipt), new { id = receiptId });
+            TempData["PaymentReceiptId"]=receiptId; return AfterPayment(returnUrl);
         }
         catch (InvalidOperationException ex) { ModelState.AddModelError(string.Empty, ex.Message); return View(model); }
     }
@@ -185,7 +219,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         var entry = await db.StudentMonthlyExemptions.Include(e => e.Student).FirstOrDefaultAsync(e => e.Id == id);
         if (entry == null) return NotFound();
         ViewData["Action"] = nameof(ReverseExemption);
-        return View("Reverse", new ReverseBillingModel { Id = id, StudentId = entry.StudentId, Description = $"Kthim lirimi: {entry.Student!.FullName} · {entry.Month:00}/{entry.Year} · {entry.Amount:N2} €" });
+        return View("Reverse", new ReverseBillingModel { Id = id, StudentId = entry.StudentId, Description = $"Kthim lirimi: {entry.Student!.FullName} · {entry.Month:00}/{entry.Year} · {entry.Amount:N2}" });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Admin)]
@@ -195,7 +229,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         if (entry == null) return NotFound();
         model.StudentId = entry.StudentId;
         ViewData["Action"] = nameof(ReverseExemption);
-        model.Description = $"Kthim lirimi · {entry.Month:00}/{entry.Year} · {entry.Amount:N2} €";
+        model.Description = $"Kthim lirimi · {entry.Month:00}/{entry.Year} · {entry.Amount:N2}";
         if (!ModelState.IsValid) return View("Reverse", model);
         try
         {
@@ -214,7 +248,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         if (entry.FamilyPaymentId.HasValue) return RedirectToAction(nameof(CancelFamilyPayment), new { id = entry.FamilyPaymentId });
         ViewData["Action"] = nameof(CancelPayment);
         ViewData["SeasonalCancellation"] = entry.SeasonalStartMonth.HasValue;
-        return View("Reverse", new ReverseBillingModel { Id = id, StudentId = entry.StudentId, Description = $"Anulim pagese #{id}: {entry.Student!.FullName} · {entry.Amount:N2} €" });
+        return View("Reverse", new ReverseBillingModel { Id = id, StudentId = entry.StudentId, Description = $"Anulim pagese #{id}: {entry.Student!.FullName} · {entry.Amount:N2}" });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Admin)]
@@ -224,7 +258,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         if (entry == null) return NotFound();
         if (entry.FamilyPaymentId.HasValue) return RedirectToAction(nameof(CancelFamilyPayment), new { id = entry.FamilyPaymentId });
         model.StudentId = entry.StudentId;
-        model.Description = $"Anulim pagese #{model.Id} · {entry.Amount:N2} €";
+        model.Description = $"Anulim pagese #{model.Id} · {entry.Amount:N2}";
         ViewData["Action"] = nameof(CancelPayment);
         ViewData["SeasonalCancellation"] = entry.SeasonalStartMonth.HasValue;
         if (!ModelState.IsValid) return View("Reverse", model);
@@ -240,26 +274,28 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
     {
         var account = await billing.GetFamilyAccountAsync(id);
         if (account == null) return NotFound();
-        return View(new FamilyPaymentModel { FamilyId = id, Account = account, Amount = account.Due, ExpectedState = account.State });
+        return View(new FamilyPaymentModel { AutomaticBankAmount=await db.PendingBankPayments.Where(x=>x.Kind=="Family"&&x.TargetId==id&&x.IsAutomatic&&x.ReviewedAt==null).SumAsync(x=>x.Amount), PaymentMethod=account.Family.PreferredPaymentMethod, OtherDebts=(await new OtherDebtService(db).LoadAsync()).Where(x=>account.Members.Any(m=>m.Student.Id==x.StudentId)).ToList(),FamilyId = id, Account = account, Amount = account.Due, ExpectedState = account.State });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
-    public async Task<IActionResult> Family(FamilyPaymentModel model)
+    public async Task<IActionResult> Family(FamilyPaymentModel model, string? returnUrl = null)
     {
+        ViewData["PaymentReturnUrl"]=returnUrl;
         if (ModelState.IsValid)
             try
             {
-                var id = await billing.RegisterFamilyPaymentAsync(model, ActorId);
+                if(model.PaymentMethod=="Bank"){if(!await db.PendingBankPayments.AnyAsync(x=>x.Kind=="Family"&&x.TargetId==model.FamilyId&&x.IsAutomatic&&x.ReviewedAt==null))await new BankVerificationService(db).QueueFamily(model,ActorId);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return AfterPayment(returnUrl);} var id = await billing.RegisterFamilyPaymentAsync(model, ActorId);
                 TempData["Success"] = "Pagesa e plotë e familjes u regjistrua.";
-                return RedirectToAction(nameof(FamilyReceipt), new { id });
+                TempData["FamilyReceiptId"]=id; return AfterPayment(returnUrl);
             }
             catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
-        model.Account = await billing.GetFamilyAccountAsync(model.FamilyId);
+        model.AutomaticBankAmount=await db.PendingBankPayments.Where(x=>x.Kind=="Family"&&x.TargetId==model.FamilyId&&x.IsAutomatic&&x.ReviewedAt==null).SumAsync(x=>x.Amount);model.Account = await billing.GetFamilyAccountAsync(model.FamilyId);
         if (model.Account == null) return NotFound();
+        model.OtherDebts=(await new OtherDebtService(db).LoadAsync()).Where(x=>model.Account.Members.Any(m=>m.Student.Id==x.StudentId)).ToList();
         return View(model);
     }
 
-    public async Task<IActionResult> FamilyReceipt(int id)
+    public async Task<IActionResult> FamilyReceipt(int id, string? returnUrl = null)
     {
         var payment = await db.FamilyPayments.AsNoTracking().Include(p => p.CreatedByUser)
             .Include(p => p.Payments).ThenInclude(p => p.Student).SingleOrDefaultAsync(p => p.Id == id);
@@ -272,7 +308,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         var payment = await db.FamilyPayments.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id);
         if (payment == null) return NotFound();
         ViewData["FamilyId"] = payment.FamilyId;
-        return View(new ReverseBillingModel { Id = id, Description = $"{payment.FamilyName} · {payment.Amount:N2} €" });
+        return View(new ReverseBillingModel { Id = id, Description = $"{payment.FamilyName} · {payment.Amount:N2}" });
     }
 
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Admin)]
@@ -289,7 +325,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
             }
             catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
         ViewData["FamilyId"] = payment.FamilyId;
-        model.Description = $"{payment.FamilyName} · {payment.Amount:N2} €";
+        model.Description = $"{payment.FamilyName} · {payment.Amount:N2}";
         return View(model);
     }
 }

@@ -5,6 +5,7 @@ namespace _2Korriku.Models;
 
 public class PlayerFamily
 {
+    [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
     [Required, StringLength(150)] public string Name { get; set; } = "";
     [StringLength(100)] public string? Phone { get; set; }
@@ -24,6 +25,9 @@ public class FamilyChange
 }
 public class FamilyEditModel : IValidatableObject
 {
+    [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
+    public bool ConfirmIndividualTransfer { get; set; }
+    public Dictionary<int,string> JoinBlocks { get; set; } = [];
     [Range(1,int.MaxValue)] public int FeePlanId { get; set; } = 2;
     public List<FeePlanOption> Plans { get; set; } = [];
     public int Id { get; set; }

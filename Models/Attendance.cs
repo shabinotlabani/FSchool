@@ -44,6 +44,7 @@ public class AttendancePlayerInput
     [ValidateNever] public string Name { get; set; } = "";
     [ValidateNever] public string? Notes { get; set; }
     [ValidateNever] public decimal Debt { get; set; }
+    [ValidateNever] public bool CanChangeGroup { get; set; }
 }
 public class AttendanceModel : IValidatableObject
 {

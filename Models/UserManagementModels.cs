@@ -4,6 +4,7 @@ namespace _2Korriku.Models;
 
 public class UserEditModel : IValidatableObject
 {
+    public bool CanVerifyBank { get; set; }
     public string? Id { get; set; }
     [Phone, StringLength(50)] public string? Phone { get; set; }
     [StringLength(150)] public string? Specialization { get; set; }

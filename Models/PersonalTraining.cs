@@ -18,6 +18,8 @@ public class PersonalTariff
 
 public class PersonalTraining
 {
+    public string? CoachId { get; set; }
+    public ApplicationUser? AssignedCoach { get; set; }
     public int Id { get; set; }
     public Guid RequestId { get; set; }
     [StringLength(64)] public string PayloadHash { get; set; } = "";
@@ -110,6 +112,8 @@ public class PersonalTariffModel : IValidatableObject
 
 public class PersonalTrainingCreateModel : IValidatableObject
 {
+    [Required(ErrorMessage="Zgjidhni trajnerin.")] public string? CoachId { get; set; }
+    [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever] public List<ApplicationUser> Coaches { get; set; } = [];
     public Guid RequestId { get; set; } = Guid.NewGuid();
     [Range(1,int.MaxValue,ErrorMessage="Zgjidhni lojtarin.")] public int StudentId { get; set; }
     [Range(1,int.MaxValue,ErrorMessage="Zgjidhni tarifën.")] public int PersonalTariffId { get; set; }

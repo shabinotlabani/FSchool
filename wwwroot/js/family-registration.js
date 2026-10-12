@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     const form=document.querySelector('#family-registration'),body=document.querySelector('#registration-children'),family=document.querySelector('#FamilyId');
     const pricing=JSON.parse(document.querySelector('#registration-pricing').textContent),template=body.children[0].cloneNode(true),requests=new WeakMap();
     const field=(row,name)=>row.querySelector(`[data-child-field="${name}"]`);
@@ -19,11 +19,14 @@
             row.querySelector('.child-fee-reason').hidden=!manual;
             if(!manual)price.value=Number(amount).toFixed(2);
             total+=Math.round((manual?(Number(price.value)||0):amount)*100);
-            row.querySelector('.child-fee').textContent=Number(amount).toFixed(2)+' €';
+            row.querySelector('.child-fee').textContent=Number(amount).toFixed(2)+'';
             row.querySelector('.remove-child').disabled=body.children.length<=2;
         });
         document.querySelector('#registration-total').textContent=(total/100).toFixed(2);
         document.querySelector('#FamilyName').required=!family.value;
+        const paymentMethod=document.querySelector('#PreferredPaymentMethod');
+        paymentMethod.disabled=!!family.value;
+        if(family.value)paymentMethod.value=family.selectedOptions[0].dataset.paymentMethod||'Cash';
         document.querySelector('#family-name-field').hidden=!!family.value;
         document.querySelector('#add-child').disabled=body.children.length>=20;
     }

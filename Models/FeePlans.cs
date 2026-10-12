@@ -80,7 +80,7 @@ public class AssignFeeModel : IValidatableObject
 }
 public record FeePlanOption(int Id,string Name,decimal Amount,bool IsWaiver,decimal? FamilyAdditionalAmount=null,int FamilyFirstCount=2,bool SingleUsesStandard=true,bool IsFamily=false,bool IsActive=true)
 {
-    public string PriceLabel => IsFamily ? $"{Amount:0.##} € për {FamilyFirstCount} të parët; {FamilyAdditionalAmount:0.##} € për të tjerët" : $"{Amount:0.##} € / muaj";
+    public string PriceLabel => IsFamily ? $"{Amount:0.##} për {FamilyFirstCount} të parët; {FamilyAdditionalAmount:0.##} për të tjerët" : $"{Amount:0.##} / muaj";
 }
 public record ResolvedFee(decimal Amount,string Name,bool IsWaiver,string? Reason,string? Notes);
 public class FeePlanIndexModel

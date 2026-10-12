@@ -19,6 +19,8 @@
 <span class="attendance-player-note">· @Model.Players[i].Notes</span>
 }
 </h2>
+<div class="attendance-player-actions">
+@if(Model.Players[i].CanChangeGroup){<a class="player-transfer-link" asp-action="ChangeGroup" asp-route-studentId="@Model.Players[i].StudentId" asp-route-sourceTeamId="@Model.TeamId" asp-route-coachRole="@Model.CoachRole">Ndrysho grupin</a>}
 <details class="player-history">
 <summary aria-label="Historiku i prezencës për @Model.Players[i].Name">Historiku</summary>
 <div class="player-history-content">
@@ -29,7 +31,7 @@
 <div class="player-history-entry"><time>@entry.Date.ToString("dd.MM.yyyy")</time><span class="@(present?"history-present":"history-absent")">@(present?"✓ Prezent":"− Mungon")</span></div>
 }
 </div>
-</details></div>
+</details></div></div>
 <input asp-for="Players[i].StudentId" type="hidden"/>
 <div class="attendance-options">
 <input asp-for="Players[i].Present" type="radio" value="true" id="present-@i" disabled="@Model.IsLocked" required/><label for="present-@i" class="present-option">✓ Prezent</label>

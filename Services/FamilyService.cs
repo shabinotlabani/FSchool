@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +8,22 @@ namespace _2Korriku.Services;
 public class FamilyService(ApplicationDbContext db)
 {
     public const string BillingLock = "SELECT pg_advisory_xact_lock(20260929, 2002)";
+    public async Task<Dictionary<int,string>> JoinBlocksAsync(IEnumerable<int> studentIds,int familyId,DateOnly month)
+    {
+        var ids=studentIds.ToList();
+        var existing=familyId==0?new HashSet<int>():(await MembersAsync(familyId,month)).Select(x=>x.StudentId).ToHashSet();
+        var states=await Latest(month).Include(x=>x.FeePlan).Where(x=>ids.Contains(x.StudentId)).ToListAsync();
+        var current=await Latest(TariffService.CurrentMonth).Include(x=>x.FeePlan).Where(x=>ids.Contains(x.StudentId)).ToListAsync();
+        var future=await db.StudentFeeAssignments.AsNoTracking().Where(x=>ids.Contains(x.StudentId)&&x.EffectiveMonth>month).ToListAsync();
+        var result=new Dictionary<int,string>();
+        foreach(var id in ids.Where(id=>!existing.Contains(id))){
+            var assignments=states.Concat(current).Where(x=>x.StudentId==id).ToList();
+            if(assignments.Any(x=>x.FamilyId.HasValue&&x.FamilyId!=familyId))result[id]="Është në një familje tjetër";
+            else if(future.Any(x=>x.StudentId==id))result[id]="Ka ndryshim pakete të planifikuar";
+            else if(assignments.Any(x=>x.FeePlanId!=1))result[id]="Ka paketë të veçantë: "+assignments.First(x=>x.FeePlanId!=1).FeePlan?.Name;
+        }
+        return result;
+    }
     public async Task<int> PlanIdAsync(int familyId, DateOnly month) =>
         await db.FamilyTariffAssignments.AsNoTracking().Where(a => a.FamilyId == familyId && a.EffectiveMonth <= month)
             .OrderByDescending(a => a.EffectiveMonth).ThenByDescending(a => a.Id).Select(a => (int?)a.FeePlanId).FirstOrDefaultAsync() ?? 2;
@@ -34,6 +50,11 @@ public class FamilyService(ApplicationDbContext db)
             throw new InvalidOperationException("Ky emër familjeje ekziston. Përdorni një emër dallues.");
         var members=input.Id==0?new List<StudentFeeAssignment>():await MembersAsync(input.Id,month);
         var affected=members.Select(m=>m.StudentId).Union(input.StudentIds).ToList();
+        var blocks=await JoinBlocksAsync(input.StudentIds,input.Id,month);
+        if(blocks.Count>0){var blocked=await db.Students.AsNoTracking().FirstAsync(s=>s.Id==blocks.First().Key);throw new InvalidOperationException(blocked.FullName+": "+blocks.First().Value+". Shtimi në këtë familje nuk lejohet.");}
+        var additions=input.StudentIds.Except(members.Select(x=>x.StudentId)).ToList();
+        if(additions.Count>0&&!input.ConfirmIndividualTransfer)
+            throw new InvalidOperationException("Konfirmoni kalimin e lojtarëve të rinj nga tarifa individuale në paketën familjare.");
         await new BillingService(db).EnsureNoSeasonalChangeAsync(affected, month);
         if(await db.StudentFeeAssignments.AnyAsync(a=>(affected.Contains(a.StudentId)||a.FamilyId==input.Id) && a.EffectiveMonth>month) || await db.FamilyTariffAssignments.AnyAsync(a=>a.FamilyId==input.Id && a.EffectiveMonth>month))
             throw new InvalidOperationException("Ka ndryshime të planifikuara pas këtij muaji. Zgjidhni muajin e fundit të planifikuar ose një muaj më vonë.");
@@ -45,7 +66,7 @@ public class FamilyService(ApplicationDbContext db)
         if(await db.MonthlyFeePeriods.AnyAsync(p=>affected.Contains(p.StudentId) && (p.Year>month.Year || p.Year==month.Year && p.Month>=month.Month)))
             throw new InvalidOperationException("Muaji ose një muaj pas tij është faturuar. Zgjidhni muajin pas periudhës së fundit të faturuar.");
         if(input.Id==0)db.PlayerFamilies.Add(family);
-        family.Name=input.Name.Trim();family.Phone=input.Phone?.Trim();family.Revision=Guid.NewGuid();
+        family.PreferredPaymentMethod=input.PreferredPaymentMethod;family.Name=input.Name.Trim();family.Phone=input.Phone?.Trim();family.Revision=Guid.NewGuid();
         await db.SaveChangesAsync();
         db.FamilyTariffAssignments.Add(new() { FamilyId = family.Id, FeePlanId = input.FeePlanId,
             EffectiveMonth = input.Id == 0 ? TariffService.CurrentMonth : month, CreatedByUserId = actor });
@@ -54,8 +75,8 @@ public class FamilyService(ApplicationDbContext db)
         for(var i=0;i<input.StudentIds.Count;i++)
             db.StudentFeeAssignments.Add(new(){StudentId=input.StudentIds[i],FeePlanId=input.FeePlanId,FamilyId=family.Id,FamilyOrder=i+1,EffectiveMonth=month,Reason=input.Reason.Trim(),Notes=$"Familja {family.Name} · Renditja {i+1}",CreatedByUserId=actor});
         db.FamilyChanges.Add(new(){FamilyId=family.Id,EffectiveMonth=month,Reason=input.Reason.Trim(),ActorId=actor,
-            Snapshot=$"Tarifa: {selectedPlan.Name}. " + string.Join("; ",input.StudentIds.Select((id,i)=>$"{i+1}. {students[id].FullName} (#{id})"))+(input.StudentIds.Count==0?"Pa fëmijë në paketë":"")});
-        await db.SaveChangesAsync();await tx.CommitAsync();return family.Id;
+            Snapshot=$"Pagesa e zakonshme: {BillingService.MethodLabel(family.PreferredPaymentMethod)}. Tarifa: {selectedPlan.Name}. " +(additions.Count>0?"Kalimi individual në familje u konfirmua për: "+string.Join(", ",additions)+". ":"")+ string.Join("; ",input.StudentIds.Select((id,i)=>$"{i+1}. {students[id].FullName} (#{id})"))+(input.StudentIds.Count==0?"Pa fëmijë në paketë":"")});
+        await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();await tx.CommitAsync();return family.Id;
     }
 
     // Called inside registration's transaction and billing lock. New children
@@ -66,6 +87,7 @@ public class FamilyService(ApplicationDbContext db)
         await db.Database.ExecuteSqlRawAsync(BillingLock);
         var family=await db.PlayerFamilies.SingleOrDefaultAsync(f=>f.Id==familyId)??throw new InvalidOperationException("Zgjidhni familjen e regjistruar.");
         var month=TariffService.CurrentMonth;
+        if(await db.StudentFeeAssignments.AnyAsync(x=>x.StudentId==student.Id))throw new InvalidOperationException("Lojtari ka paketë ose familje ekzistuese. Ky veprim lejohet vetëm gjatë regjistrimit të ri.");
         var members=await MembersAsync(familyId,month);
         if(members.Count>=20)throw new InvalidOperationException("Familja ka arritur 20 anëtarë.");
         if(await db.StudentFeeAssignments.AnyAsync(a=>a.FamilyId==familyId && a.EffectiveMonth>month) || await db.FamilyTariffAssignments.AnyAsync(a=>a.FamilyId==familyId && a.EffectiveMonth>month))

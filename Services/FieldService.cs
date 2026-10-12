@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ public class FieldService(ApplicationDbContext db)
     public async Task<int> PayAsync(FieldPaymentModel input, string actor)
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);
-        await using var tx = await db.Database.BeginTransactionAsync();
+        await using var tx = db.Database.CurrentTransaction == null ? await db.Database.BeginTransactionAsync() : null;
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         await db.Database.ExecuteSqlRawAsync(MoneyLockSql);
         var existing = await db.FieldPayments.AsNoTracking().SingleOrDefaultAsync(p => p.RequestId == input.RequestId);
@@ -29,8 +29,8 @@ public class FieldService(ApplicationDbContext db)
         var payment = new FieldPayment { FieldBookingId = booking.Id, RequestId = input.RequestId, Amount = input.Amount, Method = input.Method, ActorId = actor,
             Description = $"{booking.CustomerName} · {booking.FootballField!.Name} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}–{booking.EndsAt:HH:mm}" };
         db.FieldPayments.Add(payment); booking.Revision = Guid.NewGuid();
-        booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Arkëtim: {input.Amount:N2} € · {BillingService.MethodLabel(input.Method)}" });
-        await db.SaveChangesAsync(); await tx.CommitAsync(); return payment.Id;
+        booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Arkëtim: {input.Amount:N2} · {BillingService.MethodLabel(input.Method)}" });
+        await db.SaveChangesAsync(); if (tx != null) await tx.CommitAsync(); return payment.Id;
     }
 
     public async Task<int> CancelPaymentAsync(FieldPaymentCancelModel input, string actor)
@@ -46,7 +46,7 @@ public class FieldService(ApplicationDbContext db)
             throw new InvalidOperationException("Pagesa nuk mund të anulohet: mjetet janë përdorur për shpenzime. Korrigjoni fillimisht shpenzimet përkatëse.");
         payment.CancelledAt = DateTime.UtcNow; payment.CancellationReason = input.Reason.Trim();
         payment.FieldBooking!.Revision = Guid.NewGuid();
-        payment.FieldBooking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Anulim i pagesës {payment.Number}: {payment.Amount:N2} € · {payment.CancellationReason}" });
+        payment.FieldBooking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Anulim i pagesës {payment.Number}: {payment.Amount:N2} · {payment.CancellationReason}" });
         await db.SaveChangesAsync(); await tx.CommitAsync(); return payment.FieldBookingId;
     }
 
@@ -117,11 +117,11 @@ public class FieldService(ApplicationDbContext db)
                 var next = new FieldBooking { RequestId = Guid.NewGuid(), SeriesId = booking.SeriesId, SeriesWeeks = input.Weeks,
                     FootballFieldId = field.Id, CustomerName = booking.CustomerName, Phone = booking.Phone,
                     Date = date, StartsAt = start, EndsAt = end, Price = input.Price, Notes = booking.Notes };
-                next.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Rezervim javor ({input.Weeks} javë): {field.Name} · {date:dd.MM.yyyy} · {start:HH:mm}–{end:HH:mm} · {next.CustomerName} · {next.Phone} · {next.Price:N2} € · {next.Notes}" });
+                next.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Rezervim javor ({input.Weeks} javë): {field.Name} · {date:dd.MM.yyyy} · {start:HH:mm}–{end:HH:mm} · {next.CustomerName} · {next.Phone} · {next.Price:N2} · {next.Notes}" });
                 db.FieldBookings.Add(next);
             }
         }
-        booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"{(input.Id == 0 ? "Rezervuar" : "Ndryshuar")}: {field.Name} · {booking.Date:dd.MM.yyyy} · {start:HH:mm}–{end:HH:mm} · {booking.CustomerName} · {booking.Phone} · {booking.Price:N2} € · {booking.Notes}" });
+        booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"{(input.Id == 0 ? "Rezervuar" : "Ndryshuar")}: {field.Name} · {booking.Date:dd.MM.yyyy} · {start:HH:mm}–{end:HH:mm} · {booking.CustomerName} · {booking.Phone} · {booking.Price:N2} · {booking.Notes}" });
         await db.SaveChangesAsync(); await tx.CommitAsync(); return booking.Id;
     }
 

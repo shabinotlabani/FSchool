@@ -1,0 +1,9 @@
+@model (string Kind, int TargetId)
+@using Microsoft.EntityFrameworkCore
+@inject _2Korriku.Data.ApplicationDbContext Db
+@{
+    var amount=await Db.PendingBankPayments.Where(x=>x.Kind==Model.Kind&&x.TargetId==Model.TargetId&&x.ReviewedAt==null).SumAsync(x=>x.Amount);
+}
+@if(amount>0){<div class="alert alert-warning py-2">Bankë në pritje: <strong>@amount.ToString("N2")</strong> · Borxhi mbetet.
+@if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){<a asp-controller="BankPayments" asp-action="Index" class="ms-2">Verifikimi</a>}
+</div>}

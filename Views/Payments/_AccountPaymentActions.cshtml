@@ -1,7 +1,7 @@
 @model PlayerBillingModel
 @if(Model.CurrentFamilyId.HasValue){
-    <a asp-action="Family" asp-route-id="@Model.CurrentFamilyId" class="btn btn-primary">Pagesa familjare</a>
+    <a asp-action="Family" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@Model.CurrentFamilyId" class="btn btn-primary">Pagesa familjare</a>
 }else{
-    <a asp-action="Register" asp-route-studentId="@Model.Student.Id" class="btn btn-primary">+ Pagesë mujore</a>
-    <a asp-action="Seasonal" asp-route-studentId="@Model.Student.Id" class="btn btn-outline-primary">+ Pagesë sezonale</a>
+    <a asp-action="Register" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-studentId="@Model.Student.Id" class="btn btn-primary">+ Pagesë mujore</a>
+    <a asp-action="Seasonal" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-studentId="@Model.Student.Id" class="btn btn-outline-primary">+ Pagesë sezonale</a>
 }

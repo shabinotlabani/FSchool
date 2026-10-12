@@ -1,0 +1,25 @@
+@model List<PendingBankPayment>
+@using _2Korriku.Services
+@{ViewData["Title"]="Verifikimi i bankës";}
+<div class="page-heading"><h1>Pagesat bankare</h1></div>
+@if(TempData["Success"] is string success){<div class="alert alert-success" role="status">@success</div>}
+@if(TempData["Error"] is string error){<div class="alert alert-danger" role="alert"><strong>Nuk u realizua veprimi.</strong> @error</div>}
+<section class="panel table-responsive"><table class="table align-middle"><thead><tr><th>Lojtari / Përshkrimi</th><th>Pagesa</th><th>Shuma</th><th>Statusi</th><th>Verifikimi</th></tr></thead><tbody>
+@foreach(var item in Model){
+    var confirmed=item.PaymentId.HasValue||item.ResultId.HasValue;
+    var label=item.Kind switch {"Seasonal"=>"Sezonale","Sale"=>"Rekuizita","Personal"=>"Trajnim personal","Field"=>"Termin privat","Family"=>"Familje","Expense"=>"Shpenzim","Withdrawal"=>"Tërheqje pronari","Opening"=>"Gjendje fillestare",_=>"Mujore"};
+    var outgoing=item.Kind is "Expense" or "Withdrawal";
+    var controller=item.Kind switch {"Field"=>"Fields","Expense"=>"Expenses","Opening" or "Withdrawal"=>"Treasury",_=>"Payments"};
+    var action=item.Kind switch {"Family"=>"FamilyReceipt","Expense" or "Opening" or "Withdrawal"=>"Details",_=>"Receipt"};
+    <tr><td>
+    @if(item.StudentId.HasValue){<a asp-controller="Payments" asp-action="Account" asp-route-id="@item.StudentId">@item.Student?.FullName</a>}
+    <span class="d-block">@item.Description</span><small class="d-block text-secondary">@TimeZoneInfo.ConvertTimeFromUtc(item.CreatedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</small></td>
+    <td>@label · #@item.Id<small class="d-block text-secondary">@(outgoing?"Dalje":"Hyrje")</small></td><td class="fw-semibold">@((item.ConfirmedAmount??item.Amount).ToString("N2"))@if(item.ConfirmedAmount.HasValue&&item.ConfirmedAmount!=item.Amount){<small class="d-block text-secondary">Propozuar: @item.Amount.ToString("N2")</small>}</td>
+    <td>@(confirmed?"Konfirmuar":item.ReviewedAt.HasValue?(item.ReviewedById=="System"?"Mbyllur automatikisht":"Refuzuar"):"Në pritje")<small class="d-block text-danger">@item.RejectionReason</small></td><td>
+    @if(item.ReviewedAt==null&&ViewBag.CanReview==true){<form asp-action="Review" method="post" class="d-flex flex-wrap gap-2"><input type="hidden" name="Id" value="@item.Id"/><input type="hidden" name="ExpectedAmount" value="@item.Amount.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)"/>@if(item.Kind is "Monthly" or "Family"){<label class="small">Shuma e pranuar<input name="ReceivedAmount" type="number" min="0.01" max="999999999.99" step="0.01" value="@item.Amount.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)" class="form-control form-control-sm" required/><small class="text-secondary">Teprica ruhet si parapagim.</small></label>}<label class="small">Data e veprimit në bankë<input type="date" name="ReceivedOn" value="@BillingClock.Today.ToString("yyyy-MM-dd")" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control form-control-sm" required/></label><input name="Reason" maxlength="250" class="form-control form-control-sm" placeholder="Arsyeja nëse refuzohet" aria-label="Arsyeja e refuzimit"/><button name="approve" value="true" class="btn btn-sm btn-primary">Konfirmo</button><button name="approve" value="false" class="btn btn-sm btn-outline-danger">Refuzo</button></form>}
+    @if(confirmed){<a asp-controller="@controller" asp-action="@action" asp-route-id="@(item.PaymentId??item.ResultId)">Dokumenti</a>}
+    </td></tr>
+}
+@if(Model.Count==0){<tr><td colspan="5" class="text-secondary p-4">Nuk ka pagesa bankare për verifikim.</td></tr>}
+</tbody></table></section>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="Payments" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}

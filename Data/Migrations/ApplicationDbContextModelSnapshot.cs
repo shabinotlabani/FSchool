@@ -166,6 +166,9 @@ namespace _2Korriku.Data.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("CanVerifyBank")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -1197,6 +1200,83 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.PendingBankPayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateOnly?>("AutomaticMonth")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("ConfirmedAmount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsAutomatic")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ResultId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewedById")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("PendingBankPayments");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.PersonalCharge", b =>
                 {
                     b.Property<int>("Id")
@@ -1300,6 +1380,9 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("CoachId")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1355,6 +1438,8 @@ namespace _2Korriku.Data.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CoachId");
 
                     b.HasIndex("CreatedByUserId");
 
@@ -1451,6 +1536,11 @@ namespace _2Korriku.Data.Migrations
                     b.Property<string>("Phone")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PreferredPaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<Guid>("Revision")
                         .IsConcurrencyToken()
@@ -1966,6 +2056,11 @@ namespace _2Korriku.Data.Migrations
 
                     b.Property<string>("ParentPhone")
                         .HasColumnType("text");
+
+                    b.Property<string>("PreferredPaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("timestamp with time zone");
@@ -2862,6 +2957,23 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.PendingBankPayment", b =>
+                {
+                    b.HasOne("_2Korriku.Models.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("_2Korriku.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.PersonalCharge", b =>
                 {
                     b.HasOne("_2Korriku.Models.PersonalTraining", "PersonalTraining")
@@ -2875,6 +2987,11 @@ namespace _2Korriku.Data.Migrations
 
             modelBuilder.Entity("_2Korriku.Models.PersonalTraining", b =>
                 {
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "AssignedCoach")
+                        .WithMany()
+                        .HasForeignKey("CoachId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("_2Korriku.Models.ApplicationUser", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedByUserId");
@@ -2890,6 +3007,8 @@ namespace _2Korriku.Data.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("AssignedCoach");
 
                     b.Navigation("CreatedByUser");
 

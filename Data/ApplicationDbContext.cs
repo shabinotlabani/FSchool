@@ -7,6 +7,7 @@ namespace _2Korriku.Data;
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<TeamAttendance> TeamAttendances => Set<TeamAttendance>();
+    public DbSet<PendingBankPayment> PendingBankPayments => Set<PendingBankPayment>();
     public DbSet<AttendancePlayer> AttendancePlayers => Set<AttendancePlayer>();
     public DbSet<AttendanceChange> AttendanceChanges => Set<AttendanceChange>();
     public DbSet<TreasuryEntry> TreasuryEntries => Set<TreasuryEntry>();
@@ -59,6 +60,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<PendingBankPayment>().HasIndex(x=>x.RequestId).IsUnique();
+        builder.Entity<PendingBankPayment>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PendingBankPayment>().HasOne(x=>x.Payment).WithMany().HasForeignKey(x=>x.PaymentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PersonalTraining>().HasOne(x=>x.AssignedCoach).WithMany().HasForeignKey(x=>x.CoachId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<TeamAttendance>().HasIndex(x=>new{x.TrainingTeamId,x.Date}).IsUnique();
         builder.Entity<TeamAttendance>().Property(x=>x.Revision).IsConcurrencyToken();
         builder.Entity<TeamAttendance>().HasOne(x=>x.TrainingTeam).WithMany().HasForeignKey(x=>x.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);

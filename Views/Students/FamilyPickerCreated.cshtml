@@ -1,0 +1,7 @@
+@model Student
+@{Layout=null;}
+<!DOCTYPE html><html lang="sq"><head><meta charset="utf-8"/><title>Lojtari u regjistrua</title></head><body>
+<p>Lojtari u regjistrua. Mund ta mbyllni këtë dritare.</p>
+<script id="created-player" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {id=Model.Id,name=Model.FullName,parent=Model.ParentName,phone=Model.ParentPhone}))</script>
+<script src="~/js/family-player-created.js" asp-append-version="true"></script>
+</body></html>

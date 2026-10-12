@@ -85,7 +85,7 @@
             button.type = 'button'; button.className = 'player-search-result pick-product'; button.dataset.productId = String(product.id);
             const info = document.createElement('span'), name = document.createElement('strong'), details = document.createElement('small');
             name.textContent = product.name;
-            details.textContent = `${product.price} € / ${product.unit} · ${stockLabel(product) || 'Pa madhësi aktive'}`;
+            details.textContent = `${product.price} / ${product.unit} · ${stockLabel(product) || 'Pa madhësi aktive'}`;
             info.append(name, details);
             const label = document.createElement('span'); label.className = 'player-pick-label';
             button.disabled = !productVariants(product).some(v => Number(v.stock) > 0);
@@ -118,11 +118,11 @@
             const quantity = field(row, 'Quantity'), price = field(row, 'UnitPrice');
             const value = (cents(quantity.value) * cents(price.value) + 50n) / 100n;
             gross += value;
-            row.querySelector('.line-total').textContent = money(value) + ' €';
+            row.querySelector('.line-total').textContent = money(value) + '';
             const product = selectedProduct(row), variant = variants.find(v => String(v.id) === field(row, 'ProductVariantId').value);
             quantity.setCustomValidity(variant && totals.get(String(variant.id)) > cents(variant.stock) ? 'Sasia totale e kësaj madhësie tejkalon stokun.' : '');
             price.setCustomValidity(price.value && parse(price.value) === null ? 'Shkruani çmimin me deri në dy shifra dhjetore.' : price.value && cents(price.value) === 0n && !free ? 'Për çmim zero përdorni lirimin me arsye dhe shënim.' : '');
-            row.querySelector('.list-price-hint').textContent = product ? `Çmimi i listës: ${product.price} €` : '';
+            row.querySelector('.list-price-hint').textContent = product ? `Çmimi i listës: ${product.price}` : '';
             row.querySelector('.reset-price').hidden = !product || parse(price.value) === cents(product.price);
             row.querySelector('.remove-line').disabled = lines.length === 1;
         });
@@ -137,10 +137,10 @@
         document.querySelector('#waiver-fields').hidden = !free;
         document.querySelector('#note-required').hidden = !free;
         document.querySelector('#pay-full').disabled = free;
-        document.querySelector('#gross').textContent = money(gross) + ' €';
-        document.querySelector('#net').textContent = money(net) + ' €';
-        const due = net - cents(paid.value);
-        document.querySelector('#due').textContent = money(due > 0n ? due : 0n) + ' €';
+        document.querySelector('#gross').textContent = money(gross) + '';
+        document.querySelector('#net').textContent = money(net) + '';
+        const due = document.querySelector('#PaymentMethod')?.value === 'Bank' ? net : net - cents(paid.value);
+        document.querySelector('#due').textContent = money(due > 0n ? due : 0n) + '';
         paid.setCustomValidity(cents(paid.value) > net ? 'Pagesa tejkalon detyrimin.' : '');
     }
 

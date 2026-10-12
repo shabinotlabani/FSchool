@@ -5,6 +5,7 @@ namespace _2Korriku.Models;
 
 public class MonthlyInvoiceView
 {
+    public MonthlyAttendanceSummary? Attendance { get; set; }
     public MonthlyFeePeriod Period { get; set; } = new();
     public Student Student { get; set; } = new();
     public decimal Amount { get; set; }
@@ -23,8 +24,15 @@ public class MonthlyInvoiceView
     public string StatusClass => Due == 0 ? "status-active" : Paid > 0 ? "billing-partial" : "billing-unpaid";
 }
 
+public record MonthlyAttendanceSummary(int Present,int Total)
+{
+    public decimal Percent => Total==0?0:decimal.Round(100m*Present/Total,0,MidpointRounding.AwayFromZero);
+}
+
 public class BillingIndexModel
 {
+    public List<BillingGridRow> Rows { get; set; } = [];
+    public List<OtherDebt> OtherDebts { get; set; } = [];
     public List<FamilyInvoiceGroup> Families { get; set; } = [];
     public int Year { get; set; }
     public int Month { get; set; }
@@ -32,9 +40,21 @@ public class BillingIndexModel
     public bool UnpaidOnly { get; set; }
     public List<MonthlyInvoiceView> Invoices { get; set; } = [];
 }
+public class BillingGridRow
+{
+    public decimal PendingBankAmount { get; set; }
+    public PlayerFamily? Family { get; set; }
+    public List<Student> Students { get; set; } = [];
+    public List<MonthlyInvoiceView> Invoices { get; set; } = [];
+    public List<OtherDebt> OtherDebts { get; set; } = [];
+    public string Name => Family?.Name??Students.First().FullName;
+    public decimal MonthlyDue => Invoices.Sum(x=>x.Due);
+    public decimal TotalDue => MonthlyDue+OtherDebts.Sum(x=>x.Due);
+}
 
 public class PlayerBillingModel
 {
+    public decimal PendingBankAmount { get; set; }
     public int? CurrentFamilyId { get; set; }
     public List<PersonalTraining> PersonalTrainings { get; set; } = [];
     public decimal PersonalDue => PersonalTrainings.SelectMany(x=>x.Charges).Sum(x=>x.Due);
@@ -63,6 +83,7 @@ public class InvoiceDetailModel
 
 public class RegisterPaymentModel : IValidatableObject
 {
+    public decimal AutomaticBankAmount { get; set; }
     public int StudentId { get; set; }
     public string? StudentName { get; set; }
     public decimal Balance { get; set; }

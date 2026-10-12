@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using _2Korriku.Data;
 using _2Korriku.Models;
@@ -51,7 +51,7 @@ public class ExpensesController(ApplicationDbContext db):Controller
     public async Task<IActionResult> Create(){var m=new ExpenseCreateModel();await Choices(m);return View(m);}
     [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Write)]
     public async Task<IActionResult> Create(ExpenseCreateModel m){
-        if(ModelState.IsValid)try{var id=await Service.CreateAsync(m,Actor);TempData["Success"]="Shpenzimi u regjistrua dhe u zbrit nga mjetet e mbledhura.";return RedirectToAction(nameof(Details),new{id});}catch(Exception ex)when(ex is InvalidOperationException or ValidationException){ModelState.AddModelError("",ex.Message);}
+        if(ModelState.IsValid)try{if(m.Method=="Bank"){await new BankVerificationService(db).QueueExpense(m,Actor);return RedirectToAction("Index","BankPayments");} var id=await Service.CreateAsync(m,Actor);TempData["Success"]="Shpenzimi u regjistrua dhe u zbrit nga mjetet e mbledhura.";return RedirectToAction(nameof(Details),new{id});}catch(Exception ex)when(ex is InvalidOperationException or ValidationException){ModelState.AddModelError("",ex.Message);}
         await Choices(m);return View(m);
     }
     private Task<Expense?> Find(int id)=>db.Expenses.AsNoTracking().Include(x=>x.CreatedBy).Include(x=>x.CancelledBy).SingleOrDefaultAsync(x=>x.Id==id);

@@ -17,14 +17,14 @@ public class IssueService(ApplicationDbContext db)
             if (decimal.Round(line.Quantity, 2) != line.Quantity) throw new InvalidOperationException("Sasia lejon dy shifra dhjetore.");
         }
         if (input.WaivePayment && !canWaive) throw new InvalidOperationException("Vetëm administratori mund të lirojë nga pagesa.");
-        await using var tx = await db.Database.BeginTransactionAsync();
+        await using var tx = db.Database.CurrentTransaction == null ? await db.Database.BeginTransactionAsync() : null;
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
         await db.Database.ExecuteSqlRawAsync(InventoryService.LockSql);
         var existing = await db.Sales.AsNoTracking().Include(s => s.Details).Include(s => s.Payments).SingleOrDefaultAsync(s => s.RequestId == input.RequestId);
         if (existing != null)
         {
             var originalPrices = existing.Details.GroupBy(d => d.ProductId).ToDictionary(g => g.Key, g => g.First().ListPrice ?? g.First().Price);
-            var initialPayment = existing.Payments.SingleOrDefault(p => p.RequestId == input.RequestId)?.Amount ?? 0;
+            var initialPayment = await db.PendingBankPayments.Where(p => p.RequestId == input.RequestId && p.Kind == "Sale").Select(p => (decimal?)p.Amount).SingleOrDefaultAsync() ?? existing.Payments.SingleOrDefault(p => p.RequestId == input.RequestId)?.Amount ?? 0;
             if (existing.StudentId != input.StudentId || existing.UserId != actorId || initialPayment != input.AmountPaid || existing.PaymentMethod != input.PaymentMethod
                 || (existing.WaiverReason != null) != input.WaivePayment || existing.WaiverReason != (input.WaivePayment ? input.WaiverReason?.Trim() : null) || existing.Notes != input.Notes?.Trim()
                 || existing.Details.Count != input.Lines.Count || !existing.Details.Select(d => (d.ProductId, d.ProductVariantId, d.Quantity, d.Price)).Order().SequenceEqual(
@@ -74,16 +74,21 @@ public class IssueService(ApplicationDbContext db)
         }
         db.StudentTransactions.Add(Entry(sale, "Sale", sale.Total, 0, actorId, "Dalje rekuizitash " + sale.InvoiceNumber));
         if (input.WaivePayment) db.StudentTransactions.Add(Entry(sale, "SaleWaiver", 0, sale.Discount, actorId, "Lirim: " + sale.WaiverReason));
-        if (input.AmountPaid > 0) await AddPayment(sale, input.AmountPaid, input.PaymentMethod, input.RequestId, null, actorId);
+        if (input.AmountPaid > 0) {
+            if(input.PaymentMethod=="Bank") {
+                await db.SaveChangesAsync();
+                await new BankVerificationService(db).QueueSale(new(){SaleId=sale.Id,RequestId=input.RequestId,Amount=input.AmountPaid,PaymentMethod="Bank"},actorId);
+            } else await AddPayment(sale, input.AmountPaid, input.PaymentMethod, input.RequestId, null, actorId);
+        }
         await db.SaveChangesAsync();
-        await tx.CommitAsync();
+        if (tx != null) await tx.CommitAsync();
         return sale.Id;
     }
 
     public async Task<int> PayAsync(IssuePaymentModel input, string actorId)
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);
-        await using var tx = await db.Database.BeginTransactionAsync();
+        await using var tx = db.Database.CurrentTransaction == null ? await db.Database.BeginTransactionAsync() : null;
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
         var duplicate = await db.Payments.AsNoTracking().SingleOrDefaultAsync(p => p.RequestId == input.RequestId);
         if (duplicate != null)
@@ -94,10 +99,10 @@ public class IssueService(ApplicationDbContext db)
         var sale = await db.Sales.SingleOrDefaultAsync(s => s.Id == input.SaleId && s.RequestId != null) ?? throw new InvalidOperationException("Dalja nuk u gjet.");
         // Reload under the lock even if this context previously read the sale.
         await db.Entry(sale).ReloadAsync();
-        if (input.Amount > sale.Due) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
+        if (sale.Status == "Cancelled" || input.Amount > sale.Due) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
         var payment = await AddPayment(sale, input.Amount, input.PaymentMethod, input.RequestId, input.Notes?.Trim(), actorId);
         await db.SaveChangesAsync();
-        await tx.CommitAsync();
+        if (tx != null) await tx.CommitAsync();
         return payment.Id;
     }
 

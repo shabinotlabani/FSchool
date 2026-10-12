@@ -90,12 +90,31 @@ public class TeamService(ApplicationDbContext db)
         if(count>=team.Capacity)throw new InvalidOperationException("Ekipi është i mbushur. Zgjidhni një ekip tjetër ose regjistrojeni pa ekip.");
         return team;
     }
-    public async Task ChangeStudentAsync(ChangeStudentTeamModel input,string actor)
+    public Task ChangeStudentAsync(ChangeStudentTeamModel input,string actor)=>ChangeStudentCoreAsync(input,actor,null);
+    public Task ChangeStudentByCoachAsync(CoachTeamTransferModel input,string actor)
+    {
+        Validator.ValidateObject(input,new(input),true);
+        return ChangeStudentCoreAsync(new(){StudentId=input.StudentId,ExpectedTeamId=input.SourceTeamId,TeamId=input.TeamId,Reason="Ndryshim grupi nga paneli i prezencës"},actor,input.CoachRole);
+    }
+    public async Task<CoachTeamTransferModel> CoachTransferOptionsAsync(int studentId,int sourceTeamId,string role,string actor)
+    {
+        var source=await new AttendanceService(db).Team(sourceTeamId,role,actor);
+        var student=await db.Students.AsNoTracking().SingleOrDefaultAsync(s=>s.Id==studentId&&s.IsActive&&s.TrainingTeamId==sourceTeamId)??throw new UnauthorizedAccessException();
+        var age=Age(student.DateOfBirth);
+        var options=await OptionsAsync(excludingStudentId:studentId);
+        return new(){StudentId=studentId,SourceTeamId=sourceTeamId,CoachRole=role,StudentName=student.FullName,SourceTeamName=source.Name,Age=age,
+            Teams=options.Where(x=>x.Team.Id!=sourceTeamId).OrderByDescending(x=>x.Team.MinAge<=age&&x.Team.MaxAge>=age).ThenByDescending(x=>x.FreePlaces>0).ThenBy(x=>x.Team.Name).ToList()};
+    }
+    private async Task ChangeStudentCoreAsync(ChangeStudentTeamModel input,string actor,string? coachRole)
     {
         Validator.ValidateObject(input,new ValidationContext(input),true);
-        await using var tx=await db.Database.BeginTransactionAsync();await db.Database.ExecuteSqlRawAsync(LockSql);
+        await using var tx=await db.Database.BeginTransactionAsync();
+        if(coachRole!=null)await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2004)");
+        await db.Database.ExecuteSqlRawAsync(LockSql);
+        if(coachRole!=null)await new AttendanceService(db).Team(input.ExpectedTeamId??0,coachRole,actor);
         var student=await db.Students.Include(s=>s.TrainingTeam).SingleOrDefaultAsync(s=>s.Id==input.StudentId)??throw new InvalidOperationException("Lojtari nuk u gjet.");
         await db.Entry(student).ReloadAsync();
+        if(coachRole!=null&&student.TrainingTeamId!=input.ExpectedTeamId)throw new UnauthorizedAccessException();
         if(student.TrainingTeamId==input.TeamId)return;
         if(student.TrainingTeamId!=input.ExpectedTeamId)throw new InvalidOperationException("Ekipi i lojtarit ka ndryshuar. Hapeni formularin përsëri.");
         if(!student.IsActive&&input.TeamId.HasValue)throw new InvalidOperationException("Vetëm lojtarët aktivë mund të caktohen në ekip.");

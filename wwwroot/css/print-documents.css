@@ -4,3 +4,8 @@
 .stock-print-category{font-size:12pt;margin-top:20px;break-after:avoid}.stock-sheet .document-heading{max-width:52%;flex-shrink:1;overflow-wrap:anywhere}.stock-sheet .document-table td{overflow-wrap:anywhere}.stock-sheet .document-table td:last-child{white-space:nowrap}
 
 .issue-totals strong{font-weight:600;color:#46536a}
+
+.print-toolbar .app-back-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;min-width:110px;padding:9px 16px;border:1px solid #cbd5e1;border-radius:8px;background:white;font-size:14px;font-weight:600;line-height:1.5;text-decoration:none}
+.print-toolbar .app-back-button:hover{background:#f1f5f9}
+.print-toolbar .app-back-button:focus-visible{outline:3px solid #2c3f9366;outline-offset:3px}
+.print-toolbar .app-back-button span{display:inline;font-size:inherit;color:inherit}

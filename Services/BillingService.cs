@@ -15,6 +15,7 @@ public partial class BillingService(ApplicationDbContext db)
         await using var transaction = owned ? await db.Database.BeginTransactionAsync(ct) : null;
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)", ct);
         var result = await action();
+        await new BankVerificationService(db).SyncAutomaticAsync(ct);
         if (transaction != null) await transaction.CommitAsync(ct);
         return result;
     }
@@ -74,12 +75,14 @@ public partial class BillingService(ApplicationDbContext db)
     private async Task<int> CreateFeeAsync(Student student, int year, int month, string? actorId, CancellationToken ct = default)
     {
         var seasonal = await ActiveSeasonAsync(student.Id, new DateOnly(year,month,1));
+        var pendingSeasons=await db.PendingBankPayments.AsNoTracking().Where(p=>p.StudentId==student.Id&&p.Kind=="Seasonal"&&p.ReviewedAt==null).Select(p=>p.Payload).ToListAsync(ct);
+        var pendingSeason=pendingSeasons.Select(p=>System.Text.Json.JsonSerializer.Deserialize<SeasonalPaymentModel>(p)!).FirstOrDefault(p=>TariffService.TryMonth(p.StartMonth,out var start)&&new DateOnly(year,month,1)>=start&&new DateOnly(year,month,1)<start.AddMonths(p.Months));
         var fee = seasonal == null ? await new TariffService(db).ResolveAsync(student, new DateOnly(year,month,1))
             : new ResolvedFee(seasonal.SeasonalRate!.Value, "Pagesa sezonale", false, seasonal.SeasonalLabel, $"Arkëtimi #{seasonal.Id}; tarifa ruhet për sezonin.");
         if (fee.Amount < 0 || decimal.Round(fee.Amount, 2) != fee.Amount)
             throw new InvalidOperationException("Tarifa mujore e lojtarit nuk është e vlefshme.");
         var registration = BillingClock.LocalDate(student.RegistrationDate);
-        var firstMonth = seasonal == null && !fee.IsWaiver && fee.Amount > 0 && registration.Year == year && registration.Month == month;
+        var firstMonth = seasonal == null && pendingSeason == null && !fee.IsWaiver && fee.Amount > 0 && registration.Year == year && registration.Month == month;
         var weekly = firstMonth && student.FirstMonthUsesWeeks;
         var prorated = firstMonth && (weekly || registration.Day > 1);
         var amount = weekly ? FirstMonthPricing.Calculate(fee.Amount, registration) : prorated ? MonthlyProration.Calculate(fee.Amount,registration) : fee.Amount;
@@ -145,6 +148,7 @@ public partial class BillingService(ApplicationDbContext db)
         student.MonthlyFee = currentFee.Amount;
         var account = new PlayerBillingModel
         {
+            PendingBankAmount=await db.PendingBankPayments.Where(x=>x.StudentId==studentId&&x.ReviewedAt==null).SumAsync(x=>x.Amount),
             CurrentFamilyId = await CurrentFamilyIdAsync(studentId),
             Student = student,
             CurrentFeeName = currentFee.Name,
@@ -163,6 +167,7 @@ public partial class BillingService(ApplicationDbContext db)
 
     public Task<int> RegisterPaymentAsync(RegisterPaymentModel input, string actorId) => WriteAsync(async () =>
     {
+        if(input.PaymentMethod is not ("Cash" or "Bank"))throw new InvalidOperationException("Zgjidhni Cash ose Bankë.");
         Validator.ValidateObject(input, new ValidationContext(input), true);
         if (await CurrentFamilyIdAsync(input.StudentId) != null)
             throw new InvalidOperationException("Lojtari është në paketë familjare. Përdorni pagesën e përbashkët të familjes.");

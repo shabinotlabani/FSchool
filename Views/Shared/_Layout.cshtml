@@ -1,21 +1,22 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var navigation = new[] {
-        (Controller: "Home", Label: "Përmbledhja", Icon: "home"),
-        (Controller: "Students", Label: "Lojtarët", Icon: "players"),
-        (Controller: "Families", Label: "Familjet", Icon: "players"),
-        (Controller: "Coaches", Label: "Trajnerët", Icon: "players"),
-        (Controller: "Teams", Label: "Ekipet", Icon: "calendar"),
-        (Controller: "Fields", Label: "Fushat dhe terminet", Icon: "calendar"),
-        (Controller: "PersonalTraining", Label: "Trajnimet personale", Icon: "calendar"),
-        (Controller: "Payments", Label: "Pagesat", Icon: "wallet"),
-        (Controller: "Products", Label: "Rekuizitat", Icon: "box"),
-        (Controller: "Sales", Label: "Daljet", Icon: "bag"),
-        (Controller: "Expenses", Label: "Shpenzimet", Icon: "wallet"),
-        (Controller: "Treasury", Label: "Arkat", Icon: "wallet"),
-        (Controller: "Reports", Label: "Raportet", Icon: "chart")
+        (Controller: "Home", Label: "Përmbledhja", Icon: "home", Group: ""),
+        (Controller: "Students", Label: "Lojtarët", Icon: "players", Group: "Shkolla"),
+        (Controller: "Teams", Label: "Ekipet", Icon: "calendar", Group: "Shkolla"),
+        (Controller: "Coaches", Label: "Trajnerët", Icon: "players", Group: "Shkolla"),
+        (Controller: "Fields", Label: "Fushat dhe terminet", Icon: "calendar", Group: "Shkolla"),
+        (Controller: "PersonalTraining", Label: "Trajnimet personale", Icon: "calendar", Group: "Shkolla"),
+        (Controller: "Payments", Label: "Pagesat", Icon: "wallet", Group: "Financat"),
+        (Controller: "BankPayments", Label: "Verifikimi i bankës", Icon: "wallet", Group: "Financat"),
+        (Controller: "Expenses", Label: "Shpenzimet", Icon: "wallet", Group: "Financat"),
+        (Controller: "Treasury", Label: "Arkat", Icon: "wallet", Group: "Financat"),
+        (Controller: "Reports", Label: "Raportet", Icon: "chart", Group: "Financat"),
+        (Controller: "Products", Label: "Rekuizitat", Icon: "box", Group: "Stoku"),
+        (Controller: "Sales", Label: "Daljet", Icon: "bag", Group: "Stoku")
     };
-    if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Prezenca dhe ekipet", Icon: "calendar") };
+    if(!User.IsInRole(Roles.Admin)&&!User.IsInRole(Roles.Operator)) navigation=navigation.Where(x=>x.Controller!="BankPayments").ToArray();
+    if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Prezenca dhe ekipet", Icon: "calendar", Group: "") };
     var accountName = User.Identity?.Name?.Split('@')[0] ?? "Llogaria";
 }
 <!DOCTYPE html>
@@ -38,15 +39,19 @@
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-content"><svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg><span>Menuja</span></button>
         <div class="sidebar-content" id="sidebar-content">
             <nav class="side-navigation" aria-label="Navigimi kryesor">
-                @foreach (var item in navigation)
+                @foreach (var group in navigation.GroupBy(x=>x.Group))
                 {
+                    @if(!string.IsNullOrEmpty(group.Key)){<div class="side-group-title">@group.Key</div>}
+                    @foreach(var item in group){
                     var active = currentController == item.Controller;
                     <a asp-controller="@item.Controller" asp-action="Index" class="side-link @(active ? "is-active" : "")" aria-current="@(active ? "page" : null)"><svg class="icon" aria-hidden="true"><use href="#i-@item.Icon" /></svg>@item.Label @if(active){<span class="nav-dot" aria-hidden="true"></span>}</a>
+                    }
                 }
             </nav>
-            @if(User.IsInRole(Roles.Admin)){<nav class="side-navigation" aria-label="Administrimi"><a asp-controller="Users" asp-action="Index" class="side-link @(currentController == "Users" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg>Shfrytëzuesit</a><a asp-controller="Tariffs" asp-action="Index" class="side-link @(currentController == "Tariffs" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg>Tarifat</a></nav>}
+            @if(User.IsInRole(Roles.Admin)){<nav class="side-navigation" aria-label="Administrimi"><div class="side-group-title">Administrimi</div><a asp-controller="Users" asp-action="Index" class="side-link @(currentController == "Users" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg>Shfrytëzuesit</a><a asp-controller="Tariffs" asp-action="Index" class="side-link @(currentController == "Tariffs" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg>Tarifat</a></nav>}
             <div class="sidebar-account"><div class="account-avatar" aria-hidden="true">@(accountName.Length > 0 ? accountName[..1].ToUpperInvariant() : "K")</div><div class="account-details"><strong>@accountName</strong><span>@(User.IsInRole(Roles.Admin) ? "Admin" : User.IsInRole(Roles.Operator) ? "Operator" : User.IsInRole(Roles.Coach) ? "Trajner" : "Shikues")</span></div></div>
             <partial name="_LoginPartial" />
+            <div class="sidebar-credit">Programuar nga <strong>profix.ITS</strong></div>
         </div>
     </aside>
     <div class="app-workspace">
@@ -68,7 +73,7 @@
         <main class="app-content" id="main-content" tabindex="-1">
             @RenderBody()
         </main>
-        <footer class="app-footer"><span>© @DateTime.Today.Year 2 Korriku</span><span>Talenti rritet. Ekipi fiton.</span></footer>
+        <footer class="app-footer"><span>© @DateTime.Today.Year 2 Korriku</span><span>Programuar nga <strong>profix.ITS</strong></span></footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>

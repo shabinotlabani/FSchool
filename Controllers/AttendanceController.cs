@@ -13,6 +13,27 @@ public class AttendanceController(ApplicationDbContext db):Controller
 {
     private string Actor=>User.FindFirstValue(ClaimTypes.NameIdentifier)!;
     [HttpGet]
+    public async Task<IActionResult> ChangeGroup(int studentId,int sourceTeamId,string coachRole="head")
+    {
+        try{return View(await new TeamService(db).CoachTransferOptionsAsync(studentId,sourceTeamId,coachRole,Actor));}
+        catch(UnauthorizedAccessException){return NotFound();}
+    }
+    [HttpPost,ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangeGroup(CoachTeamTransferModel model)
+    {
+        if(ModelState.IsValid)try{
+            await new TeamService(db).ChangeStudentByCoachAsync(model,Actor);
+            TempData["Success"]="Grupi i lojtarit u ndryshua.";
+            return RedirectToAction(nameof(Index),new{teamId=model.SourceTeamId,coachRole=model.CoachRole});
+        }
+        catch(UnauthorizedAccessException){return NotFound();}
+        catch(Exception ex)when(ex is InvalidOperationException or ValidationException){ModelState.AddModelError("",ex.Message);}
+        try{
+            var current=await new TeamService(db).CoachTransferOptionsAsync(model.StudentId,model.SourceTeamId,model.CoachRole,Actor);
+            current.TeamId=model.TeamId;return View(current);
+        }catch(UnauthorizedAccessException){return NotFound();}
+    }
+    [HttpGet]
     public async Task<IActionResult> Index(int teamId,string coachRole="head",DateOnly? date=null)
     {
         if(!ModelState.IsValid)return BadRequest();
@@ -39,12 +60,13 @@ public class AttendanceController(ApplicationDbContext db):Controller
         model.TeamName=current.TeamName;model.FieldName=current.FieldName;model.History=current.History;model.SavedAt=current.SavedAt;model.SavedBy=current.SavedBy;
         model.EditableUntil=current.EditableUntil;model.IsLocked=current.IsLocked;
         if(current.IsLocked){ModelState.Clear();ModelState.AddModelError("","Ka kaluar një orë nga ruajtja e parë. Prezenca nuk mund të ndryshohet.");return View("Index",current);}
-        model.Players=(model.Players??[]).Where(x=>x!=null).ToList();
+        model.Players=(model.Players??[]).Where(x=>x!=null&&current.Players.Any(p=>p.StudentId==x.StudentId)).ToList();
         foreach(var row in model.Players){
             var player=current.Players.FirstOrDefault(x=>x.StudentId==row.StudentId);
             row.Name=player?.Name??"Lojtar jashtë listës";
             row.Notes=player?.Notes;
             row.Debt=player?.Debt??0;
+            row.CanChangeGroup=player?.CanChangeGroup??false;
         }
         return View("Index",model);
     }

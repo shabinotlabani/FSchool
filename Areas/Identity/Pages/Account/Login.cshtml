@@ -8,20 +8,20 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#2c3f93" />
+    <meta name="theme-color" content="#f2f2f7" />
+    <meta name="color-scheme" content="light" />
     <title>Hyr në llogari · 2 Korriku</title>
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
     <link rel="icon" type="image/svg+xml" href="~/images/fc-2-korriku.svg" asp-append-version="true" />
 </head>
 <body>
     <main class="login-shell">
-        <section class="form-panel" aria-labelledby="login-title">
+        <section class="form-panel" aria-label="Identifikimi">
             <a href="~/" class="login-brand" aria-label="FC 2 Korriku">
                 <img src="~/images/fc-2-korriku.svg" asp-append-version="true" alt="Stema e FC 2 Korriku" width="64" height="90" />
                 <span>FC 2 KORRIKU<small>Portali i menaxhimit</small></span>
             </a>
             <div class="form-content">
-                <h1 id="login-title">Hyr në llogari</h1>
                 <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
                     <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
                     <div class="field">
@@ -42,9 +42,8 @@
                     <label class="remember"><input asp-for="Input.RememberMe" /> Më mbaj të kyçur</label>
                     <button type="submit" class="submit-button">Hyr në llogari <span aria-hidden="true">→</span></button>
                 </form>
-                <div class="support"><span>Keni nevojë për ndihmë?</span><p>Për qasje në llogari, kontaktoni administratorin.</p></div>
             </div>
-            <footer class="form-footer">© @DateTime.UtcNow.Year 2 Korriku <span>Shkolla e futbollit</span></footer>
+            <footer class="form-footer"><span>© @DateTime.UtcNow.Year 2 Korriku</span><span>Programuar nga <strong>profix.ITS</strong></span></footer>
         </section>
     </main>
     <script>

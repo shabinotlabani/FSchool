@@ -43,7 +43,26 @@ public partial class BillingService
         return debts.ToDictionary(m => m.StudentId, m => m.Due);
     }
 
-    public Task<int> RegisterFamilyPaymentAsync(FamilyPaymentModel input, string actorId) => WriteAsync(async () =>
+    public Task<int> RegisterFamilyPaymentAsync(FamilyPaymentModel input, string actorId) => RegisterFamilyPaymentCore(input,actorId,false);
+    internal Task<int> RegisterFlexibleFamilyBankPaymentAsync(FamilyPaymentModel input,string actorId)
+    {
+        if(input.PaymentMethod!="Bank")throw new InvalidOperationException("Ky konfirmim kërkon pagesë bankare.");
+        return RegisterFamilyPaymentCore(input,actorId,true);
+    }
+
+    // Distribute whole cents proportionally, resolving rounding by student ID.
+    private static Dictionary<int,decimal> DistributeFamilyAmount(IEnumerable<(int Id,decimal Weight)> source,decimal amount)
+    {
+        var members=source.OrderBy(x=>x.Id).ToList();
+        var total=members.Sum(x=>Math.Max(0,x.Weight));
+        if(total==0){members=members.Select(x=>(x.Id,Weight:1m)).ToList();total=members.Count;}
+        var result=members.ToDictionary(x=>x.Id,x=>decimal.Floor(amount*100*Math.Max(0,x.Weight)/total)/100);
+        var cents=(int)decimal.Round((amount-result.Values.Sum())*100);
+        foreach(var member in members.Where(x=>x.Weight>0).Take(cents))result[member.Id]+=.01m;
+        return result;
+    }
+
+    private Task<int> RegisterFamilyPaymentCore(FamilyPaymentModel input, string actorId,bool flexible) => WriteAsync(async () =>
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);
         var hash = Hash(new { input.FamilyId, input.Amount, input.PaymentDate, input.PaymentMethod,
@@ -60,7 +79,14 @@ public partial class BillingService
         if (account.Members.Count == 0) throw new InvalidOperationException("Familja nuk ka anëtarë në paketën aktuale.");
         if (input.ExpectedState != account.State)
             throw new InvalidOperationException("Paketa ose borxhi i familjes ka ndryshuar. Rihapni pagesën familjare.");
-        var allocations = AllocateFamilyPayment(account.Members.Select(m => (m.Student.Id, m.MonthlyDue)), input.Amount!.Value);
+        Dictionary<int,decimal> allocations;
+        if(!flexible)allocations=AllocateFamilyPayment(account.Members.Select(m => (m.Student.Id, m.MonthlyDue)), input.Amount!.Value);
+        else if(input.Amount<=account.Due)allocations=DistributeFamilyAmount(account.Members.Select(m=>(m.Student.Id,m.MonthlyDue)),input.Amount!.Value);
+        else{
+            allocations=account.Members.ToDictionary(m=>m.Student.Id,m=>m.MonthlyDue);
+            var advance=DistributeFamilyAmount(account.Members.Select(m=>(m.Student.Id,m.Student.MonthlyFee)),input.Amount!.Value-account.Due);
+            foreach(var share in advance)allocations[share.Key]+=share.Value;
+        }
         var batch = new FamilyPayment { FamilyId = input.FamilyId, FamilyName = account.Family.Name,
             RequestId = input.RequestId, PayloadHash = hash, Amount = input.Amount.Value,
             PaymentDate = BillingClock.UtcDate(input.PaymentDate!.Value), PaymentMethod = input.PaymentMethod,

@@ -9,6 +9,10 @@
 }
 .app-sidebar .sidebar-content { gap: 0; min-height: min-content; }
 .app-sidebar .side-navigation { gap: 5px; }
+.app-sidebar .side-group-title { margin: 14px 13px 3px; color: #a9b8d7; font-size: 10px; font-weight: 650; letter-spacing: .8px; text-transform: uppercase; }
+.app-sidebar .side-navigation + .side-navigation .side-group-title { margin-top: 0; }
+.app-sidebar .sidebar-credit { margin-top: 14px; padding: 12px 10px 0; border-top: 1px solid #ffffff14; color: #a9b8d7; font-size: 10px; text-align: center; }
+.app-sidebar .sidebar-credit strong { color: #e4eaff; font-weight: 600; white-space: nowrap; }
 .app-sidebar .side-navigation + .side-navigation {
     margin-top: 18px;
     padding-top: 16px;

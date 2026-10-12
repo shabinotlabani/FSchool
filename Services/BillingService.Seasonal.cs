@@ -61,17 +61,24 @@ public partial class BillingService
             throw new InvalidOperationException("Paketa familjare nuk përfiton pagesë sezonale.");
         for (var month = start; month <= end; month = month.AddMonths(1))
             if (At(month)?.FeePlan is { IsFamily: true } or { IsWaiver: true })
-                throw new InvalidOperationException("Sezoni nuk mund të përfshijë muaj me paketë familjare ose lirim nga pagesa.");
+                throw new InvalidOperationException($"Muaji {month:MM.yyyy} ka paketën ‘{At(month)!.FeePlan!.Name}’. Sezoni nuk lejohet për muaj me paketë familjare ose lirim.");
         var seasons = await db.Payments.AsNoTracking().Where(p => p.StudentId == student.Id && !p.IsCancelled && p.SeasonalStartMonth != null).ToListAsync();
-        if (seasons.Any(p => p.SeasonalStartMonth <= end && p.SeasonalEndMonth >= start))
-            throw new InvalidOperationException("Kjo periudhë mbulohet nga një pagesë sezonale. Zgjidhni muajin pas përfundimit të saj.");
+        var overlap=seasons.FirstOrDefault(p => p.SeasonalStartMonth <= end && p.SeasonalEndMonth >= start);
+        if (overlap!=null)
+            throw new InvalidOperationException($"Ekziston pagesa sezonale #{overlap.Id} për {overlap.SeasonalStartMonth:MM.yyyy}–{overlap.SeasonalEndMonth:MM.yyyy}. Zgjidhni fillim pas kësaj periudhe.");
         var fee = await new TariffService(db).ResolveAsync(student, start);
         if (fee.IsWaiver || fee.Amount <= 0 || decimal.Round(fee.Amount, 2) != fee.Amount || fee.Amount > 999999999999999.99m)
             throw new InvalidOperationException("Sezoni kërkon tarifë mujore pozitive dhe të vlefshme.");
         var invoices = await GetInvoicesAsync(student.Id);
         foreach (var invoice in invoices.Where(i => new DateOnly(i.Period.Year, i.Period.Month, 1) >= start && new DateOnly(i.Period.Year, i.Period.Month, 1) <= end))
             if (invoice.Paid > 0 || invoice.Exempted > 0 || invoice.Period.IsFeeWaived || invoice.Amount != fee.Amount)
-                throw new InvalidOperationException("Një muaj i zgjedhur ka pagesë, lirim ose tarifë tjetër. Fillojeni sezonin nga muaji vijues i pambuluar.");
+            {
+                var reasons=new List<string>();
+                if(invoice.Paid>0)reasons.Add($"pagesë të mbuluar {invoice.Paid:N2}");
+                if(invoice.Exempted>0||invoice.Period.IsFeeWaived)reasons.Add($"lirim / zbritje {invoice.Exempted:N2}");
+                if(invoice.Amount!=fee.Amount)reasons.Add($"tarifë {invoice.Amount:N2}, ndërsa sezoni kërkon {fee.Amount:N2}");
+                throw new InvalidOperationException($"Muaji {invoice.Period.Month:00}.{invoice.Period.Year} ka {string.Join("; ",reasons)}. Zgjidhni fillim pas këtij muaji ose kontrolloni kartelën.");
+            }
         if (await db.StudentMonthlyExemptions.AnyAsync(e => e.StudentId == student.Id && (e.Year > start.Year || e.Year == start.Year && e.Month >= start.Month) && (e.Year < end.Year || e.Year == end.Year && e.Month <= end.Month)))
             throw new InvalidOperationException("Periudha ka historik lirimesh. Zgjidhni një periudhë tjetër për sezonin.");
         return new(start, input.Months, fee.Amount);

@@ -1,0 +1,20 @@
+@model List<BillingGridRow>
+@foreach(var row in Model){
+<tr class="@(row.Family!=null?"table-light":"")">
+<td><a class="fw-semibold" asp-action="@(row.Family!=null?"Family":"Account")" asp-route-id="@(row.Family?.Id??row.Students[0].Id)">@row.Name</a>
+@if(row.Family!=null){<span class="badge text-bg-secondary ms-2">Familje</span>@foreach(var student in row.Students){<small class="balance-caption">@student.FullName</small>}}
+@if(row.Invoices.Count==0){<small class="balance-caption">Pa faturë mujore në këtë muaj</small>}</td>
+<td>@(row.Invoices.Count>0?row.Invoices.Sum(x=>x.Amount).ToString("N2"):"—")</td>
+<td>@(row.Invoices.Count>0?row.Invoices.Sum(x=>x.Exempted).ToString("N2"):"—")</td>
+<td>@(row.Invoices.Count>0?row.Invoices.Sum(x=>x.Paid).ToString("N2"):"—")</td>
+<td class="text-nowrap"><strong class="@(row.TotalDue>0?"text-danger":"text-success")">@row.TotalDue.ToString("N2")</strong>
+@if(row.PendingBankAmount>0){<small class="balance-caption text-warning">Bankë në pritje: @row.PendingBankAmount.ToString("N2")</small>}
+@if(row.OtherDebts.Count>0){@if(row.MonthlyDue>0){<small class="balance-caption">Muaji: @row.MonthlyDue.ToString("N2")</small>}@foreach(var category in row.OtherDebts.GroupBy(x=>x.Category)){<small class="balance-caption">@category.Key: @category.Sum(x=>x.Due).ToString("N2")</small>}}</td>
+<td><span class="status-pill @(row.TotalDue>0?"billing-unpaid":"status-active")">@(row.TotalDue>0?"Me borxh":"E paguar")</span></td>
+<td><div class="billing-actions">
+@if(row.Family!=null){<a asp-action="Family" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@row.Family.Id">@(row.MonthlyDue>0&&(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator))?"Paguaj familjen":"Kartela familjare")</a>}
+else{@foreach(var invoice in row.Invoices){<a asp-action="Invoice" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@invoice.Period.Id">Fletëpagesa</a>@if(invoice.Due>0&&(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator))){<a asp-action="Register" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-studentId="@invoice.Student.Id">Paguaj muajin</a>}@if(User.IsInRole(Roles.Admin)&&invoice.CanExempt){<a asp-action="Exempt" asp-route-id="@invoice.Period.Id">Liro</a>}}}
+@if(row.OtherDebts.Count>0){<details class="billing-debt-actions"><summary>Paguaj borxhet e tjera (@row.OtherDebts.Count)</summary>@foreach(var debt in row.OtherDebts){<div class="py-2">@if(row.Family!=null){<small class="d-block text-secondary">@debt.StudentName</small>}<small class="d-block">@debt.Category · @debt.Document</small>@if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){<a asp-controller="@debt.Controller" asp-action="@debt.Action" asp-route-id="@debt.Id">@(debt.Action=="Pay"?"Paguaj":"Dokumenti") · @debt.Due.ToString("N2")</a>}else{<span>@debt.Due.ToString("N2")</span>}</div>}</details>}
+</div></td>
+<td>@foreach(var invoice in row.Invoices){@if(row.Family!=null){<small class="d-block text-secondary">@invoice.Student.FullName</small>}<partial name="_AttendanceSummary" model="invoice.Attendance"/>}@if(row.Invoices.Count==0){<span class="text-secondary">—</span>}</td>
+</tr>}

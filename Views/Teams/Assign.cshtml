@@ -1,9 +1,41 @@
 @model ChangeStudentTeamModel
 @using _2Korriku.Services
-@{ViewData["Title"]="Cakto ekipin";}
-<div class="page-heading"><div><p class="eyebrow">@Model.Student!.FullName · @TeamService.Age(Model.Student.DateOfBirth) VJEÇ</p><h1>Cakto ose ndrysho ekipin</h1><p>Ekipi aktual: @(Model.Student.TrainingTeam?.Name??"Pa ekip")</p></div></div>
-<form method="post" class="panel p-4"><input asp-for="StudentId" type="hidden"/><input asp-for="ExpectedTeamId" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div><label asp-for="TeamId" class="form-label">Ekipi i ri</label><select asp-for="TeamId" class="form-select mb-3"><option value="">Pa ekip / largo nga ekipi aktual</option>@if(Model.Student.TrainingTeamId.HasValue&&!Model.Options.Any(o=>o.Team.Id==Model.Student.TrainingTeamId)){<option value="@Model.Student.TrainingTeamId">@(Model.Student.TrainingTeam?.Name) · ekipi aktual</option>}@foreach(var o in Model.Options){<option value="@o.Team.Id" disabled="@(o.FreePlaces==0)">@o.Team.Name · @o.FreePlaces vende · @string.Join("; ",o.Team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{TeamService.DayName(s.Day)} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"))</option>}</select><label asp-for="Reason" class="form-label">Arsyeja e caktimit / transferimit</label><input asp-for="Reason" class="form-control mb-4" maxlength="200" required/><button class="btn btn-primary">Ruaj caktimin</button></form>
-
+@{ViewData["Title"]="Cakto ekipin";var student=Model.Student!;var age=TeamService.Age(student.DateOfBirth);}
+<link rel="stylesheet" href="~/css/attendance.css" asp-append-version="true"/>
+<div class="attendance-page">
+<div class="page-heading"><div><h1>Cakto ekipin</h1><p><strong>@student.FullName</strong> · @age vjeç<br/>Ekipi aktual: @(student.TrainingTeam?.Name??"Pa ekip")</p></div></div>
+<form method="post">
+<input asp-for="StudentId" type="hidden"/><input asp-for="ExpectedTeamId" type="hidden"/>
+<div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<fieldset class="transfer-groups">
+<legend class="h6">Ekipet · @Model.Options.Count</legend>
+@foreach(var option in Model.Options){
+    var team=option.Team;var matches=team.MinAge<=age&&team.MaxAge>=age;var current=team.Id==student.TrainingTeamId;
+    var available=current||(student.IsActive&&matches&&option.FreePlaces>0);
+    <label class="transfer-group @(available?"":"is-unavailable")">
+    <input asp-for="TeamId" type="radio" value="@team.Id" id="assign-team-@team.Id" disabled="@(!available)"/>
+    <span class="transfer-group-body">
+        <span class="transfer-group-heading"><strong>@team.Name</strong><small class="@(available?"text-success":"text-secondary")">@(current?"Ekipi aktual":!student.IsActive?"Lojtari është joaktiv":!matches?"Jashtë moshës":option.FreePlaces==0?"I mbushur":"I propozuar për moshën")</small></span>
+        <small class="text-secondary">@team.MinAge–@team.MaxAge vjeç · @option.FreePlaces vende të lira</small>
+        <span>Trajner: <strong>@team.Coach?.FirstName @team.Coach?.LastName</strong></span>
+        <span>Ndihmëstrajner: <strong>@team.AssistantCoach?.FirstName @team.AssistantCoach?.LastName</strong></span>
+        <span class="transfer-group-schedule">
+        @foreach(var session in team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt)){<span>@TeamService.DayName(session.Day) <strong>@session.StartsAt.ToString("HH:mm")–@session.EndsAt.ToString("HH:mm")</strong></span>}
+        @if(team.Sessions.Count==0){<span>Pa orar të caktuar</span>}
+        </span>
+        @if(!string.IsNullOrWhiteSpace(team.FootballField?.Name??team.Location)){<small class="text-secondary">@(team.FootballField?.Name??team.Location)</small>}
+    </span></label>
+}
+@if(Model.Options.Count==0){<p class="text-secondary">Nuk ka ekipe aktive.</p>}
+else if(!Model.Options.Any(x=>x.Team.MinAge<=age&&x.Team.MaxAge>=age&&x.FreePlaces>0)){<p class="text-secondary">Nuk ka ekip me vende të lira për moshën @age vjeç.</p>}
+@if(student.TrainingTeamId.HasValue&&!Model.Options.Any(x=>x.Team.Id==student.TrainingTeamId)){
+<label class="transfer-group"><input asp-for="TeamId" type="radio" value="@student.TrainingTeamId" id="assign-current"/><span class="transfer-group-body"><strong>@student.TrainingTeam?.Name</strong><small>Ekipi aktual · Joaktiv</small></span></label>
+}
+<label class="transfer-group"><input asp-for="TeamId" type="radio" value="" id="assign-none"/><span class="transfer-group-body"><strong>Pa ekip</strong><small class="text-secondary">@(student.TrainingTeamId.HasValue?"Largo nga ekipi aktual":"Caktoje më vonë")</small></span></label>
+</fieldset>
+<div class="panel p-3 mt-3"><label asp-for="Reason" class="form-label">Arsyeja e caktimit / transferimit</label><input asp-for="Reason" class="form-control" maxlength="200" placeholder="P.sh. ndryshim i orarit" required/><span asp-validation-for="Reason" class="text-danger small"></span></div>
+<div class="attendance-save panel mt-3"><button type="submit" class="btn btn-primary w-100 py-3">Ruaj caktimin</button></div>
+</form></div>
 @section PageNavigation {
     <a class="btn btn-outline-secondary app-back-button" asp-controller="Payments" asp-action="Account" asp-route-id="@Model.StudentId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
 }

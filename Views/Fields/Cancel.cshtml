@@ -10,7 +10,7 @@
 }
 else if(booking.Paid > 0)
 {
-    <p>Termini ka @booking.Paid.ToString("N2") € pagesa aktive. Anuloni dhe ktheni fillimisht pagesat përpara anulimit të terminit.</p>
+    <p>Termini ka @booking.Paid.ToString("N2") pagesa aktive. Anuloni dhe ktheni fillimisht pagesat përpara anulimit të terminit.</p>
     <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-primary">Shiko pagesat</a>
 }
 else

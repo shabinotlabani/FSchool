@@ -1,0 +1,30 @@
+@model ReasonReportModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Veprimet me arsye";}
+<link rel="stylesheet" href="~/css/reason-report.css" asp-append-version="true"/>
+<div class="reason-report">
+<div class="page-heading"><div><h1>Veprimet me arsye</h1><p>@Model.Filter.From?.ToString("dd.MM.yyyy") – @Model.Filter.To?.ToString("dd.MM.yyyy")</p></div><div class="d-flex gap-2 no-print"><a asp-action="Index" asp-route-from="@Model.Filter.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.Filter.To?.ToString("yyyy-MM-dd")" class="btn btn-outline-primary">Raporti financiar</a><button type="button" class="btn btn-primary" onclick="window.print()">Printo</button></div></div>
+<form method="get" class="panel p-3 mb-4 no-print">
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<div class="row g-3 align-items-end">
+<div class="col-6 col-lg-2"><label for="From" class="form-label">Nga data</label><input id="From" name="From" value="@Model.Filter.From?.ToString("yyyy-MM-dd")" type="date" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required/></div>
+<div class="col-6 col-lg-2"><label for="To" class="form-label">Deri në datë</label><input id="To" name="To" value="@Model.Filter.To?.ToString("yyyy-MM-dd")" type="date" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" class="form-control" required/></div>
+<div class="col-6 col-lg-2"><label for="category" class="form-label">Kategoria</label><select id="category" name="category" class="form-select"><option value="">Të gjitha</option>@foreach(var c in ReasonReportModel.Categories){<option value="@c" selected="@(Model.Category==c)">@c</option>}</select></div>
+<div class="col-6 col-lg-2"><label for="actionType" class="form-label">Veprimi</label><select id="actionType" name="actionType" class="form-select"><option value="">Të gjitha</option>@foreach(var a in ReasonReportModel.Actions){<option value="@a" selected="@(Model.Action==a)">@a</option>}</select></div>
+<div class="col-12 col-lg-4"><label for="search" class="form-label">Kërko</label><input id="search" name="search" value="@Model.Search" class="form-control" placeholder="Emri, arsyeja ose përdoruesi"/></div>
+<div class="col-12 d-flex gap-2"><button class="btn btn-primary">Shfaq raportin</button><a asp-action="Reasons" class="btn btn-outline-secondary">Ky muaj</a></div>
+</div></form>
+@if(ViewData.ModelState.IsValid){
+<div class="reason-counts">@foreach(var summary in Model.Rows.GroupBy(x=>x.Action)){<span>@summary.Key <strong>@summary.Count()</strong></span>}<span>Gjithsej <strong>@Model.Rows.Count</strong></span></div>
+@if(!string.IsNullOrEmpty(Model.Category)||!string.IsNullOrEmpty(Model.Action)||!string.IsNullOrEmpty(Model.Search)){<p class="small text-secondary">@Model.Category · @Model.Action @if(!string.IsNullOrEmpty(Model.Search)){<span>· Kërkimi: @Model.Search</span>}</p>}
+@foreach(var group in Model.Rows.GroupBy(x=>x.Category)){
+<section class="reason-category panel mb-4">
+<h2>@group.Key <span>@group.Count() veprime</span></h2>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Data / ora</th><th>Veprimi</th><th>Lojtari / dokumenti</th><th>Arsyeja</th><th class="text-end">Shuma</th><th>Kryer nga</th></tr></thead><tbody>
+@foreach(var row in group){<tr><td class="reason-date">@TimeZoneInfo.ConvertTimeFromUtc(row.Date,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</td><td><span class="reason-action">@row.Action</span></td><td><strong>@row.Subject</strong><small class="d-block text-secondary">@row.Document</small></td><td class="reason-text">@row.Reason</td><td class="text-end text-nowrap">@(row.Amount?.ToString("N2")??"—")</td><td>@row.Actor</td></tr>}
+</tbody></table></div></section>
+}
+@if(Model.Rows.Count==0){<div class="panel p-4">Nuk ka veprime për filtrat e zgjedhur.</div>}
+}
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}

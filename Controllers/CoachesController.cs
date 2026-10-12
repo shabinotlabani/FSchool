@@ -27,6 +27,16 @@ public class CoachesController(ApplicationDbContext db, UserManager<ApplicationU
   var ids=coaches.Select(x=>x.Id).ToList();
   return View(new CoachDirectoryModel { Coaches=coaches, Assignments=await db.CoachTeams.AsNoTracking().Include(x=>x.TrainingTeam).Where(x=>ids.Contains(x.UserId)).ToListAsync() });
  }
+ [Authorize(Roles=Roles.Coach)]
+ public async Task<IActionResult> Personal()
+ {
+  var id=User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+  var today=_2Korriku.Services.BillingClock.Today;
+  var list=await db.PersonalTrainings.AsNoTracking().Include(x=>x.Student).Include(x=>x.Sessions)
+   .Where(x=>x.CoachId==id&&!x.IsCancelled&&(x.Mode=="Session"?x.StartsOn>=today:!x.EndsOn.HasValue||x.EndsOn>=today))
+   .OrderBy(x=>x.StartsOn).ThenBy(x=>x.Student!.FirstName).ToListAsync();
+  return View(list);
+ }
  public async Task<IActionResult> Team(int id,string? search)
  {
   if(User.IsInRole(Roles.Coach) && !await db.CoachTeams.AnyAsync(x=>x.UserId==User.FindFirstValue(ClaimTypes.NameIdentifier)&&x.TrainingTeamId==id)) return NotFound();

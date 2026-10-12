@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -15,7 +15,7 @@ public class StudentWorkflowService(ApplicationDbContext db)
     {
         Validator.ValidateObject(input,new ValidationContext(input),true);
         foreach(var child in input.Children)Validator.ValidateObject(child,new ValidationContext(child),true);
-        var payload=JsonSerializer.Serialize(new{input.FamilyId,FeePlanId=input.FamilyId.HasValue?0:input.FeePlanId,FamilyName=input.FamilyId.HasValue?null:Clean(input.FamilyName),ParentName=Clean(input.ParentName),ParentPhone=Clean(input.ParentPhone),ParentEmail=Clean(input.ParentEmail),Children=input.Children.Select(c=>new{FirstName=c.FirstName.Trim(),LastName=c.LastName.Trim(),c.DateOfBirth,c.TrainingTeamId,c.FirstMonthAmount,FirstMonthReason=Clean(c.FirstMonthReason),Notes=Clean(c.Notes)})});
+        var payload=JsonSerializer.Serialize(new{input.FamilyId,PreferredPaymentMethod=input.FamilyId.HasValue?null:input.PreferredPaymentMethod,FeePlanId=input.FamilyId.HasValue?0:input.FeePlanId,FamilyName=input.FamilyId.HasValue?null:Clean(input.FamilyName),ParentName=Clean(input.ParentName),ParentPhone=Clean(input.ParentPhone),ParentEmail=Clean(input.ParentEmail),Children=input.Children.Select(c=>new{FirstName=c.FirstName.Trim(),LastName=c.LastName.Trim(),c.DateOfBirth,c.TrainingTeamId,c.FirstMonthAmount,FirstMonthReason=Clean(c.FirstMonthReason),Notes=Clean(c.Notes)})});
         var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);
@@ -37,7 +37,7 @@ public class StudentWorkflowService(ApplicationDbContext db)
                 throw new InvalidOperationException("Zgjidhni një tarifë familjare aktive.");
             var name=input.FamilyName!.Trim();
             if(await db.PlayerFamilies.AnyAsync(f=>f.Name.ToUpper()==name.ToUpper()))throw new InvalidOperationException("Familja ekziston. Zgjidheni nga lista ose shkruani një emër dallues.");
-            family=new(){Name=name,Phone=Clean(input.ParentPhone)};db.PlayerFamilies.Add(family);await db.SaveChangesAsync();
+            family=new(){PreferredPaymentMethod=input.PreferredPaymentMethod,Name=name,Phone=Clean(input.ParentPhone)};db.PlayerFamilies.Add(family);await db.SaveChangesAsync();
             db.FamilyTariffAssignments.Add(new() { FamilyId = family.Id, FeePlanId = input.FeePlanId,
                 EffectiveMonth = TariffService.CurrentMonth, CreatedByUserId = actor });
             await db.SaveChangesAsync();
@@ -49,7 +49,7 @@ public class StudentWorkflowService(ApplicationDbContext db)
         foreach(var child in input.Children)
         {
             var team=await new TeamService(db).ValidatePlacementAsync(child.TrainingTeamId,child.DateOfBirth!.Value);
-            var student=new Student{FirstMonthUsesWeeks=true,FirstName=child.FirstName.Trim(),LastName=child.LastName.Trim(),DateOfBirth=child.DateOfBirth.Value,ParentName=Clean(input.ParentName),ParentPhone=Clean(input.ParentPhone),ParentEmail=Clean(input.ParentEmail),Notes=Clean(child.Notes),TrainingTeamId=team?.Id};
+            var student=new Student{PreferredPaymentMethod=family.PreferredPaymentMethod,FirstMonthUsesWeeks=true,FirstName=child.FirstName.Trim(),LastName=child.LastName.Trim(),DateOfBirth=child.DateOfBirth.Value,ParentName=Clean(input.ParentName),ParentPhone=Clean(input.ParentPhone),ParentEmail=Clean(input.ParentEmail),Notes=Clean(child.Notes),TrainingTeamId=team?.Id};
             db.Students.Add(student);await db.SaveChangesAsync();
             if(team!=null)db.StudentTeamChanges.Add(new(){StudentId=student.Id,ToTeamId=team.Id,ToTeamName=team.Name,Reason="Regjistrim familjar",ActorId=actor});
             await familyService.JoinRegistrationAsync(family.Id,student,actor);
@@ -65,7 +65,7 @@ public class StudentWorkflowService(ApplicationDbContext db)
             await billing.ApplyFirstMonthOverrideAsync(periodId,child.FirstMonthAmount,child.FirstMonthReason,actor);
         }
         db.FamilyRegistrations.Add(new(){RequestId=input.RequestId,PayloadHash=hash,FamilyId=family.Id,ActorId=actor});
-        await db.SaveChangesAsync();await tx.CommitAsync();return family.Id;
+        await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();await tx.CommitAsync();return family.Id;
     }
 
     public async Task EditAsync(StudentEditModel input,string actor)
@@ -81,8 +81,9 @@ public class StudentWorkflowService(ApplicationDbContext db)
             throw new InvalidOperationException("Lojtari joaktiv nuk mund të caktohet në ekip të ri.");
         if(input.IsActive && (!student.IsActive || student.TrainingTeamId!=input.TrainingTeamId || student.DateOfBirth!=input.DateOfBirth))
             await new TeamService(db).ValidatePlacementAsync(input.TrainingTeamId,input.DateOfBirth!.Value,student.Id);
-        static object Snapshot(Student s)=>new{s.FirstName,s.LastName,s.DateOfBirth,s.ParentName,s.ParentPhone,s.ParentEmail,s.Notes,s.IsActive,s.TrainingTeamId};
+        static object Snapshot(Student s)=>new{s.PreferredPaymentMethod,s.FirstName,s.LastName,s.DateOfBirth,s.ParentName,s.ParentPhone,s.ParentEmail,s.Notes,s.IsActive,s.TrainingTeamId};
         var before=JsonSerializer.Serialize(Snapshot(student));var changes=new List<string>();
+        if(student.PreferredPaymentMethod!=input.PreferredPaymentMethod)changes.Add("Mënyra e zakonshme e pagesës");
         if(student.FirstName!=input.FirstName.Trim()||student.LastName!=input.LastName.Trim())changes.Add("Emri / mbiemri");
         if(student.DateOfBirth!=input.DateOfBirth)changes.Add("Datëlindja");
         if(student.ParentName!=Clean(input.ParentName)||student.ParentPhone!=Clean(input.ParentPhone)||student.ParentEmail!=Clean(input.ParentEmail))changes.Add("Të dhënat e prindit");
@@ -96,10 +97,10 @@ public class StudentWorkflowService(ApplicationDbContext db)
             db.StudentTeamChanges.Add(new(){StudentId=student.Id,FromTeamId=student.TrainingTeamId,FromTeamName=oldName,ToTeamId=input.TrainingTeamId,ToTeamName=newName,Reason=input.Reason.Trim(),ActorId=actor});
         }
         if(changes.Count==0)return;
-        student.FirstName=input.FirstName.Trim();student.LastName=input.LastName.Trim();student.DateOfBirth=input.DateOfBirth!.Value;
+        student.PreferredPaymentMethod=input.PreferredPaymentMethod;student.FirstName=input.FirstName.Trim();student.LastName=input.LastName.Trim();student.DateOfBirth=input.DateOfBirth!.Value;
         student.ParentName=Clean(input.ParentName);student.ParentEmail=Clean(input.ParentEmail);student.ParentPhone=Clean(input.ParentPhone);student.Notes=Clean(input.Notes);
         student.IsActive=input.IsActive;student.TrainingTeamId=input.TrainingTeamId;student.UpdatedAt=DateTime.UtcNow;student.Revision=Guid.NewGuid();
         db.StudentChanges.Add(new(){StudentId=student.Id,ActorId=actor,Reason=input.Reason.Trim(),Before=before,After=JsonSerializer.Serialize(Snapshot(student)),Summary=string.Join("; ",changes)});
-        await db.SaveChangesAsync();await tx.CommitAsync();
+        await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();await tx.CommitAsync();
     }
 }

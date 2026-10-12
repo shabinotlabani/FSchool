@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using _2Korriku.Data;
 using _2Korriku.Models;
@@ -62,7 +62,7 @@ public class TariffService(ApplicationDbContext db)
                 amount=await db.FeePlanPrices.Where(p=>p.FeePlanId==1 && p.EffectiveMonth<=month).OrderByDescending(p=>p.EffectiveMonth).ThenByDescending(p=>p.Id).Select(p=>p.Amount).FirstAsync();
             var family=await db.PlayerFamilies.AsNoTracking().SingleAsync(f=>f.Id==assignment.FamilyId);
             var familyLabel=family.Name.Length>45?family.Name[..45]+"…":family.Name;
-            return new(amount,$"Familjare · {familyLabel} · Fëmija {position}/{members.Count}",false,assignment.Reason,$"{assignment.Notes} · Paketa: {price.FamilyFirstCount} të parët nga {price.FamilyFirstAmount??40:0.##} €, të tjerët nga {price.FamilyAdditionalAmount??35:0.##} €." );
+            return new(amount,$"Familjare · {familyLabel} · Fëmija {position}/{members.Count}",false,assignment.Reason,$"{assignment.Notes} · Paketa: {price.FamilyFirstCount} të parët nga {price.FamilyFirstAmount??40:0.##}, të tjerët nga {price.FamilyAdditionalAmount??35:0.##}." );
         }
         return new(price.Amount,assignment.FeePlan!.Name+(assignment.FeePlan!.IsFamily?" (tarifë e mëparshme, pa familje)":""),assignment.FeePlan.IsWaiver,assignment.Reason,assignment.Notes);
     }

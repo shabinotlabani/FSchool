@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     const weeks = document.getElementById('Weeks');
     const date = document.getElementById('Date');
     const price = document.getElementById('Price');
@@ -15,7 +15,7 @@
         const format = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
         const last = new Date(first); last.setDate(last.getDate() + (count - 1) * 7);
         const amount = Number(price.value);
-        const cost = Number.isFinite(amount) && amount >= 0 ? ` · Gjithsej: ${(amount * count).toLocaleString('sq-AL', {minimumFractionDigits:2, maximumFractionDigits:2})} € (${count} × ${amount.toLocaleString('sq-AL')} €)` : '';
+        const cost = Number.isFinite(amount) && amount >= 0 ? ` · Gjithsej: ${(amount * count).toLocaleString('sq-AL', {minimumFractionDigits:2, maximumFractionDigits:2})} (${count} × ${amount.toLocaleString('sq-AL')})` : '';
         preview.textContent = `${count} termine · ${days[first.getDay()]} · ${format(first)}${count > 1 ? ' – ' + format(last) : ''}${start.value && end.value ? ' · ' + start.value + '–' + end.value : ''}${cost}. Çdo termin paguhet ose anulohet veçmas.`;
     }
     [weeks, date, price, start, end].forEach(input => input.addEventListener('input', update));

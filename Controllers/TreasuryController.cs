@@ -34,7 +34,7 @@ public class TreasuryController(ApplicationDbContext db) : Controller
     {
         if (ModelState.IsValid) try
         {
-            var id = await new TreasuryService(db).CreateAsync(model, Actor);
+            if(model.Method=="Bank"){await new BankVerificationService(db).QueueTreasury(model,Actor);return RedirectToAction("Index","BankPayments");} var id = await new TreasuryService(db).CreateAsync(model, Actor);
             TempData["Success"] = "Regjistrimi u ruajt.";
             return RedirectToAction(nameof(Details), new { id });
         }

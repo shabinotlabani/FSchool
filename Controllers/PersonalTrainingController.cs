@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
@@ -39,6 +39,8 @@ public class PersonalTrainingController(ApplicationDbContext db):Controller
         return View(m);
     }
     private async Task Choices(PersonalTrainingCreateModel m){
+        var coachIds=await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id where r.Name==Roles.Coach select ur.UserId).ToListAsync();
+        m.Coaches=(await db.Users.AsNoTracking().Where(x=>coachIds.Contains(x.Id)).OrderBy(x=>x.FirstName).ThenBy(x=>x.LastName).ToListAsync()).Where(x=>!UserAdministrationService.IsDisabled(x)).ToList();
         m.Students=await db.Students.AsNoTracking().Where(x=>x.IsActive).OrderBy(x=>x.LastName).ToListAsync();
         m.Tariffs=await db.PersonalTariffs.AsNoTracking().Where(x=>x.IsActive).OrderBy(x=>x.Name).ToListAsync();
     }
@@ -63,7 +65,7 @@ public class PersonalTrainingController(ApplicationDbContext db):Controller
     [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Write)]
     public async Task<IActionResult> Pay(PersonalPaymentModel m){
         m.Charge=await Charge(m.ChargeId);if(m.Charge==null)return NotFound();
-        if(ModelState.IsValid)try{var id=await Service.PayAsync(m,Actor);return RedirectToAction("Receipt","Payments",new{id});}catch(Exception ex)when(ex is ValidationException or InvalidOperationException){ModelState.AddModelError("",ex.Message);}
+        if(ModelState.IsValid)try{if(m.PaymentMethod=="Bank"){await new BankVerificationService(db).QueuePersonal(m,Actor);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return RedirectToAction("Index","Payments");} var id=await Service.PayAsync(m,Actor);TempData["Success"]="Pagesa u regjistrua.";TempData["PaymentReceiptId"]=id;return RedirectToAction("Index","Payments");}catch(Exception ex)when(ex is ValidationException or InvalidOperationException){ModelState.AddModelError("",ex.Message);}
         return View(m);
     }
     public async Task<IActionResult> Print(int id){

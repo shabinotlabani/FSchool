@@ -1,4 +1,4 @@
-﻿@model DashboardViewModel
+@model DashboardViewModel
 @{ ViewData["Title"] = "Përmbledhja"; }
 @if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator))
 {
@@ -12,7 +12,7 @@
         } else {<div class="empty-panel"><span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-players" /></svg></span><strong>Ekipi fillon këtu</strong><p>Regjistroni lojtarin e parë të shkollës.</p>@if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-controller="Students" asp-action="Create" class="text-link">+ Regjistro lojtar</a>}</div>}
     </section>
     <section class="panel"><div class="panel-heading"><div><h2>Detyrimet e lojtarëve</h2><p>Pesë bilancet më të larta të papaguara</p></div><a asp-controller="Reports" asp-action="Operations" class="icon-link" aria-label="Shiko raportet"><svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg></a></div>
-        @if(Model.Stats.StudentsWithHighestOutstandingDebt.Any()) {<div class="activity-list">@foreach(var student in Model.Stats.StudentsWithHighestOutstandingDebt) {<div class="activity-row"><span class="person-avatar debt-avatar" aria-hidden="true"><svg class="icon"><use href="#i-wallet" /></svg></span><div class="activity-description"><strong>@student.StudentName</strong><small>Detyrim i papaguar</small></div><strong class="debt-amount">@student.Balance.ToString("N2") €</strong></div>}</div>}
+        @if(Model.Stats.StudentsWithHighestOutstandingDebt.Any()) {<div class="activity-list">@foreach(var student in Model.Stats.StudentsWithHighestOutstandingDebt) {<div class="activity-row"><span class="person-avatar debt-avatar" aria-hidden="true"><svg class="icon"><use href="#i-wallet" /></svg></span><div class="activity-description"><strong>@student.StudentName</strong><small>Detyrim i papaguar</small></div><strong class="debt-amount">@student.Balance.ToString("N2")</strong></div>}</div>}
         else {<div class="empty-panel"><span class="empty-icon tint-green"><svg class="icon" aria-hidden="true"><use href="#i-check" /></svg></span><strong>Asnjë detyrim i papaguar</strong><p>Lojtarët nuk kanë borxhe të regjistruara.</p></div>}
     </section>
 </div>

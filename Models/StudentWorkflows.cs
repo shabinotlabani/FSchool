@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Services;
 
 namespace _2Korriku.Models;
@@ -22,6 +22,7 @@ public class FamilyChildInput : IValidatableObject
 }
 public class FamilyRegistrationModel : IValidatableObject
 {
+    [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     [Range(1,int.MaxValue)] public int FeePlanId { get; set; } = 2;
     public List<FeePlanOption> Plans { get; set; } = [];
     public Dictionary<int,int> FamilyPlanIds { get; set; } = [];
@@ -56,6 +57,7 @@ public class FamilyRegistration
 }
 public class StudentEditModel : FamilyChildInput
 {
+    [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
     public Guid Revision { get; set; }
     [StringLength(150)] public string? ParentName { get; set; }

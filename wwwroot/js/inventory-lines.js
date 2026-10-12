@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     const issue = !!document.querySelector('#issue-form');
     const form = document.querySelector(issue ? '#issue-form' : '#stock-entry-form');
     const body = document.querySelector(issue ? '#issue-lines' : '#stock-lines');
@@ -36,7 +36,7 @@
             const quantity = field(row, 'Quantity'), product = field(row, 'ProductId');
             const price = issue ? product.selectedOptions[0]?.dataset.price || '0' : field(row, 'UnitPrice').value;
             const value = (cents(quantity.value) * cents(price) + 50n) / 100n;
-            gross += value; row.querySelector('.line-total').textContent = money(value) + (issue ? ' €' : '');
+            gross += value; row.querySelector('.line-total').textContent = money(value) + (issue ? '' : '');
             const id = field(row, 'ProductVariantId').value, variant = catalog.find(v => String(v.id) === id);
             quantity.setCustomValidity(issue && variant && totals.get(id) > cents(String(variant.stock)) ? 'Sasia totale e kësaj madhësie tejkalon stokun.' : '');
             row.querySelector('.remove-line').disabled = body.rows.length === 1;
@@ -52,10 +52,10 @@
         document.querySelector('#waiver-fields').hidden = !free;
         document.querySelector('#note-required').hidden = !free;
         document.querySelector('#pay-full').disabled = free;
-        document.querySelector('#gross').textContent = money(gross) + ' €';
-        document.querySelector('#net').textContent = money(net) + ' €';
+        document.querySelector('#gross').textContent = money(gross) + '';
+        document.querySelector('#net').textContent = money(net) + '';
         const due = net - cents(paid.value);
-        document.querySelector('#due').textContent = money(due > 0n ? due : 0n) + ' €';
+        document.querySelector('#due').textContent = money(due > 0n ? due : 0n) + '';
         paid.setCustomValidity(cents(paid.value) > net ? 'Pagesa tejkalon detyrimin.' : '');
     }
     add.onclick = () => {

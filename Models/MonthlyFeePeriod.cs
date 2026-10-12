@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using _2Korriku.Services;
 
@@ -14,9 +14,9 @@ public class MonthlyFeePeriod
     [Column(TypeName = "numeric(18,2)")] public decimal? FullMonthlyAmount { get; set; }
     public DateOnly? ProratedFrom { get; set; }
     [NotMapped] public string? ProrationDescription => FirstMonthFinal.HasValue
-        ? $"Muaji i parë: {FirstMonthWeeks?.ToString() ?? "—"}/4 javë · Propozimi {FirstMonthSuggested:N2} € · Shuma {FirstMonthFinal:N2} €" + (FirstMonthReason==null?" · Rrumbullakim përpjetë.":" · Caktuar nga operatori: "+FirstMonthReason)
+        ? $"Muaji i parë: {FirstMonthWeeks?.ToString() ?? "—"}/4 javë · Propozimi {FirstMonthSuggested:N2} · Shuma {FirstMonthFinal:N2}" + (FirstMonthReason==null?" · Rrumbullakim përpjetë.":" · Caktuar nga operatori: "+FirstMonthReason)
         : ProratedFrom is DateOnly start && FullMonthlyAmount is decimal amount
-        ? $"Muaji i parë: {start:dd.MM.yyyy}–{DateTime.DaysInMonth(start.Year, start.Month):00}.{start:MM.yyyy} · {amount:N2} € × {DateTime.DaysInMonth(start.Year, start.Month) - start.Day + 1}/{DateTime.DaysInMonth(start.Year, start.Month)} ditë = {MonthlyProration.Calculate(amount, start):N2} €"
+        ? $"Muaji i parë: {start:dd.MM.yyyy}–{DateTime.DaysInMonth(start.Year, start.Month):00}.{start:MM.yyyy} · {amount:N2} × {DateTime.DaysInMonth(start.Year, start.Month) - start.Day + 1}/{DateTime.DaysInMonth(start.Year, start.Month)} ditë = {MonthlyProration.Calculate(amount, start):N2}"
         : null;
     [StringLength(100)] public string? FeePlanName { get; set; }
     public bool IsFeeWaived { get; set; }

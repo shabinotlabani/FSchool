@@ -1,4 +1,5 @@
 @model StudentRegistrationModel
+<link rel="stylesheet" href="~/css/first-month-help.css" asp-append-version="true"/>
 @using _2Korriku.Services
 @{ ViewData["Title"] = "Regjistro lojtar të ri"; }
 <link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
@@ -11,7 +12,8 @@
     </div>
     <div class="mb-3"><a asp-action="CreateFamily" class="btn btn-outline-primary">Regjistro familjen së bashku</a></div>
     <form asp-action="Create" method="post" class="card shadow-sm p-3 p-md-4">
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        @if(ViewData["FamilyPicker"] is true){<input type="hidden" name="familyPicker" value="true"/>}
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div><div class="mb-3"><label asp-for="PreferredPaymentMethod" class="form-label">Pagesa mujore zakonisht</label><select asp-for="PreferredPaymentMethod" class="form-select"><option value="Cash">Cash</option><option value="Bank">Bankë</option></select><small class="text-secondary">Mund të ndryshohet për çdo pagesë.</small><span asp-validation-for="PreferredPaymentMethod" class="text-danger"></span></div>
         <fieldset class="mb-4">
             <legend class="h5 mb-3">Të dhënat e lojtarit</legend>
             <div class="row g-3">
@@ -19,15 +21,31 @@
                 <div class="col-md-6"><label asp-for="LastName" class="form-label"></label> *<input asp-for="LastName" class="form-control" autocomplete="family-name" maxlength="100" required aria-describedby="last-error" /><span asp-validation-for="LastName" id="last-error" class="text-danger small"></span></div>
                 <div class="col-md-6"><label asp-for="DateOfBirth" class="form-label"></label> *<input asp-for="DateOfBirth" type="date" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" required aria-describedby="birth-error" /><span asp-validation-for="DateOfBirth" id="birth-error" class="text-danger small"></span></div>
                 <div class="col-md-6"><label asp-for="FeePlanId" class="form-label">Kategoria e pagesës *</label><select asp-for="FeePlanId" class="form-select" required>@foreach(var plan in Model.FeePlans){<option value="@plan.Id" data-family="@plan.IsFamily.ToString().ToLowerInvariant()">@plan.Name · @plan.PriceLabel</option>}</select></div>
-                <div class="col-12" id="fee-family"><label asp-for="FamilyId" class="form-label">Familja *</label><select asp-for="FamilyId" class="form-select"><option value="">Zgjidhni familjen</option>@foreach(var family in Model.Families){<option value="@family.Id" data-plan="@Model.FamilyPlanIds.GetValueOrDefault(family.Id)">@family.Name · @family.Phone · #@family.Id</option>}</select><small class="text-secondary">@if(User.IsInRole(Roles.Admin)){<a asp-controller="Families" asp-action="Edit" target="_blank">Krijo familje</a>}</small></div>
+                <div class="col-12" id="fee-family"><label asp-for="FamilyId" class="form-label">Familja *</label><select asp-for="FamilyId" class="form-select"><option value="">Zgjidhni familjen</option>@foreach(var family in Model.Families){<option value="@family.Id" data-plan="@Model.FamilyPlanIds.GetValueOrDefault(family.Id)" data-payment-method="@family.PreferredPaymentMethod">@family.Name · @family.Phone · #@family.Id</option>}</select><small class="text-secondary">@if(User.IsInRole(Roles.Admin)){<a asp-controller="Families" asp-action="Edit" target="_blank">Krijo familje</a>}</small></div>
                 <div class="col-12" id="fee-waiver"><label asp-for="FeeReason" class="form-label">Arsyeja e lirimit *</label><input asp-for="FeeReason" class="form-control mb-3" maxlength="200"/><label asp-for="FeeNotes" class="form-label">Shënimi i lirimit *</label><textarea asp-for="FeeNotes" class="form-control" maxlength="400"></textarea></div>
             </div>
         </fieldset>
-        <fieldset class="border-top pt-4 mb-4">
+        <fieldset class="border-top pt-4 mb-4" id="registration-payment" data-family-picker="@((ViewData["FamilyPicker"] is true).ToString().ToLowerInvariant())">
+            <legend class="h5">Pagesa në regjistrim</legend>
+            <div class="row g-3">
+                <div class="col-sm-6"><label asp-for="RegistrationPayment" class="form-label">Lloji i pagesës</label><select asp-for="RegistrationPayment" class="form-select"><option value="Monthly">Mujore</option><option value="Seasonal">Sezonale</option></select></div>
+                <div class="col-sm-6" id="registration-season-length"><label asp-for="SeasonalMonths" class="form-label">Kohëzgjatja</label><select asp-for="SeasonalMonths" class="form-select"><option value="6">6 muaj · paguan 5</option><option value="12">12 muaj · paguan 10</option></select></div>
+            </div>
+            <div id="registration-seasonal" class="mt-3" hidden>
+                <input asp-for="SeasonalRequestId" type="hidden"/>
+                <input asp-for="SeasonalExpectedRate" type="hidden"/>
+                <div class="row g-3 align-items-end">
+                    <div class="col-sm-6"><label asp-for="SeasonalPaymentMethod" class="form-label">Mënyra e pagesës sezonale</label><select asp-for="SeasonalPaymentMethod" class="form-select"><option value="Cash">Cash</option><option value="Bank">Bankë</option></select></div>
+                    <div class="col-sm-6"><div class="bg-light border rounded p-3" aria-live="polite"><small id="registration-season-period" class="text-secondary d-block" data-start="@TariffService.CurrentMonth.ToString("yyyy-MM")"></small><strong id="registration-season-total" class="fs-5"></strong><small id="registration-season-calculation" class="d-block text-secondary"></small></div></div>
+                </div>
+                <p id="registration-season-bank" class="small text-secondary mt-2 mb-0" hidden>Sezoni aktivizohet pas konfirmimit bankar.</p>
+            </div>
+        </fieldset>
+        <fieldset class="border-top pt-4 mb-4" id="registration-monthly">
             <legend class="h5">Tarifa e muajit të parë</legend>
             <p id="first-month-proposal" role="status" aria-live="polite"></p>
             <label class="d-flex gap-2 mb-3"><input type="checkbox" id="manual-first-month" checked="@Model.FirstMonthAmount.HasValue"/> Cakto vetë shumën për muajin e parë</label>
-            <label asp-for="FirstMonthAmount" class="form-label">Shuma e muajit të parë (€)</label><input asp-for="FirstMonthAmount" class="form-control mb-3" type="number" min="0" max="999999999.99" step="0.01" disabled="@(!Model.FirstMonthAmount.HasValue)"/>
+            <div class="first-month-label"><label asp-for="FirstMonthAmount" class="form-label">Shuma e muajit të parë</label><details class="first-month-help"><summary aria-label="Si llogaritet shuma e muajit të parë?">i</summary><div class="first-month-help-content"><strong>Si llogaritet?</strong><p>Numërohen ditët nga regjistrimi deri në fund të muajit, përfshirë ditën e regjistrimit. Çdo 7 ditë llogariten si një javë; java e paplotë llogaritet e plotë, deri në 4 javë.</p><p><strong>Tarifa mujore × javët ÷ 4</strong></p><p>Rezultati rrumbullakohet përpjetë në numër të plotë, pa kaluar tarifën mujore.</p><p id="first-month-calculation" class="first-month-example" aria-live="polite"></p><small>Nëse e caktoni shumën vetë, përdoret ajo shumë dhe kërkohet arsyeja.</small></div></details></div><input asp-for="FirstMonthAmount" class="form-control mb-3" type="number" min="0" max="999999999.99" step="0.01" disabled="@(!Model.FirstMonthAmount.HasValue)"/>
             <div id="first-month-reason"><label asp-for="FirstMonthReason" class="form-label">Arsyeja e shumës së caktuar *</label><input asp-for="FirstMonthReason" class="form-control" maxlength="200" disabled="@(!Model.FirstMonthAmount.HasValue)"/></div>
         </fieldset>
         <fieldset class="border-top pt-4 mb-4" id="team-selection" data-endpoint="@Url.Action("Suggestions","Teams")" data-selected="@Model.TrainingTeamId">
@@ -50,13 +68,13 @@
         </fieldset>
         <div class="border-top pt-4 mb-4"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="3" maxlength="2000" placeholder="Informacione shtesë (opsionale)"></textarea><span asp-validation-for="Notes" class="text-danger small"></span></div>
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 border-top pt-4">
-            <span class="small text-secondary">Lojtari regjistrohet aktiv. Fatura e parë llogaritet me javë ose me shumën që caktoni me arsye. Nga muaji tjetër zbatohet tarifa e plotë.</span>
+
             <div class="d-flex gap-2"><button type="submit" class="btn btn-primary px-4">Regjistro lojtarin</button></div>
         </div>
     </form>
 </div>
 <script type="application/json" id="first-month-pricing">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new{standard=Model.StandardPrice,weeks=FirstMonthPricing.Weeks(BillingClock.Today),counts=Model.FamilyCounts,plans=Model.FeePlans.Select(p=>new{id=p.Id,isFamily=p.IsFamily,amount=p.Amount,additional=p.FamilyAdditionalAmount,limit=p.FamilyFirstCount,singleStandard=p.SingleUsesStandard})}))</script>
-@section Scripts{<script src="~/js/first-month-registration.js" asp-append-version="true"></script><script>const plan=document.querySelector('#FeePlanId');function waiver(){const family=plan.selectedOptions[0]?.dataset.family==='true';document.querySelector('#fee-family').hidden=!family;document.querySelector('#FamilyId').required=family;const free=plan.value==='3';document.querySelector('#fee-waiver').hidden=!free;document.querySelector('#FeeReason').required=free;document.querySelector('#FeeNotes').required=free;}plan.addEventListener('change',waiver);waiver();</script><script src="~/js/team-suggestions.js" asp-append-version="true"></script>}
+@section Scripts{<script src="~/js/registration-seasonal.js" asp-append-version="true" defer></script><script src="~/js/first-month-registration.js" asp-append-version="true"></script><script>const plan=document.querySelector('#FeePlanId');function waiver(){const family=plan.selectedOptions[0]?.dataset.family==='true';document.querySelector('#fee-family').hidden=!family;document.querySelector('#FamilyId').required=family;const method=document.querySelector('#PreferredPaymentMethod');method.disabled=family;if(family)method.value=document.querySelector('#FamilyId').selectedOptions[0]?.dataset.paymentMethod||'Cash';const free=plan.value==='3';document.querySelector('#fee-waiver').hidden=!free;document.querySelector('#FeeReason').required=free;document.querySelector('#FeeNotes').required=free;}document.querySelector('#FamilyId').addEventListener('change',waiver);plan.addEventListener('change',waiver);waiver();</script><script src="~/js/team-suggestions.js" asp-append-version="true"></script>}
 
 @section PageNavigation {
     <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>

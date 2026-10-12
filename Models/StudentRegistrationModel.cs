@@ -1,9 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace _2Korriku.Models;
 
 public class StudentRegistrationModel : IValidatableObject
 {
+    [Required, RegularExpression("Monthly|Seasonal")] public string RegistrationPayment { get; set; } = "Monthly";
+    public Guid SeasonalRequestId { get; set; } = Guid.NewGuid();
+    public int SeasonalMonths { get; set; } = 6;
+    public decimal SeasonalExpectedRate { get; set; }
+    [Required, RegularExpression("Cash|Bank")] public string SeasonalPaymentMethod { get; set; } = "Cash";
+    [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     [Range(typeof(decimal),"0","999999999.99")] public decimal? FirstMonthAmount { get; set; }
     [StringLength(200)] public string? FirstMonthReason { get; set; }
     [Required(ErrorMessage = "Shkruani emrin e lojtarit."), StringLength(100)]
@@ -39,6 +45,11 @@ public class StudentRegistrationModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if(RegistrationPayment=="Seasonal"){
+            if(SeasonalMonths is not (6 or 12))yield return new("Zgjidhni sezonin 6 ose 12 muaj.");
+            if(SeasonalRequestId==Guid.Empty)yield return new("Rihapni formularin e regjistrimit.");
+            if(FirstMonthAmount.HasValue)yield return new("Pagesa sezonale nuk përdor shumën e muajit të parë.");
+        }
         if(FirstMonthAmount.HasValue && (decimal.Round(FirstMonthAmount.Value,2)!=FirstMonthAmount.Value || string.IsNullOrWhiteSpace(FirstMonthReason)))yield return new("Për shumën e caktuar të muajit të parë shkruani arsyen dhe përdorni deri në dy shifra dhjetore.");
         if (DateOfBirth.HasValue && (DateOfBirth.Value == DateOnly.MinValue || DateOfBirth.Value > DateOnly.FromDateTime(DateTime.Today)))
             yield return new ValidationResult("Datëlindja duhet të jetë një datë e vlefshme, jo në të ardhmen.", [nameof(DateOfBirth)]);

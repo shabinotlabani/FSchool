@@ -4,33 +4,38 @@
 
 <div class="page-heading mt-3"><div><p class="eyebrow">PAKETA FAMILJARE</p><h1>@account.Family.Name</h1></div><a asp-controller="Families" asp-action="Details" asp-route-id="@Model.FamilyId" class="btn btn-outline-secondary">Paketa</a></div>
 <partial name="_BillingNotice"/>
+<partial name="_PendingBankNotice" model='@("Family", Model.FamilyId)'/>
+<partial name="_OtherDebts" model="Model.OtherDebts"/>
 <section class="panel p-4 mb-4">
+    @if(account.Members.Sum(m=>Math.Max(0,-m.MonthlyBalance-m.SeasonalReserve))>0){<p>Parapagim mujor: <strong>@account.Members.Sum(m=>Math.Max(0,-m.MonthlyBalance-m.SeasonalReserve)).ToString("N2")</strong></p>}
     <table class="table"><thead><tr><th>Lojtari</th><th>Borxhi mujor</th></tr></thead><tbody>
-    @foreach(var member in account.Members){<tr><td><a asp-action="Account" asp-route-id="@member.Student.Id">@member.Student.FullName</a></td><td>@member.MonthlyDue.ToString("N2") €</td></tr>}
+    @foreach(var member in account.Members){<tr><td><a asp-action="Account" asp-route-id="@member.Student.Id">@member.Student.FullName</a></td><td>@member.MonthlyDue.ToString("N2")</td></tr>}
     @if(account.Members.Count == 0){<tr><td colspan="2">Nuk ka anëtarë në paketën aktuale.</td></tr>}
-    </tbody><tfoot><tr><th>Gjithsej për pagesë</th><th>@account.Due.ToString("N2") €</th></tr></tfoot></table>
+    </tbody><tfoot><tr><th>Gjithsej për pagesë</th><th>@account.Due.ToString("N2")</th></tr></tfoot></table>
 </section>
 @if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){
-<form asp-action="Family" method="post" class="panel p-4 mb-4">
+<form asp-action="Family" method="post" data-automatic-bank="@(Model.AutomaticBankAmount>0?"true":"false")" class="panel p-4 mb-4"><input type="hidden" name="returnUrl" value="@(ViewData["PaymentReturnUrl"] ?? Context.Request.Query["returnUrl"].ToString())"/>
     <div asp-validation-summary="All" class="text-danger" role="alert"></div>
     <input asp-for="FamilyId" type="hidden"/><input asp-for="RequestId" type="hidden"/><input asp-for="ExpectedState" type="hidden"/>
     @if(account.Due > 0 && account.State == Model.ExpectedState){
     <div class="row g-3">
-        <div class="col-md-6"><label asp-for="Amount" class="form-label">Pagesa e plotë e familjes (€)</label><input asp-for="Amount" class="form-control" type="number" step="0.01" readonly required/></div>
+        <div class="col-md-6"><label asp-for="Amount" class="form-label">Pagesa e plotë e familjes</label><input asp-for="Amount" class="form-control" type="number" step="0.01" readonly required/></div>
         <div class="col-md-6"><label asp-for="PaymentDate" class="form-label">Data e pagesës</label><input asp-for="PaymentDate" class="form-control" type="date" max="@BillingClock.Today.ToString("yyyy-MM-dd")" required/></div>
         <div class="col-md-6"><label asp-for="PaymentMethod" class="form-label">Mënyra e pagesës</label><select asp-for="PaymentMethod" class="form-select"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select></div>
         <div class="col-12"><label asp-for="Notes" class="form-label">Shënim / referencë bankare</label><textarea asp-for="Notes" class="form-control" maxlength="250"></textarea></div>
     </div>
-    <button class="btn btn-primary mt-4">Paguaj familjen · @account.Due.ToString("N2") €</button>
+    <button class="btn btn-primary mt-4">Paguaj familjen · @account.Due.ToString("N2")</button>
     }else if(account.Due == 0){<strong>Familja nuk ka borxh mujor të papaguar.</strong>}
-    else{<a asp-action="Family" asp-route-id="@Model.FamilyId" class="btn btn-primary">Rihap pagesën me gjendjen aktuale</a>}
-</form>
+    else{<a asp-action="Family" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@Model.FamilyId" class="btn btn-primary">Rihap pagesën me gjendjen aktuale</a>}
+@if(Model.AutomaticBankAmount>0){<p class="text-secondary small">Në pritje automatikisht: <strong>@Model.AutomaticBankAmount.ToString("N2")</strong>. Për pagesë Cash, ndryshoni mënyrën.</p>}<p class="bank-pending-hint small text-secondary mt-2" hidden>Bankë në pritje — regjistrohet vetëm pas konfirmimit.</p></form>
 }
 <section class="panel p-4"><h2>Pagesat familjare</h2><div class="table-responsive"><table class="table"><thead><tr><th>Dëftesa</th><th>Data</th><th>Shuma</th><th>Statusi</th><th></th></tr></thead><tbody>
-@foreach(var payment in account.Payments){<tr><td><a asp-action="FamilyReceipt" asp-route-id="@payment.Id">FAM-@payment.Id.ToString("000000")</a></td><td>@BillingClock.LocalDate(payment.PaymentDate).ToString("dd.MM.yyyy")</td><td>@payment.Amount.ToString("N2") €</td><td>@(payment.CancelledAt.HasValue ? "Anuluar" : "E paguar")</td><td>@if(!payment.CancelledAt.HasValue && User.IsInRole(Roles.Admin)){<a asp-action="CancelFamilyPayment" asp-route-id="@payment.Id">Anulo pagesën familjare</a>}</td></tr>}
+@foreach(var payment in account.Payments){<tr><td><a asp-action="FamilyReceipt" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@payment.Id">FAM-@payment.Id.ToString("000000")</a></td><td>@BillingClock.LocalDate(payment.PaymentDate).ToString("dd.MM.yyyy")</td><td>@payment.Amount.ToString("N2")</td><td>@(payment.CancelledAt.HasValue ? "Anuluar" : "E paguar")</td><td>@if(!payment.CancelledAt.HasValue && User.IsInRole(Roles.Admin)){<a asp-action="CancelFamilyPayment" asp-route-id="@payment.Id">Anulo pagesën familjare</a>}</td></tr>}
 @if(account.Payments.Count == 0){<tr><td colspan="5">Nuk ka pagesa familjare të regjistruara.</td></tr>}
 </tbody></table></div></section>
 
 @section PageNavigation {
     <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
 }
+
+@section Scripts { <script src="~/js/bank-pending-hint.js" asp-append-version="true"></script> }

@@ -61,7 +61,7 @@ public class SalesController(ApplicationDbContext db, IssueService issues) : Con
     {
         model.Sale = await Load(model.SaleId); if (model.Sale == null || model.Sale.RequestId == null) return NotFound();
         if (ModelState.IsValid)
-            try { var id = await issues.PayAsync(model, Actor); return RedirectToAction("Receipt", "Payments", new { id }); }
+            try { if(model.PaymentMethod=="Bank"){await new BankVerificationService(db).QueueSale(model,Actor);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return RedirectToAction("Index","Payments");} var id = await issues.PayAsync(model, Actor); TempData["Success"]="Pagesa u regjistrua.";TempData["PaymentReceiptId"]=id; return RedirectToAction("Index", "Payments"); }
             catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
         return View(model);
     }

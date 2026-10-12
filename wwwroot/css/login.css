@@ -1,37 +1,40 @@
 ﻿* { box-sizing: border-box; }
-:root { font-family: "Segoe UI", Arial, sans-serif; color: #20304a; background: #f3f5f9; font-synthesis: none; }
+:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1c1c1e; background: #f2f2f7; font-synthesis: none; color-scheme: light; }
 body { margin: 0; }
 button, input { font: inherit; }
 a { color: inherit; }
 .login-shell { min-height: 100svh; display: grid; place-items: center; padding: 32px 20px; }
-.form-panel { width: 100%; max-width: 450px; padding: 34px 36px 24px; border: 1px solid #e0e6ef; border-top: 4px solid #2c3f93; border-radius: 14px; background: #fff; box-shadow: 0 12px 40px #23365c0a; }
+.form-panel { width: 100%; max-width: 440px; padding: 36px 32px 24px; border: 1px solid #e7e7ee; border-radius: 28px; background: #fff; box-shadow: 0 16px 60px #1c1c1e06; }
 .login-brand { display: flex; align-items: center; justify-content: center; gap: 18px; padding-bottom: 26px; margin-bottom: 26px; border-bottom: 1px solid #edf0f5; text-decoration: none; }
 .login-brand img { width: 56px; height: auto; }
-.login-brand>span { color: #2c3f93; font-weight: 800; font-size: 19px; letter-spacing: .5px; }
+.login-brand>span { color: #1c1c1e; font-weight: 700; font-size: 19px; letter-spacing: -.3px; }
 .login-brand small { display: block; margin-top: 7px; color: #758198; font-size: 12px; font-weight: 400; letter-spacing: 0; }
-h1 { margin: 0 0 26px; font-size: 24px; font-weight: 650; letter-spacing: -.5px; }
+h1 { margin: 0 0 28px; font-size: 28px; font-weight: 700; letter-spacing: -.8px; text-align: center; }
 .field { margin-bottom: 20px; }
-.field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-.field input { width: 100%; height: 48px; border: 1px solid #d8dfeb; border-radius: 7px; background: #fff; padding: 0 13px; color: #20304a; font-size: 15px; }
+.field label { display: block; font-size: 12px; color: #63636f; font-weight: 600; margin: 0 0 8px 3px; }
+.field input { width: 100%; height: 54px; border: 1px solid #ededf2; border-radius: 14px; background: #f5f5f9; padding: 0 15px; color: #1c1c1e; font-size: 16px; }
 .field input::placeholder { color: #929caf; }
-.field input:focus { outline: none; border-color: #2c3f93; box-shadow: 0 0 0 3px #2c3f9315; }
+.field input:focus { outline: none; border-color: #007aff; background: #fff; box-shadow: 0 0 0 4px #007aff12; }
 .password-field { position: relative; }
 .password-field input { padding-right: 48px; }
-.password-toggle { position: absolute; right: 3px; top: 3px; width: 42px; height: 42px; border: 0; background: transparent; color: #748199; cursor: pointer; border-radius: 5px; }
+.password-toggle { position: absolute; right: 5px; top: 5px; width: 44px; height: 44px; border: 0; background: transparent; color: #73737e; cursor: pointer; border-radius: 10px; }
 .password-toggle svg { width: 21px; height: 21px; vertical-align: middle; }
 .eye-slash { display: none; }
 [aria-pressed="true"] .eye-slash { display: block; }
 .remember { display: flex; align-items: center; gap: 9px; font-size: 13px; color: #5b6880; cursor: pointer; margin: 0 0 22px; min-height: 24px; width: fit-content; }
-.remember input { width: 16px; height: 16px; margin: 0; accent-color: #2c3f93; }
-.submit-button { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 48px; padding: 0 16px; border: 0; border-radius: 7px; background: #2c3f93; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; }
-.submit-button:hover { background: #233478; }
+.remember input { width: 19px; height: 19px; margin: 0; accent-color: #007aff; }
+.remember { min-height: 44px; margin-bottom: 16px; }
+.submit-button { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; height: 54px; padding: 0 16px; border: 0; border-radius: 14px; background: #007aff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+.submit-button:hover { background: #0067da; }
+.submit-button:active { background: #005bc2; }
 .submit-button span { font-size: 20px; font-weight: 400; }
-button:focus-visible, a:focus-visible, input[type="checkbox"]:focus-visible { outline: 3px solid #8897db; outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input[type="checkbox"]:focus-visible { outline: 3px solid #9ac8ff; outline-offset: 3px; }
 .support { text-align: center; color: #78849a; font-size: 11px; line-height: 1.6; margin: 20px 0 0; }
-.form-footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 22px; margin-top: 24px; border-top: 1px solid #edf0f5; color: #8b96a8; font-size: 10px; }
+.form-footer { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; padding-top: 22px; margin-top: 28px; border-top: 1px solid #eeeef3; color: #73737e; font-size: 10px; }
+.form-footer strong { font-weight: 600; color: #585863; }
 .validation-summary-valid, .field-validation-valid { display: none; }
 .validation-summary-errors { background: #fff2f2; border: 1px solid #efcccc; padding: 12px; border-radius: 7px; color: #a82b36; font-size: 13px; margin-bottom: 20px; }
 .validation-summary ul { list-style: none; margin: 0; padding: 0; }
 .field-error { display: block; color: #a82b36; font-size: 12px; margin-top: 7px; }
 .field input.input-validation-error { border-color: #c94c58; }
-@media (max-width: 480px) { .login-shell { padding: 20px 14px; }.form-panel { padding: 26px 22px 20px; }.field input { font-size: 16px; }.login-brand { gap: 14px; }.login-brand>span { font-size: 17px; } }
+@media (max-width: 480px) { .login-shell { padding: 24px 16px; }.form-panel { padding: 28px 22px 22px; border-radius: 24px; }.login-brand { gap: 14px; }.login-brand>span { font-size: 17px; } }

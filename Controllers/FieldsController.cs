@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using _2Korriku.Data;
 using _2Korriku.Models;
@@ -93,7 +93,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
     {
         if (ModelState.IsValid) try
         {
-            var id = await Service.PayAsync(model, Actor); return RedirectToAction(nameof(Receipt), new { id });
+            if(model.Method=="Bank"){await new BankVerificationService(db).QueueField(model,Actor);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return RedirectToAction("Index","Payments");} var id = await Service.PayAsync(model, Actor); TempData["Success"]="Pagesa u regjistrua.";TempData["FieldReceiptId"]=id; return RedirectToAction("Index", "Payments");
         }
         catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
         model.Booking = await GetBooking(model.BookingId); return model.Booking == null ? NotFound() : View(model);

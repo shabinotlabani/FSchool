@@ -52,12 +52,19 @@ public class TeamsController(ApplicationDbContext db,TeamService teams):Controll
     [HttpGet,Authorize(Roles=Roles.Write)]public async Task<IActionResult> Assign(int id)
     {
         var student=await db.Students.AsNoTracking().Include(s=>s.TrainingTeam).SingleOrDefaultAsync(s=>s.Id==id);if(student==null)return NotFound();
-        return View(new ChangeStudentTeamModel{StudentId=id,TeamId=student.TrainingTeamId,ExpectedTeamId=student.TrainingTeamId,Student=student,Options=await teams.OptionsAsync(student.DateOfBirth,excludingStudentId:id)});
+        return View(new ChangeStudentTeamModel{StudentId=id,TeamId=student.TrainingTeamId,ExpectedTeamId=student.TrainingTeamId,Student=student,Options=await AssignmentOptions(student)});
     }
     [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Write)]public async Task<IActionResult> Assign(ChangeStudentTeamModel model)
     {
         model.Student=await db.Students.AsNoTracking().Include(s=>s.TrainingTeam).SingleOrDefaultAsync(s=>s.Id==model.StudentId);if(model.Student==null)return NotFound();
         if(ModelState.IsValid)try{await teams.ChangeStudentAsync(model,Actor);TempData["Success"]="Caktimi i ekipit u ruajt në historik.";return RedirectToAction("Account","Payments",new{id=model.StudentId});}catch(Exception ex)when(ex is InvalidOperationException or ValidationException){ModelState.AddModelError("",ex.Message);}
-        model.Options=await teams.OptionsAsync(model.Student.DateOfBirth,excludingStudentId:model.StudentId);return View(model);
+        model.Options=await AssignmentOptions(model.Student);return View(model);
+    }
+    private async Task<List<TeamOption>> AssignmentOptions(Student student)
+    {
+        var age=TeamService.Age(student.DateOfBirth);
+        return (await teams.OptionsAsync(excludingStudentId:student.Id))
+            .OrderByDescending(x=>x.Team.MinAge<=age&&x.Team.MaxAge>=age)
+            .ThenByDescending(x=>x.FreePlaces>0).ThenBy(x=>x.Team.Name).ToList();
     }
 }

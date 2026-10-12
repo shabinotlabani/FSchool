@@ -1,0 +1,7 @@
+@model MonthlyAttendanceSummary
+@if(Model is { Total: >0 }){
+<div class="billing-attendance" title="Pjesëmarrje / ditë stërvitjeje në muaj, sipas orarit aktual dhe prezencave të ruajtura">
+<div class="billing-attendance-values"><strong>@Model.Percent%</strong><span>@Model.Present/@Model.Total</span></div>
+<div class="billing-attendance-track" role="progressbar" aria-label="Prezenca mujore" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@Model.Percent" aria-valuetext="@Model.Present pjesëmarrje nga @Model.Total stërvitje"><span style="width: @(Model.Percent.ToString(System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
+</div>
+}else{<span class="text-secondary" title="Pa orar ose prezencë të regjistruar">—</span>}

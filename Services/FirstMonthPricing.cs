@@ -1,4 +1,4 @@
-﻿namespace _2Korriku.Services;
+namespace _2Korriku.Services;
 
 public static class FirstMonthPricing
 {
@@ -9,5 +9,5 @@ public static class FirstMonthPricing
         return Math.Min(monthlyAmount,decimal.Ceiling(monthlyAmount*Weeks(date)/4m));
     }
     public static string Explanation(decimal monthlyAmount,DateOnly date)
-        =>$"{Weeks(date)}/4 javë · java e nisur llogaritet e plotë · rrumbullakim përpjetë në euro, maksimumi {monthlyAmount:N2} €.";
+        =>$"{Weeks(date)}/4 javë · java e nisur llogaritet e plotë · rrumbullakim përpjetë në euro, maksimumi {monthlyAmount:N2}.";
 }

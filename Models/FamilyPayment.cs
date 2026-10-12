@@ -25,6 +25,7 @@ public class FamilyPayment
 
 public class FamilyPaymentModel : RegisterPaymentModel
 {
+    public List<OtherDebt> OtherDebts { get; set; } = [];
     [Range(1, int.MaxValue)] public int FamilyId { get; set; }
     [Required, StringLength(64)] public string ExpectedState { get; set; } = "";
     public FamilyBillingModel? Account { get; set; }

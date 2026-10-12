@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Models;
 using Microsoft.EntityFrameworkCore;
 namespace _2Korriku.Services;
@@ -27,7 +27,7 @@ public partial class BillingService
         var change=new FirstMonthFeeChange{RequestId=input.RequestId,PeriodId=period.Id,PreviousAmount=invoice.Amount,Amount=input.Amount,Reason=input.Reason.Trim(),ActorId=actor};
         db.FirstMonthFeeChanges.Add(change);await db.SaveChangesAsync();
         var difference=input.Amount-invoice.Amount;
-        var description=$"Muaji i parë {invoice.Amount:N2} → {input.Amount:N2} €: {change.Reason}";
+        var description=$"Muaji i parë {invoice.Amount:N2} → {input.Amount:N2}: {change.Reason}";
         db.StudentTransactions.Add(Entry(period.StudentId,period.Year,period.Month,"MonthlyFeeAdjustment",description[..Math.Min(250,description.Length)],Math.Max(0,difference),Math.Max(0,-difference),"FirstMonthFeeChange",change.Id,actor));
         await db.SaveChangesAsync();return period.StudentId;
     });

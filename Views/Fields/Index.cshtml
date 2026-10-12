@@ -25,7 +25,7 @@
             <article class="field-event @(item.TeamId.HasValue ? "team" : "private") @(item.IsCancelled ? "cancelled" : "")">
                 <time>@item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</time><span class="field-event-location">@item.FieldName</span>
                 @if(item.TeamId.HasValue){<a asp-controller="Teams" asp-action="Details" asp-route-id="@item.TeamId">@item.Name</a><small>Stërvitje ekipi</small>}
-                else{<a asp-action="Details" asp-route-id="@item.BookingId">@item.Name</a><small>@(item.IsCancelled ? "I anuluar" : "Termin privat")</small>@if(!item.IsCancelled){<small>@(item.Due > 0 ? "Mbetur: " + item.Due.Value.ToString("N2") + " €" : "I paguar / pa detyrim")</small>}}
+                else{<a asp-action="Details" asp-route-id="@item.BookingId">@item.Name</a><small>@(item.IsCancelled ? "I anuluar" : "Termin privat")</small>@if(!item.IsCancelled){<small>@(item.Due > 0 ? "Mbetur: " + item.Due.Value.ToString("N2") + "" : "I paguar / pa detyrim")</small>}}
                 @if(writer && item.CanCancel){<a asp-action="Cancel" asp-route-id="@item.BookingId" class="text-danger mt-2">Anulo terminin</a>}
             </article>
         }

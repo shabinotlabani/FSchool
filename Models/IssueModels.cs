@@ -5,7 +5,7 @@ namespace _2Korriku.Models;
 
 public class IssueLineModel
 {
-    [Range(typeof(decimal), "0", "999999999", ErrorMessage = "Çmimi duhet të jetë nga 0 deri në 999999999 €.")] public decimal? UnitPrice { get; set; }
+    [Range(typeof(decimal), "0", "999999999", ErrorMessage = "Çmimi duhet të jetë nga 0 deri në 999999999.")] public decimal? UnitPrice { get; set; }
     [Range(1, int.MaxValue, ErrorMessage = "Zgjidhni madhësinë.")] public int ProductVariantId { get; set; }
     [Range(1, int.MaxValue)] public int ProductId { get; set; }
     [Range(typeof(decimal), "0.01", "1000000")] public decimal Quantity { get; set; } = 1;

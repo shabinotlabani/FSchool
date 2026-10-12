@@ -1,0 +1,38 @@
+@model CoachTeamTransferModel
+@using _2Korriku.Services
+@{ViewData["Title"]="Ndrysho grupin";}
+<link rel="stylesheet" href="~/css/attendance.css" asp-append-version="true"/>
+<div class="attendance-page">
+    <div class="page-heading"><div><h1>Ndrysho grupin</h1><p>@Model.StudentName · @Model.Age vjeç<br/>Grupi aktual: <strong>@Model.SourceTeamName</strong></p></div></div>
+    <form method="post" asp-action="ChangeGroup">
+        <input asp-for="StudentId" type="hidden"/><input asp-for="SourceTeamId" type="hidden"/><input asp-for="CoachRole" type="hidden"/>
+        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <fieldset class="transfer-groups">
+        <legend class="h6">Zgjidh grupin e ri</legend>
+        @foreach(var option in Model.Teams){
+            var team=option.Team;
+            var matches=team.MinAge<=Model.Age&&team.MaxAge>=Model.Age;
+            var available=matches&&option.FreePlaces>0;
+            <label class="transfer-group @(available?"":"is-unavailable")">
+                <input type="radio" asp-for="TeamId" value="@team.Id" id="transfer-team-@team.Id" disabled="@(!available)" required/>
+                <span class="transfer-group-body">
+                    <span class="transfer-group-heading"><strong>@team.Name</strong><small class="@(available?"text-success":"text-secondary")">@(option.FreePlaces==0?"I mbushur":matches?"Përshtatet me moshën":"Jashtë moshës")</small></span>
+                    <small class="text-secondary">@team.MinAge–@team.MaxAge vjeç · @option.FreePlaces vende të lira</small>
+                    <span>Trajner: <strong>@team.Coach?.FirstName @team.Coach?.LastName</strong></span>
+                    <span>Ndihmëstrajner: <strong>@team.AssistantCoach?.FirstName @team.AssistantCoach?.LastName</strong></span>
+                    <span class="transfer-group-schedule">
+                    @foreach(var session in team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt)){<span>@TeamService.DayName(session.Day) <strong>@session.StartsAt.ToString("HH:mm")–@session.EndsAt.ToString("HH:mm")</strong></span>}
+                    @if(team.Sessions.Count==0){<span>Pa orar të caktuar</span>}
+                    </span>
+                    @if(!string.IsNullOrWhiteSpace(team.FootballField?.Name??team.Location)){<small class="text-secondary">@(team.FootballField?.Name??team.Location)</small>}
+                </span>
+            </label>
+        }
+        @if(Model.Teams.Count==0){<p class="text-secondary">Nuk ka grupe të tjera aktive.</p>}
+        </fieldset>
+        @if(Model.Teams.Any(x=>x.FreePlaces>0&&x.Team.MinAge<=Model.Age&&x.Team.MaxAge>=Model.Age)){
+            <div class="attendance-save panel mt-3"><button type="submit" class="btn btn-primary w-100 py-3">Konfirmo ndryshimin e grupit</button></div>
+        }else{<p class="text-secondary mt-3">Nuk ka grup të lirë për moshën e lojtarit.</p>}
+    </form>
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-teamId="@Model.SourceTeamId" asp-route-coachRole="@Model.CoachRole"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}

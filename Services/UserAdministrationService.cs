@@ -46,6 +46,7 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         var email = input.Email.Trim();
         var duplicate = await users.FindByEmailAsync(email);
         if (duplicate != null && duplicate.Id != user.Id) throw new InvalidOperationException("Ky email është përdorur nga një llogari tjetër.");
+        user.CanVerifyBank = input.Role == Roles.Operator && input.CanVerifyBank;
         user.PhoneNumber = input.Phone?.Trim(); user.Specialization = input.Specialization?.Trim();
         user.FirstName = input.FirstName.Trim(); user.LastName = input.LastName.Trim();
         user.Email = email; user.UserName = email; user.EmailConfirmed = true;
@@ -65,7 +66,7 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         Check(await users.UpdateSecurityStampAsync(user));
         await db.SaveChangesAsync();
         await transaction.CommitAsync();
-        logger.LogInformation("User administration: actor {ActorId}, target {UserId}, role {Role}, active {Active}, created {Created}", actorId, user.Id, input.Role, input.IsActive, isNew);
+        logger.LogInformation("User administration: actor {ActorId}, target {UserId}, role {Role}, active {Active}, created {Created}, bank verification {CanVerifyBank}", actorId, user.Id, input.Role, input.IsActive, isNew, user.CanVerifyBank);
         return user.Id;
     }
 }

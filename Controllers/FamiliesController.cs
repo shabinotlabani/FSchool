@@ -42,7 +42,7 @@ public class FamiliesController(ApplicationDbContext db):Controller
         if(id.HasValue)
         {
             var family=await db.PlayerFamilies.AsNoTracking().SingleOrDefaultAsync(f=>f.Id==id);if(family==null)return NotFound();
-            model.FeePlanId=await new FamilyService(db).PlanIdAsync(family.Id,date);model.Id=family.Id;model.Name=family.Name;model.Phone=family.Phone;model.Revision=family.Revision;
+            model.FeePlanId=await new FamilyService(db).PlanIdAsync(family.Id,date);model.Id=family.Id;model.Name=family.Name;model.Phone=family.Phone;model.PreferredPaymentMethod=family.PreferredPaymentMethod;model.Revision=family.Revision;
             model.StudentIds=(await new FamilyService(db).MembersAsync(family.Id,date)).Select(a=>a.StudentId).ToList();
         }
         await Choices(model);return View(model);
@@ -63,6 +63,7 @@ public class FamiliesController(ApplicationDbContext db):Controller
     {
         model.Students=await db.Students.AsNoTracking().Where(s=>s.IsActive||model.StudentIds.Contains(s.Id)).OrderBy(s=>s.LastName).ThenBy(s=>s.FirstName).ToListAsync();
         var month=TariffService.TryMonth(model.EffectiveMonth,out var date)?date:TariffService.NextMonth;
+        model.JoinBlocks=await new FamilyService(db).JoinBlocksAsync(model.Students.Select(x=>x.Id),model.Id,month);
         var options=await new TariffService(db).OptionsAsync(month,includeInactive:true);
         var existing=model.Id==0?0:await new FamilyService(db).PlanIdAsync(model.Id,month);
         model.Plans=options.Where(p=>p.IsFamily && (p.IsActive || p.Id==existing)).ToList();

@@ -103,7 +103,7 @@ public class ExpenseService(ApplicationDbContext db)
         ExpenseCategory? sub=null;
         if(m.SubcategoryId.HasValue)sub=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.SubcategoryId&&x.ParentId==category.Id&&x.IsActive)??throw new InvalidOperationException("Nënkategoria nuk i përket kategorisë ose është joaktive.");
         var available=await AvailableFromAsync(m.Date!.Value);
-        if(m.Amount>available)throw new InvalidOperationException($"Mjete të pamjaftueshme. Për këtë datë mund të regjistroni deri në {Math.Max(0,available):N2} €. Kontrolli përfshin edhe shpenzimet e regjistruara në ditët pasuese.");
+        if(m.Amount>available)throw new InvalidOperationException($"Mjete të pamjaftueshme. Për këtë datë mund të regjistroni deri në {Math.Max(0,available):N2}. Kontrolli përfshin edhe shpenzimet e regjistruara në ditët pasuese.");
         var e=new Expense{RequestId=m.RequestId,PayloadHash=hash,CategoryId=category.Id,SubcategoryId=sub?.Id,CategoryName=category.Name,SubcategoryName=sub?.Name,Date=m.Date.Value,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method=m.Method,Notes=m.Notes?.Trim(),CreatedById=actor};
         db.Expenses.Add(e);await db.SaveChangesAsync();return e.Id;
     });

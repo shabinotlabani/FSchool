@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -37,10 +37,13 @@ public class PersonalTrainingService(ApplicationDbContext db)
     public Task<int> CreateAsync(PersonalTrainingCreateModel m,string actor)=>Write(async()=>{
         Validator.ValidateObject(m,new(m),true);
         foreach(var s in m.Sessions)Validator.ValidateObject(s,new(s),true);
-        var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{m.StudentId,m.PersonalTariffId,m.ExpectedRate,m.StartsOn,m.Coach,m.Location,m.Notes,Sessions=m.Sessions.Select(s=>new{s.Day,s.StartsAt,s.EndsAt})}))));
+        var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{m.StudentId,m.PersonalTariffId,m.ExpectedRate,m.StartsOn,m.CoachId,m.Location,m.Notes,Sessions=m.Sessions.Select(s=>new{s.Day,s.StartsAt,s.EndsAt})}))));
         var duplicate=await db.PersonalTrainings.SingleOrDefaultAsync(x=>x.RequestId==m.RequestId);
         if(duplicate!=null){if(duplicate.PayloadHash!=hash||duplicate.CreatedByUserId!=actor)throw new InvalidOperationException("Ky formular është përdorur. Rihapeni.");return duplicate.Id;}
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2005)");
+        var coach=await db.Users.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.CoachId);
+        if(coach==null||UserAdministrationService.IsDisabled(coach)||!await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id where ur.UserId==m.CoachId&&r.Name==Roles.Coach select ur).AnyAsync())
+            throw new InvalidOperationException("Zgjidhni një trajner aktiv.");
         var player=await db.Students.Include(x=>x.TrainingTeam).ThenInclude(x=>x!.Sessions).SingleOrDefaultAsync(x=>x.Id==m.StudentId&&x.IsActive)??throw new InvalidOperationException("Lojtari nuk është aktiv.");
         if(m.StartsOn<BillingClock.LocalDate(player.RegistrationDate))throw new InvalidOperationException("Trajnimi nuk mund të fillojë para regjistrimit të lojtarit.");
         var tariff=await db.PersonalTariffs.SingleOrDefaultAsync(x=>x.Id==m.PersonalTariffId&&x.IsActive)??throw new InvalidOperationException("Tarifa nuk është aktive.");
@@ -48,7 +51,7 @@ public class PersonalTrainingService(ApplicationDbContext db)
         if(!tariff.IsActive)throw new InvalidOperationException("Tarifa është çaktivizuar.");
         if(tariff.Amount!=m.ExpectedRate)throw new InvalidOperationException("Çmimi ka ndryshuar. Zgjidhni përsëri tarifën.");
         if(tariff.Mode=="Session"&&m.Sessions.Count!=1)throw new InvalidOperationException("Për seancë vendosni vetëm një orar.");
-        var t=new PersonalTraining{RequestId=m.RequestId,PayloadHash=hash,StudentId=m.StudentId,PersonalTariffId=tariff.Id,Name=tariff.Name,Mode=tariff.Mode,Rate=tariff.Amount,StartsOn=m.StartsOn!.Value,Coach=m.Coach?.Trim(),Location=m.Location?.Trim(),Notes=m.Notes?.Trim(),CreatedByUserId=actor};
+        var t=new PersonalTraining{CoachId=coach.Id,RequestId=m.RequestId,PayloadHash=hash,StudentId=m.StudentId,PersonalTariffId=tariff.Id,Name=tariff.Name,Mode=tariff.Mode,Rate=tariff.Amount,StartsOn=m.StartsOn!.Value,Coach=(coach.FirstName+" "+coach.LastName).Trim(),Location=m.Location?.Trim(),Notes=m.Notes?.Trim(),CreatedByUserId=actor};
         t.Sessions=m.Sessions.Select(s=>new PersonalTrainingSlot{Day=t.Mode=="Session"?Day(t.StartsOn):s.Day,StartsAt=s.StartsAt!.Value,EndsAt=s.EndsAt!.Value}).ToList();
         for(var i=0;i<t.Sessions.Count;i++)
         {
@@ -80,7 +83,7 @@ public class PersonalTrainingService(ApplicationDbContext db)
     {
         if(await db.PersonalCharges.AnyAsync(x=>x.PersonalTrainingId==t.Id&&x.Period==period))return;
         var prorated=t.Mode=="Monthly"&&period.Year==t.StartsOn.Year&&period.Month==t.StartsOn.Month&&t.StartsOn.Day>1;
-        var c=new PersonalCharge{PersonalTraining=t,Period=period,Description=t.Name+" · "+period.ToString(t.Mode=="Monthly"?"MM.yyyy":"dd.MM.yyyy"),Amount=prorated?MonthlyProration.Calculate(t.Rate,t.StartsOn):t.Rate,Calculation=prorated?$"Tarifa {t.Rate:N2} € × {DateTime.DaysInMonth(period.Year,period.Month)-t.StartsOn.Day+1}/{DateTime.DaysInMonth(period.Year,period.Month)} ditë":null};
+        var c=new PersonalCharge{PersonalTraining=t,Period=period,Description=t.Name+" · "+period.ToString(t.Mode=="Monthly"?"MM.yyyy":"dd.MM.yyyy"),Amount=prorated?MonthlyProration.Calculate(t.Rate,t.StartsOn):t.Rate,Calculation=prorated?$"Tarifa {t.Rate:N2} × {DateTime.DaysInMonth(period.Year,period.Month)-t.StartsOn.Day+1}/{DateTime.DaysInMonth(period.Year,period.Month)} ditë":null};
         db.PersonalCharges.Add(c);await db.SaveChangesAsync();Entry(c,"Fee",c.Amount,0,c.Description,actor);await db.SaveChangesAsync();
     }
     public Task<int> GenerateAsync(string? actor=null,DateOnly? asOf=null,CancellationToken ct=default)=>Write(async()=>{
@@ -101,7 +104,7 @@ public class PersonalTrainingService(ApplicationDbContext db)
         if(old!=null){if(old.PersonalChargeId!=m.ChargeId||old.Amount!=m.Amount||old.PaymentMethod!=m.PaymentMethod||old.CreatedByUserId!=actor||old.Notes!=m.Notes?.Trim())throw new InvalidOperationException("Formulari është përdorur.");return old.Id;}
         var c=await db.PersonalCharges.Include(x=>x.PersonalTraining).SingleAsync(x=>x.Id==m.ChargeId);
         await db.Entry(c).ReloadAsync();
-        if(m.Amount>c.Due)throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
+        if(c.IsCancelled||m.Amount>c.Due)throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
         var p=new Payment{PersonalChargeId=c.Id,StudentId=c.PersonalTraining!.StudentId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod=m.PaymentMethod,Notes=m.Notes?.Trim(),CreatedByUserId=actor};
         db.Payments.Add(p);c.Paid+=m.Amount;await db.SaveChangesAsync();
         Entry(c,"Payment",0,p.Amount,"Arkëtim personal #"+p.Id+" · "+c.Description,actor,p.Id);

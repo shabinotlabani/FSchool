@@ -8,5 +8,5 @@
 </form>
 
 @section PageNavigation {
-    <a class="btn btn-outline-secondary app-back-button" asp-action="Family" asp-route-id="@ViewData["FamilyId"]"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Family" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@ViewData["FamilyId"]"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
 }

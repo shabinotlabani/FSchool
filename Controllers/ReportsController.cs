@@ -26,6 +26,14 @@ public class ReportsController : Controller
         if(!ModelState.IsValid)return BadRequest("Zgjidhni periudhë të vlefshme.");
         return View(await new _2Korriku.Services.ExpenseService(_context).ReportAsync(filter));
     }
+    public async Task<IActionResult> Reasons(_2Korriku.Models.MoneyDateFilter filter,string? category,string? actionType,string? search)
+    {
+        if(!string.IsNullOrEmpty(category)&&!_2Korriku.Models.ReasonReportModel.Categories.Contains(category))ModelState.AddModelError("category","Zgjidhni kategori të vlefshme.");
+        if(!string.IsNullOrEmpty(actionType)&&!_2Korriku.Models.ReasonReportModel.Actions.Contains(actionType))ModelState.AddModelError("actionType","Zgjidhni veprim të vlefshëm.");
+        if(!ModelState.IsValid)return View(new _2Korriku.Models.ReasonReportModel{Filter=filter,Category=category,Action=actionType,Search=search});
+        var model=await new _2Korriku.Services.ReasonReportService(_context).LoadAsync(filter,category,actionType,search);
+        return View(model);
+    }
 
     public async Task<IActionResult> Operations(string? search, string stock = "low")
         => View(await OperationsModel(search, stock));

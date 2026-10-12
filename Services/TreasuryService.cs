@@ -39,7 +39,7 @@ public class TreasuryService(ApplicationDbContext db)
             var money = new ExpenseService(db);
             var available = Math.Min(await money.AvailableFromAsync(model.Date!.Value, model.Method), await money.AvailableFromAsync(model.Date.Value));
             if (model.Amount > available)
-                throw new InvalidOperationException($"Mjete të pamjaftueshme në {(model.Method == "Cash" ? "Cash" : "Bankë")}. Për këtë datë mund të tërhiqni deri në {Math.Max(0, available):N2} €.");
+                throw new InvalidOperationException($"Mjete të pamjaftueshme në {(model.Method == "Cash" ? "Cash" : "Bankë")}. Për këtë datë mund të tërhiqni deri në {Math.Max(0, available):N2}.");
         }
         var entry = new TreasuryEntry { RequestId = model.RequestId, Kind = model.Kind, Method = model.Method, Date = model.Date!.Value,
             Amount = model.Amount, Owner = owner, Notes = notes, CreatedById = actor };

@@ -1,10 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace _2Korriku.Models;
 
 public class Student
 {
+    [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
     public bool FirstMonthUsesWeeks { get; set; }
     public Guid Revision { get; set; } = Guid.NewGuid();

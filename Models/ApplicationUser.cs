@@ -4,6 +4,7 @@ namespace _2Korriku.Models;
 
 public class ApplicationUser : IdentityUser
 {
+    public bool CanVerifyBank { get; set; }
     [System.ComponentModel.DataAnnotations.StringLength(150)] public string? Specialization { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
