@@ -56,6 +56,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
             model = new FieldBookingEditModel { Id = id, Price = b.Price, RequestId = b.RequestId, Revision = b.Revision, FootballFieldId = b.FootballFieldId,
                 Date = b.Date, StartsAt = b.StartsAt, EndsAt = b.EndsAt, CustomerName = b.CustomerName, Phone = b.Phone, Notes = b.Notes };
         }
+        if (model.Id == 0 && model.Days.Count == 0) model.Days = [((int)model.Date.DayOfWeek + 6) % 7 + 1];
         await Choices(model); return View(model);
     }
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
@@ -63,10 +64,11 @@ public class FieldsController(ApplicationDbContext db) : Controller
     {
         if (ModelState.IsValid) try
         {
-            var id = await Service.SaveBookingAsync(model, Actor); TempData["Success"] = model.Weeks > 1 ? $"U rezervuan {model.Weeks} termine javore. Çmimi dhe pagesat mbahen veçmas për çdo termin." : "Termini privat u ruajt.";
+            var id = await Service.SaveBookingAsync(model, Actor); TempData["Success"] = model.Id == 0 ? $"U rezervuan {model.BookingDates().Count} termine nga një orë." : "Termini privat u ruajt.";
             return RedirectToAction(nameof(Details), new { id });
         }
         catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
+
         await Choices(model); return View(model);
     }
     private Task<FieldBooking?> GetBooking(int id) => db.FieldBookings.AsNoTracking().Include(b => b.Payments).Include(b => b.FootballField)

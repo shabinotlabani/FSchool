@@ -63,6 +63,9 @@ public class FieldEditModel
 
 public class FieldBookingEditModel : IValidatableObject
 {
+    public List<int> Days { get; set; } = [];
+    public List<DateOnly> BookingDates() => Id != 0 ? [Date] : Enumerable.Range(0, Weeks * 7)
+        .Select(offset => Date.AddDays(offset)).Where(date => Days.Contains(((int)date.DayOfWeek + 6) % 7 + 1)).ToList();
     [Range(1, 52, ErrorMessage = "Zgjidhni nga 1 deri në 52 javë.")] public int Weeks { get; set; } = 1;
     [Range(typeof(decimal), "0", "999999.99")] public decimal Price { get; set; }
     public int Id { get; set; }
@@ -73,7 +76,7 @@ public class FieldBookingEditModel : IValidatableObject
     [StringLength(40)] public string? Phone { get; set; }
     public DateOnly Date { get; set; } = BillingClock.Today;
     [Required(ErrorMessage = "Vendosni orën e fillimit.")] public TimeOnly? StartsAt { get; set; }
-    [Required(ErrorMessage = "Vendosni orën e përfundimit.")] public TimeOnly? EndsAt { get; set; }
+    public TimeOnly? EndsAt { get; set; }
     [StringLength(500)] public string? Notes { get; set; }
     [ValidateNever] public List<FootballField> Fields { get; set; } = [];
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
@@ -81,10 +84,15 @@ public class FieldBookingEditModel : IValidatableObject
         if (decimal.Round(Price, 2) != Price) yield return new("Çmimi lejon deri në dy shifra dhjetore.");
         if (Date.Year < 2000 || Date.Year > 2099) yield return new("Zgjidhni një datë nga viti 2000 deri më 2099.", [nameof(Date)]);
         if (Id != 0 && Weeks != 1) yield return new("Ndryshimi vlen vetëm për terminin e zgjedhur.");
-        if (Date.Year is >= 2000 and <= 2099 && Weeks is >= 1 and <= 52 && Date.AddDays((Weeks - 1) * 7).Year > 2099)
+        if (Id == 0 && (Days == null || Days.Count == 0 || Days.Count > 7 || Days.Any(d => d < 1 || d > 7) || Days.Distinct().Count() != Days.Count))
+            yield return new("Zgjidhni të paktën një ditë të javës.", [nameof(Days)]);
+        if (Id != 0 && Days is { Count: > 0 }) yield return new("Ndryshimi vlen vetëm për terminin e zgjedhur.");
+        if (Date.Year is >= 2000 and <= 2099 && Weeks is >= 1 and <= 52 && Days != null && BookingDates().Any(d => d.Year > 2099))
             yield return new("Data e fundit e rezervimit duhet të jetë deri në vitin 2099.");
         if (StartsAt.HasValue && EndsAt.HasValue && (EndsAt <= StartsAt || StartsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0 || EndsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0))
             yield return new("Përfundimi duhet të jetë pas fillimit, brenda së njëjtës ditë dhe me minuta të plota.");
+        if (StartsAt.HasValue && (StartsAt.Value.Hour >= 23 || StartsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0 || (EndsAt.HasValue && EndsAt != StartsAt.Value.AddHours(1))))
+            yield return new("Çdo termin zgjat një orë dhe përfundon brenda së njëjtës ditë.", [nameof(StartsAt)]);
         if (RequestId == Guid.Empty) yield return new("Hapeni përsëri formularin e rezervimit.");
     }
 }

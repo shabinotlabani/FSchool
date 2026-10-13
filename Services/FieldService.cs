@@ -74,6 +74,8 @@ public class FieldService(ApplicationDbContext db)
     public async Task<int> SaveBookingAsync(FieldBookingEditModel input, string actor)
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);
+        var dates = input.BookingDates();
+        var start = input.StartsAt!.Value; var end = start.AddHours(1);
         await using var tx = await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         if (input.Id == 0)
@@ -81,8 +83,11 @@ public class FieldService(ApplicationDbContext db)
             var existing = await db.FieldBookings.AsNoTracking().SingleOrDefaultAsync(b => b.RequestId == input.RequestId);
             if (existing != null)
             {
-                if (existing.FootballFieldId != input.FootballFieldId || existing.Date != input.Date || existing.StartsAt != input.StartsAt
-                    || existing.EndsAt != input.EndsAt || existing.Price != input.Price || existing.CustomerName != input.CustomerName.Trim()
+                var existingDates = existing.SeriesId.HasValue
+                    ? await db.FieldBookings.Where(b => b.SeriesId == existing.SeriesId).OrderBy(b => b.Date).Select(b => b.Date).ToListAsync()
+                    : new List<DateOnly> { existing.Date };
+                if (!existingDates.SequenceEqual(dates) || existing.FootballFieldId != input.FootballFieldId || existing.Date != dates[0] || existing.StartsAt != input.StartsAt
+                    || existing.EndsAt != end || existing.Price != input.Price || existing.CustomerName != input.CustomerName.Trim()
                     || existing.Phone != input.Phone?.Trim() || existing.Notes != input.Notes?.Trim() || existing.SeriesWeeks != input.Weeks)
                     throw new InvalidOperationException("Ky formular është përdorur. Hapni një termin të ri ose ndryshoni rezervimin ekzistues.");
                 return existing.Id;
@@ -95,23 +100,21 @@ public class FieldService(ApplicationDbContext db)
         if (input.Id != 0 && (booking.Revision != input.Revision || booking.IsCancelled))
             throw new InvalidOperationException("Termini u ndryshua ose u anulua. Hapeni përsëri.");
         if (input.Price < booking.Paid) throw new InvalidOperationException("Çmimi nuk mund të jetë më i ulët se shuma e paguar. Korrigjoni fillimisht pagesat përkatëse.");
-        var start = input.StartsAt!.Value; var end = input.EndsAt!.Value;
-        var dates = Enumerable.Range(0, input.Weeks).Select(week => input.Date.AddDays(week * 7)).ToList();
         var conflicts = await db.FieldBookings.AsNoTracking().Where(b => b.Id != input.Id && !b.IsCancelled && b.FootballFieldId == field.Id && dates.Contains(b.Date) && b.StartsAt < end && b.EndsAt > start)
             .Select(b => b.Date).Distinct().OrderBy(date => date).ToListAsync();
         if (conflicts.Count > 0)
             throw new InvalidOperationException("Fusha është e rezervuar më " + string.Join(", ", conflicts.Select(date => date.ToString("dd.MM.yyyy"))) + ". Asnjë termin nuk u ruajt. Ndryshoni datën, orarin ose fushën.");
-        var day = ((int)input.Date.DayOfWeek + 6) % 7 + 1;
-        if (await db.TrainingSessions.AnyAsync(s => s.TrainingTeam!.IsActive && s.TrainingTeam.FootballFieldId == field.Id && s.Day == day && s.StartsAt < end && s.EndsAt > start))
+        var days = dates.Select(d => ((int)d.DayOfWeek + 6) % 7 + 1).Distinct().ToList();
+        if (await db.TrainingSessions.AnyAsync(s => s.TrainingTeam!.IsActive && s.TrainingTeam.FootballFieldId == field.Id && days.Contains(s.Day) && s.StartsAt < end && s.EndsAt > start))
             throw new InvalidOperationException("Në këtë orar fusha përdoret nga ekipet. Zgjidhni një orar ose fushë tjetër për terminin privat.");
         booking.Price = input.Price;
         booking.FootballFieldId = field.Id; booking.CustomerName = input.CustomerName.Trim(); booking.Phone = input.Phone?.Trim();
-        booking.Date = input.Date; booking.StartsAt = start; booking.EndsAt = end; booking.Notes = input.Notes?.Trim(); booking.Revision = Guid.NewGuid();
+        booking.Date = dates[0]; booking.StartsAt = start; booking.EndsAt = end; booking.Notes = input.Notes?.Trim(); booking.Revision = Guid.NewGuid();
         if (input.Id == 0) db.FieldBookings.Add(booking);
         if (input.Id == 0)
         {
             booking.SeriesWeeks = input.Weeks;
-            booking.SeriesId = input.Weeks > 1 ? input.RequestId : null;
+            booking.SeriesId = dates.Count > 1 ? input.RequestId : null;
             foreach (var date in dates.Skip(1))
             {
                 var next = new FieldBooking { RequestId = Guid.NewGuid(), SeriesId = booking.SeriesId, SeriesWeeks = input.Weeks,

@@ -13,7 +13,7 @@
 @if(writer && !Model.IsCancelled && Model.Paid > 0){<p class="text-secondary">Për të anuluar terminin, anuloni dhe ktheni fillimisht pagesat aktive më sipër.</p>}
 @if(ViewData["SeriesBookings"] is List<FieldBooking> series)
 {
-    <section class="panel p-4 mt-4"><h2 class="h5">Terminet e këtij rezervimi javor</h2><p>Çdo javë ka pagesat e veta. Ndryshimi ose anulimi i një termini nuk ndryshon javët e tjera.</p><div class="table-responsive"><table class="table"><thead><tr><th>Data / orari</th><th>Fusha</th><th>Çmimi</th><th>Paguar</th><th>Mbetur</th><th>Statusi</th><th></th></tr></thead><tbody>
+    <section class="panel p-4 mt-4"><h2 class="h5">Terminet e këtij rezervimi</h2><p>Çdo termin paguhet, ndryshohet ose anulohet veçmas.</p><div class="table-responsive"><table class="table"><thead><tr><th>Data / orari</th><th>Fusha</th><th>Çmimi</th><th>Paguar</th><th>Mbetur</th><th>Statusi</th><th></th></tr></thead><tbody>
     @foreach(var item in series){<tr><td>@item.Date.ToString("dd.MM.yyyy") · @item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</td><td>@item.FootballField?.Name</td><td>@item.Price.ToString("N2")</td><td>@item.Paid.ToString("N2")</td><td>@item.Due.ToString("N2")</td><td>@(item.IsCancelled ? "I anuluar" : "I rezervuar")</td><td><a asp-action="Details" asp-route-id="@item.Id">Hap terminin</a></td></tr>}
     </tbody></table></div></section>
 }
