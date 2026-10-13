@@ -7,9 +7,11 @@
 
 @if(Model.StudentsWithoutTeam.Any())
 {
-    <section class="panel mb-4">
-        <div class="panel-heading"><h2>Lojtarët pa ekip <span class="badge bg-warning text-dark">@Model.StudentsWithoutTeam.Count</span></h2></div>
-        <div class="table-responsive" style="max-height:360px"><table class="table align-middle mb-0">
+    <details class="mb-3">
+        <summary class="btn btn-sm btn-light border rounded-pill d-inline-flex align-items-center gap-2" style="list-style:none" aria-controls="players-without-team">
+            <span class="badge bg-warning text-dark rounded-pill">@Model.StudentsWithoutTeam.Count</span><span>Lojtarë pa ekip</span>
+        </summary>
+        <div id="players-without-team" class="panel table-responsive mt-2" style="max-height:360px"><table class="table align-middle mb-0">
             <thead><tr><th>Lojtari</th><th>Mosha</th><th>Statusi</th><th></th></tr></thead>
             <tbody>@foreach(var student in Model.StudentsWithoutTeam){<tr>
                 <td>@student.FullName</td><td>@(_2Korriku.Services.TeamService.Age(student.DateOfBirth)) vjeç</td>
@@ -18,7 +20,7 @@
                     <a class="btn btn-sm btn-outline-primary" asp-controller="@(student.IsActive ? "Teams" : "Students")" asp-action="@(student.IsActive ? "Assign" : "Edit")" asp-route-id="@student.Id">@(student.IsActive ? "Cakto ekipin" : "Ndrysho lojtarin")</a>
                 }</td></tr>}</tbody>
         </table></div>
-    </section>
+    </details>
 }
 <div class="dashboard-columns">
     <section class="panel"><div class="panel-heading"><div><h2>Lojtarët e fundit</h2><p>Anëtarët më të rinj të shkollës</p></div><a asp-controller="Students" asp-action="Index" class="text-link">Shiko të gjithë <span aria-hidden="true">→</span></a></div>
