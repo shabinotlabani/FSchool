@@ -460,6 +460,11 @@ try
     var inactiveSheet=await WithDb(db=>new AttendanceService(db).LoadAsync(transferFixture.Target,"head",BillingClock.Today,"test-coach-0"));
     Check(inactiveSheet.Players.All(x=>x.StudentId!=transferFixture.Player),"Inactive player disappears even from a saved current attendance sheet");
     Check(await WithDb(db=>db.AttendancePlayers.AnyAsync(x=>x.StudentId==transferFixture.Player&&x.Present)),"Deactivation retains attendance history");
+    var accountAttendance=await WithDb(db=>new MonthlyAttendanceService(db).HistoryAsync(attendanceStudent.Id));
+    Check(accountAttendance.Single(x=>x.Year==2026&&x.Month==7) is {Present:10,Total:14,Percent:71,Label:"Korrik 2026"},"Account history groups recorded attendance by month with percentage and counts");
+    var transferredAttendance=await WithDb(db=>new MonthlyAttendanceService(db).HistoryAsync(transferFixture.Player));
+    Check(transferredAttendance.Single() is {Present:1,Total:1,Percent:100},"Account attendance retains inactive player history and counts same-day transfers once");
+    Check((await WithDb(db=>new MonthlyAttendanceService(db).HistoryAsync(int.MaxValue))).Count==0,"Account attendance handles no records without invented percentages");
     Console.WriteLine("All field and private booking checks passed.");
 }
 finally

@@ -85,6 +85,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
     public async Task<IActionResult> Account(int id)
     {
         var model = await billing.GetAccountAsync(id);
+        if (model != null) model.AttendanceHistory = await new MonthlyAttendanceService(db).HistoryAsync(id);
         return model == null ? NotFound() : View(model);
     }
 

@@ -54,6 +54,7 @@ public class BillingGridRow
 
 public class PlayerBillingModel
 {
+    public List<PlayerAttendanceMonth> AttendanceHistory { get; set; } = [];
     public decimal PendingBankAmount { get; set; }
     public int? CurrentFamilyId { get; set; }
     public List<PersonalTraining> PersonalTrainings { get; set; } = [];

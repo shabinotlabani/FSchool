@@ -6,6 +6,7 @@
 <div class="page-heading"><div><h1>@Model.Student.FullName</h1><span class="text-secondary">Kartela financiare · #@Model.Student.Id · @(Model.Student.IsActive?"Aktiv":"Joaktiv")</span></div></div>
 <div class="account-toolbar">
 <a asp-action="PrintAccount" asp-route-id="@Model.Student.Id" class="btn btn-outline-primary">Printo / PDF</a>
+<button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#player-attendance" aria-expanded="false" aria-controls="player-attendance">Prezenca</button>
 @if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){
 <partial name="_AccountPaymentActions" model="Model"/>
 <a asp-controller="Students" asp-action="Edit" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Edito lojtarin</a>
@@ -16,6 +17,21 @@
 @if(User.IsInRole(Roles.Admin)){<a asp-controller="Tariffs" asp-action="Assign" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Ndrysho kategorinë</a>}
 </div>
 <partial name="_BillingNotice"/>
+<div class="collapse" id="player-attendance">
+    <section class="panel p-3 mb-3" aria-label="Historiku i prezencës sipas muajve">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-2"><h2>Prezenca sipas muajve</h2><small class="text-secondary">Prezent / ditë të regjistruara</small></div>
+        @if(Model.AttendanceHistory.Count == 0){<p class="text-secondary small mb-0">Nuk ka prezencë të regjistruar.</p>}
+        <div class="attendance-months">
+        @foreach(var month in Model.AttendanceHistory){
+            <div class="attendance-month">
+                <span>@month.Label</span>
+                <div class="progress" role="progressbar" aria-label="@month.Label" aria-valuenow="@month.Percent" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar @(month.Percent >= 80 ? "bg-success" : month.Percent >= 50 ? "bg-warning" : "bg-danger")" style="width:@(month.Percent)%"></div></div>
+                <strong>@month.Percent%</strong><small>@month.Present/@month.Total</small>
+            </div>
+        }
+        </div>
+    </section>
+</div>
 @if(Model.PendingBankAmount>0){<div class="alert alert-warning py-2">Bankë në pritje: <strong>@Model.PendingBankAmount.ToString("N2")</strong> · Borxhi mbetet deri në verifikim. @if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){<a asp-controller="BankPayments" asp-action="Index">Shiko kërkesat</a>}</div>}
 <div class="account-metadata">
 <div><small>Datëlindja</small><strong>@Model.Student.DateOfBirth.ToString("dd.MM.yyyy")</strong></div>

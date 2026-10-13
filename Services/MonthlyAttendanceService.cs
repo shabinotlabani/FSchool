@@ -6,6 +6,19 @@ namespace _2Korriku.Services;
 
 public class MonthlyAttendanceService(ApplicationDbContext db)
 {
+    public async Task<List<PlayerAttendanceMonth>> HistoryAsync(int studentId)
+    {
+        var today = BillingClock.Today;
+        var records = await db.AttendancePlayers.AsNoTracking()
+            .Where(x => x.StudentId == studentId && x.TeamAttendance!.Date <= today)
+            .Select(x => new { x.TeamAttendance!.Date, x.Present }).ToListAsync();
+        // A transfer can leave two team records on one date; count the training day once.
+        return records.GroupBy(x => x.Date).Select(g => new { Date = g.Key, Present = g.Any(x => x.Present) })
+            .GroupBy(x => new { x.Date.Year, x.Date.Month })
+            .Select(g => new PlayerAttendanceMonth(g.Key.Year, g.Key.Month, g.Count(x => x.Present), g.Count()))
+            .OrderByDescending(x => x.Year).ThenByDescending(x => x.Month).ToList();
+    }
+
     public async Task PopulateAsync(IEnumerable<MonthlyInvoiceView> invoices, int year, int month)
     {
         var list=invoices.ToList();
