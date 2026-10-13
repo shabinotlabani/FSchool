@@ -1,12 +1,22 @@
 @model FieldPaymentModel
 @using _2Korriku.Services
-@{ViewData["Title"] = "Pagesa e terminit privat";}
+@{ViewData["Title"] = Model.WholeSeries ? "Pagesa e plotë e rezervimit" : "Pagesa e terminit privat"; var due = Model.WholeSeries ? Model.SeriesBookings.Where(b=>!b.IsCancelled).Sum(b=>b.Due) : Model.Booking!.Due;}
 
-<div class="page-heading mt-3"><div><p class="eyebrow">ARKËTIM</p><h1>Pagesa e terminit privat</h1><p>@Model.Booking!.CustomerName · @Model.Booking.FootballField?.Name · @Model.Booking.Date.ToString("dd.MM.yyyy") · @Model.Booking.StartsAt.ToString("HH:mm")–@Model.Booking.EndsAt.ToString("HH:mm")</p></div></div>
-<form asp-action="Pay" method="post" class="panel p-4"><input asp-for="BookingId" type="hidden" /><input asp-for="Revision" type="hidden" /><input asp-for="RequestId" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
-<p>Çmimi: <strong>@Model.Booking.Price.ToString("N2")</strong> · Paguar: <strong>@Model.Booking.Paid.ToString("N2")</strong> · Mbetur: <strong>@Model.Booking.Due.ToString("N2")</strong></p>
-<div class="row g-3"><div class="col-md-6"><label asp-for="Amount" class="form-label">Shuma për arkëtim</label><input asp-for="Amount" class="form-control" type="number" min="0.01" step="0.01" max="@Model.Booking.Due.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)" required /></div><div class="col-md-6"><label asp-for="Method" class="form-label">Mënyra e pagesës</label><select asp-for="Method" class="form-select"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select></div></div>
-<p class="text-secondary mt-3">Regjistroni vetëm shumën e pranuar. Pagesa regjistrohet me datën e sotme, @BillingClock.Today.ToString("dd.MM.yyyy").</p><button class="btn btn-primary mt-2">Regjistro pagesën dhe hap dëftesën</button><p class="bank-pending-hint small text-secondary mt-2" hidden>Bankë në pritje — regjistrohet vetëm pas konfirmimit.</p></form>
+<div class="page-heading mt-3"><div><p class="eyebrow">ARKËTIM</p><h1>@ViewData["Title"]</h1><p>@Model.Booking!.CustomerName · @Model.Booking.FootballField?.Name · @Model.Booking.Date.ToString("dd.MM.yyyy") · @Model.Booking.StartsAt.ToString("HH:mm")–@Model.Booking.EndsAt.ToString("HH:mm")</p></div></div>
+@if(Model.Booking!.SeriesId.HasValue){
+<div class="d-flex gap-2 mb-3">
+<a asp-action="Pay" asp-route-id="@Model.BookingId" class="btn @(Model.WholeSeries ? "btn-outline-primary" : "btn-primary")">Vetëm këtë termin</a>
+<a asp-action="Pay" asp-route-id="@Model.BookingId" asp-route-wholeSeries="true" class="btn @(Model.WholeSeries ? "btn-primary" : "btn-outline-primary")">Gjithë rezervimin</a>
+</div>}
+@if(Model.WholeSeries){
+<div class="panel p-3 mb-3"><strong>Borxhi i rezervimit: @due.ToString("N2")</strong>
+<div class="table-responsive mt-2" style="max-height:280px"><table class="table table-sm mb-0"><thead><tr><th>Termini</th><th>Çmimi</th><th>Paguar</th><th>Mbetur</th></tr></thead><tbody>
+@foreach(var booking in Model.SeriesBookings.Where(b=>!b.IsCancelled)){<tr><td>@booking.Date.ToString("dd.MM.yyyy") · @booking.StartsAt.ToString("HH:mm")</td><td>@booking.Price.ToString("N2")</td><td>@booking.Paid.ToString("N2")</td><td>@booking.Due.ToString("N2")</td></tr>}
+</tbody></table></div></div>}
+<form asp-action="Pay" method="post" class="panel p-4"><input asp-for="WholeSeries" type="hidden"/><input asp-for="ExpectedState" type="hidden"/><input asp-for="BookingId" type="hidden" /><input asp-for="Revision" type="hidden" /><input asp-for="RequestId" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+@if(!Model.WholeSeries){<p>Çmimi: <strong>@Model.Booking.Price.ToString("N2")</strong> · Paguar: <strong>@Model.Booking.Paid.ToString("N2")</strong> · Mbetur: <strong>@Model.Booking.Due.ToString("N2")</strong></p>}
+<div class="row g-3"><div class="col-md-6"><label asp-for="Amount" class="form-label">Shuma për arkëtim</label><input asp-for="Amount" class="form-control" type="number" min="0.01" step="0.01" readonly="@Model.WholeSeries" max="@due.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)" required /></div><div class="col-md-6"><label asp-for="Method" class="form-label">Mënyra e pagesës</label><select asp-for="Method" class="form-select"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option></select></div></div>
+<p class="text-secondary mt-3">Regjistroni vetëm shumën e pranuar. Pagesa regjistrohet me datën e sotme, @BillingClock.Today.ToString("dd.MM.yyyy").</p><button class="btn btn-primary mt-2">Regjistro pagesën</button><p class="bank-pending-hint small text-secondary mt-2" hidden>Bankë në pritje — regjistrohet vetëm pas konfirmimit.</p></form>
 
 @section PageNavigation {
     <a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@Model.BookingId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>

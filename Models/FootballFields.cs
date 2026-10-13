@@ -133,6 +133,8 @@ public class FieldScheduleModel
 
 public class FieldPayment
 {
+    public Guid? BatchId { get; set; }
+    [StringLength(64)] public string? BatchState { get; set; }
     public int Id { get; set; }
     public Guid RequestId { get; set; }
     public int FieldBookingId { get; set; }
@@ -150,6 +152,9 @@ public class FieldPayment
 
 public class FieldPaymentModel : IValidatableObject
 {
+    public bool WholeSeries { get; set; }
+    [StringLength(64)] public string? ExpectedState { get; set; }
+    [ValidateNever] public List<FieldBooking> SeriesBookings { get; set; } = [];
     public int BookingId { get; set; }
     public Guid Revision { get; set; }
     public Guid RequestId { get; set; } = Guid.NewGuid();
@@ -159,6 +164,7 @@ public class FieldPaymentModel : IValidatableObject
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
         if (RequestId == Guid.Empty) yield return new("Rihapni formularin e pagesës.");
+        if (WholeSeries && string.IsNullOrWhiteSpace(ExpectedState)) yield return new("Rihapni pagesën e rezervimit.");
         if (decimal.Round(Amount, 2) != Amount) yield return new("Shuma lejon deri në dy shifra dhjetore.");
     }
 }

@@ -16,7 +16,7 @@ public partial class BankVerificationService
     }
     public Task<int> QueueSale(IssuePaymentModel m,string actor)=>QueueAdditional(new IssuePaymentModel{SaleId=m.SaleId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueuePersonal(PersonalPaymentModel m,string actor)=>QueueAdditional(new PersonalPaymentModel{ChargeId=m.ChargeId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
-    public Task<int> QueueField(FieldPaymentModel m,string actor)=>QueueAdditional(new FieldPaymentModel{BookingId=m.BookingId,Revision=m.Revision,RequestId=m.RequestId,Amount=m.Amount,Method="Bank"},actor);
+    public Task<int> QueueField(FieldPaymentModel m,string actor)=>QueueAdditional(new FieldPaymentModel{WholeSeries=m.WholeSeries,ExpectedState=m.ExpectedState,BookingId=m.BookingId,Revision=m.Revision,RequestId=m.RequestId,Amount=m.Amount,Method="Bank"},actor);
     public Task<int> QueueFamily(FamilyPaymentModel m,string actor)=>QueueAdditional(new FamilyPaymentModel{FamilyId=m.FamilyId,ExpectedState=m.ExpectedState,StudentId=m.StudentId,RequestId=m.RequestId,Amount=m.Amount,PaymentDate=m.PaymentDate,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueueExpense(ExpenseCreateModel m,string actor)=>QueueAdditional(new ExpenseCreateModel{RequestId=m.RequestId,CategoryId=m.CategoryId,SubcategoryId=m.SubcategoryId,Date=m.Date,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueueTreasury(TreasuryCreateModel m,string actor)=>QueueAdditional(new TreasuryCreateModel{RequestId=m.RequestId,Kind=m.Kind,Date=m.Date,Amount=m.Amount,Owner=m.Owner?.Trim(),Notes=m.Notes?.Trim(),Method="Bank"},actor);
@@ -54,8 +54,19 @@ public partial class BankVerificationService
                 student=charge.PersonalTraining!.StudentId;description=charge.Number;break;
             case FieldPaymentModel m:
                 var booking=await db.FieldBookings.AsNoTracking().Include(x=>x.Payments).SingleOrDefaultAsync(x=>x.Id==m.BookingId)??throw new InvalidOperationException("Termini nuk u gjet.");
-                if(booking.IsCancelled||booking.Revision!=m.Revision||amount>booking.Due)throw new InvalidOperationException("Termini ose borxhi ka ndryshuar. Rihapni formularin.");
-                description=$"{booking.CustomerName} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}";break;
+                if(booking.SeriesId.HasValue){
+                    var seriesIds=await db.FieldBookings.Where(b=>b.SeriesId==booking.SeriesId).Select(b=>b.Id).ToListAsync();
+                    var waiting=await db.PendingBankPayments.Where(p=>p.Kind=="Field"&&p.ReviewedAt==null&&p.TargetId.HasValue&&seriesIds.Contains(p.TargetId.Value)).ToListAsync();
+                    if(waiting.Any(p=>m.WholeSeries||JsonSerializer.Deserialize<FieldPaymentModel>(p.Payload)!.WholeSeries))
+                        throw new InvalidOperationException("Rezervimi ka pagesë bankare në pritje. Verifikojeni para një kërkese tjetër.");
+                }
+                if(m.WholeSeries){
+                    var bookings=await new FieldService(db).ValidateSeriesPaymentAsync(m);
+                    var ids=bookings.Select(b=>b.Id).ToList();
+                    if(await db.PendingBankPayments.AnyAsync(p=>p.Kind=="Field"&&p.ReviewedAt==null&&p.TargetId.HasValue&&ids.Contains(p.TargetId.Value)))
+                        throw new InvalidOperationException("Një termin ka pagesë bankare në pritje. Verifikojeni para pagesës së plotë.");
+                }else if(booking.IsCancelled||booking.Revision!=m.Revision||amount>booking.Due)throw new InvalidOperationException("Termini ose borxhi ka ndryshuar. Rihapni formularin.");
+                description=m.WholeSeries ? $"{booking.CustomerName} · Pagesë e plotë e rezervimit" : $"{booking.CustomerName} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}";break;
             case FamilyPaymentModel m:
                 var account=await new BillingService(db).GetFamilyAccountAsync(m.FamilyId)??throw new InvalidOperationException("Familja nuk u gjet.");
                 if(account.State!=m.ExpectedState)throw new InvalidOperationException("Borxhi i familjes ka ndryshuar. Rihapni formularin.");
@@ -81,7 +92,7 @@ public partial class BankVerificationService
                 pending.ResultId=await new BillingService(db).RegisterFlexibleFamilyBankPaymentAsync(family,actor);break;
             case "Field":
                 pending.ResultId=await new FieldService(db).PayAsync(JsonSerializer.Deserialize<FieldPaymentModel>(pending.Payload)!,actor);
-                (await db.FieldPayments.SingleAsync(x=>x.Id==pending.ResultId)).CreatedAt=BillingClock.UtcDate(date);break;
+                foreach(var receipt in await db.FieldPayments.Where(x=>x.Id==pending.ResultId||x.BatchId==pending.RequestId).ToListAsync()) receipt.CreatedAt=BillingClock.UtcDate(date);break;
             case "Expense":
                 var expense=JsonSerializer.Deserialize<ExpenseCreateModel>(pending.Payload)!;expense.Date=date;
                 pending.ResultId=await new ExpenseService(db).CreateAsync(expense,actor);break;

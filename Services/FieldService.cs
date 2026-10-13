@@ -5,12 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace _2Korriku.Services;
 
-public class FieldService(ApplicationDbContext db)
+public partial class FieldService(ApplicationDbContext db)
 {
     private const string MoneyLockSql = "SELECT pg_advisory_xact_lock(20260929, 2002)";
 
     public async Task<int> PayAsync(FieldPaymentModel input, string actor)
     {
+        if (input.WholeSeries) return await PaySeriesAsync(input, actor);
         Validator.ValidateObject(input, new ValidationContext(input), true);
         await using var tx = db.Database.CurrentTransaction == null ? await db.Database.BeginTransactionAsync() : null;
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
@@ -18,7 +19,7 @@ public class FieldService(ApplicationDbContext db)
         var existing = await db.FieldPayments.AsNoTracking().SingleOrDefaultAsync(p => p.RequestId == input.RequestId);
         if (existing != null)
         {
-            if (existing.FieldBookingId != input.BookingId || existing.Amount != input.Amount || existing.Method != input.Method || existing.ActorId != actor)
+            if (existing.BatchId.HasValue || existing.FieldBookingId != input.BookingId || existing.Amount != input.Amount || existing.Method != input.Method || existing.ActorId != actor)
                 throw new InvalidOperationException("Ky formular është përdorur. Hapni një pagesë të re.");
             return existing.Id;
         }

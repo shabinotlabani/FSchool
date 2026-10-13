@@ -480,6 +480,37 @@ try
     var transferredAttendance=await WithDb(db=>new MonthlyAttendanceService(db).HistoryAsync(transferFixture.Player));
     Check(transferredAttendance.Single() is {Present:1,Total:1,Percent:100},"Account attendance retains inactive player history and counts same-day transfers once");
     Check((await WithDb(db=>new MonthlyAttendanceService(db).HistoryAsync(int.MaxValue))).Count==0,"Account attendance handles no records without invented percentages");
+    async Task<FieldPaymentModel> SeriesPayment(int anchor,string method="Cash"){
+        return await WithDb(async db=>{
+            var rows=await new FieldService(db).SeriesBookingsAsync(anchor);
+            return new FieldPaymentModel{WholeSeries=true,BookingId=anchor,ExpectedState=FieldService.SeriesState(rows),Amount=rows.Where(b=>!b.IsCancelled).Sum(b=>b.Due),Method=method};
+        });
+    }
+    var seriesBeforePartial=await SeriesPayment(multiId);
+    var firstMulti=await WithDb(db=>db.FieldBookings.SingleAsync(b=>b.Id==multiId));
+    await WithDb(db=>new FieldService(db).PayAsync(new(){BookingId=multiId,Revision=firstMulti.Revision,Amount=10},actor));
+    await Reject(()=>WithDb(db=>new FieldService(db).PayAsync(seriesBeforePartial,actor)),"Stale full-series payment rejected after an individual payment");
+    var toCancelMulti=multiRows.Last();
+    await WithDb(async db=>{await new FieldService(db).CancelAsync(new(){Id=toCancelMulti.Id,Revision=toCancelMulti.Revision,Reason="Test cancellation"},actor);return true;});
+    var fullSeries=await SeriesPayment(multiId);
+    Check(fullSeries.Amount==530,"Full-series payment excludes cancelled bookings and subtracts earlier payments");
+    var fullReceipt=await WithDb(db=>new FieldService(db).PayAsync(fullSeries,actor));
+    Check(await WithDb(db=>db.FieldPayments.Where(p=>p.BatchId==fullSeries.RequestId).SumAsync(p=>p.Amount))==530,"Full payment allocates exact total across booking receipts");
+    Check((await WithDb(db=>new FieldService(db).SeriesBookingsAsync(multiId))).Where(b=>!b.IsCancelled).All(b=>b.Due==0),"Full payment settles every non-cancelled occurrence");
+    Check(await WithDb(db=>new FieldService(db).PayAsync(fullSeries,actor))==fullReceipt,"Repeated full payment returns same receipt without duplicates");
+    var bankSeriesInput=Booking(field:3,hour:6);bankSeriesInput.Weeks=2;
+    var bankSeriesId=await WithDb(db=>new FieldService(db).SaveBookingAsync(bankSeriesInput,actor));
+    var fullBank=await SeriesPayment(bankSeriesId,"Bank");
+    var pendingSeries=await WithDb(db=>new BankVerificationService(db).QueueField(fullBank,actor));
+    Check((await WithDb(db=>new FieldService(db).SeriesBookingsAsync(bankSeriesId))).Sum(b=>b.Due)==120,"Full bank request keeps all debt until confirmation");
+    Check(await WithDb(db=>new BankVerificationService(db).QueueField(fullBank,actor))==pendingSeries,"Repeated bank series request creates no duplicate");
+    var bankSibling=(await WithDb(db=>new FieldService(db).SeriesBookingsAsync(bankSeriesId))).Last();
+    await Reject(()=>WithDb(db=>new BankVerificationService(db).QueueField(new(){BookingId=bankSibling.Id,Revision=bankSibling.Revision,Amount=60,Method="Bank"},actor)),"Individual bank request cannot overlap pending full-series request");
+    var bankDate=BillingClock.Today.AddDays(-1);
+    await WithDb(db=>new BankVerificationService(db).Review(new(){Id=pendingSeries,ReceivedOn=bankDate},actor,true));
+    var bankReceipts=await WithDb(db=>db.FieldPayments.Where(p=>p.BatchId==fullBank.RequestId).ToListAsync());
+    Check(bankReceipts.Count==2 && bankReceipts.All(p=>p.Method=="Bank"&&p.CreatedAt==BillingClock.UtcDate(bankDate)),"Bank approval posts all allocations on actual bank date");
+    Check((await WithDb(db=>new FieldService(db).SeriesBookingsAsync(bankSeriesId))).All(b=>b.Due==0),"One bank confirmation settles the entire reservation");
     Console.WriteLine("All field and private booking checks passed.");
 }
 finally

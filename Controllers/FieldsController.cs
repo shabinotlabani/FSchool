@@ -83,12 +83,20 @@ public class FieldsController(ApplicationDbContext db) : Controller
         return View(booking);
     }
     [HttpGet, Authorize(Roles = Roles.Write)]
-    public async Task<IActionResult> Pay(int id)
+    public async Task<IActionResult> Pay(int id, bool wholeSeries = false)
     {
         var booking = await GetBooking(id);
         if (booking == null) return NotFound();
-        if (booking.IsCancelled || booking.Due <= 0) return RedirectToAction(nameof(Details), new { id });
-        return View(new FieldPaymentModel { BookingId = id, Revision = booking.Revision, Amount = booking.Due, Booking = booking });
+        if (!wholeSeries && (booking.IsCancelled || booking.Due <= 0)) return RedirectToAction(nameof(Details), new { id });
+                var model = new FieldPaymentModel { BookingId = id, Revision = booking.Revision, Amount = booking.Due, Booking = booking, WholeSeries = wholeSeries };
+        if(wholeSeries){
+            if(!booking.SeriesId.HasValue)return RedirectToAction(nameof(Pay),new{id});
+            model.SeriesBookings=await Service.SeriesBookingsAsync(id);
+            model.ExpectedState=FieldService.SeriesState(model.SeriesBookings);
+            model.Amount=model.SeriesBookings.Where(b=>!b.IsCancelled).Sum(b=>b.Due);
+            if(model.Amount<=0)return RedirectToAction(nameof(Details),new{id});
+        }
+        return View(model);
     }
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
     public async Task<IActionResult> Pay(FieldPaymentModel model)
@@ -98,11 +106,12 @@ public class FieldsController(ApplicationDbContext db) : Controller
             if(model.Method=="Bank"){await new BankVerificationService(db).QueueField(model,Actor);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return RedirectToAction("Index","Payments");} var id = await Service.PayAsync(model, Actor); TempData["Success"]="Pagesa u regjistrua.";TempData["FieldReceiptId"]=id; return RedirectToAction("Index", "Payments");
         }
         catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
-        model.Booking = await GetBooking(model.BookingId); return model.Booking == null ? NotFound() : View(model);
+        model.Booking = await GetBooking(model.BookingId); if(model.WholeSeries && model.Booking?.SeriesId != null) model.SeriesBookings = await Service.SeriesBookingsAsync(model.BookingId); return model.Booking == null ? NotFound() : View(model);
     }
     public async Task<IActionResult> Receipt(int id)
     {
         var payment = await db.FieldPayments.AsNoTracking().Include(p => p.Actor).SingleOrDefaultAsync(p => p.Id == id);
+        if(payment?.BatchId is Guid batch) ViewData["BatchPayments"] = await db.FieldPayments.AsNoTracking().Where(p=>p.BatchId==batch).OrderBy(p=>p.Id).ToListAsync();
         return payment == null ? NotFound() : View(payment);
     }
     [HttpGet, Authorize(Roles = Roles.Write)]

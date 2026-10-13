@@ -82,6 +82,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<TreasuryEntry>().HasOne(x => x.CreatedBy).WithMany().HasForeignKey(x => x.CreatedById).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<TreasuryEntry>().HasOne(x => x.CancelledBy).WithMany().HasForeignKey(x => x.CancelledById).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<FieldPayment>().HasIndex(p => p.RequestId).IsUnique();
+        builder.Entity<FieldPayment>().HasIndex(p => p.BatchId);
         builder.Entity<FieldPayment>().HasOne(p => p.FieldBooking).WithMany(b => b.Payments).HasForeignKey(p => p.FieldBookingId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<FieldPayment>().HasOne(p => p.Actor).WithMany().HasForeignKey(p => p.ActorId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<FootballField>().Property(f => f.Revision).IsConcurrencyToken();
