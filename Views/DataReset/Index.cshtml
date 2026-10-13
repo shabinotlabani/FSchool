@@ -1,0 +1,18 @@
+@{ ViewData["Title"] = "Zerimi i të dhënave"; }
+<div class="card border-0 shadow-sm mx-auto" style="max-width:680px">
+    <div class="card-body p-4">
+        <h1 class="h4 mb-3">Zerimi i të dhënave</h1>
+        @if (TempData["ResetSuccess"] is string success) { <div class="alert alert-success" role="status">@success</div> }
+        <div class="alert alert-danger"><strong>Fshirja është përfundimtare.</strong> Fshihen edhe anulimet, kalimet dhe historiku i veprimeve.</div>
+        <p><strong>Fshihen:</strong> lojtarët, familjet, ekipet, prezencat, pagesat, borxhet, arkat, shpenzimet, rezervimet, trajnimet personale, rekuizitat dhe stoku.</p>
+        <p><strong>Ruhen:</strong> shfrytëzuesit, rolet, tarifat dhe historiku i çmimeve, fushat, kategoritë e shpenzimeve, grupet e madhësive dhe konfigurimet e aplikacionit.</p>
+        <form asp-action="Index" method="post">
+            <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+            <label for="password" class="form-label">Fjalëkalimi juaj</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required class="form-control mb-3" />
+            <label for="confirmation" class="form-label">Shkruani <strong>ZERO</strong> për të konfirmuar</label>
+            <input id="confirmation" name="confirmation" autocomplete="off" pattern="ZERO" required class="form-control mb-3" />
+            <div class="d-flex gap-2"><a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Anulo</a><button type="submit" class="btn btn-danger">Fshi të dhënat përgjithmonë</button></div>
+        </form>
+    </div>
+</div>

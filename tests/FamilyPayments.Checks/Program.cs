@@ -395,6 +395,18 @@ try
     Check(await db.PendingBankPayments.AnyAsync(x=>x.Student!.LastName=="DEMO"&&x.ReviewedAt==null),"Demo retains pending bank payments for presentation");
     var demoReport=await new ReasonReportService(db).LoadAsync(new(),search:"DEMO");
     Check(demoReport.Rows.Any(x=>x.Action=="Anulim")&&demoReport.Rows.Any(x=>x.Action=="Lirim"),"Demo fills cancellation and waiver reports");
+    Check(DataResetService.IsOwner("LABINOT.SHABANI@GMAIL.COM") && !DataResetService.IsOwner("other@example.com") && !DataResetService.IsOwner(null), "Reset is restricted to the exact owner username");
+    var keptTypes = new[]{typeof(ApplicationUser),typeof(FeePlan),typeof(FeePlanPrice),typeof(FootballField),typeof(ExpenseCategory),typeof(SizeGroup),typeof(PersonalTariff),typeof(DemoImport)};
+    var keptTables = keptTypes.Select(t=>db.Model.FindEntityType(t)!.GetTableName()!).ToArray();
+    async Task<long> TableCount(string table) => await db.Database.SqlQueryRaw<long>("SELECT count(*) AS \"Value\" FROM \""+table+"\"").SingleAsync();
+    var beforeReset = new Dictionary<string,long>();
+    foreach(var table in keptTables) beforeReset[table] = await TableCount(table);
+    await DataResetService.ResetAsync(db);
+    foreach(var table in DataResetService.Tables) Check(await TableCount(table)==0,"Reset clears "+table);
+    foreach(var table in keptTables) Check(await TableCount(table)==beforeReset[table],"Reset preserves "+table);
+    Check(!await PresentationDemo.SeedAsync(provider),"Reset cannot re-import presentation records");
+    await DataResetService.ResetAsync(db);
+    Check(!await db.Students.AnyAsync(),"Repeated reset remains safe on an empty database");
 }
 finally
 {
