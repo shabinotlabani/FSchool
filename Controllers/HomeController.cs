@@ -2,6 +2,7 @@
 using _2Korriku.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace _2Korriku.Controllers;
 
@@ -29,7 +30,9 @@ public class HomeController : Controller
         var model = new DashboardViewModel
         {
             Stats = stats,
-            RecentStudents = latestStudents
+            RecentStudents = latestStudents,
+            StudentsWithoutTeam = await _context.Students.AsNoTracking().Where(s => s.TrainingTeamId == null)
+                .OrderByDescending(s => s.IsActive).ThenBy(s => s.FirstName).ThenBy(s => s.LastName).ToListAsync()
         };
 
         return View(model);
@@ -46,4 +49,5 @@ public class DashboardViewModel
 {
     public DashboardStats Stats { get; set; } = new();
     public List<_2Korriku.Models.Student> RecentStudents { get; set; } = new();
+    public List<_2Korriku.Models.Student> StudentsWithoutTeam { get; set; } = new();
 }

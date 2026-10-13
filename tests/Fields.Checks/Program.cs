@@ -441,6 +441,25 @@ try
     Check(!(await WithDb(db=>new ReasonReportService(db).LoadAsync(new(){From=BillingClock.Today.AddDays(-1),To=BillingClock.Today.AddDays(-1)},search:"Transfer Player"))).Rows.Any(),"Reason report excludes actions outside selected dates");
     var reportAccess=typeof(_2Korriku.Controllers.ReportsController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute),true).Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
     Check(reportAccess.Any(x=>x.Roles!.Split(',').Contains(Roles.Viewer)),"Reports authorize the viewer role without granting write access");
+    foreach(var teamInput in new object[]{
+        new StudentRegistrationModel{FirstName="Required",LastName="Team",DateOfBirth=new(2015,1,1)},
+        new FamilyChildInput{FirstName="Required",LastName="Team",DateOfBirth=new(2015,1,1)},
+        new StudentEditModel{FirstName="Required",LastName="Team",DateOfBirth=new(2015,1,1),Reason="Test"},
+        new ChangeStudentTeamModel{StudentId=transferFixture.Player,Reason="Test"}})
+    {
+        var errors=new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        System.ComponentModel.DataAnnotations.Validator.TryValidateObject(teamInput,new(teamInput),errors,true);
+        Check(errors.Any(e=>e.MemberNames.Any(n=>n is "TrainingTeamId" or "TeamId")),"Missing team rejected for "+teamInput.GetType().Name);
+    }
+    await Reject(()=>WithDb(async db=>{
+        await using var tx=await db.Database.BeginTransactionAsync();
+        await new TeamService(db).ValidatePlacementAsync(null,new(2015,1,1));
+        return true;
+    }),"Placement service rejects missing team independently of form validation");
+    await WithDb(db=>db.Students.Where(x=>x.Id==transferFixture.Player).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.IsActive,false)));
+    var inactiveSheet=await WithDb(db=>new AttendanceService(db).LoadAsync(transferFixture.Target,"head",BillingClock.Today,"test-coach-0"));
+    Check(inactiveSheet.Players.All(x=>x.StudentId!=transferFixture.Player),"Inactive player disappears even from a saved current attendance sheet");
+    Check(await WithDb(db=>db.AttendancePlayers.AnyAsync(x=>x.StudentId==transferFixture.Player&&x.Present)),"Deactivation retains attendance history");
     Console.WriteLine("All field and private booking checks passed.");
 }
 finally

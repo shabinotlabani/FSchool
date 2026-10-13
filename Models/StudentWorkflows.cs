@@ -10,6 +10,7 @@ public class FamilyChildInput : IValidatableObject
     [Required, StringLength(100)] public string FirstName { get; set; } = "";
     [Required, StringLength(100)] public string LastName { get; set; } = "";
     [Required, DataType(DataType.Date)] public DateOnly? DateOfBirth { get; set; }
+    [Required(ErrorMessage = "Zgjidhni ekipin e lojtarit.")]
     public int? TrainingTeamId { get; set; }
     [StringLength(2000)] public string? Notes { get; set; }
     public List<TeamOption> Teams { get; set; } = [];

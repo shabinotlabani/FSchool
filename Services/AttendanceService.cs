@@ -33,7 +33,7 @@ public class AttendanceService(ApplicationDbContext db, TimeProvider? clock=null
         if(date<new DateOnly(1900,1,1)||date>BillingClock.Today) throw new ValidationException("Zgjidhni datë deri sot.");
         var team=await Team(teamId,role,actor);
         var saved=await db.TeamAttendances.AsNoTracking().Include(x=>x.Players).ThenInclude(x=>x.Student).Include(x=>x.SavedBy).SingleOrDefaultAsync(x=>x.TrainingTeamId==teamId&&x.Date==date);
-        var players=saved==null||date==BillingClock.Today?await Roster(teamId):saved.Players.OrderBy(x=>x.StudentName).ThenBy(x=>x.StudentId)
+        var players=saved==null||date==BillingClock.Today?await Roster(teamId):saved.Players.Where(x=>x.Student?.IsActive==true).OrderBy(x=>x.StudentName).ThenBy(x=>x.StudentId)
             .Select(x=>new AttendancePlayerInput{StudentId=x.StudentId,Name=x.StudentName,Present=x.Present,Notes=x.Student?.Notes}).ToList();
         if(saved!=null&&date==BillingClock.Today)
             foreach(var player in players)player.Present=saved.Players.SingleOrDefault(x=>x.StudentId==player.StudentId)?.Present;
@@ -60,11 +60,11 @@ public class AttendanceService(ApplicationDbContext db, TimeProvider? clock=null
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2004)");
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         var team=await Team(model.TeamId,model.CoachRole,actor);
-        var saved=await db.TeamAttendances.Include(x=>x.Players).SingleOrDefaultAsync(x=>x.TrainingTeamId==model.TeamId&&x.Date==model.Date);
+        var saved=await db.TeamAttendances.Include(x=>x.Players).ThenInclude(x=>x.Student).SingleOrDefaultAsync(x=>x.TrainingTeamId==model.TeamId&&x.Date==model.Date);
         if(saved!=null && Now>=await Deadline(saved)) throw new InvalidOperationException("Ka kaluar një orë nga ruajtja e parë. Prezenca nuk mund të ndryshohet.");
         if(saved==null && !team.IsActive) throw new InvalidOperationException("Ekipi nuk është aktiv.");
         if((saved?.Revision??Guid.Empty)!=model.Revision) throw new InvalidOperationException("Lista është ruajtur ndërkohë nga një trajner. Rihapeni para ndryshimit.");
-        var roster=saved==null||model.Date==BillingClock.Today?await Roster(model.TeamId):saved.Players.Select(x=>new AttendancePlayerInput{StudentId=x.StudentId,Name=x.StudentName}).ToList();
+        var roster=saved==null||model.Date==BillingClock.Today?await Roster(model.TeamId):saved.Players.Where(x=>x.Student?.IsActive==true).Select(x=>new AttendancePlayerInput{StudentId=x.StudentId,Name=x.StudentName}).ToList();
         if(Token(roster)!=model.RosterToken || !roster.Select(x=>x.StudentId).Order().SequenceEqual(model.Players.Select(x=>x.StudentId).Order()))
             throw new InvalidOperationException("Lojtarët e ekipit kanë ndryshuar. Rihapni listën e prezencës.");
         if(saved==null){saved=new(){TrainingTeamId=model.TeamId,Date=model.Date!.Value};db.TeamAttendances.Add(saved);

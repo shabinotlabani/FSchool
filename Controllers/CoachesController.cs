@@ -33,7 +33,7 @@ public class CoachesController(ApplicationDbContext db, UserManager<ApplicationU
   var id=User.FindFirstValue(ClaimTypes.NameIdentifier)!;
   var today=_2Korriku.Services.BillingClock.Today;
   var list=await db.PersonalTrainings.AsNoTracking().Include(x=>x.Student).Include(x=>x.Sessions)
-   .Where(x=>x.CoachId==id&&!x.IsCancelled&&(x.Mode=="Session"?x.StartsOn>=today:!x.EndsOn.HasValue||x.EndsOn>=today))
+   .Where(x=>x.Student!.IsActive&&x.CoachId==id&&!x.IsCancelled&&(x.Mode=="Session"?x.StartsOn>=today:!x.EndsOn.HasValue||x.EndsOn>=today))
    .OrderBy(x=>x.StartsOn).ThenBy(x=>x.Student!.FirstName).ToListAsync();
   return View(list);
  }

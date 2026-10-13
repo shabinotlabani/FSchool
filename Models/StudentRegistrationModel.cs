@@ -37,6 +37,7 @@ public class StudentRegistrationModel : IValidatableObject
     [StringLength(200)] public string? FeeReason { get; set; }
     [StringLength(400)] public string? FeeNotes { get; set; }
     public List<FeePlanOption> FeePlans { get; set; } = [];
+    [Required(ErrorMessage = "Zgjidhni ekipin e lojtarit.")]
     public int? TrainingTeamId { get; set; }
     public List<TeamOption> SuggestedTeams { get; set; } = [];
     [StringLength(2000, ErrorMessage = "Shënimet mund të kenë deri në 2000 karaktere.")]

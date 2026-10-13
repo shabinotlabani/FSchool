@@ -31,7 +31,6 @@ else if(!Model.Options.Any(x=>x.Team.MinAge<=age&&x.Team.MaxAge>=age&&x.FreePlac
 @if(student.TrainingTeamId.HasValue&&!Model.Options.Any(x=>x.Team.Id==student.TrainingTeamId)){
 <label class="transfer-group"><input asp-for="TeamId" type="radio" value="@student.TrainingTeamId" id="assign-current"/><span class="transfer-group-body"><strong>@student.TrainingTeam?.Name</strong><small>Ekipi aktual · Joaktiv</small></span></label>
 }
-<label class="transfer-group"><input asp-for="TeamId" type="radio" value="" id="assign-none"/><span class="transfer-group-body"><strong>Pa ekip</strong><small class="text-secondary">@(student.TrainingTeamId.HasValue?"Largo nga ekipi aktual":"Caktoje më vonë")</small></span></label>
 </fieldset>
 <div class="panel p-3 mt-3"><label asp-for="Reason" class="form-label">Arsyeja e caktimit / transferimit</label><input asp-for="Reason" class="form-control" maxlength="200" placeholder="P.sh. ndryshim i orarit" required/><span asp-validation-for="Reason" class="text-danger small"></span></div>
 <div class="attendance-save panel mt-3"><button type="submit" class="btn btn-primary w-100 py-3">Ruaj caktimin</button></div>

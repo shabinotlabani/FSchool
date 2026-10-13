@@ -82,12 +82,12 @@ public class TeamService(ApplicationDbContext db)
     {
         if(db.Database.CurrentTransaction==null)throw new InvalidOperationException("Caktimi në ekip kërkon transaksion.");
         await db.Database.ExecuteSqlRawAsync(LockSql);
-        if(!teamId.HasValue)return null;
+        if(!teamId.HasValue)throw new InvalidOperationException("Zgjidhni ekipin e lojtarit.");
         var team=await db.TrainingTeams.AsNoTracking().SingleOrDefaultAsync(t=>t.Id==teamId.Value&&t.IsActive)??throw new InvalidOperationException("Ekipi nuk është aktiv ose nuk ekziston.");
         var age=Age(birth);
         if(birth>BillingClock.Today||age<team.MinAge||age>team.MaxAge)throw new InvalidOperationException("Mosha e lojtarit nuk përputhet me ekipin e zgjedhur.");
         var count=await db.Students.CountAsync(s=>s.IsActive&&s.TrainingTeamId==teamId&&(!excludingStudentId.HasValue||s.Id!=excludingStudentId.Value));
-        if(count>=team.Capacity)throw new InvalidOperationException("Ekipi është i mbushur. Zgjidhni një ekip tjetër ose regjistrojeni pa ekip.");
+        if(count>=team.Capacity)throw new InvalidOperationException("Ekipi është i mbushur. Zgjidhni një ekip tjetër.");
         return team;
     }
     public Task ChangeStudentAsync(ChangeStudentTeamModel input,string actor)=>ChangeStudentCoreAsync(input,actor,null);

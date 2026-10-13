@@ -35,7 +35,7 @@
         row.querySelectorAll('[data-child-field]').forEach(input=>input.value='');
         row.querySelector('.child-manual').checked=false;
         field(row,'LastName').value=field(body.children[0],'LastName').value;
-        field(row,'TrainingTeamId').replaceChildren(new Option('Pa ekip — caktoje më vonë',''));
+        field(row,'TrainingTeamId').replaceChildren(new Option('Zgjidhni ekipin',''));
         row.querySelector('.team-message').textContent='Vendosni datëlindjen për ekipet dhe oraret.';
         row.querySelectorAll('.input-validation-error').forEach(input=>input.classList.remove('input-validation-error'));
         body.append(row);update();field(row,'FirstName').focus();
@@ -46,11 +46,11 @@
         if(e.target.classList.contains('child-manual')){update();return;}
         if(e.target.dataset.childField!=='DateOfBirth')return;const row=e.target.closest('.registration-child'),select=field(row,'TrainingTeamId'),status=row.querySelector('.team-message');
         requests.get(row)?.abort();const request=new AbortController();requests.set(row,request);const selected=select.value;
-        if(!e.target.value){select.replaceChildren(new Option('Pa ekip — caktoje më vonë',''));status.textContent='Vendosni datëlindjen.';return;}
+        if(!e.target.value){select.replaceChildren(new Option('Zgjidhni ekipin',''));status.textContent='Vendosni datëlindjen.';return;}
         status.textContent='Duke kërkuar ekipet…';
         try{
             const response=await fetch(form.dataset.teamsUrl+'?dateOfBirth='+encodeURIComponent(e.target.value),{signal:request.signal,cache:'no-store'});if(!response.ok)throw Error();const data=await response.json();if(request.signal.aborted)return;
-            select.replaceChildren(new Option('Pa ekip — caktoje më vonë',''));
+            select.replaceChildren(new Option('Zgjidhni ekipin',''));
             data.teams.forEach(team=>{const times=team.sessions.map(s=>`${s.day} ${s.start}–${s.end}`).join('; ');const option=new Option(`${team.name} · ${team.freePlaces} vende · ${times}`,team.id);option.disabled=team.freePlaces===0;select.add(option);});
             if([...select.options].some(option=>option.value===selected&&!option.disabled))select.value=selected;
             status.textContent=`Mosha: ${data.age} vjeç. Vendet konfirmohen për të gjithë fëmijët gjatë ruajtjes.`;

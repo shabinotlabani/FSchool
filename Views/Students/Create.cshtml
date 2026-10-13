@@ -52,9 +52,9 @@
             <legend class="h5 mb-2">Ekipi dhe orari i stërvitjeve</legend>
             <p id="team-status" class="team-selection-note" role="status" aria-live="polite">Vendosni datëlindjen për të parë ekipet e përshtatshme dhe oraret.</p>
             <div id="team-proposals" class="team-proposals">
-            @foreach(var option in Model.SuggestedTeams){<label class="team-choice"><input type="radio" name="TrainingTeamId" value="@option.Team.Id" checked="@(Model.TrainingTeamId==option.Team.Id)" disabled="@(option.FreePlaces==0)"/><span><strong>@option.Team.Name</strong><small>@option.Team.MinAge–@option.Team.MaxAge vjeç · @(option.FreePlaces==0?"Ekipi është i mbushur":option.FreePlaces+" vende të lira")</small><span class="team-choice-times">@string.Join("\n",option.Team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{_2Korriku.Services.TeamService.DayName(s.Day)} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"))</span><small>@option.Team.Location</small></span></label>}
+            @foreach(var option in Model.SuggestedTeams){<label class="team-choice"><input type="radio" name="TrainingTeamId" required value="@option.Team.Id" checked="@(Model.TrainingTeamId==option.Team.Id)" disabled="@(option.FreePlaces==0)"/><span><strong>@option.Team.Name</strong><small>@option.Team.MinAge–@option.Team.MaxAge vjeç · @(option.FreePlaces==0?"Ekipi është i mbushur":option.FreePlaces+" vende të lira")</small><span class="team-choice-times">@string.Join("\n",option.Team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{_2Korriku.Services.TeamService.DayName(s.Day)} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"))</span><small>@option.Team.Location</small></span></label>}
             </div>
-            <label class="d-flex align-items-center gap-2"><input type="radio" name="TrainingTeamId" id="no-team" value="" checked="@(!Model.TrainingTeamId.HasValue)"/> Pa ekip — caktoje më vonë</label>
+            <span asp-validation-for="TrainingTeamId" class="text-danger"></span>
             
         </fieldset>
         <fieldset class="border-top pt-4 mb-4">

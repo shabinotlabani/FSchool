@@ -110,6 +110,7 @@ public class TeamDetailsModel
 public class ChangeStudentTeamModel
 {
     public int StudentId { get; set; }
+    [Required(ErrorMessage = "Zgjidhni ekipin e lojtarit.")]
     public int? TeamId { get; set; }
     public int? ExpectedTeamId { get; set; }
     [Required,StringLength(200)] public string Reason { get; set; } = "";
