@@ -40,7 +40,12 @@ public class LoginModel(SignInManager<ApplicationUser> signInManager) : PageMode
 
         var result = await signInManager.PasswordSignInAsync(
             Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: true);
-        if (result.Succeeded) return LocalRedirect(ReturnUrl);
+        if (result.Succeeded) {
+            var user = await signInManager.UserManager.FindByEmailAsync(Input.Email.Trim());
+            if (user != null && await signInManager.UserManager.IsInRoleAsync(user, Roles.FieldOperator))
+                return LocalRedirect(Url.Content("~/Fields"));
+            return LocalRedirect(ReturnUrl);
+        }
         if (result.RequiresTwoFactor)
             return RedirectToPage("./LoginWith2fa", new { ReturnUrl, RememberMe = Input.RememberMe });
 

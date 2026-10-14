@@ -1,0 +1,16 @@
+@model Student
+@{ViewData["Title"]="Linku i prindit";}
+<section class="panel p-4" style="max-width:640px">
+<h1 class="h4">@Model.FullName</h1>
+@if(Model.ParentLinkToken != null){
+    var link=Url.Action("Index","ParentPortal",new{token=Model.ParentLinkToken},Context.Request.Scheme);
+    <label for="parent-link" class="form-label">Linku privat</label>
+    <input id="parent-link" class="form-control mb-3" value="@link" readonly onclick="this.select()"/>
+    <div class="d-flex gap-2 mb-3"><button type="button" class="btn btn-primary" id="copy-parent-link">Kopjo linkun</button><a href="@link" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Hap</a></div>
+}
+<div class="d-flex gap-2">
+<form asp-action="Save" method="post"><input name="id" value="@Model.Id" type="hidden"/><button class="btn btn-outline-secondary">@(Model.ParentLinkToken==null?"Krijo linkun":"Rikrijo linkun")</button></form>
+@if(Model.ParentLinkToken!=null){<form asp-action="Save" method="post"><input name="id" value="@Model.Id" type="hidden"/><input name="revoke" value="true" type="hidden"/><button class="btn btn-outline-danger">Çaktivizo linkun</button></form>}
+</div></section>
+@section PageNavigation{<a asp-controller="Payments" asp-action="Account" asp-route-id="@Model.Id" class="btn btn-outline-secondary app-back-button">← Mbrapa</a>}
+@section Scripts{<script src="~/js/parent-link.js" asp-append-version="true"></script>}

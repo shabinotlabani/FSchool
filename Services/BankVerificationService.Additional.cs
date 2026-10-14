@@ -27,7 +27,7 @@ public partial class BankVerificationService
         await using var tx=db.Database.CurrentTransaction==null?await db.Database.BeginTransactionAsync():null;
         if(model is FieldPaymentModel)await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);
-        await CheckActor(actor,model is TreasuryCreateModel);
+        await CheckActor(actor,model is TreasuryCreateModel,model is FieldPaymentModel);
         var (kind,request,amount,target)=model switch {
             IssuePaymentModel m => ("Sale",m.RequestId,m.Amount,m.SaleId),
             PersonalPaymentModel m => ("Personal",m.RequestId,m.Amount,m.ChargeId),

@@ -5,6 +5,7 @@ namespace _2Korriku.Models;
 
 public class Student
 {
+    [StringLength(64)] public string? ParentLinkToken { get; set; }
     [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
     public bool FirstMonthUsesWeeks { get; set; }

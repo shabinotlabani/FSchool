@@ -1,7 +1,7 @@
 @{
     var destination=Context.Request.Query["returnUrl"].ToString();
     if(!Url.IsLocalUrl(destination)){
-        destination=Url.Action("Index","Payments")!;
+        destination=Url.Action("Index",User.IsInRole(Roles.FieldOperator) ? "Fields" : "Payments")!;
         if(Uri.TryCreate(Context.Request.Headers.Referer.ToString(),UriKind.Absolute,out var source)
             &&source.Scheme==Context.Request.Scheme&&source.Authority==Context.Request.Host.Value
             &&source.AbsolutePath!=Context.Request.Path.Value&&Url.IsLocalUrl(source.PathAndQuery))destination=source.PathAndQuery;

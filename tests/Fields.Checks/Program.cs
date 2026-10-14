@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using _2Korriku.Data;
@@ -48,6 +49,7 @@ try
     var testSettings = new NpgsqlConnectionStringBuilder(source.ConnectionString) { Database = testDatabase, Pooling = false };
     var services = new ServiceCollection();
     services.AddLogging();
+    services.AddAuthorization(o=>o.DefaultPolicy=new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireRole(Roles.All).Build());
     services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(testSettings.ConnectionString));
     services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
     await using var provider = services.BuildServiceProvider();
@@ -511,6 +513,95 @@ try
     var bankReceipts=await WithDb(db=>db.FieldPayments.Where(p=>p.BatchId==fullBank.RequestId).ToListAsync());
     Check(bankReceipts.Count==2 && bankReceipts.All(p=>p.Method=="Bank"&&p.CreatedAt==BillingClock.UtcDate(bankDate)),"Bank approval posts all allocations on actual bank date");
     Check((await WithDb(db=>new FieldService(db).SeriesBookingsAsync(bankSeriesId))).All(b=>b.Due==0),"One bank confirmation settles the entire reservation");
+    var lateDate=day.AddDays(90);
+    FieldBookingEditModel Late(int field,DateOnly date,int hour,int minute=0)=>new(){
+        FootballFieldId=field,Date=date,Days=[((int)date.DayOfWeek+6)%7+1],
+        StartsAt=new(hour,minute),CustomerName="Late session",Price=60
+    };
+    var lateId=await WithDb(db=>new FieldService(db).SaveBookingAsync(Late(3,lateDate,23),actor));
+    Check(await WithDb(db=>db.FieldBookings.AnyAsync(b=>b.Id==lateId&&b.StartsAt==new TimeOnly(23,0)&&b.EndsAt==TimeOnly.MinValue)),"11 PM booking ends at midnight on the next day");
+    await Reject(()=>WithDb(db=>new FieldService(db).SaveBookingAsync(Late(3,lateDate,23,15),actor)),"Overlapping late-night booking rejected");
+    await WithDb(db=>new FieldService(db).SaveBookingAsync(Late(3,lateDate.AddDays(1),0),actor));
+    Check(true,"Midnight booking can start exactly when 11 PM booking ends");
+    var crossingId=await WithDb(db=>new FieldService(db).SaveBookingAsync(Late(2,lateDate,23,30),actor));
+    await Reject(()=>WithDb(db=>new FieldService(db).SaveBookingAsync(Late(2,lateDate.AddDays(1),0,15),actor)),"Next-day reservation detects prior night's overlap");
+    var nightTeam=Team("Midnight team",field:2,hour:0);
+    nightTeam.Sessions[0].Day=((int)lateDate.AddDays(1).DayOfWeek+6)%7+1;
+    await Reject(()=>WithDb(db=>new TeamService(db).SaveAsync(nightTeam,actor)),"Team schedule cannot overlap a private reservation from the previous night");
+    var earlyTeam=Team("Early morning team",field:1,hour:0);
+    earlyTeam.Sessions[0].Day=((int)lateDate.AddDays(1).DayOfWeek+6)%7+1;
+    await WithDb(db=>new TeamService(db).SaveAsync(earlyTeam,actor));
+    await Reject(()=>WithDb(db=>new FieldService(db).SaveBookingAsync(Late(1,lateDate,23,30),actor)),"Late reservation checks next day's team training");
+    await DbInitializer.SeedAsync(provider);
+    string fieldUser;
+    using(var roleScope=provider.CreateScope()){
+        var roleDb=roleScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var roleUsers=roleScope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var adminService=new UserAdministrationService(roleDb,roleUsers,Microsoft.Extensions.Logging.Abstractions.NullLogger<UserAdministrationService>.Instance);
+        fieldUser=await adminService.SaveAsync(new(){FirstName="Field",LastName="Operator",Email="field-only@example.invalid",Role=Roles.FieldOperator,CanVerifyBank=true,Password="FieldsTest123!",ConfirmPassword="FieldsTest123!"},actor);
+        Check((await roleUsers.GetRolesAsync((await roleUsers.FindByIdAsync(fieldUser))!)).SequenceEqual(new[]{Roles.FieldOperator}),"Private reservations user receives only the dedicated role");
+        Check(!(await roleUsers.FindByIdAsync(fieldUser))!.CanVerifyBank,"Private reservations role cannot acquire bank reviewer permissions");
+    }
+    var fieldPrincipal=new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]{
+        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier,fieldUser),
+        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role,Roles.FieldOperator)},"Test"));
+    var policyProvider=provider.GetRequiredService<Microsoft.AspNetCore.Authorization.IAuthorizationPolicyProvider>();
+    var authorization=provider.GetRequiredService<Microsoft.AspNetCore.Authorization.IAuthorizationService>();
+    async Task<bool> Allowed(Type type,string action){
+        foreach(var method in type.GetMethods().Where(m=>m.Name==action)){
+            var attributes=type.GetCustomAttributes(true).Concat(method.GetCustomAttributes(true)).OfType<Microsoft.AspNetCore.Authorization.IAuthorizeData>();
+            var policy=await Microsoft.AspNetCore.Authorization.AuthorizationPolicy.CombineAsync(policyProvider,attributes);
+            if(policy==null || !(await authorization.AuthorizeAsync(fieldPrincipal,null,policy)).Succeeded)return false;
+        }
+        return true;
+    }
+    foreach(var action in new[]{"Index","Booking","Details","Pay","Receipt","Cancel","CancelPayment"})
+        Check(await Allowed(typeof(_2Korriku.Controllers.FieldsController),action),"Dedicated role authorized for Fields/"+action);
+    foreach(var action in new[]{"Manage","Edit"})
+        Check(!await Allowed(typeof(_2Korriku.Controllers.FieldsController),action),"Dedicated role denied field configuration "+action);
+    foreach(var type in new[]{typeof(_2Korriku.Controllers.StudentsController),typeof(_2Korriku.Controllers.PaymentsController),typeof(_2Korriku.Controllers.TeamsController),typeof(_2Korriku.Controllers.ReportsController),typeof(_2Korriku.Controllers.UsersController),typeof(_2Korriku.Controllers.BankPaymentsController),typeof(_2Korriku.Controllers.TreasuryController),typeof(_2Korriku.Controllers.SalesController),typeof(_2Korriku.Controllers.CoachesController),typeof(_2Korriku.Controllers.TariffsController)})
+        Check(!await Allowed(type,"Index"),"Dedicated role denied "+type.Name+" even through direct URLs");
+    await WithDb(async db=>{
+        var controller=new _2Korriku.Controllers.FieldsController(db){ControllerContext=new(){HttpContext=new Microsoft.AspNetCore.Http.DefaultHttpContext{User=fieldPrincipal}}};
+        var view=(Microsoft.AspNetCore.Mvc.ViewResult)await controller.Index(day,null,false);
+        var schedule=(FieldScheduleModel)view.Model!;
+        Check(schedule.UnassignedTeams==0&&schedule.Items.Where(i=>i.TeamId.HasValue).All(i=>i.TeamId==0&&i.Name=="Orar i zënë"),"Private calendar masks all team identities");
+        return true;
+    });
+    var fieldOnlyBooking=Booking(field:3,hour:4);
+    var fieldOnlyId=await WithDb(db=>new FieldService(db).SaveBookingAsync(fieldOnlyBooking,fieldUser));
+    var fieldOnlyRow=await WithDb(db=>db.FieldBookings.SingleAsync(b=>b.Id==fieldOnlyId));
+    var fieldOnlyPending=await WithDb(db=>new BankVerificationService(db).QueueField(new(){BookingId=fieldOnlyId,Revision=fieldOnlyRow.Revision,Amount=60,Method="Bank"},fieldUser));
+    Check(fieldOnlyPending>0,"Dedicated role can submit private booking bank payments");
+    Check(!await WithDb(db=>new BankVerificationService(db).CanReview(fieldUser)),"Dedicated role cannot approve bank payments");
+    await Reject(()=>WithDb(db=>new BankVerificationService(db).QueueMonthly(new(){StudentId=attendanceStudent.Id,Amount=50},fieldUser)),"Dedicated role cannot submit student payments through services");
+    var parentFixture=await WithDb(async db=>{
+        var parentTeam=new TrainingTeam{Name="Parent schedule",MinAge=5,MaxAge=18,Capacity=20,Sessions=[new(){Day=1,StartsAt=new(17,0),EndsAt=new(18,0)}]};
+        var child=new Student{FirstName="Parent",LastName="One",DateOfBirth=new(2015,1,1),Notes="INTERNAL_NOTE",TrainingTeam=parentTeam,ParentLinkToken=new string('A',64)};
+        var other=new Student{FirstName="Parent",LastName="Two",DateOfBirth=new(2015,1,1),TrainingTeam=parentTeam,ParentLinkToken=new string('B',64)};
+        db.AddRange(child,other);await db.SaveChangesAsync();
+        db.StudentTransactions.AddRange(new(){StudentId=child.Id,TransactionType="MonthlyFee",Description="INTERNAL_REASON",Debit=50},new(){StudentId=other.Id,TransactionType="MonthlyFee",Description="OTHER_CHILD",Debit=75});
+        db.TeamAttendances.Add(new(){TrainingTeamId=parentTeam.Id,Date=BillingClock.Today,SavedById=actor,Players=[new(){StudentId=child.Id,StudentName=child.FullName,Present=true},new(){StudentId=other.Id,StudentName=other.FullName,Present=false}]});
+        await db.SaveChangesAsync();return (Child:child.Id,Other:other.Id,Token:child.ParentLinkToken!);
+    });
+    foreach(var finance in new[]{false,true}){
+        var blockedParent=await WithDb(db=>new ParentPortalService(db).LoadAsync(parentFixture.Token,TariffService.CurrentMonth,finance));
+        Check(blockedParent is {Debt:50,Name:null}&&blockedParent.Schedule.Count==0&&blockedParent.Attendance.Count==0&&blockedParent.Movements.Count==0,"Debt gate returns only the child's debt, including direct financial URLs");
+    }
+    Check(await WithDb(db=>new ParentPortalService(db).LoadAsync("6",TariffService.CurrentMonth,false))==null,"A student ID cannot replace a private token");
+    Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(new string('C',64),TariffService.CurrentMonth,false))==null,"Unknown private links disclose no player data");
+    await WithDb(async db=>{db.StudentTransactions.Add(new(){StudentId=parentFixture.Child,TransactionType="Payment",Description="Private payment note",Credit=50});await db.SaveChangesAsync();return true;});
+    var unlockedParent=await WithDb(db=>new ParentPortalService(db).LoadAsync(parentFixture.Token,TariffService.CurrentMonth,false));
+    Check(unlockedParent is {Debt:0,Name:"Parent One"}&&unlockedParent.Schedule.Count==1&&unlockedParent.Attendance.Count==1&&unlockedParent.Attendance[0].Present,"Cleared debt unlocks only the correct child's schedule and presence");
+    var parentFinance=await WithDb(db=>new ParentPortalService(db).LoadAsync(parentFixture.Token,TariffService.CurrentMonth,true));
+    Check(parentFinance!.Movements.Count==2&&parentFinance.Movements.Sum(m=>m.Debit)==50&&parentFinance.Movements.Sum(m=>m.Credit)==50&&parentFinance.Attendance.Count==0,"Financial view is scoped to one child and one month");
+    await WithDb(async db=>{await new _2Korriku.Controllers.ParentLinksController(db).Save(parentFixture.Child);return true;});
+    Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(parentFixture.Token,TariffService.CurrentMonth,false))==null,"Regenerating link immediately invalidates the old link");
+    var replacementToken=await WithDb(db=>db.Students.Where(s=>s.Id==parentFixture.Child).Select(s=>s.ParentLinkToken).SingleAsync());
+    Check(replacementToken?.Length==64&&replacementToken!=parentFixture.Token,"New link uses an unpredictable 256-bit token");
+    await WithDb(async db=>{await new _2Korriku.Controllers.ParentLinksController(db).Save(parentFixture.Child,true);return true;});
+    Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(replacementToken!,TariffService.CurrentMonth,false))==null,"Revocation disables parent access");
+    Check(!await Allowed(typeof(_2Korriku.Controllers.ParentLinksController),"Index")&&!await Allowed(typeof(_2Korriku.Controllers.ParentLinksController),"Save"),"Private field operators cannot create or read parent links");
     Console.WriteLine("All field and private booking checks passed.");
 }
 finally

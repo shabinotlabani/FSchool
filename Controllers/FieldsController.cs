@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace _2Korriku.Controllers;
 
-[Authorize(Roles = Roles.Read)]
+[Authorize(Roles = Roles.FieldRead)]
 public class FieldsController(ApplicationDbContext db) : Controller
 {
     private FieldService Service => new(db);
@@ -18,8 +18,14 @@ public class FieldsController(ApplicationDbContext db) : Controller
     {
         var date = from ?? BillingClock.Today;
         if (!ModelState.IsValid || date.Year < 2000 || date.Year > 2099 || fieldId <= 0) return BadRequest();
-        return View(await Service.ScheduleAsync(date, fieldId, includeCancelled));
+        var schedule = await Service.ScheduleAsync(date, fieldId, includeCancelled);
+        if(User.IsInRole(Roles.FieldOperator)){
+            schedule.UnassignedTeams=0;
+            foreach(var item in schedule.Items.Where(i=>i.TeamId.HasValue)){item.Name="Orar i zënë";item.TeamId=0;}
+        }
+        return View(schedule);
     }
+    [Authorize(Roles = Roles.Read)]
     public async Task<IActionResult> Manage() => View(await db.FootballFields.AsNoTracking().OrderBy(f => f.Name).ToListAsync());
 
     [HttpGet, Authorize(Roles = Roles.Admin)]
@@ -43,7 +49,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
     private async Task Choices(FieldBookingEditModel model) => model.Fields = await db.FootballFields.AsNoTracking()
         .Where(f => f.IsActive || f.Id == model.FootballFieldId).OrderBy(f => f.Name).ToListAsync();
 
-    [HttpGet, Authorize(Roles = Roles.Write)]
+    [HttpGet, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Booking(int id = 0, int? fieldId = null, DateOnly? date = null)
     {
         if (!ModelState.IsValid) return BadRequest();
@@ -59,7 +65,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
         if (model.Id == 0 && model.Days.Count == 0) model.Days = [((int)model.Date.DayOfWeek + 6) % 7 + 1];
         await Choices(model); return View(model);
     }
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Booking(FieldBookingEditModel model)
     {
         if (ModelState.IsValid) try
@@ -82,7 +88,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
                 .Where(b => b.SeriesId == booking.SeriesId).OrderBy(b => b.Date).ThenBy(b => b.StartsAt).ToListAsync();
         return View(booking);
     }
-    [HttpGet, Authorize(Roles = Roles.Write)]
+    [HttpGet, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Pay(int id, bool wholeSeries = false)
     {
         var booking = await GetBooking(id);
@@ -98,12 +104,12 @@ public class FieldsController(ApplicationDbContext db) : Controller
         }
         return View(model);
     }
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Pay(FieldPaymentModel model)
     {
         if (ModelState.IsValid) try
         {
-            if(model.Method=="Bank"){await new BankVerificationService(db).QueueField(model,Actor);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return RedirectToAction("Index","Payments");} var id = await Service.PayAsync(model, Actor); TempData["Success"]="Pagesa u regjistrua.";TempData["FieldReceiptId"]=id; return RedirectToAction("Index", "Payments");
+            if(model.Method=="Bank"){await new BankVerificationService(db).QueueField(model,Actor);TempData["Success"]="Pagesa bankare u ruajt në pritje të konfirmimit.";return User.IsInRole(Roles.FieldOperator) ? RedirectToAction(nameof(Details),new{id=model.BookingId}) : RedirectToAction("Index","Payments");} var id = await Service.PayAsync(model, Actor); TempData["Success"]="Pagesa u regjistrua.";TempData["FieldReceiptId"]=id; return User.IsInRole(Roles.FieldOperator) ? RedirectToAction(nameof(Details),new{id=model.BookingId}) : RedirectToAction("Index", "Payments");
         }
         catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
         model.Booking = await GetBooking(model.BookingId); if(model.WholeSeries && model.Booking?.SeriesId != null) model.SeriesBookings = await Service.SeriesBookingsAsync(model.BookingId); return model.Booking == null ? NotFound() : View(model);
@@ -114,13 +120,13 @@ public class FieldsController(ApplicationDbContext db) : Controller
         if(payment?.BatchId is Guid batch) ViewData["BatchPayments"] = await db.FieldPayments.AsNoTracking().Where(p=>p.BatchId==batch).OrderBy(p=>p.Id).ToListAsync();
         return payment == null ? NotFound() : View(payment);
     }
-    [HttpGet, Authorize(Roles = Roles.Write)]
+    [HttpGet, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> CancelPayment(int id)
     {
         var payment = await db.FieldPayments.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id);
         return payment == null ? NotFound() : View(new FieldPaymentCancelModel { Id = id, Payment = payment });
     }
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> CancelPayment(FieldPaymentCancelModel model)
     {
         if (ModelState.IsValid) try
@@ -132,7 +138,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
         model.Payment = await db.FieldPayments.AsNoTracking().SingleOrDefaultAsync(p => p.Id == model.Id);
         return model.Payment == null ? NotFound() : View(model);
     }
-    [HttpGet, Authorize(Roles = Roles.Write)]
+    [HttpGet, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Cancel(int id)
     {
         var booking = await GetBooking(id);
@@ -140,7 +146,7 @@ public class FieldsController(ApplicationDbContext db) : Controller
         if (booking.IsCancelled) return RedirectToAction(nameof(Details), new { id });
         return View(new FieldBookingCancelModel { Id = id, Revision = booking.Revision, Booking = booking });
     }
-    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Cancel(FieldBookingCancelModel model)
     {
         if (ModelState.IsValid) try

@@ -9,11 +9,11 @@ public partial class BankVerificationService(ApplicationDbContext db)
 {
     public Task<int> QueueMonthly(RegisterPaymentModel input,string actor)=>Queue("Monthly",new RegisterPaymentModel{StudentId=input.StudentId,RequestId=input.RequestId,Amount=input.Amount,PaymentDate=input.PaymentDate,PaymentMethod="Bank",Notes=input.Notes?.Trim()},actor);
     public Task<int> QueueSeasonal(SeasonalPaymentModel input,string actor)=>Queue("Seasonal",new SeasonalPaymentModel{StudentId=input.StudentId,RequestId=input.RequestId,StartMonth=input.StartMonth,Months=input.Months,ExpectedRate=input.ExpectedRate,PaymentDate=input.PaymentDate,PaymentMethod="Bank",Notes=input.Notes?.Trim()},actor);
-    private async Task CheckActor(string actor,bool admin)
+    private async Task CheckActor(string actor,bool admin,bool fieldPayment=false)
     {
         var user=await db.Users.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==actor);
         var roles=await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id where ur.UserId==actor select r.Name).ToListAsync();
-        if(user==null||UserAdministrationService.IsDisabled(user)||!(roles.Contains(Roles.Admin)||!admin&&roles.Contains(Roles.Operator)))throw new InvalidOperationException("Nuk keni të drejtë për këtë veprim.");
+        if(user==null||UserAdministrationService.IsDisabled(user)||!(roles.Contains(Roles.Admin)||!admin&&(roles.Contains(Roles.Operator)||fieldPayment&&roles.Contains(Roles.FieldOperator))))throw new InvalidOperationException("Nuk keni të drejtë për këtë veprim.");
     }
     private async Task<int> Queue<T>(string kind,T input,string actor) where T:class
     {

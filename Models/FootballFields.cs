@@ -89,10 +89,8 @@ public class FieldBookingEditModel : IValidatableObject
         if (Id != 0 && Days is { Count: > 0 }) yield return new("Ndryshimi vlen vetëm për terminin e zgjedhur.");
         if (Date.Year is >= 2000 and <= 2099 && Weeks is >= 1 and <= 52 && Days != null && BookingDates().Any(d => d.Year > 2099))
             yield return new("Data e fundit e rezervimit duhet të jetë deri në vitin 2099.");
-        if (StartsAt.HasValue && EndsAt.HasValue && (EndsAt <= StartsAt || StartsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0 || EndsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0))
-            yield return new("Përfundimi duhet të jetë pas fillimit, brenda së njëjtës ditë dhe me minuta të plota.");
-        if (StartsAt.HasValue && (StartsAt.Value.Hour >= 23 || StartsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0 || (EndsAt.HasValue && EndsAt != StartsAt.Value.AddHours(1))))
-            yield return new("Çdo termin zgjat një orë dhe përfundon brenda së njëjtës ditë.", [nameof(StartsAt)]);
+        if (StartsAt.HasValue && (StartsAt.Value.Ticks % TimeSpan.TicksPerMinute != 0 || (EndsAt.HasValue && EndsAt != StartsAt.Value.AddHours(1))))
+            yield return new("Çdo termin zgjat një orë. Vendosni orën me minuta të plota.", [nameof(StartsAt)]);
         if (RequestId == Guid.Empty) yield return new("Hapeni përsëri formularin e rezervimit.");
     }
 }

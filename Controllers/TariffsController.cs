@@ -12,6 +12,23 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles=Roles.Admin)]
 public class TariffsController(ApplicationDbContext db,TariffService tariffs):Controller
 {
+    [HttpGet]
+    public async Task<IActionResult> Rename(int id)
+    {
+        var plan = await db.FeePlans.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id);
+        return plan == null ? NotFound() : View(new RenameTariffModel { Id = id, Name = plan.Name, ExpectedName = plan.Name });
+    }
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Rename(RenameTariffModel model)
+    {
+        if (ModelState.IsValid) try {
+            await tariffs.RenameAsync(model);
+            TempData["Success"] = "Emri i tarifës u ndryshua.";
+            return RedirectToAction(nameof(Index));
+        } catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
+        return View(model);
+    }
+
     [HttpGet] public IActionResult Create(bool family = false) => View(new CreateTariffModel { IsFamily = family });
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateTariffModel model)

@@ -1,0 +1,16 @@
+@model RenameTariffModel
+@{ ViewData["Title"] = "Ndrysho emrin e tarifës"; }
+<div class="panel p-4 mx-auto" style="max-width:540px">
+    <h1 class="h4 mb-3">Ndrysho emrin e tarifës</h1>
+    <form asp-action="Rename" method="post">
+        <input asp-for="Id" type="hidden"/>
+        <input asp-for="ExpectedName" type="hidden"/>
+        <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+        <label asp-for="Name" class="form-label">Emri i tarifës</label>
+        <input asp-for="Name" class="form-control mb-3" maxlength="100" required autofocus/>
+        <div class="d-flex gap-2"><button class="btn btn-primary" type="submit">Ruaj emrin</button><a asp-action="Index" class="btn btn-outline-secondary">Anulo</a></div>
+    </form>
+</div>
+@section PageNavigation {
+    <a asp-action="Index" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
+}

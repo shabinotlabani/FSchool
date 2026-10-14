@@ -8,6 +8,24 @@ namespace _2Korriku.Services;
 
 public class TariffService(ApplicationDbContext db)
 {
+    public async Task RenameAsync(RenameTariffModel input)
+    {
+        Validator.ValidateObject(input, new(input), true);
+        await using var tx = await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);
+        var plan = await db.FeePlans.SingleOrDefaultAsync(p => p.Id == input.Id)
+            ?? throw new InvalidOperationException("Tarifa nuk u gjet.");
+        await db.Entry(plan).ReloadAsync();
+        if (plan.Name != input.ExpectedName)
+            throw new InvalidOperationException("Emri ka ndryshuar ndërkohë. Rihapni formularin.");
+        var name = input.Name.Trim();
+        if (await db.FeePlans.AnyAsync(p => p.Id != input.Id && p.Name.ToUpper() == name.ToUpper()))
+            throw new InvalidOperationException("Ekziston një tarifë me këtë emër.");
+        plan.Name = name;
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+    }
+
     public async Task<int> CreateAsync(CreateTariffModel input, string actor)
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);

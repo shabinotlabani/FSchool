@@ -101,12 +101,13 @@ public partial class FieldService(ApplicationDbContext db)
         if (input.Id != 0 && (booking.Revision != input.Revision || booking.IsCancelled))
             throw new InvalidOperationException("Termini u ndryshua ose u anulua. Hapeni përsëri.");
         if (input.Price < booking.Paid) throw new InvalidOperationException("Çmimi nuk mund të jetë më i ulët se shuma e paguar. Korrigjoni fillimisht pagesat përkatëse.");
-        var conflicts = await db.FieldBookings.AsNoTracking().Where(b => b.Id != input.Id && !b.IsCancelled && b.FootballFieldId == field.Id && dates.Contains(b.Date) && b.StartsAt < end && b.EndsAt > start)
-            .Select(b => b.Date).Distinct().OrderBy(date => date).ToListAsync();
+        var fromDate = dates[0].AddDays(-1); var toDate = dates[^1].AddDays(1);
+        var nearby = await db.FieldBookings.AsNoTracking().Where(b => b.Id != input.Id && !b.IsCancelled && b.FootballFieldId == field.Id && b.Date >= fromDate && b.Date <= toDate).ToListAsync();
+        var conflicts = dates.Where(date => nearby.Any(b => FieldTime.Overlaps(date, start, end, b.Date, b.StartsAt, b.EndsAt))).ToList();
         if (conflicts.Count > 0)
             throw new InvalidOperationException("Fusha është e rezervuar më " + string.Join(", ", conflicts.Select(date => date.ToString("dd.MM.yyyy"))) + ". Asnjë termin nuk u ruajt. Ndryshoni datën, orarin ose fushën.");
-        var days = dates.Select(d => ((int)d.DayOfWeek + 6) % 7 + 1).Distinct().ToList();
-        if (await db.TrainingSessions.AnyAsync(s => s.TrainingTeam!.IsActive && s.TrainingTeam.FootballFieldId == field.Id && days.Contains(s.Day) && s.StartsAt < end && s.EndsAt > start))
+        var sessions = await db.TrainingSessions.AsNoTracking().Where(s => s.TrainingTeam!.IsActive && s.TrainingTeam.FootballFieldId == field.Id).ToListAsync();
+        if (dates.Any(date => sessions.Any(s => FieldTime.OverlapsWeekly(date, start, end, s.Day, s.StartsAt, s.EndsAt))))
             throw new InvalidOperationException("Në këtë orar fusha përdoret nga ekipet. Zgjidhni një orar ose fushë tjetër për terminin privat.");
         booking.Price = input.Price;
         booking.FootballFieldId = field.Id; booking.CustomerName = input.CustomerName.Trim(); booking.Phone = input.Phone?.Trim();

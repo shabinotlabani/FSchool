@@ -50,8 +50,11 @@ public class TeamService(ApplicationDbContext db)
                 ?? throw new InvalidOperationException("Zgjidhni një fushë aktive.");
             if (input.IsActive)
             {
-                var privateBookings = await db.FieldBookings.AsNoTracking().Where(b => b.FootballFieldId == field.Id && !b.IsCancelled && b.Date >= BillingClock.Today).ToListAsync();
-                if (privateBookings.Any(b => input.Sessions.Any(s => s.Day == ((int)b.Date.DayOfWeek + 6) % 7 + 1 && s.StartsAt < b.EndsAt && s.EndsAt > b.StartsAt)))
+                var today = BillingClock.Today;
+                var previousDay = today.AddDays(-1);
+                var todayWeekday = ((int)today.DayOfWeek + 6) % 7 + 1;
+                var privateBookings = await db.FieldBookings.AsNoTracking().Where(b => b.FootballFieldId == field.Id && !b.IsCancelled && (b.Date >= today || (b.Date == previousDay && b.EndsAt < b.StartsAt && b.EndsAt > TimeOnly.MinValue))).ToListAsync();
+                if (privateBookings.Any(b => input.Sessions.Any(s => (b.Date >= today || s.Day == todayWeekday) && FieldTime.OverlapsWeekly(b.Date, b.StartsAt, b.EndsAt, s.Day, s.StartsAt!.Value, s.EndsAt!.Value))))
                     throw new InvalidOperationException("Orari përputhet me një termin privat të rezervuar në këtë fushë. Zhvendosni terminin ose ndryshoni orarin / fushën e ekipit.");
             }
         }

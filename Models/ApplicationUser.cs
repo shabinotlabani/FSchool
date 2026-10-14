@@ -17,7 +17,11 @@ public static class Roles
     public const string Operator = "Operator";
     public const string Coach = "Trajner";
     public const string Viewer = "Shikues";
+    public const string FieldOperator = "RezervimePrivate";
+    public const string FieldRead = Read + "," + FieldOperator;
+    public const string FieldWrite = Write + "," + FieldOperator;
+    public static string Label(string role) => role == FieldOperator ? "Rezervimet private" : role;
     public const string Read = Admin + "," + Operator + "," + Viewer;
     public const string Write = Admin + "," + Operator;
-    public static readonly string[] All = [Admin, Operator, Viewer, Coach];
+    public static readonly string[] All = [Admin, Operator, Viewer, Coach, FieldOperator];
 }

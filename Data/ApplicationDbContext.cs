@@ -158,6 +158,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<Student>(entity =>
         {
+            entity.HasIndex(x => x.ParentLinkToken).IsUnique();
             entity.HasIndex(x => x.IsActive);
             entity.HasIndex(x => x.LastName);
             entity.HasIndex(x => x.ParentPhone);

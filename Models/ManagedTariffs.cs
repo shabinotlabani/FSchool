@@ -3,6 +3,14 @@ using _2Korriku.Services;
 
 namespace _2Korriku.Models;
 
+public class RenameTariffModel
+{
+    [Range(1, int.MaxValue)] public int Id { get; set; }
+    [Required, StringLength(100)] public string ExpectedName { get; set; } = "";
+    [Required(ErrorMessage = "Shkruani emrin e tarifës."), StringLength(100, ErrorMessage = "Emri lejon deri në 100 karaktere.")]
+    public string Name { get; set; } = "";
+}
+
 public class CreateTariffModel : IValidatableObject
 {
     [Required, StringLength(100)] public string Name { get; set; } = "";

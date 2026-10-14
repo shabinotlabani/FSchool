@@ -10,6 +10,7 @@
 @if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){
 <partial name="_AccountPaymentActions" model="Model"/>
 <a asp-controller="Students" asp-action="Edit" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Edito lojtarin</a>
+<a asp-controller="ParentLinks" asp-action="Index" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Linku i prindit</a>
 <a asp-controller="Teams" asp-action="Assign" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Ndrysho ekipin</a>
 <a asp-controller="Sales" asp-action="Create" asp-route-studentId="@Model.Student.Id" class="btn btn-outline-secondary">+ Rekuzita</a>
 <a asp-controller="PersonalTraining" asp-action="Create" asp-route-studentId="@Model.Student.Id" class="btn btn-outline-secondary">+ Trajnim personal</a>

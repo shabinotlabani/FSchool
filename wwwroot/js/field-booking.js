@@ -9,7 +9,7 @@
         let range = '';
         if (start.value) {
             const [h,m] = start.value.split(':').map(Number);
-            if (h < 23) range = start.value + '–' + String(h+1).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+            range = start.value + '–' + String((h+1)%24).padStart(2,'0') + ':' + String(m).padStart(2,'0') + (h === 23 ? ' (ditën tjetër)' : '');
         }
         time.textContent = range ? range + ' · 60 minuta' : '';
         if (!weeks) { preview.textContent = range; return; }

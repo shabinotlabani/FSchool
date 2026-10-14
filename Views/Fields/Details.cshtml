@@ -1,7 +1,7 @@
 @model FieldBooking
 <partial name="_PendingBankNotice" model='@("Field", Model.Id)'/>
 @using _2Korriku.Services
-@{ViewData["Title"] = "Termini privat #" + Model.Id; var writer = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator);}
+@{ViewData["Title"] = "Termini privat #" + Model.Id; var writer = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator) || User.IsInRole(Roles.FieldOperator);}
 
 <div class="page-heading mt-3"><div><p class="eyebrow">TERMIN PRIVAT #@Model.Id · @(Model.IsCancelled ? "I ANULUAR" : "I REZERVUAR")</p><h1>@Model.CustomerName</h1><p>@Model.FootballField?.Name · @Model.Date.ToString("dd.MM.yyyy") · @Model.StartsAt.ToString("HH:mm")–@Model.EndsAt.ToString("HH:mm")</p></div>@if(writer && !Model.IsCancelled){<div class="d-flex gap-2 flex-wrap"><a asp-action="Booking" asp-route-id="@Model.Id" class="btn btn-primary">Ndrysho terminin</a>@if(Model.Paid == 0){<a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger">Anulo terminin</a>}</div>}</div>
 @if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}

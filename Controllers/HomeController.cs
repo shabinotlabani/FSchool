@@ -20,6 +20,7 @@ public class HomeController : Controller
     [Authorize]
     public async Task<IActionResult> Index()
     {
+        if (User.IsInRole(_2Korriku.Models.Roles.FieldOperator)) return RedirectToAction("Index", "Fields");
         if (User.IsInRole(_2Korriku.Models.Roles.Coach)) return RedirectToAction("Index", "Coaches");
         var stats = await _dashboardService.GetStatsAsync();
         var latestStudents = _context.Students
