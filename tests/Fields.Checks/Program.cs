@@ -592,6 +592,26 @@ try
         db.TeamAttendances.Add(new(){TrainingTeamId=parentTeam.Id,Date=BillingClock.Today,SavedById=actor,Players=[new(){StudentId=child.Id,StudentName=child.FullName,Present=true},new(){StudentId=other.Id,StudentName=other.FullName,Present=false}]});
         await db.SaveChangesAsync();return (Child:child.Id,Other:other.Id,Token:child.ParentLinkToken!);
     });
+    Task<Microsoft.AspNetCore.Mvc.IActionResult> ParentManifest(string token) => WithDb(db =>
+        new _2Korriku.Controllers.ParentPortalController(db)
+        {
+            ControllerContext = new() { HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+                { Request = { PathBase = "/school" } } }
+        }.Manifest(token));
+    var parentManifest = (Microsoft.AspNetCore.Mvc.ContentResult)await ParentManifest(parentFixture.Token);
+    using (var manifest = JsonDocument.Parse(parentManifest.Content!))
+    {
+        var link = "/school/p/" + parentFixture.Token;
+        Check(manifest.RootElement.GetProperty("start_url").GetString() == link
+            && manifest.RootElement.GetProperty("id").GetString() == link
+            && manifest.RootElement.GetProperty("scope").GetString() == link,
+            "Parent installation launches its exact private link with a distinct app identity");
+        Check(parentManifest.ContentType == "application/manifest+json"
+            && !parentManifest.Content!.Contains("Parent One"), "Parent manifest exposes no child name or financial details");
+    }
+    Check(await ParentManifest("6") is Microsoft.AspNetCore.Mvc.NotFoundResult
+        && await ParentManifest(new string('C',64)) is Microsoft.AspNetCore.Mvc.NotFoundResult,
+        "Invalid and unknown parent links cannot generate install manifests");
     foreach(var finance in new[]{false,true}){
         var blockedParent=await WithDb(db=>new ParentPortalService(db).LoadAsync(parentFixture.Token,TariffService.CurrentMonth,finance));
         Check(blockedParent is {Debt:50,Name:null}&&blockedParent.Schedule.Count==0&&blockedParent.Attendance.Count==0&&blockedParent.Movements.Count==0,"Debt gate returns only the child's debt, including direct financial URLs");
@@ -605,6 +625,8 @@ try
     Check(parentFinance!.Movements.Count==2&&parentFinance.Movements.Sum(m=>m.Debit)==50&&parentFinance.Movements.Sum(m=>m.Credit)==50&&parentFinance.Attendance.Count==0,"Financial view is scoped to one child and one month");
     await WithDb(async db=>{await new _2Korriku.Controllers.ParentLinksController(db).Save(parentFixture.Child);return true;});
     Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(parentFixture.Token,TariffService.CurrentMonth,false))==null,"Regenerating link immediately invalidates the old link");
+    Check(await ParentManifest(parentFixture.Token) is Microsoft.AspNetCore.Mvc.NotFoundResult,
+        "Regenerating a parent link invalidates its old install manifest");
     var replacementToken=await WithDb(db=>db.Students.Where(s=>s.Id==parentFixture.Child).Select(s=>s.ParentLinkToken).SingleAsync());
     Check(replacementToken?.Length==64&&replacementToken!=parentFixture.Token,"New link uses an unpredictable 256-bit token");
     await WithDb(async db=>{await new _2Korriku.Controllers.ParentLinksController(db).Save(parentFixture.Child,true);return true;});

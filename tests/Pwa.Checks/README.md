@@ -17,7 +17,7 @@ The checks cover manifest delivery and parsing, icon responses, service worker c
 - Launch from the home-screen icon and confirm the application opens without browser navigation controls.
 - After one online visit, enable airplane mode and navigate or reload. The offline notice should appear. Reconnect and select **Provo përsëri**.
 - Payments, reservations, authenticated pages, and parent links are never stored by the service worker or queued for offline submission. Only the public offline page and logo are cached.
-- The installed app opens the portal root and uses the existing login/session rules. It does not preserve a private parent-link token in its manifest.
+- Installation from the staff portal opens the portal root and uses existing login/session rules. Installation from a parent page uses a dedicated, non-cacheable manifest with that private link as its app ID and launch URL. No child names or financial details appear in the manifest. Treat this installed shortcut as private access to that child's report. Rotating or revoking the link disables the old shortcut; install again from the replacement link.
 - For future changes to the offline page, increment the cache version in `wwwroot/sw.js`. Updates activate after old controlled windows close, avoiding forced reloads during form entry.
 
 Reference: [MDN — Making PWAs installable](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable).
