@@ -60,6 +60,14 @@ try
         await db.Database.MigrateAsync();
         Check(!db.Database.HasPendingModelChanges(), "Migration matches the EF model");
         Check(await db.FootballFields.CountAsync() == 3, "Three editable fields seeded");
+        var disposableField = new FootballField { Name = "Delete test" };
+        db.FootballFields.Add(disposableField);
+        await db.SaveChangesAsync();
+        var fieldService = new FieldService(db);
+        await Reject(() => fieldService.DeleteFieldAsync(disposableField.Id, Guid.NewGuid()), "Reject deletion with stale field revision");
+        Check(await db.FootballFields.AnyAsync(f => f.Id == disposableField.Id), "Stale deletion preserves field");
+        await fieldService.DeleteFieldAsync(disposableField.Id, disposableField.Revision);
+        Check(!await db.FootballFields.AnyAsync(f => f.Id == disposableField.Id), "Unused field can be deleted");
         db.Users.Add(new ApplicationUser { Id = "field-test-staff", UserName = "field-test-staff" });
         db.Roles.AddRange(new IdentityRole(Roles.Coach){Id="test-coach-role",NormalizedName=Roles.Coach.ToUpperInvariant()},new IdentityRole(Roles.Admin){Id="test-admin-role",NormalizedName=Roles.Admin.ToUpperInvariant()});
         db.UserRoles.Add(new IdentityUserRole<string>{UserId="field-test-staff",RoleId="test-admin-role"});

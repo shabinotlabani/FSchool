@@ -1,0 +1,18 @@
+@model FootballField
+@{ ViewData["Title"] = "Fshi fushën"; }
+
+<div class="page-heading mt-3"><div><p class="eyebrow">ADMINISTRIMI</p><h1>Fshi fushën</h1></div></div>
+<section class="panel p-4">
+    <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+    <p>A dëshironi ta fshini fushën <strong>@Model.Name</strong>?</p>
+    <p>Fshirja është e përhershme. Fushat me ekipe të lidhura ose historik rezervimesh nuk mund të fshihen.</p>
+    <form asp-action="Delete" method="post">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <input type="hidden" name="revision" value="@Model.Revision" />
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger">Konfirmo fshirjen</button>
+            <a asp-action="Manage" class="btn btn-outline-secondary">Anulo</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Ndrysho</a>
+        </div>
+    </form>
+</section>

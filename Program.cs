@@ -118,7 +118,17 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+var staticContentTypes = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+staticContentTypes.Mappings[".webmanifest"] = "application/manifest+json";
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticContentTypes,
+    OnPrepareResponse = context =>
+    {
+        if (context.File.Name is "sw.js" or "manifest.webmanifest")
+            context.Context.Response.Headers.CacheControl = "no-cache";
+    }
+});
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();

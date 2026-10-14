@@ -46,6 +46,28 @@ public class FieldsController(ApplicationDbContext db) : Controller
         catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
         return View(model);
     }
+    [HttpGet, Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var field = await db.FootballFields.AsNoTracking().SingleOrDefaultAsync(f => f.Id == id);
+        return field == null ? NotFound() : View(field);
+    }
+
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken, Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> DeleteConfirmed(int id, Guid revision)
+    {
+        if (!ModelState.IsValid) return BadRequest();
+        try
+        {
+            await Service.DeleteFieldAsync(id, revision);
+            TempData["Success"] = "Fusha u fshi.";
+            return RedirectToAction(nameof(Manage));
+        }
+        catch (InvalidOperationException ex) { ModelState.AddModelError("", ex.Message); }
+        var field = await db.FootballFields.AsNoTracking().SingleOrDefaultAsync(f => f.Id == id);
+        return field == null ? NotFound() : View("Delete", field);
+    }
+
     private async Task Choices(FieldBookingEditModel model) => model.Fields = await db.FootballFields.AsNoTracking()
         .Where(f => f.IsActive || f.Id == model.FootballFieldId).OrderBy(f => f.Name).ToListAsync();
 

@@ -72,6 +72,23 @@ public partial class FieldService(ApplicationDbContext db)
         await db.SaveChangesAsync(); await tx.CommitAsync(); return field.Id;
     }
 
+    public async Task DeleteFieldAsync(int id, Guid revision)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
+        var field = await db.FootballFields.SingleOrDefaultAsync(f => f.Id == id)
+            ?? throw new InvalidOperationException("Fusha nuk u gjet.");
+        if (field.Revision != revision)
+            throw new InvalidOperationException("Fusha u ndryshua ndërkohë. Hapeni përsëri para fshirjes.");
+        if (await db.TrainingTeams.AnyAsync(t => t.FootballFieldId == id))
+            throw new InvalidOperationException("Fusha ka ekipe të lidhura. Zhvendosni ekipet në një fushë tjetër para fshirjes.");
+        if (await db.FieldBookings.AnyAsync(b => b.FootballFieldId == id))
+            throw new InvalidOperationException("Fusha ka historik rezervimesh dhe nuk mund të fshihet. Mund ta çaktivizoni te Ndrysho.");
+        db.FootballFields.Remove(field);
+        await db.SaveChangesAsync();
+        await tx.CommitAsync();
+    }
+
     public async Task<int> SaveBookingAsync(FieldBookingEditModel input, string actor)
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);
