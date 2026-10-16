@@ -1,21 +1,73 @@
 @model StockOverviewModel
-@using _2Korriku.Services
-@{ViewData["Title"]="Rekuizitat dhe stoku";var f=Model.Filter;var valid=ViewData.ModelState.IsValid;var writer=User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator);var from=f.From.ToString("yyyy-MM-dd");var to=f.To.ToString("yyyy-MM-dd");}
-<link rel="stylesheet" href="~/css/inventory.css" asp-append-version="true"/><link rel="stylesheet" href="~/css/stock-sizes.css" asp-append-version="true"/>
-<div class="page-heading"><div><p class="eyebrow">FC 2 KORRIKU / MAGAZINA</p><h1>Rekuizitat dhe stoku</h1></div><div class="stock-actions">@if(writer){<a asp-action="Create" class="btn btn-outline-primary">+ Rekuizitë e re</a><a asp-action="Receive" class="btn btn-primary">+ Hyrje në stok</a>}</div></div>
-@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
-<div class="stock-section-nav">@if(User.IsInRole(Roles.Admin)){<a asp-controller="SizeGroups" asp-action="Index">Madhësitë dhe numrat →</a>}<span class="stock-section-active"><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg>Gjendja e magazinës</span><a asp-action="Entries">Dokumentet e hyrjeve →</a><a asp-controller="Sales" asp-action="Index">Daljet për lojtarët →</a></div>
-<form method="get" class="stock-filter panel"><div asp-validation-summary="All" class="text-danger mb-2" role="alert"></div><div class="stock-filter-grid"><div class="stock-search-field"><label for="stock-search">Kërko rekuizitë</label><input id="stock-search" type="search" name="Search" value="@f.Search" placeholder="Emri, madhësia, kategoria ose barkodi…" maxlength="200"/></div><div><label for="stock-category">Kategoria</label><select id="stock-category" name="Category"><option value="">Të gjitha kategoritë</option>@foreach(var category in Model.Categories){<option value="@category" selected="@(string.Equals(f.Category,category,StringComparison.OrdinalIgnoreCase))">@category</option>}</select></div><div><label for="stock-status">Rekuizitat</label><select id="stock-status" name="Status"><option value="all" selected="@(f.Status=="all")">Të gjitha</option><option value="active" selected="@(f.Status=="active")">Aktive</option><option value="inactive" selected="@(f.Status=="inactive")">Joaktive</option></select></div><div><label for="stock-level">Stoku në fund</label><select id="stock-level" name="Stock"><option value="all" selected="@(f.Stock=="all")">Çdo gjendje</option><option value="low" selected="@(f.Stock=="low")">Stok i ulët</option><option value="empty" selected="@(f.Stock=="empty")">Pa stok / negativ</option></select></div><div><label for="stock-from">Nga data</label><input id="stock-from" name="From" type="date" value="@from" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" required/></div><div><label for="stock-to">Deri në datë</label><input id="stock-to" name="To" type="date" value="@to" min="1900-01-01" max="@BillingClock.Today.ToString("yyyy-MM-dd")" required/></div></div><div class="stock-filter-footer"><div class="stock-actions"><button class="btn btn-primary" name="Display" value="@f.Display">Zbato filtrat</button><a asp-action="Index" class="stock-reset">Pastro</a></div><div class="stock-view-switch" aria-label="Pamja e rekuizitave"><button name="Display" value="list" class="@(f.Display=="list"?"is-selected":"")" aria-pressed="@(f.Display=="list"?"true":"false")">Lista</button><button name="Display" value="categories" class="@(f.Display=="categories"?"is-selected":"")" aria-pressed="@(f.Display=="categories"?"true":"false")">Sipas kategorisë</button><button name="Display" value="cards" class="@(f.Display=="cards"?"is-selected":"")" aria-pressed="@(f.Display=="cards"?"true":"false")">Kartela vizuale</button></div></div></form>
-@if(valid){
-<div class="stock-results-heading"><div><h2>@(f.Display=="categories"?"Stoku sipas kategorisë":f.Display=="cards"?"Rekuizitat në kartela":"Pasqyra e stokut")</h2><p>@f.From.ToString("dd.MM.yyyy") — @f.To.ToString("dd.MM.yyyy") · Përfshihen të dyja datat</p></div><a asp-action="PrintStock" asp-route-search="@f.Search" asp-route-category="@f.Category" asp-route-status="@f.Status" asp-route-stock="@f.Stock" asp-route-display="@f.Display" asp-route-from="@from" asp-route-to="@to" class="btn btn-outline-primary">Printo stokun sipas madhësive</a></div>
-@if(Model.HasUndatedStock){<div class="alert alert-warning">Disa rekuizita kanë diferencë midis stokut dhe lëvizjeve të dokumentuara. Gjendja historike përfshin një bazë pa datë; shihni shpjegimin në kartelën e rekuizitës.</div>}
-@if(Model.Rows.Count==0){<section class="panel empty-panel"><span class="empty-icon"><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg></span><strong>Nuk u gjetën rekuizita</strong><a asp-action="Index" class="btn btn-outline-primary">Pastro filtrat</a></section>}
-else if(f.Display=="categories"){
-@foreach(var group in Model.Rows.GroupBy(r=>r.Product.CategoryId,StringComparer.OrdinalIgnoreCase).OrderBy(g=>g.Key)){<details class="panel stock-category-group" open><summary><div><span class="stock-category-marker"><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg></span><div><strong>@group.Key</strong><small>@group.Count() rekuizita · @group.Count(r=>r.IsLow) në / nën minimum</small></div></div><span>Në fund <b>@group.Sum(r=>r.Closing).ToString("0.##")</b><i aria-hidden="true">⌄</i></span></summary><partial name="_StockTable" model="@(new StockOverviewModel{Filter=f,Rows=group.ToList()})"/></details>}
+@{
+    ViewData["Title"] = "Rekuizitat";
+    var f = Model.Filter;
+    var writer = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator);
+    var inactive = f.Status == "inactive";
 }
-else if(f.Display=="cards"){
-<div class="stock-card-grid">@foreach(var row in Model.Rows){var p=row.Product;<article class="stock-item-card"><div class="stock-item-top"><span class="stock-product-icon"><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg></span><span class="stock-badge @row.StatusClass">@row.Status</span></div><p class="stock-item-category">@p.CategoryId</p><h3><a asp-action="Card" asp-route-id="@p.Id" asp-route-from="@from" asp-route-to="@to">@p.Name</a></h3><p class="stock-item-size">Madhësia: @(p.Variants.Count>0?string.Join(", ",p.Variants.Select(v=>v.Size)):p.Size??"—") · @(p.IsActive?"Aktive":"Joaktive")</p><div class="stock-item-quantity"><strong>@row.Closing.ToString("0.##")</strong><span>në fund të periudhës</span></div><partial name="_StockSizes" model="row"/><div class="stock-item-flow"><span>Hyrje <b class="stock-in">+@row.Incoming.ToString("0.##")</b></span><span>Dalje <b class="stock-out">−@row.Outgoing.ToString("0.##")</b></span><span>Sot <b>@p.CurrentStock.ToString("0.##")</b></span></div><footer><span>Çmimi i shitjes <b>@p.SalePrice.ToString("N2")</b></span><a asp-action="Card" asp-route-id="@p.Id" asp-route-from="@from" asp-route-to="@to">Hap kartelën →</a></footer></article>}</div>
-}else{<section class="panel"><partial name="_StockTable" model="Model"/></section>}
-
-}
-
+<link rel="stylesheet" href="~/css/product-shop.css" asp-append-version="true" />
+<div class="product-shop">
+    <header class="shop-heading">
+        <div><p class="eyebrow">FC 2 KORRIKU</p><h1>Rekuizitat</h1><p>Gjithçka për lojën.</p></div>
+        <details class="shop-management">
+            <summary>Menaxhimi <span aria-hidden="true">⌄</span></summary>
+            <nav aria-label="Menaxhimi i rekuizitave">
+                @if(writer){<a asp-action="Create">Shto rekuizitë</a><a asp-action="Receive">Furnizo stokun</a>}
+                <a asp-action="Entries">Historiku i furnizimeve</a>
+                <a asp-controller="Sales" asp-action="Index">Dorëzimet për lojtarët</a>
+                <a asp-action="Stock">Raporti i stokut / printimi</a>
+                <a asp-action="Index" asp-route-inactive="@(!inactive)">@(inactive ? "Rekuizitat aktive" : "Rekuizitat joaktive")</a>
+                @if(User.IsInRole(Roles.Admin)){<a asp-controller="SizeGroups" asp-action="Index">Menaxho madhësitë</a>}
+            </nav>
+        </details>
+    </header>
+    @if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+    <form method="get" asp-action="Index" class="shop-search" role="search">
+        <input type="hidden" name="category" value="@f.Category" />
+        @if(inactive){<input type="hidden" name="inactive" value="true" />}
+        <label for="shop-search" class="visually-hidden">Kërko rekuizitë</label>
+        <input id="shop-search" name="search" type="search" value="@f.Search" maxlength="200" placeholder="Kërko rekuizitën…" />
+        <button type="submit" class="btn btn-primary">Kërko</button>
+    </form>
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <nav class="shop-categories" aria-label="Kategoritë e rekuizitave">
+        <a asp-action="Index" asp-route-search="@f.Search" asp-route-inactive="@inactive" class="@(string.IsNullOrEmpty(f.Category) ? "selected" : "")" aria-current="@(string.IsNullOrEmpty(f.Category) ? "page" : null)">Të gjitha</a>
+        @foreach(var category in Model.Categories){
+            var selected = string.Equals(f.Category, category, StringComparison.OrdinalIgnoreCase);
+            <a asp-action="Index" asp-route-category="@category" asp-route-search="@f.Search" asp-route-inactive="@inactive" class="@(selected ? "selected" : "")" aria-current="@(selected ? "page" : null)">@category</a>
+        }
+    </nav>
+    @if(ViewData.ModelState.IsValid){
+        <div class="shop-results"><span>@Model.Rows.Count rekuizita @(inactive ? "joaktive" : "")</span>@if(!string.IsNullOrEmpty(f.Search)||!string.IsNullOrEmpty(f.Category)){<a asp-action="Index" asp-route-inactive="@inactive">Pastro kërkimin</a>}</div>
+        @if(Model.Rows.Count == 0){<div class="shop-empty"><h2>Nuk u gjetën rekuizita</h2><p>Provo një emër tjetër ose zgjidh të gjitha kategoritë.</p></div>}
+        <div class="shop-grid">
+        @foreach(var row in Model.Rows){
+            var p = row.Product;
+            var available = p.IsActive && p.CurrentStock > 0 && (p.Variants.Count == 0 || p.Variants.Any(v => v.IsActive && v.CurrentStock > 0));
+            var sizes = p.Variants.Where(v => v.IsActive).OrderBy(v => v.Id).ToList();
+            <article class="shop-product">
+                <a asp-action="Card" asp-route-id="@p.Id" class="shop-product-visual" aria-label="Shiko @p.Name">
+                    <span class="shop-availability @(!available ? "unavailable" : "")">@(!p.IsActive ? "Joaktive" : available ? "Në stok" : "Pa stok")</span>
+                    <svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 16 83 33v35L50 86 17 68V33Z" fill="currentColor" opacity=".08"/><path d="m17 33 33 18 33-18M50 51v35M17 33l33-17 33 17v35L50 86 17 68V33Zm16-9 34 18v14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    <span class="shop-product-code">@p.Code</span>
+                </a>
+                <div class="shop-product-body">
+                    <p class="shop-category">@p.CategoryId</p>
+                    <h2><a asp-action="Card" asp-route-id="@p.Id">@p.Name</a></h2>
+                    <div class="shop-price">@p.SalePrice.ToString("N2")</div>
+                    <div class="shop-sizes" aria-label="Madhësitë">
+                        @foreach(var size in sizes.Take(6)){<span class="@(size.CurrentStock <= 0 ? "sold-out" : "")" title="@size.CurrentStock.ToString("0.##") në stok">@size.Size</span>}
+                        @if(sizes.Count > 6){<a asp-action="Card" asp-route-id="@p.Id">+@(sizes.Count - 6)</a>}
+                        @if(sizes.Count == 0 && !string.IsNullOrEmpty(p.Size)){<span>@p.Size</span>}
+                    </div>
+                    <div class="shop-product-bottom">
+                        <span>@p.CurrentStock.ToString("0.##") @p.UnitName.ToLowerInvariant() në stok</span>
+                        @if(writer && available){<a asp-controller="Sales" asp-action="Create" asp-route-productId="@p.Id" class="btn btn-primary" aria-label="Jep lojtarit: @p.Name">Jep lojtarit</a>}
+                        else{<a asp-action="Card" asp-route-id="@p.Id" class="shop-detail-link">Shiko →</a>}
+                    </div>
+                </div>
+            </article>
+        }
+        </div>
+    }
+</div>

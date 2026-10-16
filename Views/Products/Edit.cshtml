@@ -2,7 +2,7 @@
 @{ViewData["Title"]="Ndrysho rekuizitën";}
 
 <div class="page-heading mt-3"><div><p class="eyebrow">REKUIZITAT / TË DHËNAT</p><h1>Ndrysho rekuizitën</h1><p>@Model.Product?.Code</p></div></div>
-<form asp-action="Edit" method="post" class="panel p-4"><input asp-for="Id" type="hidden" /><input asp-for="ExpectedState" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+<form asp-action="Edit" method="post" data-financial-confirm class="panel p-4"><input asp-for="Id" type="hidden" /><input asp-for="ExpectedState" type="hidden" /><div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
 <div class="row g-3">
 <div class="col-md-6"><label asp-for="Name" class="form-label">Emri</label><input asp-for="Name" class="form-control" maxlength="200" required /></div>
 <div class="col-md-6"><label asp-for="Category" class="form-label">Kategoria</label><input asp-for="Category" class="form-control" maxlength="50" required /></div>

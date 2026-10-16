@@ -1,7 +1,7 @@
 @model CreateTariffModel
 @{ ViewData["Title"] = Model.IsFamily ? "Tarifë familjare e re" : "Tarifë mujore e re"; }
 <div class="page-heading mt-3"><h1>@ViewData["Title"]</h1></div>
-<form method="post" class="panel p-4" style="max-width:750px">
+<form method="post" data-financial-confirm class="panel p-4" style="max-width:750px">
 <div asp-validation-summary="All" class="text-danger" role="alert"></div>
 <label asp-for="Name" class="form-label">Emri i tarifës</label><input asp-for="Name" class="form-control mb-3" maxlength="100" required/>
 <label asp-for="IsFamily" class="form-label">Lloji</label><select asp-for="IsFamily" class="form-select mb-3"><option value="false">Mujore</option><option value="true">Familjare</option></select>

@@ -3,7 +3,7 @@
 @{ ViewData["Title"] = "Pagesat dhe arkëtimet"; var selectedMonth = new DateTime(Model.Year, Model.Month, 1); }
 <a asp-controller="PersonalTraining" asp-action="Index" class="btn btn-outline-primary mb-3">Pagesat e trajnimeve personale →</a>
 <div class="page-heading"><div><p class="eyebrow">FINANCAT E SHKOLLËS</p><h1>Pagesat dhe arkëtimet</h1></div>
-@if(User.IsInRole(Roles.Admin)){<form asp-action="Generate" method="post"><button class="btn btn-primary" type="submit">Përditëso faturat</button></form>}</div>
+@if(User.IsInRole(Roles.Admin)){<form asp-action="Generate" method="post" data-financial-confirm><button class="btn btn-primary" type="submit">Përditëso faturat</button></form>}</div>
 <partial name="_BillingNotice" />
 @if(TempData["PaymentReceiptId"] is int receiptId){<a asp-action="Receipt" asp-route-id="@receiptId" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" class="btn btn-outline-primary mb-3">Printo dëftesën e pagesës</a>}
 @if(TempData["FamilyReceiptId"] is int familyReceiptId){<a asp-action="FamilyReceipt" asp-route-id="@familyReceiptId" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" class="btn btn-outline-primary mb-3">Printo dëftesën familjare</a>}

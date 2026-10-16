@@ -3,6 +3,7 @@
 @{ViewData["Title"]="Veprimet me arsye";}
 <link rel="stylesheet" href="~/css/reason-report.css" asp-append-version="true"/>
 <div class="reason-report">
+<p class="text-secondary">Vetëm veprimet me arsye që prekin pagesat, detyrimet, tarifat dhe arkat.</p>
 <div class="page-heading"><div><h1>Veprimet me arsye</h1><p>@Model.Filter.From?.ToString("dd.MM.yyyy") – @Model.Filter.To?.ToString("dd.MM.yyyy")</p></div><div class="d-flex gap-2 no-print"><a asp-action="Index" asp-route-from="@Model.Filter.From?.ToString("yyyy-MM-dd")" asp-route-to="@Model.Filter.To?.ToString("yyyy-MM-dd")" class="btn btn-outline-primary">Raporti financiar</a><button type="button" class="btn btn-primary" onclick="window.print()">Printo</button></div></div>
 <form method="get" class="panel p-3 mb-4 no-print">
 <div asp-validation-summary="All" class="text-danger" role="alert"></div>

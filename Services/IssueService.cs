@@ -16,7 +16,7 @@ public class IssueService(ApplicationDbContext db)
             if (line.UnitPrice.HasValue && decimal.Round(line.UnitPrice.Value, 2) != line.UnitPrice.Value) throw new InvalidOperationException("Çmimi lejon vetëm dy shifra dhjetore.");
             if (decimal.Round(line.Quantity, 2) != line.Quantity) throw new InvalidOperationException("Sasia lejon dy shifra dhjetore.");
         }
-        if (input.WaivePayment && !canWaive) throw new InvalidOperationException("Vetëm administratori mund të lirojë nga pagesa.");
+        if (input.WaivePayment && !canWaive) throw new InvalidOperationException("Nuk keni leje për dorëzim gratis.");
         await using var tx = db.Database.CurrentTransaction == null ? await db.Database.BeginTransactionAsync() : null;
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
         await db.Database.ExecuteSqlRawAsync(InventoryService.LockSql);
@@ -53,11 +53,11 @@ public class IssueService(ApplicationDbContext db)
             if (!products.TryGetValue(line.ProductId, out var p) || p.CurrentStock < line.Quantity) throw new InvalidOperationException("Stoku nuk mjafton ose rekuizita nuk është aktive. Kontrolloni sasitë.");
             if (p.SalePrice < 0) throw new InvalidOperationException("Çmimi i rekuizitës nuk është i vlefshëm.");
             var price = line.UnitPrice ?? p.SalePrice;
-            if (price == 0 && !input.WaivePayment) throw new InvalidOperationException("Për çmim zero përdorni lirimin me arsye dhe shënim.");
+            if (price == 0 && !input.WaivePayment) throw new InvalidOperationException("Për çmim zero shënoni 'Jep gratis këtë dorëzim' te Pagesa dhe shkruani përshkrimin.");
             sale.Details.Add(new SaleDetail { ProductId = p.Id, ProductName = p.Name, ProductSize = variants[line.ProductVariantId].Size, ProductVariantId = line.ProductVariantId, UnitName = p.UnitName, Quantity = line.Quantity, Price = price, ListPrice = p.SalePrice, Total = decimal.Round(price * line.Quantity, 2, MidpointRounding.AwayFromZero) });
         }
         sale.Total = sale.Details.Sum(d => d.Total);
-        if (sale.Total == 0 && !input.WaivePayment) throw new InvalidOperationException("Për dalje me vlerë zero zgjidhni lirimin dhe shkruani arsyen e shënimin.");
+        if (sale.Total == 0 && !input.WaivePayment) throw new InvalidOperationException("Për dorëzim me vlerë zero shënoni 'Jep gratis këtë dorëzim' dhe shkruani përshkrimin.");
         sale.Discount = input.WaivePayment ? sale.Total : 0;
         sale.GrandTotal = sale.Total - sale.Discount;
         if (input.AmountPaid > sale.GrandTotal) throw new InvalidOperationException("Pagesa nuk mund të tejkalojë vlerën e daljes.");

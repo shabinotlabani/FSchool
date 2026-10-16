@@ -2,6 +2,10 @@ namespace _2Korriku.Models;
 
 public class ParentPortalModel
 {
+    public DateOnly Today { get; set; }
+    public bool NeedsAcknowledgement { get; set; }
+    public string? ParkingTicketId { get; set; }
+    public List<ParentSchedule> TodaySessions { get; set; } = [];
     public decimal Debt { get; set; }
     public decimal Advance { get; set; }
     public string? Name { get; set; }

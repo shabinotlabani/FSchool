@@ -62,6 +62,7 @@ public class DashboardService
             ProductsLowInStock = lowStock,
             StudentsWithHighestOutstandingDebt = studentsWithDebt.Select(x => new StudentDebtSummary
             {
+                StudentId = x.student.Id,
                 StudentName = x.student.FullName,
                 Balance = x.Balance
             }).ToList(),
@@ -88,6 +89,7 @@ public class DashboardStats
 
 public class StudentDebtSummary
 {
+    public int StudentId { get; set; }
     public string StudentName { get; set; } = string.Empty;
     public decimal Balance { get; set; }
 }

@@ -1,2 +1,30 @@
 ﻿.cash-report-table{width:100%;font-variant-numeric:tabular-nums}.cash-report-table th,.cash-report-table td{padding:9px 10px;vertical-align:top}.cash-report-table th:first-child,.cash-report-table td:first-child{width:40%;text-align:left;overflow-wrap:anywhere}.cash-report-table th:not(:first-child),.cash-report-table td:not(:first-child){text-align:right;white-space:nowrap}.cash-report-table thead th{background:#f0f3f9;font-size:11px;color:#344a72;border-bottom:2px solid #bac6d9}.cash-category{background:#f4f6fa;font-weight:600}.cash-subcategory td:first-child{padding-left:20px;color:#5c6c81}.cash-report-table tfoot{background:#edf1f8;border-top:2px solid #9bacc8}.cash-balances tfoot{background:#e8eef8;font-weight:700}.cash-report-note{margin-bottom:14px!important}.stock-sheet .cash-report-table{font-size:8pt;table-layout:fixed}.stock-sheet .cash-report-table th,.stock-sheet .cash-report-table td{padding:6px}.stock-sheet .cash-report-table thead th{font-size:7.5pt;white-space:normal}.stock-sheet .cash-report-table th:first-child,.stock-sheet .cash-report-table td:first-child{width:38%}.stock-sheet .cash-subcategory td:first-child{padding-left:13px}.stock-sheet .document-notes{line-height:1.5}.cash-balances tfoot{break-inside:avoid}@media print{.cash-report-table thead{display:table-header-group}.cash-report-table tr{break-inside:avoid}.cash-report-table thead th,.cash-report-table tfoot td,.cash-category{print-color-adjust:exact;-webkit-print-color-adjust:exact}.table-responsive{overflow:visible}}
 .cash-breakdown th:first-child,.cash-breakdown td:first-child{width:28%}.cash-reversed{color:#9c4551}.stock-sheet .cash-breakdown th:first-child,.stock-sheet .cash-breakdown td:first-child{width:28%}.stock-sheet .cash-breakdown{font-size:7.5pt}.stock-sheet .cash-breakdown th,.stock-sheet .cash-breakdown td{padding:6px 4px}.stock-sheet .cash-breakdown thead th{font-size:7pt}.cash-breakdown thead th{white-space:normal}
+.financial-report { min-width: 0; }
+@media screen and (max-width: 760px) {
+    .financial-report .page-heading > div { width: 100%; min-width: 0; }
+    .financial-report .page-heading .btn { flex: 1 1 140px; white-space: normal; min-height: 44px; }
+    .financial-report-filter > .d-flex { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px !important; }
+    .financial-report-filter > .d-flex > div { grid-column: 1 / -1; min-width: 0; }
+    .financial-report-filter input { width: 100%; min-width: 0; min-height: 44px; font-size: 16px; }
+    .financial-report-filter .btn { white-space: normal; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    .financial-report > .panel.p-4 { padding: 16px !important; }
+    .financial-report h2 { font-size: 17px; line-height: 1.4; }
+    .financial-report .table-responsive { overflow: visible; }
+    .financial-report table { display: block; width: 100%; font-size: 14px; }
+    .financial-report table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .financial-report table tbody, .financial-report table tfoot { display: block; border: 0; background: transparent; }
+    .financial-report table tr { display: block; margin: 12px 0; border: 1px solid #dbe2ea; border-radius: 10px; overflow: hidden; }
+    .financial-report table tr > :is(td, th) { display: block; width: auto; padding: 10px 12px; text-align: right; white-space: normal; overflow-wrap: anywhere; font-size: 14px; border-bottom: 1px solid #eef1f5; }
+    .financial-report table tr > :first-child { text-align: left; font-weight: 650; background: #f0f3f9; color: #344a72; }
+    .financial-report table tr > :not(:first-child)::before { content: attr(data-label); float: left; max-width: 48%; margin-right: 12px; text-align: left; color: #64748b; font-size: 12px; font-weight: 500; }
+    .financial-report table tr > :is(td, th)::after { content: ''; display: block; clear: both; }
+    .financial-report table tr > :last-child { border-bottom: 0; font-weight: 700; }
+    .financial-report table tfoot tr { border-color: #9bacc8; background: #edf1f8; }
+    .financial-report .cash-subcategory { margin-left: 12px; }
+    .financial-report .cash-category { background: #f4f6fa; }
+    .financial-report .cash-movements tr > td { text-align: left; }
+    .financial-report .cash-movements tr > td::before { float: none; display: block; max-width: none; margin: 0 0 4px; }
+    .financial-report .cash-movements tr > td:first-child::before { content: attr(data-label); font-size: 12px; font-weight: 500; }
+    .financial-report .cash-movements small { overflow-wrap: anywhere; }
+}

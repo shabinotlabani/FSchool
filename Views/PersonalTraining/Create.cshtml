@@ -3,7 +3,7 @@
 @using System.Globalization
 @{ViewData["Title"]="Regjistro trajnim personal";}
 <div class="page-heading"><div><p class="eyebrow">TRAJNIM SHTESË</p><h1>Trajnim personal</h1></div></div>
-<form method="post" id="issue-form"><input asp-for="RequestId" type="hidden"/><input asp-for="ExpectedRate" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div>
+<form method="post" data-financial-confirm id="issue-form"><input asp-for="RequestId" type="hidden"/><input asp-for="ExpectedRate" type="hidden"/><div asp-validation-summary="All" class="text-danger mb-3"></div>
 <section class="panel p-4 mb-3 player-picker" aria-labelledby="player-picker-title">
 <h2 id="player-picker-title" class="h5 mb-3">Për cilin lojtar është trajnimi?</h2>
 <input asp-for="StudentId" type="hidden" />

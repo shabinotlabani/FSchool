@@ -1,8 +1,10 @@
 @model List<BillingGridRow>
 @foreach(var row in Model){
 <tr class="@(row.Family!=null?"table-light":"")">
-<td><a class="fw-semibold" asp-action="@(row.Family!=null?"Family":"Account")" asp-route-id="@(row.Family?.Id??row.Students[0].Id)">@row.Name</a>
-@if(row.Family!=null){<span class="badge text-bg-secondary ms-2">Familje</span>@foreach(var student in row.Students){<small class="balance-caption">@student.FullName</small>}}
+@{var directDebt = row.MonthlyDue <= 0 ? row.OtherDebts.FirstOrDefault(d => d.Action == "Pay") : null;
+var canPay = User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator);}
+<td><a class="fw-semibold" asp-controller="@(canPay && directDebt != null ? directDebt.Controller : "Payments")" asp-action="@(canPay && directDebt != null ? directDebt.Action : row.Family!=null?"Family":row.TotalDue>0?"Debt":"Account")" asp-route-id="@(canPay && directDebt != null ? directDebt.Id : row.Family?.Id??row.Students[0].Id)">@row.Name</a>
+@if(row.Family!=null){<span class="badge text-bg-secondary ms-2">Familje</span>@foreach(var student in row.Students){<small class="balance-caption"><a asp-action="Debt" asp-route-id="@student.Id">@student.FullName</a></small>}}
 @if(row.Invoices.Count==0){<small class="balance-caption">Pa faturë mujore në këtë muaj</small>}</td>
 <td>@(row.Invoices.Count>0?row.Invoices.Sum(x=>x.Amount).ToString("N2"):"—")</td>
 <td>@(row.Invoices.Count>0?row.Invoices.Sum(x=>x.Exempted).ToString("N2"):"—")</td>

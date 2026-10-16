@@ -3,7 +3,7 @@
 <link rel="stylesheet" href="~/css/payment-register.css" asp-append-version="true"/>
 <div class="payment-register">
 <div class="payment-heading"><div><h1>Pagesë mujore</h1><a asp-action="Account" asp-route-id="@Model.StudentId">@Model.StudentName</a></div><a asp-action="Seasonal" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-studentId="@Model.StudentId" class="payment-seasonal">Pagesë sezonale →</a></div>
-<form asp-action="Register" method="post" data-automatic-bank="@(Model.AutomaticBankAmount>0?"true":"false")" class="panel payment-form"><input type="hidden" name="returnUrl" value="@(ViewData["PaymentReturnUrl"] ?? Context.Request.Query["returnUrl"].ToString())"/>
+<form asp-action="Register" method="post" data-financial-confirm data-automatic-bank="@(Model.AutomaticBankAmount>0?"true":"false")" class="panel payment-form"><input type="hidden" name="returnUrl" value="@(ViewData["PaymentReturnUrl"] ?? Context.Request.Query["returnUrl"].ToString())"/>
 <div class="payment-balance"><span>@(Model.Balance > 0 ? "Borxh mujor" : Model.Balance < 0 ? "Parapagim aktual" : "Bilanci mujor")</span><strong class="@(Model.Balance>0?"text-danger":"text-success")">@Math.Abs(Model.Balance).ToString("N2")</strong></div>
 <div class="payment-fields">
 <div asp-validation-summary="All" class="text-danger" role="alert"></div><input asp-for="StudentId" type="hidden"/><input asp-for="RequestId" type="hidden"/>
@@ -18,12 +18,7 @@
 </div>
 <div class="payment-submit"><button type="submit" class="btn btn-primary">Ruaj pagesën</button></div>
 </div></form></div>
-<dialog id="payment-confirm" class="payment-confirm" aria-labelledby="payment-confirm-title">
-<h2 id="payment-confirm-title">A jeni të sigurt?</h2>
-<p>@Model.StudentName</p><strong id="payment-confirm-value"></strong><p id="payment-confirm-date"></p>
-<div class="payment-confirm-buttons"><button type="button" id="payment-confirm-no" class="btn btn-outline-secondary" autofocus>Jo</button><button type="button" id="payment-confirm-yes" class="btn btn-primary">Po, regjistro</button></div>
-</dialog>
-@section Scripts {<script src="~/js/payment-register.js" asp-append-version="true"></script><script src="~/js/bank-pending-hint.js" asp-append-version="true"></script>}
+@section Scripts {<script src="~/js/bank-pending-hint.js" asp-append-version="true"></script>}
 @section PageNavigation {
 <a class="btn btn-outline-secondary app-back-button" asp-action="Account" asp-route-id="@Model.StudentId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>
 }

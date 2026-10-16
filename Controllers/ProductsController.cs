@@ -11,7 +11,14 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles = Roles.Read)]
 public class ProductsController(ApplicationDbContext db, InventoryService inventory) : Controller
 {
-    public async Task<IActionResult> Index(StockFilter filter)
+    public async Task<IActionResult> Index(string? search, string? category, bool inactive = false)
+    {
+        var filter = new StockFilter { Search = search, Category = category, Status = inactive ? "inactive" : "active", Display = "cards" };
+        if (!TryValidateModel(filter)) return View(new StockOverviewModel { Filter = filter });
+        return View(await new StockReportService(db).OverviewAsync(filter));
+    }
+
+    public async Task<IActionResult> Stock(StockFilter filter)
     {
         if(!ModelState.IsValid) return View(new StockOverviewModel { Filter=filter, Categories=await db.Products.AsNoTracking().Select(p=>p.CategoryId).Distinct().OrderBy(c=>c).ToListAsync() });
         return View(await new StockReportService(db).OverviewAsync(filter));

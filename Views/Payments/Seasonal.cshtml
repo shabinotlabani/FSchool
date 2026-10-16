@@ -25,7 +25,7 @@
     </tbody></table></div>
     <div class="seasonal-months">@for(var i=0;i<quote.Months;i++){<span class="@(i>=quote.PaidMonths?"seasonal-free":"")">@quote.Start.AddMonths(i).ToString("MM.yyyy")<small>@(i>=quote.PaidMonths?"Zbritje":"Me pagesë")</small></span>}</div><small class="text-secondary d-block mt-2">Borxhet jashtë kësaj periudhe paguhen veçmas. Mungesat nuk e zgjasin sezonin.</small>
 </section>
-<form asp-action="Seasonal" method="post" class="card p-4"><input type="hidden" name="returnUrl" value="@(ViewData["PaymentReturnUrl"] ?? Context.Request.Query["returnUrl"].ToString())"/>
+<form asp-action="Seasonal" method="post" data-financial-confirm class="card p-4"><input type="hidden" name="returnUrl" value="@(ViewData["PaymentReturnUrl"] ?? Context.Request.Query["returnUrl"].ToString())"/>
     <p class="text-secondary bank-pending-hint" hidden>Bankë: pagesa dhe sezoni mbeten në pritje. Borxhi ulet vetëm pasi administratori konfirmon hyrjen në bankë.</p>
     <input asp-for="StudentId" type="hidden" /><input asp-for="RequestId" type="hidden" /><input asp-for="StartMonth" type="hidden" /><input asp-for="Months" type="hidden" /><input asp-for="ExpectedRate" type="hidden" />
     <div class="row g-3">

@@ -1,0 +1,22 @@
+@model CreateIssueModel
+<aside class="panel issue-payment" aria-labelledby="issue-payment-title">
+    <div class="issue-section-heading"><span class="issue-step">3</span><h2 id="issue-payment-title">Pagesa</h2></div>
+    <label class="issue-waiver"><input asp-for="WaivePayment"/> Jep gratis këtë dorëzim</label>
+    <div id="waiver-fields">
+        <label asp-for="WaiverReason" class="form-label">Arsyeja / përshkrimi për gratis</label>
+        <textarea asp-for="WaiverReason" maxlength="200" rows="2" class="form-control mb-2" placeholder="P.sh. Dhuratë për lojtarin"></textarea>
+        <span asp-validation-for="WaiverReason" class="text-danger"></span>
+        <p class="small text-secondary">Për dorëzim gratis, shëno kutinë më sipër dhe shkruaj përshkrimin. Vlen për të gjitha rekuizitat e këtij dorëzimi.</p>
+    </div>
+    <div class="issue-summary-row"><span>Vlera e rekuizitave</span><strong id="gross">0.00</strong></div>
+    <div class="issue-summary-row issue-net"><span>Për pagesë</span><strong id="net">0.00</strong></div>
+    <label asp-for="AmountPaid" class="form-label">Shuma që paguhet tani</label>
+    <div class="input-group mb-3"><input asp-for="AmountPaid" type="number" min="0" step="0.01" class="form-control" required/><button type="button" id="pay-full" class="btn btn-outline-primary">E plotë</button></div>
+    <label asp-for="PaymentMethod" class="form-label">Mënyra e pagesës</label>
+    <select asp-for="PaymentMethod" class="form-select mb-3"><option value="Cash">Para në dorë</option><option value="Bank">Bankë</option><option value="Other">Tjetër</option></select>
+    <div class="issue-summary-row issue-due"><span>Mbetet për pagesë</span><strong id="due">0.00</strong></div>
+    <label asp-for="Notes" class="form-label">Shënim shtesë (opsional)</label>
+    <textarea asp-for="Notes" maxlength="400" rows="2" class="form-control mb-3" placeholder="Shënim për dorëzimin…"></textarea>
+    <p class="bank-pending-hint small text-secondary" hidden>Pagesa bankare mbetet në pritje deri në konfirmim.</p>
+    <button type="submit" class="btn btn-primary issue-save">Ruaj dorëzimin</button>
+</aside>

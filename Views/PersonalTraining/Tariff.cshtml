@@ -1,7 +1,7 @@
 @model PersonalTariffModel
 @{ViewData["Title"]=Model.Id==0?"Tarifë e re personale":"Ndrysho tarifën";}
 <div class="page-heading"><h1>@ViewData["Title"]</h1></div>
-<form method="post" class="panel p-4"><input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
+<form method="post" data-financial-confirm class="panel p-4"><input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
 <label asp-for="Name" class="form-label">Emri i tarifës</label><input asp-for="Name" class="form-control mb-3" required maxlength="100"/>
 <label asp-for="Mode" class="form-label">Mënyra e tarifimit</label>
 @if(Model.Id==0){<select asp-for="Mode" class="form-select mb-3"><option value="Session">Për seancë</option><option value="Monthly">Paketë mujore</option></select>}else{<input asp-for="Mode" type="hidden"/><p>@(Model.Mode=="Monthly"?"Paketë mujore":"Për seancë")</p>}

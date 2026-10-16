@@ -28,7 +28,7 @@ public class CreateIssueModel : IValidatableObject
         if (RequestId == Guid.Empty) yield return new("Hapni një formular të ri.");
         if (Lines == null || Lines.Count is < 1 or > 6) yield return new("Lejohen 1–6 rekuizita për fletëdalje.");
         if (decimal.Round(AmountPaid, 2) != AmountPaid) yield return new("Pagesa lejon dy shifra dhjetore.");
-        if (WaivePayment && (string.IsNullOrWhiteSpace(WaiverReason) || string.IsNullOrWhiteSpace(Notes))) yield return new("Për lirim nga pagesa kërkohen arsyeja dhe shënimi.");
+        if (WaivePayment && string.IsNullOrWhiteSpace(WaiverReason)) yield return new("Shkruani arsyen / përshkrimin për dorëzimin gratis.", [nameof(WaiverReason)]);
         if (WaivePayment && AmountPaid != 0) yield return new("Dalja e liruar duhet të ketë pagesë zero.");
     }
 }

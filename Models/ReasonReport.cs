@@ -7,7 +7,7 @@ public class ReasonReportModel
     public string? Action { get; set; }
     public string? Search { get; set; }
     public List<ReasonReportRow> Rows { get; set; }=[];
-    public static readonly string[] Categories=["Pagesat","Lirimet mujore","Rekuizitat","Trajnimet personale","Shpenzimet","Arkat","Terminet","Tarifat","Familjet","Lojtarët","Ekipet","Banka"];
+    public static readonly string[] Categories=["Pagesat","Lirimet mujore","Rekuizitat","Trajnimet personale","Shpenzimet","Arkat","Terminet","Tarifat","Banka"];
     public static readonly string[] Actions=["Anulim","Lirim","Kthim lirimi","Ndryshim","Refuzim","Mbyllje automatike"];
 }
 public class ReasonReportRow

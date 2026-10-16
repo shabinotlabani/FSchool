@@ -37,7 +37,7 @@ public class SalesController(ApplicationDbContext db, IssueService issues) : Con
     public async Task<IActionResult> Create(CreateIssueModel model)
     {
         if (ModelState.IsValid)
-            try { var id = await issues.CreateAsync(model, Actor, User.IsInRole(Roles.Admin)); return RedirectToAction(nameof(Details), new { id }); }
+            try { var id = await issues.CreateAsync(model, Actor, User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)); return RedirectToAction(nameof(Details), new { id }); }
             catch (Exception ex) when (ex is InvalidOperationException or ValidationException) { ModelState.AddModelError("", ex.Message); }
         if (model.Lines == null || model.Lines.Count == 0) model.Lines = [new()];
         await Choices(model); return View(model);

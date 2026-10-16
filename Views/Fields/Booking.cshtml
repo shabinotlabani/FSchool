@@ -1,7 +1,7 @@
 @model FieldBookingEditModel
 @{ViewData["Title"] = Model.Id == 0 ? "Termin privat i ri" : "Ndrysho terminin";}
 <div class="page-heading mt-3"><div><p class="eyebrow">REZERVIM PRIVAT</p><h1>@ViewData["Title"]</h1></div></div>
-<form asp-action="Booking" method="post" class="panel p-4">
+<form asp-action="Booking" method="post" data-financial-confirm class="panel p-4">
 <input asp-for="Id" type="hidden" /><input asp-for="Revision" type="hidden" /><input asp-for="RequestId" type="hidden" />
 <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
 <div class="row g-3">

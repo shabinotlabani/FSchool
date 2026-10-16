@@ -149,6 +149,23 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         return View(model);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Debt(int id, string? returnUrl = null)
+    {
+        if (!User.IsInRole(Roles.Admin) && !User.IsInRole(Roles.Operator))
+            return RedirectToAction(nameof(Account), new { id });
+        var account = await billing.GetAccountAsync(id);
+        if (account == null) return NotFound();
+        // Pay an existing debt in its own ledger, never turn equipment/training debt into a monthly advance.
+        if (account.MonthlyDue > 0)
+            return RedirectToAction(nameof(Register), new { studentId = id, returnUrl });
+        var sale = account.Sales.Where(s => s.Status != "Cancelled" && s.Due > 0 && s.RequestId.HasValue).OrderBy(s => s.Date).ThenBy(s => s.Id).FirstOrDefault();
+        if (sale != null) return RedirectToAction("Pay", "Sales", new { id = sale.Id });
+        var charge = account.PersonalTrainings.SelectMany(t => t.Charges).Where(c => c.Due > 0).OrderBy(c => c.Period).ThenBy(c => c.Id).FirstOrDefault();
+        if (charge != null) return RedirectToAction("Pay", "PersonalTraining", new { id = charge.Id });
+        return RedirectToAction(nameof(Account), new { id });
+    }
+
     [HttpGet, Authorize(Roles = Roles.Write)]
     public async Task<IActionResult> Register(int? studentId, string? returnUrl = null)
     {

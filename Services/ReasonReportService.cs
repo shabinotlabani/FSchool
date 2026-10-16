@@ -32,18 +32,29 @@ public class ReasonReportService(ApplicationDbContext db)
         await Read(db.TreasuryEntries.AsNoTracking().Where(x=>x.CancelledAt!=null).Select(x=>new ReasonReportRow{Date=x.CancelledAt!.Value,Category="Arkat",Action="Anulim",Subject=x.Kind==TreasuryEntry.Opening?"Gjendja fillestare":"Tërheqje nga pronari",Document="Arka #"+x.Id,Reason=x.CancellationReason??"",Amount=x.Amount,ActorId=x.CancelledById}));
         await Read(db.FieldBookingChanges.AsNoTracking().Where(x=>x.Description.StartsWith("Anul")).Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Terminet",Action="Anulim",Subject=x.FieldBooking!.CustomerName,Document="Termini #"+x.FieldBookingId,Reason=x.Description,ActorId=x.ActorId}));
         await Read(db.FirstMonthFeeChanges.AsNoTracking().Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Tarifat",Subject=x.Period!.Student!.FirstName+" "+x.Period.Student.LastName,Document="Muaji i parë #"+x.PeriodId,Reason=x.Reason+" · "+x.PreviousAmount+" → "+x.Amount,Amount=x.Amount,ActorId=x.ActorId}));
+        // Fee assignments retain financial family-package changes; general profile audits are excluded.
         await Read(db.StudentFeeAssignments.AsNoTracking().Where(x=>x.Reason!="").Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category=x.FeePlan!.IsWaiver?"Lirimet mujore":"Tarifat",Action=x.FeePlan.IsWaiver?"Lirim":"Ndryshim",Subject=x.Student!.FirstName+" "+x.Student.LastName,Document=x.FeePlan.Name+" · "+x.EffectiveMonth,Reason=x.Reason,ActorId=x.CreatedByUserId}));
         await Read(db.FeePlanPrices.AsNoTracking().Where(x=>x.Reason!="").Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Tarifat",Subject=x.FeePlan!.Name,Document="Tarifa #"+x.Id,Reason=x.Reason,Amount=x.Amount,ActorId=x.CreatedByUserId}));
-        await Read(db.StudentChanges.AsNoTracking().Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Lojtarët",Subject=x.Student!.FirstName+" "+x.Student.LastName,Document="Lojtari #"+x.StudentId,Reason=x.Reason+" · "+x.Summary,ActorId=x.ActorId}));
-        await Read(db.StudentTeamChanges.AsNoTracking().Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Ekipet",Subject=x.Student!.FirstName+" "+x.Student.LastName,Document=(x.FromTeamName??"Pa ekip")+" → "+(x.ToTeamName??"Pa ekip"),Reason=x.Reason,ActorId=x.ActorId}));
-        await Read(db.TeamChanges.AsNoTracking().Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Ekipet",Subject=x.TrainingTeam!.Name,Document="Ekipi #"+x.TrainingTeamId,Reason=x.Reason,ActorId=x.ActorId}));
-        await Read(db.FamilyChanges.AsNoTracking().Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Familjet",Subject=x.Family!.Name,Document="Familja #"+x.FamilyId,Reason=x.Reason,ActorId=x.ActorId}));
-        await Read(db.ExpenseCategoryChanges.AsNoTracking().Select(x=>new ReasonReportRow{Date=x.CreatedAt,Category="Shpenzimet",Subject=x.ExpenseCategory!.Name,Document="Kategoria #"+x.ExpenseCategoryId,Reason=x.Reason,ActorId=x.ActorId}));
         await Read(db.PendingBankPayments.AsNoTracking().Where(x=>x.ReviewedAt!=null&&x.RejectionReason!=null).Select(x=>new ReasonReportRow{Date=x.ReviewedAt!.Value,Category="Banka",Action=x.ReviewedById=="System"?"Mbyllje automatike":"Refuzim",Subject=x.Student!=null?x.Student.FirstName+" "+x.Student.LastName:x.Description??"Kërkesë bankare",Document="Banka #"+x.Id,Reason=x.RejectionReason!,Amount=x.Amount,ActorId=x.ReviewedById}));
         var personal=await db.PersonalTrainingAudits.AsNoTracking().Include(x=>x.PersonalTraining).ThenInclude(x=>x!.Student).Include(x=>x.PersonalTariff).Where(x=>x.CreatedAt>=start&&x.CreatedAt<end).ToListAsync();
         foreach(var x in personal){
             string? operation=null;
-            try{using var json=JsonDocument.Parse(x.Snapshot);if(json.RootElement.TryGetProperty("Action",out var value))operation=value.GetString();}catch(JsonException){}
+            try{
+                using var json=JsonDocument.Parse(x.Snapshot);
+                var snapshot=json.RootElement;
+                if(snapshot.TryGetProperty("Action",out var value))operation=value.GetString();
+                if(x.PersonalTariffId.HasValue){
+                    // Renaming a tariff or editing its notes does not affect billing.
+                    if(!snapshot.TryGetProperty("Before",out var before)||!snapshot.TryGetProperty("After",out var after))continue;
+                    // Mode cannot be edited and is absent from the historical Before snapshot.
+                    var amountChanged=before.TryGetProperty("Amount",out var oldAmount)&&after.TryGetProperty("Amount",out var newAmount)&&
+                        oldAmount.TryGetDecimal(out var previousAmount)&&newAmount.TryGetDecimal(out var nextAmount)&&previousAmount!=nextAmount;
+                    var activeChanged=before.TryGetProperty("IsActive",out var oldActive)&&after.TryGetProperty("IsActive",out var newActive)&&oldActive.ValueKind!=newActive.ValueKind;
+                    var financialChange=amountChanged||activeChanged;
+                    if(!financialChange)continue;
+                }
+                else if(operation is not ("Cancel" or "Stop" or "Waive" or "Restore")&&!snapshot.TryGetProperty("Rate",out _))continue;
+            }catch(JsonException){continue;}
             if(operation is "Waive" or "Restore")continue; // Included once through the ledger.
             rows.Add(new(){Date=x.CreatedAt,Category="Trajnimet personale",Action=operation=="Cancel"?"Anulim":"Ndryshim",Subject=x.PersonalTraining?.Student?.FullName??x.PersonalTariff?.Name??"Trajnim personal",Document=x.PersonalTrainingId.HasValue?$"Trajnimi #{x.PersonalTrainingId}":$"Tarifa #{x.PersonalTariffId}",Reason=x.Reason,ActorId=x.ActorId});
         }

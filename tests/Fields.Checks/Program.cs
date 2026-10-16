@@ -460,9 +460,10 @@ try
     Check(await WithDb(db=>db.StudentTeamChanges.CountAsync(x=>x.StudentId==transferFixture.Player))==2,"Assistant coach can transfer and both changes retain audit history");
     var reasons=await WithDb(db=>new ReasonReportService(db).LoadAsync(new(){From=BillingClock.Today,To=BillingClock.Today}));
     Check(reasons.Rows.Any(x=>x.Category=="Pagesat"&&x.Action=="Anulim")&&reasons.Rows.Any(x=>x.Category=="Shpenzimet"&&x.Action=="Anulim")&&reasons.Rows.Any(x=>x.Category=="Terminet"&&x.Action=="Anulim"),"Reason report combines cancellations across categories on actual action date");
-    Check(reasons.Rows.Any(x=>x.Category=="Ekipet"&&x.Subject=="Transfer Player"&&x.Actor=="Coach 1"),"Reason report shows transfer reason and actual assistant coach");
-    var filteredReasons=await WithDb(db=>new ReasonReportService(db).LoadAsync(new(){From=BillingClock.Today,To=BillingClock.Today},"Ekipet","Ndryshim","Transfer Player"));
-    Check(filteredReasons.Rows.Count==2&&filteredReasons.Rows.All(x=>x.Category=="Ekipet"&&x.Action=="Ndryshim"),"Reason report category, action and search filters combine correctly");
+    Check(!reasons.Rows.Any(x=>x.Category=="Ekipet"||x.Category=="Lojtarët"),"Financial reason report excludes administrative team transfers and player edits");
+    var paymentReason=reasons.Rows.First(x=>x.Category=="Pagesat"&&x.Action=="Anulim");
+    var filteredReasons=await WithDb(db=>new ReasonReportService(db).LoadAsync(new(){From=BillingClock.Today,To=BillingClock.Today},"Pagesat","Anulim",paymentReason.Subject));
+    Check(filteredReasons.Rows.Count>0&&filteredReasons.Rows.All(x=>x.Category=="Pagesat"&&x.Action=="Anulim"&&x.Subject==paymentReason.Subject),"Financial reason report category, action and search filters combine correctly");
     Check(!(await WithDb(db=>new ReasonReportService(db).LoadAsync(new(){From=BillingClock.Today.AddDays(-1),To=BillingClock.Today.AddDays(-1)},search:"Transfer Player"))).Rows.Any(),"Reason report excludes actions outside selected dates");
     var reportAccess=typeof(_2Korriku.Controllers.ReportsController).GetCustomAttributes(typeof(Microsoft.AspNetCore.Authorization.AuthorizeAttribute),true).Cast<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
     Check(reportAccess.Any(x=>x.Roles!.Split(',').Contains(Roles.Viewer)),"Reports authorize the viewer role without granting write access");

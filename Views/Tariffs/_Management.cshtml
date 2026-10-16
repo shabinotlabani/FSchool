@@ -4,6 +4,6 @@
 @foreach(var plan in Model.Plans){<tr><td>@plan.Name</td><td>@(plan.IsFamily?"Familjare":plan.IsWaiver?"Lirim":"Mujore")</td><td>@plan.PriceLabel</td><td>@(plan.IsActive?"Aktive":"E hequr")</td><td><div class="d-flex gap-2 flex-wrap">
 @if(plan.IsActive && !plan.IsWaiver){<a asp-action="Price" asp-route-id="@plan.Id" class="btn btn-sm btn-outline-primary">Ndrysho çmimin</a>}
 <a asp-controller="Tariffs" asp-action="Rename" asp-route-id="@plan.Id" class="btn btn-sm btn-outline-secondary">Ndrysho emrin</a>
-<form asp-action="SetActive" method="post"><input type="hidden" name="id" value="@plan.Id"/><input type="hidden" name="active" value="@((!plan.IsActive).ToString().ToLowerInvariant())"/><button class="btn btn-sm @(plan.IsActive?"btn-outline-danger":"btn-outline-success")">@(plan.IsActive?"Hiq nga përdorimi":"Aktivizo")</button></form>
+<form asp-action="SetActive" method="post" data-financial-confirm><input type="hidden" name="id" value="@plan.Id"/><input type="hidden" name="active" value="@((!plan.IsActive).ToString().ToLowerInvariant())"/><button class="btn btn-sm @(plan.IsActive?"btn-outline-danger":"btn-outline-success")">@(plan.IsActive?"Hiq nga përdorimi":"Aktivizo")</button></form>
 </div></td></tr>}
 </tbody></table></div></section>
