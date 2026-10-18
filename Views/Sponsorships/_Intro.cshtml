@@ -1,0 +1,4 @@
+<link rel="stylesheet" href="~/css/sponsorships.css" asp-append-version="true" />
+@{var section=ViewContext.RouteData.Values["action"]?.ToString();}
+<nav class="sp-module-nav sp-no-print" aria-label="Sponsorizimet"><a asp-action="Index" class="@(section=="Index"?"active":"")">Përmbledhja</a><a asp-action="Coverage" asp-route-year="@Context.Request.Query["year"]" class="@(section=="Coverage"?"active":"")">Mbulimi i planit</a><a asp-action="Invoices" class="@(section is "Invoices" or "Invoice" or "InvoiceDetails"?"active":"")">Faturat</a><a asp-action="Salaries" class="@(section=="Salaries"?"active":"")">Pagat</a><a asp-action="SponsorReport" class="@(section=="SponsorReport"?"active":"")">Raporti i sponsorit</a><a asp-action="Beneficiaries" class="@(section=="Beneficiaries"?"active":"")">Përfituesit</a></nav>
+@if(TempData["Success"] is string success){<div class="alert alert-success" role="status">@success</div>}

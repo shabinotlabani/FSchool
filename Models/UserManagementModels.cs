@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace _2Korriku.Models;
 
@@ -13,7 +13,7 @@ public class UserEditModel : IValidatableObject
     [Required(ErrorMessage = "Shkruani emrin."), StringLength(100)] public string FirstName { get; set; } = "";
     [Required(ErrorMessage = "Shkruani mbiemrin."), StringLength(100)] public string LastName { get; set; } = "";
     [Required, EmailAddress(ErrorMessage = "Shkruani një email të vlefshëm."), StringLength(256)] public string Email { get; set; } = "";
-    [Required, RegularExpression("Admin|Operator|Shikues|Trajner|RezervimePrivate", ErrorMessage = "Zgjidhni një rol të vlefshëm.")] public string Role { get; set; } = Roles.Operator;
+    [Required, RegularExpression("SuperAdmin|Admin|Operator|Shikues|Trajner|RezervimePrivate", ErrorMessage = "Zgjidhni një rol të vlefshëm.")] public string Role { get; set; } = Roles.Operator;
     public bool IsActive { get; set; } = true;
     [DataType(DataType.Password), StringLength(100, MinimumLength = 6, ErrorMessage = "Fjalëkalimi duhet të ketë 6–100 karaktere.")] public string? Password { get; set; }
     [DataType(DataType.Password), Compare(nameof(Password), ErrorMessage = "Fjalëkalimet nuk përputhen.")] public string? ConfirmPassword { get; set; }

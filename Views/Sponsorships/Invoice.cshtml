@@ -1,0 +1,26 @@
+@model SponsorshipInvoiceInput
+@{ViewData["Title"]="Faturë e re";}
+<partial name="_Intro"/>
+<div class="page-heading mt-3"><div><p class="eyebrow">SPONSORIZIMET</p><h1>Faturë e re</h1></div></div>
+<form asp-action="Invoice" method="post" data-financial-confirm id="sponsor-invoice" data-budget-url="@Url.Action("BudgetSuggestions")">
+<input asp-for="RequestId" type="hidden"/>
+<div asp-validation-summary="All" class="alert alert-danger sp-validation" role="alert"></div>
+<div class="sp-invoice-layout">
+<section class="panel sp-invoice-fields"><h2>Fatura</h2><div class="row g-3">
+<div class="col-12"><div class="sp-field-heading"><label asp-for="BeneficiaryId">Përfituesi / furnitori</label><a asp-action="Beneficiaries" asp-route-invoice="true">+ Shto</a></div><select asp-for="BeneficiaryId" class="form-select" required><option value="">Zgjidhni përfituesin</option>@foreach(var b in Model.Beneficiaries){<option value="@b.Id">@b.Name · @b.Identifier</option>}</select></div>
+<div class="col-md-6"><label asp-for="DocumentReference">Numri i faturës / dokumentit</label><input asp-for="DocumentReference" class="form-control" maxlength="100" required/></div>
+<div class="col-md-6"><label asp-for="Date">Data e pagesës</label><input asp-for="Date" type="date" class="form-control" required/></div>
+<div class="col-12"><label asp-for="PlanLineId">Kategoria</label><select asp-for="PlanLineId" class="form-select" required><option value="">Zgjidhni kategorinë</option>@foreach(var g in Model.Categories.GroupBy(x=>x.Plan.Year)){<optgroup label="@g.Key">@foreach(var l in g){<option value="@l.Id" data-salary="@(l.IsSalary?"true":"false")">@l.Category</option>}</optgroup>}</select></div>
+<div class="col-md-6"><label asp-for="Amount">Shuma e paguar</label><input asp-for="Amount" type="number" min="0.01" max="999999999.99" step="0.01" class="form-control sp-amount" required/></div>
+<div class="col-md-6" id="invoice-salary"><label asp-for="SalaryMonth">Muaji i pagës</label><input asp-for="SalaryMonth" type="month" class="form-control"/><label asp-for="SalaryRole" class="mt-2">Lloji i pagës</label><select asp-for="SalaryRole" class="form-select"><option value="">Zgjidhni</option><option value="Player">Lojtar</option><option value="Staff">Staf</option></select></div>
+<div class="col-12"><label asp-for="Description">Përshkrimi</label><input asp-for="Description" class="form-control" maxlength="500" required placeholder="P.sh. Tatime ose servis i veturës"/></div>
+<div class="col-12"><label asp-for="BankReference">Referenca bankare</label><input asp-for="BankReference" class="form-control" maxlength="100" required/></div>
+</div></section>
+<aside class="panel sp-budget-panel"><div class="sp-field-heading"><h2>Buxheti</h2><span class="sp-auto-badge">Propozim automatik</span></div>
+<div id="budget-options" aria-live="polite"><partial name="_BudgetOptions" model="Model"/></div>
+<noscript><button name="intent" value="suggest" formnovalidate class="btn btn-outline-primary">Propozo buxhetin</button></noscript>
+<button type="button" id="retry-budgets" class="btn btn-outline-primary" hidden>Provo përsëri</button>
+<button type="submit" class="btn btn-primary sp-save-invoice" id="save-invoice">Regjistro faturën</button>
+</aside></div></form>
+@section Scripts {<script src="~/js/sponsorship-invoice.js" asp-append-version="true"></script>}
+@section PageNavigation {<a asp-action="Invoices" class="btn btn-outline-secondary">Mbrapa te faturat</a>}

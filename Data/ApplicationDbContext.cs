@@ -6,6 +6,14 @@ namespace _2Korriku.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<SponsorshipPlan> SponsorshipPlans => Set<SponsorshipPlan>();
+    public DbSet<SponsorshipPlanLine> SponsorshipPlanLines => Set<SponsorshipPlanLine>();
+    public DbSet<SponsorshipContract> SponsorshipContracts => Set<SponsorshipContract>();
+    public DbSet<SponsorshipAllocation> SponsorshipAllocations => Set<SponsorshipAllocation>();
+    public DbSet<SponsorshipBeneficiary> SponsorshipBeneficiaries => Set<SponsorshipBeneficiary>();
+    public DbSet<SponsorshipReceipt> SponsorshipReceipts => Set<SponsorshipReceipt>();
+    public DbSet<SponsorshipSpend> SponsorshipSpending => Set<SponsorshipSpend>();
+    public DbSet<SponsorshipAudit> SponsorshipAudits => Set<SponsorshipAudit>();
     public DbSet<DemoImport> DemoImports => Set<DemoImport>();
     public DbSet<TeamAttendance> TeamAttendances => Set<TeamAttendance>();
     public DbSet<PendingBankPayment> PendingBankPayments => Set<PendingBankPayment>();
@@ -61,6 +69,27 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<SponsorshipPlan>().HasIndex(x=>x.Year).IsUnique();
+        builder.Entity<SponsorshipPlan>().Property(x=>x.Revision).IsConcurrencyToken();
+        builder.Entity<SponsorshipContract>().Property(x=>x.Revision).IsConcurrencyToken();
+        builder.Entity<SponsorshipPlanLine>().HasIndex(x=>new{x.PlanId,x.Category}).IsUnique();
+        builder.Entity<SponsorshipPlanLine>().HasOne(x=>x.Plan).WithMany(x=>x.Lines).HasForeignKey(x=>x.PlanId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipContract>().HasIndex(x=>new{x.SponsorNumber,x.Reference}).IsUnique();
+        builder.Entity<SponsorshipContract>().HasOne(x=>x.Plan).WithMany().HasForeignKey(x=>x.PlanId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipAllocation>().HasIndex(x=>new{x.ContractId,x.PlanLineId}).IsUnique();
+        builder.Entity<SponsorshipAllocation>().HasOne(x=>x.Contract).WithMany(x=>x.Allocations).HasForeignKey(x=>x.ContractId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipAllocation>().HasOne(x=>x.PlanLine).WithMany().HasForeignKey(x=>x.PlanLineId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipBeneficiary>().HasIndex(x=>x.Identifier).IsUnique();
+        builder.Entity<SponsorshipReceipt>().HasIndex(x=>x.RequestId).IsUnique();
+        builder.Entity<SponsorshipReceipt>().HasIndex(x=>x.BankReference).IsUnique().HasFilter("\"CancelledAt\" IS NULL");
+        builder.Entity<SponsorshipReceipt>().HasOne(x=>x.Contract).WithMany().HasForeignKey(x=>x.ContractId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipSpend>().HasIndex(x=>x.RequestId).IsUnique();
+        builder.Entity<SponsorshipSpend>().HasIndex(x=>new{x.BeneficiaryId,x.SalaryMonth}).IsUnique().HasFilter("\"CancelledAt\" IS NULL AND \"SalaryMonth\" IS NOT NULL");
+        builder.Entity<SponsorshipSpend>().HasIndex(x=>new{x.BeneficiaryId,x.DocumentReference}).IsUnique().HasFilter("\"CancelledAt\" IS NULL");
+        builder.Entity<SponsorshipSpend>().HasIndex(x=>x.BankReference).IsUnique().HasFilter("\"CancelledAt\" IS NULL");
+        builder.Entity<SponsorshipSpend>().HasOne(x=>x.Allocation).WithMany().HasForeignKey(x=>x.AllocationId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipSpend>().HasOne(x=>x.Beneficiary).WithMany().HasForeignKey(x=>x.BeneficiaryId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipAudit>().HasIndex(x=>new{x.Entity,x.EntityId});
         builder.Entity<PendingBankPayment>().HasIndex(x=>x.RequestId).IsUnique();
         builder.Entity<PendingBankPayment>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<PendingBankPayment>().HasOne(x=>x.Payment).WithMany().HasForeignKey(x=>x.PaymentId).OnDelete(DeleteBehavior.Restrict);

@@ -1,4 +1,4 @@
-@{
+﻿@{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var navigation = new[] {
         (Controller: "Home", Label: "Përmbledhja", Icon: "home", Group: ""),
@@ -18,6 +18,7 @@
     if(!User.IsInRole(Roles.Admin)&&!User.IsInRole(Roles.Operator)) navigation=navigation.Where(x=>x.Controller!="BankPayments").ToArray();
     if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Prezenca dhe ekipet", Icon: "calendar", Group: "") };
     if (User.IsInRole(Roles.FieldOperator)) navigation = new[] { (Controller: "Fields", Label: "Rezervimet private", Icon: "calendar", Group: "") };
+    if (User.IsInRole(Roles.SuperAdmin)) navigation = navigation.Append((Controller: "Sponsorships", Label: "Sponsorizimet", Icon: "wallet", Group: "Financat")).ToArray();
     var accountName = User.Identity?.Name?.Split('@')[0] ?? "Llogaria";
 }
 <!DOCTYPE html>
@@ -52,7 +53,7 @@
             </nav>
             @if(User.IsInRole(Roles.Admin)){<nav class="side-navigation" aria-label="Administrimi"><div class="side-group-title">Administrimi</div><a asp-controller="Users" asp-action="Index" class="side-link @(currentController == "Users" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg>Shfrytëzuesit</a><a asp-controller="Tariffs" asp-action="Index" class="side-link @(currentController == "Tariffs" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg>Tarifat</a></nav>}
             @if(User.IsInRole(Roles.Admin) && _2Korriku.Services.DataResetService.IsOwner(User.Identity?.Name)){<nav class="side-navigation" aria-label="Mirëmbajtja"><a asp-controller="DataReset" asp-action="Index" class="side-link">Zerimi i të dhënave</a></nav>}
-            <div class="sidebar-account"><div class="account-avatar" aria-hidden="true">@(accountName.Length > 0 ? accountName[..1].ToUpperInvariant() : "K")</div><div class="account-details"><strong>@accountName</strong><span>@(User.IsInRole(Roles.Admin) ? "Admin" : User.IsInRole(Roles.Operator) ? "Operator" : User.IsInRole(Roles.Coach) ? "Trajner" : User.IsInRole(Roles.FieldOperator) ? "Rezervimet private" : "Shikues")</span></div></div>
+            <div class="sidebar-account"><div class="account-avatar" aria-hidden="true">@(accountName.Length > 0 ? accountName[..1].ToUpperInvariant() : "K")</div><div class="account-details"><strong>@accountName</strong><span>@(User.IsInRole(Roles.SuperAdmin) ? "Super Admin" : User.IsInRole(Roles.Admin) ? "Admin" : User.IsInRole(Roles.Operator) ? "Operator" : User.IsInRole(Roles.Coach) ? "Trajner" : User.IsInRole(Roles.FieldOperator) ? "Rezervimet private" : "Shikues")</span></div></div>
             <partial name="_LoginPartial" />
             <div class="sidebar-credit">Programuar nga <strong>profix.ITS</strong></div>
         </div>

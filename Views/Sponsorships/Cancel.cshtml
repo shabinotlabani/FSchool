@@ -1,0 +1,5 @@
+@model SponsorshipCancelInput
+@{ViewData["Title"]="Anulim me arsye";}
+<partial name="_Intro"/>
+<div class="page-heading mt-3"><div><h1>Anulim me arsye</h1><p>@(Model.Kind=="Spend"?"Pagesa":"Pranimi") #@Model.Id @if(ViewData["Amount"] is decimal amount){<strong>· @amount.ToString("N2")</strong>}</p></div></div>
+<form asp-action="Cancel" method="post" class="panel p-4 sp-form" data-financial-confirm><input asp-for="Id" type="hidden"/><input asp-for="Kind" type="hidden"/><div asp-validation-summary="All" class="text-danger" role="alert"></div><p>Regjistrimi ruhet në historik. Anuloni vetëm kur pagesa është regjistruar gabimisht ose mjetet janë kthyer. Anulimi llogaritet nga sot.</p><label asp-for="Reason">Arsyeja e anulimit</label><textarea asp-for="Reason" class="form-control" required maxlength="300" rows="3"></textarea><button class="btn btn-danger mt-3">Anulo regjistrimin</button></form>

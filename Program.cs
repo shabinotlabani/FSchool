@@ -93,9 +93,9 @@ if (!string.IsNullOrWhiteSpace(port))
 
 var app = builder.Build();
 
-// Production must be able to start against a new database even when the host
-// skips its pre-deploy command. EF applies only migrations not yet recorded.
-var initializeDatabase = migrateOnly || app.Environment.IsProduction();
+// Keep local development and production schemas current before serving requests.
+// EF applies only migrations not yet recorded.
+var initializeDatabase = migrateOnly || app.Environment.IsProduction() || app.Environment.IsDevelopment();
 if (initializeDatabase)
 {
     using var scope = app.Services.CreateScope();

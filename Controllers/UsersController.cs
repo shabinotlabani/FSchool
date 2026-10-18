@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using _2Korriku.Models;
 using _2Korriku.Services;
@@ -27,7 +27,7 @@ public class UsersController(UserManager<ApplicationUser> users, UserAdministrat
         {
             var assigned = await users.GetRolesAsync(user);
             if (!string.IsNullOrEmpty(role) && !assigned.Contains(role)) continue;
-            list.Add(new() { User = user, Role = string.Join(", ", assigned) });
+            list.Add(new() { User = user, Role = assigned.Contains(Roles.SuperAdmin) ? Roles.SuperAdmin : string.Join(", ", assigned) });
         }
         return View(list);
     }
@@ -37,6 +37,7 @@ public class UsersController(UserManager<ApplicationUser> users, UserAdministrat
     {
         var user = await users.FindByIdAsync(id); if (user == null) return NotFound();
         var roles = await users.GetRolesAsync(user);
+        if (roles.Contains(Roles.SuperAdmin) && !User.IsInRole(Roles.SuperAdmin)) return Forbid();
         return View(new UserEditModel { Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync(), TeamIds = await db.CoachTeams.Where(x=>x.UserId==id).Select(x=>x.TrainingTeamId).ToListAsync(), CanVerifyBank = user.CanVerifyBank, Phone = user.PhoneNumber, Specialization = user.Specialization, Id = id, FirstName = user.FirstName ?? "", LastName = user.LastName ?? "", Email = user.Email ?? "", Role = Roles.All.FirstOrDefault(roles.Contains) ?? Roles.Viewer, IsActive = !UserAdministrationService.IsDisabled(user) });
     }
     [HttpPost, ValidateAntiForgeryToken]

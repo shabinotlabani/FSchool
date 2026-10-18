@@ -1,0 +1,19 @@
+@model SponsorshipInvoiceList
+@{ViewData["Title"]="Raporti i pagave";}
+<partial name="_Intro"/>
+<section class="sp-report">
+<header class="sp-report-heading"><h1>Pagat <span>@Model.Year</span></h1><button type="button" id="print-sponsorship" class="btn btn-sm btn-outline-secondary sp-no-print">Printo</button></header>
+<form method="get" class="sp-year sp-report-filter sp-no-print"><label for="year">Viti</label><select id="year" name="year" class="form-select form-select-sm">@foreach(var y in Model.Years.Append(Model.Year).Distinct().OrderDescending()){<option value="@y" selected="@(y==Model.Year)">@y</option>}</select><button class="btn btn-sm btn-outline-primary">Shfaq</button></form>
+@foreach(var role in new[]{"Player","Staff",""}){
+var rows=Model.Invoices.Where(x=>(x.SalaryRole??"")==role).ToList();
+if(role==""&&rows.Count==0){continue;}
+var title=role=="Player"?"Lojtarë":role=="Staff"?"Staf":"Pa klasifikim";
+<h2 class="sp-report-group">@title <span>@rows.Count paga</span></h2>
+<div class="sp-table-wrap" tabindex="0" role="region" aria-label="@title"><table class="table sp-table sp-report-table"><thead><tr><th scope="col">Emri</th><th scope="col">Muaji</th><th scope="col">Data</th><th scope="col">Sponsori</th><th scope="col">Dokumenti</th><th scope="col" class="sp-number">Shuma</th></tr></thead><tbody>
+@foreach(var row in rows){<tr><th scope="row">@row.Beneficiary.Name</th><td class="sp-nowrap">@row.SalaryMonth?.ToString("MM.yyyy")</td><td class="sp-nowrap">@row.Date.ToString("dd.MM.yyyy")</td><td>@row.Allocation.Contract.Sponsor</td><td><a asp-action="InvoiceDetails" asp-route-id="@row.Id">@row.DocumentReference</a></td><td class="sp-number">@row.Amount.ToString("N2")</td></tr>}
+@if(rows.Count==0){<tr><td colspan="6">Nuk ka paga të regjistruara.</td></tr>}
+</tbody><tfoot><tr><th colspan="5" scope="row">Gjithsej</th><td class="sp-number">@rows.Sum(x=>x.Amount).ToString("N2")</td></tr></tfoot></table></div>
+}
+<div class="sp-report-total"><span>Gjithsej paga</span><strong>@Model.Invoices.Sum(x=>x.Amount).ToString("N2")</strong></div>
+</section>
+@section Scripts {<script src="~/js/sponsorships.js" asp-append-version="true"></script>}

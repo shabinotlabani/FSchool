@@ -13,6 +13,7 @@ public class ApplicationUser : IdentityUser
 
 public static class Roles
 {
+    public const string SuperAdmin = "SuperAdmin";
     public const string Admin = "Admin";
     public const string Operator = "Operator";
     public const string Coach = "Trajner";
@@ -20,8 +21,9 @@ public static class Roles
     public const string FieldOperator = "RezervimePrivate";
     public const string FieldRead = Read + "," + FieldOperator;
     public const string FieldWrite = Write + "," + FieldOperator;
-    public static string Label(string role) => role == FieldOperator ? "Rezervimet private" : role;
+    public static string Label(string role) => role == SuperAdmin ? "Super Admin" : role == FieldOperator ? "Rezervimet private" : role;
     public const string Read = Admin + "," + Operator + "," + Viewer;
     public const string Write = Admin + "," + Operator;
-    public static readonly string[] All = [Admin, Operator, Viewer, Coach, FieldOperator];
+    // Super administrators also hold Admin, so existing operational permissions remain intact.
+    public static readonly string[] All = [SuperAdmin, Admin, Operator, Viewer, Coach, FieldOperator];
 }

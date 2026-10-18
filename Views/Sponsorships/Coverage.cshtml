@@ -1,0 +1,16 @@
+@model SponsorshipCoverageReport
+@{ViewData["Title"]="Mbulimi i planit";}
+<partial name="_Intro"/>
+<section class="sp-report">
+<header class="sp-report-heading"><h1>Mbulimi i planit <span>@Model.Year</span></h1><button type="button" id="print-sponsorship" class="btn btn-sm btn-outline-secondary sp-no-print">Printo</button></header>
+<form method="get" class="sp-year sp-report-filter sp-no-print"><label for="year">Viti</label><select name="year" id="year" class="form-select form-select-sm">@foreach(var y in Model.Years.Append(Model.Year).Distinct().OrderDescending()){<option selected="@(y==Model.Year)" value="@y">@y</option>}</select><button class="btn btn-sm btn-outline-primary">Shfaq</button></form>
+<div class="sp-table-wrap" tabindex="0" role="region" aria-label="Mbulimi i planit"><table class="table sp-table sp-report-table">
+<thead><tr><th scope="col">Kategoria</th><th scope="col" class="sp-number">Deklaruar</th><th scope="col" class="sp-number">Kontraktuar</th><th scope="col" class="sp-number">Nevojiten ende</th><th scope="col" class="sp-number">Mbulimi</th></tr></thead>
+<tbody>
+@foreach(var line in Model.Lines){<tr><th scope="row">@line.Category</th><td class="sp-number">@line.Declared.ToString("N2")</td><td class="sp-number">@line.Covered.ToString("N2")</td><td class="sp-number sp-report-needed"><strong>@line.Needed.ToString("N2")</strong></td><td class="sp-number">@line.Percentage.ToString("N1")%</td></tr>}
+@if(Model.Lines.Count==0){<tr><td colspan="5" class="text-center py-4">Nuk ka plan të deklaruar për këtë vit.</td></tr>}
+</tbody>
+@if(Model.Lines.Count>0){<tfoot><tr><th scope="row">Gjithsej</th><td class="sp-number">@Model.Declared.ToString("N2")</td><td class="sp-number">@Model.Covered.ToString("N2")</td><td class="sp-number">@Model.Needed.ToString("N2")</td><td class="sp-number">@Model.Percentage.ToString("N1")%</td></tr></tfoot>}
+</table></div>
+</section>
+@section Scripts {<script src="~/js/sponsorships.js" asp-append-version="true"></script>}

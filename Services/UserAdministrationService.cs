@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
 using Microsoft.AspNetCore.Identity;
@@ -34,8 +34,18 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         var isNew = string.IsNullOrEmpty(input.Id);
         var user = isNew ? new ApplicationUser() : await users.FindByIdAsync(input.Id!) ?? throw new InvalidOperationException("Shfrytëzuesi nuk u gjet.");
         if (!isNew) await db.Entry(user).ReloadAsync();
-        if (!isNew && user.Id == actorId && (!input.IsActive || input.Role != Roles.Admin)) throw new InvalidOperationException("Nuk mund ta çaktivizoni llogarinë tuaj ose t'ia hiqni rolin Admin.");
-        if (!isNew && await users.IsInRoleAsync(user, Roles.Admin) && (!input.IsActive || input.Role != Roles.Admin))
+        var actorSuper = await users.IsInRoleAsync(actor, Roles.SuperAdmin);
+        var targetSuper = !isNew && await users.IsInRoleAsync(user, Roles.SuperAdmin);
+        if (!actorSuper && targetSuper)
+            throw new InvalidOperationException("Vetëm Super Admin mund të menaxhojë këtë rol ose llogari.");
+        if (targetSuper && user.Id == actorId && (!input.IsActive || input.Role != Roles.SuperAdmin))
+            throw new InvalidOperationException("Nuk mund t'ia hiqni vetes rolin Super Admin.");
+        if (targetSuper && (!input.IsActive || input.Role != Roles.SuperAdmin)
+            && !(await users.GetUsersInRoleAsync(Roles.SuperAdmin)).Any(x => x.Id != user.Id && !IsDisabled(x)))
+            throw new InvalidOperationException("Duhet të mbetet së paku një Super Admin aktiv.");
+
+        if (!isNew && user.Id == actorId && (!input.IsActive || input.Role != Roles.Admin && input.Role != Roles.SuperAdmin)) throw new InvalidOperationException("Nuk mund ta çaktivizoni llogarinë tuaj ose t'ia hiqni rolin Admin.");
+        if (!isNew && await users.IsInRoleAsync(user, Roles.Admin) && (!input.IsActive || input.Role != Roles.Admin && input.Role != Roles.SuperAdmin))
         {
             var admins = await users.GetUsersInRoleAsync(Roles.Admin);
             if (!admins.Any(a => a.Id != user.Id && !IsDisabled(a))) throw new InvalidOperationException("Duhet të mbetet së paku një administrator aktiv.");
@@ -54,9 +64,10 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         user.AccessFailedCount = 0;
         Check(isNew ? await users.CreateAsync(user, input.Password!) : await users.UpdateAsync(user));
         var currentRoles = await users.GetRolesAsync(user);
-        var remove = currentRoles.Where(r => r != input.Role).ToArray();
+        var desiredRoles = input.Role == Roles.SuperAdmin ? new[] { Roles.Admin, Roles.SuperAdmin } : new[] { input.Role };
+        var remove = currentRoles.Where(r => !desiredRoles.Contains(r)).ToArray();
         if (remove.Length > 0) Check(await users.RemoveFromRolesAsync(user, remove));
-        if (!currentRoles.Contains(input.Role)) Check(await users.AddToRoleAsync(user, input.Role));
+        foreach (var role in desiredRoles.Where(r => !currentRoles.Contains(r))) Check(await users.AddToRoleAsync(user, role));
         if (!isNew && !string.IsNullOrEmpty(input.Password))
         {
             var token = await users.GeneratePasswordResetTokenAsync(user);
