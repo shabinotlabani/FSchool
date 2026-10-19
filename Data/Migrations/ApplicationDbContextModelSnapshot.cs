@@ -301,6 +301,38 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("AttendancePlayers");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.BankPaymentAllocation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("BankPaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankPaymentId");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique();
+
+                    b.ToTable("BankPaymentAllocations");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.CoachTeam", b =>
                 {
                     b.Property<string>("UserId")
@@ -1149,6 +1181,167 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("MonthlyFeePeriods");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.ParentPushDelivery", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Failed")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("NextAttempt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SubscriptionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubscriptionId");
+
+                    b.HasIndex("MessageId", "SubscriptionId")
+                        .IsUnique();
+
+                    b.HasIndex("SentAt", "Failed", "NextAttempt");
+
+                    b.ToTable("ParentPushDeliveries");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ParentPushMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.ToTable("ParentPushMessages");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ParentPushSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("PrivateKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("PublicKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ParentPushSettings");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ParentPushSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("EndpointHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int?>("FamilyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId", "EndpointHash")
+                        .IsUnique();
+
+                    b.ToTable("ParentPushSubscriptions");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.Payment", b =>
                 {
                     b.Property<int>("Id")
@@ -1561,6 +1754,10 @@ namespace _2Korriku.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ParentLinkToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(100)
@@ -1976,6 +2173,13 @@ namespace _2Korriku.Data.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<DateOnly?>("CertificateDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("CertificateNumber")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateOnly>("From")
                         .HasColumnType("date");
 
@@ -2174,6 +2378,9 @@ namespace _2Korriku.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly?>("InvoiceDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("PayloadHash")
                         .IsRequired()
@@ -3050,6 +3257,25 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("TeamAttendance");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.BankPaymentAllocation", b =>
+                {
+                    b.HasOne("_2Korriku.Models.PendingBankPayment", "BankPayment")
+                        .WithMany()
+                        .HasForeignKey("BankPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BankPayment");
+
+                    b.Navigation("Payment");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.CoachTeam", b =>
                 {
                     b.HasOne("_2Korriku.Models.TrainingTeam", "TrainingTeam")
@@ -3293,6 +3519,36 @@ namespace _2Korriku.Data.Migrations
                 });
 
             modelBuilder.Entity("_2Korriku.Models.MonthlyFeePeriod", b =>
+                {
+                    b.HasOne("_2Korriku.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ParentPushDelivery", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ParentPushMessage", "Message")
+                        .WithMany("Deliveries")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ParentPushSubscription", "Subscription")
+                        .WithMany()
+                        .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+
+                    b.Navigation("Subscription");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ParentPushSubscription", b =>
                 {
                     b.HasOne("_2Korriku.Models.Student", "Student")
                         .WithMany()
@@ -3828,6 +4084,11 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Changes");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ParentPushMessage", b =>
+                {
+                    b.Navigation("Deliveries");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.PersonalCharge", b =>

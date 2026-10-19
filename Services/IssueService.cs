@@ -99,7 +99,7 @@ public class IssueService(ApplicationDbContext db)
         var sale = await db.Sales.SingleOrDefaultAsync(s => s.Id == input.SaleId && s.RequestId != null) ?? throw new InvalidOperationException("Dalja nuk u gjet.");
         // Reload under the lock even if this context previously read the sale.
         await db.Entry(sale).ReloadAsync();
-        if (sale.Status == "Cancelled" || input.Amount > sale.Due) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
+        if (sale.Status == "Cancelled" || input.Amount > sale.Due && !await BankVerificationService.IsConfirmedAmount(db,input.RequestId,"Sale",input.Amount,actorId)) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
         var payment = await AddPayment(sale, input.Amount, input.PaymentMethod, input.RequestId, input.Notes?.Trim(), actorId);
         await db.SaveChangesAsync();
         if (tx != null) await tx.CommitAsync();

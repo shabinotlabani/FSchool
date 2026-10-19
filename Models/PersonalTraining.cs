@@ -72,6 +72,7 @@ public class PersonalCharge
     public bool IsCancelled { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public List<Payment> Payments { get; set; } = [];
+    [NotMapped] public decimal Credit => IsCancelled?0:Math.Max(0,Paid+Waived-Amount);
     [NotMapped] public decimal Due => IsCancelled ? 0 : Math.Max(0,Amount-Paid-Waived);
     [NotMapped] public string Number => $"TP-{Period:yyyyMM}-{Id:000000}";
     [NotMapped] public string Status => IsCancelled ? "Anuluar" : Waived > 0 ? "E liruar" : Due == 0 ? "E paguar" : Paid > 0 ? "Pjesërisht e paguar" : "E papaguar";

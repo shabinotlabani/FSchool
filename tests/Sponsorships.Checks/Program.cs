@@ -145,13 +145,16 @@ try {
         try {await db.SaveChangesAsync();throw new Exception("Unique salary index missing");}catch(DbUpdateException e)when(e.InnerException is PostgresException{SqlState:PostgresErrorCodes.UniqueViolation}){Check(true,"Database rejects cross-sponsor duplicate salary");}
     }
     var staffContract=Contract("Staff report sponsor");staffContract.Amount=100;
+    staffContract.CertificateNumber="CERT-2026";staffContract.CertificateDate=today.AddDays(-10);
     staffContract.Allocations=[new(){PlanLineId=lines[0].Id,Amount=100}];
     var staffContractId=await Run(s=>s.CreateContract(staffContract,"super"));
     await Run(s=>s.Receive(new(){ContractId=staffContractId,Date=today,Amount=100,BankReference="STAFF-REPORT-FUNDS"},"super"));
     var staffPerson=await Run(s=>s.CreateBeneficiary(new(){Name="Staff report person",Identifier="STAFF-REPORT"},"super"));
     var staffAllocation=await Db(db=>db.SponsorshipAllocations.Where(x=>x.ContractId==staffContractId).Select(x=>x.Id).SingleAsync());
     var staffInvoice=new SponsorshipInvoiceInput{PlanLineId=lines[0].Id,AllocationId=staffAllocation,BeneficiaryId=staffPerson,Date=today,SalaryMonth=month.ToString("yyyy-MM"),SalaryRole="Staff",Amount=100,Description="Staff salary",DocumentReference="STAFF-REPORT",BankReference="STAFF-REPORT"};
+    staffInvoice.InvoiceDate=today.AddDays(-3);
     var staffInvoiceId=await Run(s=>s.RegisterInvoice(staffInvoice,"super"));
+    Check(await Db(db=>db.SponsorshipSpending.AnyAsync(x=>x.Id==staffInvoiceId&&x.InvoiceDate==today.AddDays(-3)&&x.Date==today)),"Invoice date is preserved separately from payment date");
     var salaryReport=await Db(async db=>(SponsorshipInvoiceList)((Microsoft.AspNetCore.Mvc.ViewResult)await new SponsorshipsController(db).Salaries(year)).Model!);
     Check(salaryReport.Invoices.Any(x=>x.Id==staffInvoiceId&&x.SalaryRole=="Staff"),"Invoice flow preserves staff classification in salary report");
     Check(salaryReport.Invoices.Any(x=>x.SalaryRole=="Player"),"Salary report retains separate player payments");
@@ -161,6 +164,7 @@ try {
     Check(salaryReport.Invoices.All(x=>x.Id!=staffInvoiceId),"Cancelled staff salary is removed from report totals");
     var sponsorReport=await Db(async db=>(SponsorshipSponsorReport)((Microsoft.AspNetCore.Mvc.ViewResult)await new SponsorshipsController(db).SponsorReport(staffContractId)).Model!);
     Check(sponsorReport.Report!.Received==100&&sponsorReport.Report.Used==0&&sponsorReport.Report.Spending.Count==0,"Sponsor report excludes cancelled expenses and retains actual receipts");
+    Check(sponsorReport.Report.Contract.CertificateNumber=="CERT-2026"&&sponsorReport.Report.Contract.CertificateDate==today.AddDays(-10),"Official report uses the saved certificate rather than contract reference");
     sponsorReport=await Db(async db=>(SponsorshipSponsorReport)((Microsoft.AspNetCore.Mvc.ViewResult)await new SponsorshipsController(db).SponsorReport(b)).Model!);
     Check(sponsorReport.Report!.Spending.All(x=>x.Allocation.ContractId==b&&x.CancelledAt==null)&&sponsorReport.Report.Receipts.All(x=>x.ContractId==b&&x.CancelledAt==null),"Sponsor report isolates the selected contract");
     Check(sponsorReport.Report.Used==await Db(db=>db.SponsorshipSpending.Where(x=>x.Allocation.ContractId==b&&x.CancelledAt==null).SumAsync(x=>x.Amount)),"Sponsor report spending total matches the ledger");

@@ -82,6 +82,7 @@ builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<StockReportService>();
 builder.Services.AddScoped<IssueService>();
 builder.Services.AddHostedService<MonthlyBillingWorker>();
+builder.Services.AddHostedService<ParentPushWorker>();
 builder.Services.AddRazorPages();
 builder.Services.AddHealthChecks();
 

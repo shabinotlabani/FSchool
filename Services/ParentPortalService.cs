@@ -6,21 +6,36 @@ namespace _2Korriku.Services;
 
 public class ParentPortalService(ApplicationDbContext db)
 {
-    public async Task<ParentPortalModel?> LoadAsync(string token, DateOnly month, bool finance, Func<decimal, bool>? acknowledged = null, DateOnly? currentDate = null)
+    public async Task<ParentPortalModel?> LoadAsync(string token, DateOnly month, bool finance, Func<decimal, bool>? acknowledged = null, DateOnly? currentDate = null, int? studentId = null)
     {
         if (token.Length != 64 || token.Any(c => !char.IsAsciiHexDigit(c))) return null;
         await using var snapshot = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
-        var student = await db.Students.AsNoTracking().Where(s => s.ParentLinkToken == token)
-            .Select(s => new { s.Id, s.FirstName, s.LastName, s.TrainingTeamId, s.IsActive }).SingleOrDefaultAsync();
+        var access=await new ParentAccessService(db).Resolve(token);
+        if(access==null)return null;
+        var student=studentId.HasValue?access.Students.SingleOrDefault(x=>x.Id==studentId):access.Students.FirstOrDefault(x=>x.IsActive)??access.Students.FirstOrDefault();
         if (student == null) return null;
-        var position = (await new BillingService(db).GetFinancialPositionsAsync(student.Id)).GetValueOrDefault(student.Id);
+        var members=new List<ParentFamilyMember>();
+        foreach(var child in access.Students){
+            var position=(await new BillingService(db).GetFinancialPositionsAsync(child.Id)).GetValueOrDefault(child.Id);
+            members.Add(new(child.Id,child.FullName,position?.Debt??0,position?.Advance??0));
+        }
         var today = currentDate ?? BillingClock.Today;
-        var result = new ParentPortalModel { Debt = position?.Debt ?? 0, Today = today, Month = month, Finance = finance };
+        var result = new ParentPortalModel { Debt = members.Sum(x=>x.Debt), Today = today, Month = month, Finance = finance };
         result.NeedsAcknowledgement = ParentPortalPolicy.NeedsAcknowledgement(result.Debt, acknowledged?.Invoke(result.Debt) ?? false);
         // The gate is enforced before loading any private data, including parking.
         if (result.NeedsAcknowledgement) return result;
+        result.StudentId=student.Id;result.FamilyName=access.Family?.Name;
+        if(access.Family!=null)result.Members=members;
+        result.StudentDebt=members.Single(x=>x.Id==student.Id).Debt;
         result.Name = student.FirstName + " " + student.LastName;
-        result.Advance = position?.Advance ?? 0;
+        if(student.TrainingTeamId.HasValue){
+            var team=await db.TrainingTeams.AsNoTracking().Where(x=>x.Id==student.TrainingTeamId)
+                .Select(x=>new{x.Name,Coach=x.Coach==null?null:x.Coach.FirstName+" "+x.Coach.LastName,Assistant=x.AssistantCoach==null?null:x.AssistantCoach.FirstName+" "+x.AssistantCoach.LastName}).SingleOrDefaultAsync();
+            result.TeamName=team?.Name;
+            result.CoachName=team?.Coach?.Trim();
+            result.AssistantCoachName=team?.Assistant?.Trim();
+        }
+        result.Advance = members.Sum(x=>x.Advance);
         result.Month = month;
         result.Finance = finance;
         if (student.IsActive)

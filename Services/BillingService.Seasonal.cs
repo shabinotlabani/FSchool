@@ -25,7 +25,7 @@ public partial class BillingService
             .GroupBy(t => t.StudentId).Select(g => new { Id = g.Key, Balance = g.Sum(t => t.Debit - t.Credit) }).ToListAsync();
         var seasons = await db.Payments.AsNoTracking().Where(p => !p.IsCancelled && p.SeasonalStartMonth != null && (!studentId.HasValue || p.StudentId == studentId.Value)).ToListAsync();
         var invoices = seasons.Count == 0 ? [] : await GetInvoicesAsync(studentId);
-        var personal = await db.PersonalCharges.Where(c=>!c.IsCancelled && (!studentId.HasValue || c.PersonalTraining!.StudentId==studentId)).GroupBy(c=>c.PersonalTraining!.StudentId).Select(g=>new{Id=g.Key,Due=g.Sum(c=>c.Amount-c.Paid-c.Waived)}).ToDictionaryAsync(x=>x.Id,x=>x.Due);
+        var personal = await db.PersonalCharges.Where(c=>!c.IsCancelled && (!studentId.HasValue || c.PersonalTraining!.StudentId==studentId)).GroupBy(c=>c.PersonalTraining!.StudentId).Select(g=>new{Id=g.Key,Due=g.Sum(c=>Math.Max(0,c.Amount-c.Paid-c.Waived))}).ToDictionaryAsync(x=>x.Id,x=>x.Due);
         var result = balances.ToDictionary(b => b.Id, b => new FinancialPosition(b.Balance, ReservedSeasonalFunds(seasons.Where(p => p.StudentId == b.Id), invoices.Where(i => i.Student.Id == b.Id)), personal.GetValueOrDefault(b.Id)));
         if (snapshot != null) await snapshot.CommitAsync();
         return result;
@@ -84,23 +84,29 @@ public partial class BillingService
         return new(start, input.Months, fee.Amount);
     }
 
-    public Task<int> RegisterSeasonalAsync(SeasonalPaymentModel input, string actorId) => WriteAsync(async () =>
+    public Task<int> RegisterSeasonalAsync(SeasonalPaymentModel input, string actorId) => RegisterSeasonalCore(input,actorId,null);
+    internal Task<int> RegisterSeasonalBankAmountAsync(SeasonalPaymentModel input,string actorId,decimal amount)
+    {
+        if(db.Database.CurrentTransaction==null||input.PaymentMethod!="Bank"||amount<=0||decimal.Round(amount,2)!=amount)throw new InvalidOperationException("Konfirmim bankar i pavlefshëm.");
+        return RegisterSeasonalCore(input,actorId,amount);
+    }
+    private Task<int> RegisterSeasonalCore(SeasonalPaymentModel input, string actorId,decimal? actual) => WriteAsync(async () =>
     {
         // Retries remain valid even when the calendar or tariff has since changed.
         TariffService.TryMonth(input.StartMonth, out var start);
         var duplicate = await db.Payments.AsNoTracking().SingleOrDefaultAsync(p => p.RequestId == input.RequestId);
         if (duplicate != null)
         {
-            if (duplicate.SeasonalStartMonth != start || duplicate.SeasonalMonths != input.Months || duplicate.SeasonalRate != input.ExpectedRate || duplicate.StudentId != input.StudentId || duplicate.CreatedByUserId != actorId || duplicate.PaymentMethod != input.PaymentMethod || BillingClock.LocalDate(duplicate.PaymentDate) != input.PaymentDate || duplicate.Notes != input.Notes?.Trim())
+            if (actual.HasValue&&duplicate.Amount!=actual || duplicate.SeasonalStartMonth != start || duplicate.SeasonalMonths != input.Months || duplicate.SeasonalRate != input.ExpectedRate || duplicate.StudentId != input.StudentId || duplicate.CreatedByUserId != actorId || duplicate.PaymentMethod != input.PaymentMethod || BillingClock.LocalDate(duplicate.PaymentDate) != input.PaymentDate || duplicate.Notes != input.Notes?.Trim())
                 throw new InvalidOperationException("Ky formular është përdorur. Hapni një pagesë të re.");
             return duplicate.Id;
         }
         var quote = await QuoteSeasonalAsync(input);
         if (input.ExpectedRate != quote.Rate) throw new InvalidOperationException("Tarifa ka ndryshuar. Rillogaritni sezonin para arkëtimit.");
-        var payment = new Payment { StudentId = input.StudentId, RequestId = input.RequestId, Amount = quote.Total, SeasonalStartMonth = quote.Start, SeasonalMonths = quote.Months, SeasonalRate = quote.Rate, PaymentDate = BillingClock.UtcDate(input.PaymentDate!.Value), PaymentMethod = input.PaymentMethod, Notes = input.Notes?.Trim(), CreatedByUserId = actorId };
+        var payment = new Payment { StudentId = input.StudentId, RequestId = input.RequestId, Amount = actual??quote.Total, SeasonalStartMonth = quote.Start, SeasonalMonths = quote.Months, SeasonalRate = quote.Rate, PaymentDate = BillingClock.UtcDate(input.PaymentDate!.Value), PaymentMethod = input.PaymentMethod, Notes = input.Notes?.Trim(), CreatedByUserId = actorId };
         db.Payments.Add(payment);
         await db.SaveChangesAsync();
-        var entry = Entry(input.StudentId, input.PaymentDate.Value.Year, input.PaymentDate.Value.Month, "SeasonalPayment", $"Arkëtim sezonal #{payment.Id} · {payment.SeasonalLabel}", 0, quote.Total, "Payment", payment.Id, actorId);
+        var entry = Entry(input.StudentId, input.PaymentDate.Value.Year, input.PaymentDate.Value.Month, "SeasonalPayment", $"Arkëtim sezonal #{payment.Id} · {payment.SeasonalLabel}", 0, payment.Amount, "Payment", payment.Id, actorId);
         entry.TransactionDate = payment.PaymentDate;
         db.StudentTransactions.Add(entry);
         var periods = await db.MonthlyFeePeriods.Where(p => p.StudentId == input.StudentId).ToListAsync();

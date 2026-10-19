@@ -12,6 +12,7 @@ public class Sale
     [StringLength(201)] public string? PlayerName { get; set; }
     [StringLength(200)] public string? ParentName { get; set; }
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    [NotMapped] public decimal Credit => Math.Max(0,AmountPaid-GrandTotal);
     [NotMapped] public decimal Due => Math.Max(0, GrandTotal - AmountPaid);
 
     [Required, StringLength(50)]

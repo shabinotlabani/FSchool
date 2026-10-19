@@ -26,7 +26,7 @@ public partial class FieldService(ApplicationDbContext db)
         var booking = await db.FieldBookings.Include(b => b.Payments).Include(b => b.FootballField).SingleOrDefaultAsync(b => b.Id == input.BookingId)
             ?? throw new InvalidOperationException("Termini nuk u gjet.");
         if (booking.IsCancelled || booking.Revision != input.Revision) throw new InvalidOperationException("Termini ose pagesat kanë ndryshuar. Rihapni formularin.");
-        if (input.Amount > booking.Due) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur të terminit.");
+        if (input.Amount > booking.Due && !await BankVerificationService.IsConfirmedAmount(db,input.RequestId,"Field",input.Amount,actor)) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur të terminit.");
         var payment = new FieldPayment { FieldBookingId = booking.Id, RequestId = input.RequestId, Amount = input.Amount, Method = input.Method, ActorId = actor,
             Description = $"{booking.CustomerName} · {booking.FootballField!.Name} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}–{booking.EndsAt:HH:mm}" };
         db.FieldPayments.Add(payment); booking.Revision = Guid.NewGuid();

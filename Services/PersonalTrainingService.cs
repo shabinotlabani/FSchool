@@ -104,7 +104,7 @@ public class PersonalTrainingService(ApplicationDbContext db)
         if(old!=null){if(old.PersonalChargeId!=m.ChargeId||old.Amount!=m.Amount||old.PaymentMethod!=m.PaymentMethod||old.CreatedByUserId!=actor||old.Notes!=m.Notes?.Trim())throw new InvalidOperationException("Formulari është përdorur.");return old.Id;}
         var c=await db.PersonalCharges.Include(x=>x.PersonalTraining).SingleAsync(x=>x.Id==m.ChargeId);
         await db.Entry(c).ReloadAsync();
-        if(c.IsCancelled||m.Amount>c.Due)throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
+        if(c.IsCancelled||m.Amount>c.Due&&!await BankVerificationService.IsConfirmedAmount(db,m.RequestId,"Personal",m.Amount,actor))throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur.");
         var p=new Payment{PersonalChargeId=c.Id,StudentId=c.PersonalTraining!.StudentId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod=m.PaymentMethod,Notes=m.Notes?.Trim(),CreatedByUserId=actor};
         db.Payments.Add(p);c.Paid+=m.Amount;await db.SaveChangesAsync();
         Entry(c,"Payment",0,p.Amount,"Arkëtim personal #"+p.Id+" · "+c.Description,actor,p.Id);

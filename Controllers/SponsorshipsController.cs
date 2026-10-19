@@ -122,7 +122,7 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
     {
         if(id!=0) {
             var c=await FindContract(id);if(c==null)return NotFound();var plan=await FindPlan(c.PlanId);
-            return View(new SponsorshipContractInput{Id=c.Id,Revision=c.Revision,PlanId=c.PlanId,Plan=plan,Sponsor=c.Sponsor,SponsorNumber=c.SponsorNumber,Reference=c.Reference,From=c.From,To=c.To,Amount=c.Amount,Allocations=plan!.Lines.OrderBy(x=>x.Id).Select(x=>new SponsorshipAllocationInput{PlanLineId=x.Id,Amount=c.Allocations.SingleOrDefault(a=>a.PlanLineId==x.Id)?.Amount??0}).ToList()});
+            return View(new SponsorshipContractInput{Id=c.Id,Revision=c.Revision,PlanId=c.PlanId,Plan=plan,Sponsor=c.Sponsor,SponsorNumber=c.SponsorNumber,Reference=c.Reference,CertificateNumber=c.CertificateNumber,CertificateDate=c.CertificateDate,From=c.From,To=c.To,Amount=c.Amount,Allocations=plan!.Lines.OrderBy(x=>x.Id).Select(x=>new SponsorshipAllocationInput{PlanLineId=x.Id,Amount=c.Allocations.SingleOrDefault(a=>a.PlanLineId==x.Id)?.Amount??0}).ToList()});
         }
         var p=await FindPlan(planId);if(p==null)return NotFound();
         return View(new SponsorshipContractInput{PlanId=p.Id,Plan=p,From=new(p.Year,1,1),To=new(p.Year,12,31),Allocations=p.Lines.OrderBy(x=>x.Id).Select(x=>new SponsorshipAllocationInput{PlanLineId=x.Id}).ToList()});

@@ -85,19 +85,24 @@ public partial class BankVerificationService
     private async Task ConfirmAdditional(PendingBankPayment pending,DateOnly date,string actor)
     {
         switch(pending.Kind){
-            case "Sale":pending.PaymentId=await new IssueService(db).PayAsync(JsonSerializer.Deserialize<IssuePaymentModel>(pending.Payload)!,actor);break;
-            case "Personal":pending.PaymentId=await new PersonalTrainingService(db).PayAsync(JsonSerializer.Deserialize<PersonalPaymentModel>(pending.Payload)!,actor);break;
+            case "Sale":
+                var sale=JsonSerializer.Deserialize<IssuePaymentModel>(pending.Payload)!;sale.Amount=pending.ConfirmedAmount!.Value;
+                pending.PaymentId=await new IssueService(db).PayAsync(sale,actor);break;
+            case "Personal":
+                var personal=JsonSerializer.Deserialize<PersonalPaymentModel>(pending.Payload)!;personal.Amount=pending.ConfirmedAmount!.Value;
+                pending.PaymentId=await new PersonalTrainingService(db).PayAsync(personal,actor);break;
             case "Family":
                 var family=JsonSerializer.Deserialize<FamilyPaymentModel>(pending.Payload)!;family.PaymentDate=date;family.Amount=pending.ConfirmedAmount??pending.Amount;
                 pending.ResultId=await new BillingService(db).RegisterFlexibleFamilyBankPaymentAsync(family,actor);break;
             case "Field":
-                pending.ResultId=await new FieldService(db).PayAsync(JsonSerializer.Deserialize<FieldPaymentModel>(pending.Payload)!,actor);
+                var field=JsonSerializer.Deserialize<FieldPaymentModel>(pending.Payload)!;field.Amount=pending.ConfirmedAmount!.Value;
+                pending.ResultId=await new FieldService(db).PayAsync(field,actor);
                 foreach(var receipt in await db.FieldPayments.Where(x=>x.Id==pending.ResultId||x.BatchId==pending.RequestId).ToListAsync()) receipt.CreatedAt=BillingClock.UtcDate(date);break;
             case "Expense":
-                var expense=JsonSerializer.Deserialize<ExpenseCreateModel>(pending.Payload)!;expense.Date=date;
+                var expense=JsonSerializer.Deserialize<ExpenseCreateModel>(pending.Payload)!;expense.Date=date;expense.Amount=pending.ConfirmedAmount!.Value;
                 pending.ResultId=await new ExpenseService(db).CreateAsync(expense,actor);break;
             case "Opening":case "Withdrawal":
-                var treasury=JsonSerializer.Deserialize<TreasuryCreateModel>(pending.Payload)!;treasury.Date=date;
+                var treasury=JsonSerializer.Deserialize<TreasuryCreateModel>(pending.Payload)!;treasury.Date=date;treasury.Amount=pending.ConfirmedAmount!.Value;
                 pending.ResultId=await new TreasuryService(db).CreateAsync(treasury,actor);break;
             default:throw new InvalidOperationException("Lloji i pagesës nuk njihet.");
         }

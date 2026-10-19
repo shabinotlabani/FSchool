@@ -344,7 +344,56 @@ try
     Check(await bankService.Review(new(){Id=advanceRequest.Id,ReceivedAmount=100},actor.Id,true)==advanceReceipt,"Advance confirmation retry returns the same receipt");
     await Reject(()=>bankService.Review(new(){Id=advanceRequest.Id,ReceivedAmount=200},actor.Id,true),"Changed amount cannot reuse an already confirmed request");
     var flexibleFamily=new FamilyRegistrationModel{FamilyName="Flexible bank family",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Flexible",LastName="One",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Flexible",LastName="Two",DateOfBirth=new(2016,1,1)}]};
+    var bank100=await tariffs.CreateAsync(new(){Name="Bank actual 100",Amount=100},actor.Id);
+    var bankOperator=new ApplicationUser{Id=Guid.NewGuid().ToString(),UserName="bank-operator-test",CanVerifyBank=true};
+    var operatorRole=await db.Roles.SingleOrDefaultAsync(x=>x.Name==Roles.Operator);
+    if(operatorRole==null){operatorRole=new IdentityRole(Roles.Operator){NormalizedName=Roles.Operator.ToUpperInvariant()};db.Roles.Add(operatorRole);}
+    db.Users.Add(bankOperator);await db.SaveChangesAsync();
+    db.UserRoles.Add(new(){UserId=bankOperator.Id,RoleId=operatorRole.Id});await db.SaveChangesAsync();
+    foreach(var actual in new[]{60m,110m}){
+        var player=new Student{FirstName="Actual",LastName="Bank"+actual,DateOfBirth=new(2015,1,1),RegistrationDate=BillingClock.UtcDate(TariffService.CurrentMonth),PreferredPaymentMethod="Bank"};
+        db.Students.Add(player);await db.SaveChangesAsync();
+        db.StudentFeeAssignments.Add(new(){StudentId=player.Id,FeePlanId=bank100,EffectiveMonth=TariffService.CurrentMonth});await db.SaveChangesAsync();
+        await billing.GenerateStudentMonthAsync(player.Id,BillingClock.Today.Year,BillingClock.Today.Month,actor.Id);
+        var pendingActual=await db.PendingBankPayments.SingleAsync(x=>x.StudentId==player.Id&&x.ReviewedAt==null);
+        Check(pendingActual.Amount==100,"Actual bank test starts with 100 due");
+        var actualReceipt=await bankService.Review(new(){Id=pendingActual.Id,ExpectedAmount=100,ReceivedAmount=actual},bankOperator.Id,true);
+        var actualAccount=(await billing.GetAccountAsync(player.Id))!;
+        Check(actualAccount.MonthlyBalance==100-actual&&actualAccount.MonthlyDue==Math.Max(0,100-actual),"Authorized operator records "+actual+" against 100 with correct remaining balance or credit");
+        Check((await db.Payments.SingleAsync(x=>x.Id==actualReceipt)).Amount==actual&&pendingActual.ConfirmedAmount==actual,"Receipt and bank confirmation preserve actual received amount");
+    }
     var flexibleId=await new StudentWorkflowService(db).RegisterFamilyAsync(flexibleFamily,actor.Id);
+    var receiptField=new FootballField{Name="Bank actual field"};
+    var receiptTariff=new PersonalTariff{Name="Bank actual training",Amount=100};
+    db.AddRange(receiptField,receiptTariff);await db.SaveChangesAsync();
+    foreach(var actual in new[]{60m,110m}){
+        var sale=new Sale{StudentId=advancePlayer.Id,RequestId=Guid.NewGuid(),InvoiceNumber="ACTUAL-"+actual,GrandTotal=100,Total=100};
+        var training=new PersonalTraining{StudentId=advancePlayer.Id,PersonalTariffId=receiptTariff.Id,Name="Actual bank training",RequestId=Guid.NewGuid(),StartsOn=BillingClock.Today};
+        var booking=new FieldBooking{FootballFieldId=receiptField.Id,CustomerName="Actual bank customer",RequestId=Guid.NewGuid(),Price=100,Date=BillingClock.Today,StartsAt=new(10,0),EndsAt=new(11,0)};
+        db.AddRange(sale,training,booking);await db.SaveChangesAsync();
+        var charge=new PersonalCharge{PersonalTrainingId=training.Id,Amount=100,Period=BillingClock.Today};db.Add(charge);await db.SaveChangesAsync();
+        var saleId=await bankService.QueueSale(new(){SaleId=sale.Id,Amount=100},actor.Id);
+        var personalId=await bankService.QueuePersonal(new(){ChargeId=charge.Id,Amount=100},actor.Id);
+        var fieldId=await bankService.QueueField(new(){BookingId=booking.Id,Revision=booking.Revision,Amount=100,Method="Bank"},actor.Id);
+        foreach(var pendingId in new[]{saleId,personalId,fieldId}){
+            var result=await bankService.Review(new(){Id=pendingId,ReceivedAmount=actual},bankOperator.Id,true);
+            Check(await bankService.Review(new(){Id=pendingId,ReceivedAmount=actual},bankOperator.Id,true)==result,"Actual bank receipt retry does not duplicate payment");
+            var confirmed=await db.PendingBankPayments.SingleAsync(x=>x.Id==pendingId);
+            var recorded=confirmed.Kind=="Field"?(await db.FieldPayments.SingleAsync(x=>x.Id==result)).Amount:(await db.Payments.SingleAsync(x=>x.Id==result)).Amount;
+            Check(recorded==actual&&confirmed.ConfirmedAmount==actual,"Actual bank amount is posted for "+confirmed.Kind);
+        }
+        await db.Entry(sale).ReloadAsync();await db.Entry(charge).ReloadAsync();await db.Entry(booking).Collection(x=>x.Payments).LoadAsync();
+        Check(sale.Due==Math.Max(0,100-actual)&&sale.Credit==Math.Max(0,actual-100),"Equipment partial payment and credit are correct");
+        Check(charge.Due==Math.Max(0,100-actual)&&charge.Credit==Math.Max(0,actual-100),"Personal training partial payment and credit are correct");
+        Check(booking.Due==Math.Max(0,100-actual)&&booking.Credit==Math.Max(0,actual-100),"Field partial payment and credit are correct");
+        var seriesId=Guid.NewGuid();
+        var seriesBookings=Enumerable.Range(1,2).Select(day=>new FieldBooking{SeriesId=seriesId,FootballFieldId=receiptField.Id,CustomerName="Bank series",RequestId=Guid.NewGuid(),Price=50,Date=BillingClock.Today.AddDays(day),StartsAt=new(12,0),EndsAt=new(13,0)}).ToList();
+        db.FieldBookings.AddRange(seriesBookings);await db.SaveChangesAsync();
+        var seriesPending=await bankService.QueueField(new(){BookingId=seriesBookings[0].Id,WholeSeries=true,ExpectedState=FieldService.SeriesState(seriesBookings),Amount=100,Method="Bank"},actor.Id);
+        await bankService.Review(new(){Id=seriesPending,ReceivedAmount=actual},bankOperator.Id,true);
+        foreach(var booked in seriesBookings)await db.Entry(booked).Collection(x=>x.Payments).LoadAsync();
+        Check(seriesBookings.Sum(x=>x.Paid)==actual&&seriesBookings.Sum(x=>x.Due)==Math.Max(0,100-actual)&&seriesBookings.Sum(x=>x.Credit)==Math.Max(0,actual-100),"Series allocates actual received amount exactly once and preserves remainder or credit");
+    }
     var flexibleRequest=await db.PendingBankPayments.SingleAsync(x=>x.Kind=="Family"&&x.TargetId==flexibleId&&x.ReviewedAt==null);
     var proposedFamily=flexibleRequest.Amount;
     var partialReceipt=await bankService.Review(new(){Id=flexibleRequest.Id,ExpectedAmount=proposedFamily,ReceivedAmount=1.01m},actor.Id,true);
@@ -355,6 +404,55 @@ try
     var prepaidFamily=(await billing.GetFamilyAccountAsync(flexibleId))!;
     Check(prepaidFamily.Due==0&&prepaidFamily.Members.Sum(x=>x.MonthlyBalance)==-100&&prepaidFamily.Members.All(x=>x.MonthlyBalance<0),"Family overpayment covers debts and allocates advance to every member");
     Check(await db.Payments.Where(x=>x.FamilyPaymentId==familyAdvanceReceipt).SumAsync(x=>x.Amount)==remainderRequest.ConfirmedAmount,"Family allocations equal the confirmed bank receipt amount");
+    foreach(var actual in new[]{60m,130m,180m}){
+        var client=new Student{FirstName="Unified",LastName="Bank"+actual,DateOfBirth=new(2015,1,1),RegistrationDate=BillingClock.UtcDate(TariffService.CurrentMonth),PreferredPaymentMethod="Bank"};
+        db.Students.Add(client);await db.SaveChangesAsync();
+        db.StudentFeeAssignments.Add(new(){StudentId=client.Id,FeePlanId=bank100,EffectiveMonth=TariffService.CurrentMonth});await db.SaveChangesAsync();
+        await billing.GenerateStudentMonthAsync(client.Id,BillingClock.Today.Year,BillingClock.Today.Month,actor.Id);
+        var goods=new Sale{StudentId=client.Id,RequestId=Guid.NewGuid(),InvoiceNumber="UNIFIED-"+actual,GrandTotal=40,Total=40};
+        var training=new PersonalTraining{StudentId=client.Id,PersonalTariffId=receiptTariff.Id,Name="Unified training",RequestId=Guid.NewGuid(),StartsOn=BillingClock.Today};
+        db.AddRange(goods,training);await db.SaveChangesAsync();
+        var trainingCharge=new PersonalCharge{PersonalTrainingId=training.Id,Amount=20,Period=BillingClock.Today};db.Add(trainingCharge);await db.SaveChangesAsync();
+        var queued=await bankService.QueueSale(new(){SaleId=goods.Id,Amount=40},actor.Id);
+        var request=await db.PendingBankPayments.SingleAsync(x=>x.Id==queued);
+        var proposal=await bankService.ClientBalance(request);
+        Check(proposal.Total==160&&proposal.Monthly==100&&proposal.Equipment==40&&proposal.Personal==20,"Proposal includes all client obligations regardless of request type");
+        await Reject(()=>bankService.Review(new(){Id=queued,ReceivedAmount=actual,AllocateAll=true,ExpectedClientState="stale"},bankOperator.Id,true),"Changed client obligations require a refreshed proposal");
+        var confirmation=new BankReviewModel{Id=queued,ReceivedAmount=actual,AllocateAll=true,ExpectedClientState=proposal.State};
+        var unifiedReceiptId=await bankService.Review(confirmation,bankOperator.Id,true);
+        Check(await bankService.Review(confirmation,bankOperator.Id,true)==unifiedReceiptId,"Unified receipt retries are idempotent");
+        var parts=await db.BankPaymentAllocations.Include(x=>x.Payment).Where(x=>x.BankPaymentId==queued).ToListAsync();
+        Check(parts.Sum(x=>x.Amount)==actual&&parts.All(x=>x.Payment.StudentId==client.Id&&x.Payment.Amount==x.Amount),"Every received cent is recorded once and linked to the correct client");
+        await db.Entry(goods).ReloadAsync();await db.Entry(trainingCharge).ReloadAsync();
+        var after=(await billing.GetAccountAsync(client.Id))!;
+        Check(after.MonthlyDue==Math.Max(0,100-actual)&&goods.AmountPaid==Math.Min(40,Math.Max(0,actual-100))&&trainingCharge.Paid==Math.Min(20,Math.Max(0,actual-140)),"Bank receipt settles monthly, equipment and personal debts in order");
+        if(actual>160)Check(after.MonthlyBalance==-(actual-160),"Excess becomes usable monthly advance rather than equipment overpayment");
+        Check((await bankService.ClientBalance(request)).Total==Math.Max(0,160-actual),"Updated proposal shows the remaining total only");
+    }
+    var unifiedFamilyId=await new StudentWorkflowService(db).RegisterFamilyAsync(new(){FamilyName="Unified family",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Unified",LastName="Sibling1",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Unified",LastName="Sibling2",DateOfBirth=new(2016,1,1)}]},actor.Id);
+    var unifiedFamily=(await billing.GetFamilyAccountAsync(unifiedFamilyId))!;
+    var familyGoods=new Sale{StudentId=unifiedFamily.Members[0].Student.Id,RequestId=Guid.NewGuid(),InvoiceNumber="UNIFIED-FAMILY",GrandTotal=50,Total=50};db.Add(familyGoods);await db.SaveChangesAsync();
+    var familyGoodsRequestId=await bankService.QueueSale(new(){SaleId=familyGoods.Id,Amount=50},actor.Id);
+    var familyGoodsRequest=await db.PendingBankPayments.SingleAsync(x=>x.Id==familyGoodsRequestId);
+    var familyProposal=await bankService.ClientBalance(familyGoodsRequest);
+    Check(familyProposal.FamilyId==unifiedFamilyId&&familyProposal.Total==unifiedFamily.Due+50,"A sibling equipment request proposes the full shared family obligations");
+    await bankService.Review(new(){Id=familyGoodsRequestId,ReceivedAmount=unifiedFamily.Due+30,AllocateAll=true,ExpectedClientState=familyProposal.State},bankOperator.Id,true);
+    await db.Entry(familyGoods).ReloadAsync();
+    Check((await billing.GetFamilyAccountAsync(unifiedFamilyId))!.Due==0&&familyGoods.Due==20,"Unified family bank payment settles shared monthly debt before equipment");
+    Check(await db.BankPaymentAllocations.Where(x=>x.BankPaymentId==familyGoodsRequestId).SumAsync(x=>x.Amount)==unifiedFamily.Due+30,"Family receipt records each allocated amount once");
+    foreach(var actual in new[]{60m,300m}){
+        var seasonalClient=new Student{FirstName="UnifiedSeason",LastName="Bank"+actual,DateOfBirth=new(2015,1,1),RegistrationDate=BillingClock.UtcDate(TariffService.CurrentMonth),PreferredPaymentMethod="Bank"};
+        db.Students.Add(seasonalClient);await db.SaveChangesAsync();
+        db.StudentFeeAssignments.Add(new(){StudentId=seasonalClient.Id,FeePlanId=customIndividual,EffectiveMonth=TariffService.CurrentMonth});await db.SaveChangesAsync();
+        await billing.GenerateStudentMonthAsync(seasonalClient.Id,BillingClock.Today.Year,BillingClock.Today.Month,actor.Id);
+        var seasonalRequestId=await bankService.QueueSeasonal(new(){StudentId=seasonalClient.Id,ExpectedRate=50,PaymentMethod="Bank"},actor.Id);
+        var seasonalRequest=await db.PendingBankPayments.SingleAsync(x=>x.Id==seasonalRequestId);
+        var seasonalProposal=await bankService.ClientBalance(seasonalRequest);
+        Check(seasonalProposal.Total==250,"Season proposal excludes overlapping monthly charges from the combined total");
+        await bankService.Review(new(){Id=seasonalRequestId,ReceivedAmount=actual,AllocateAll=true,ExpectedClientState=seasonalProposal.State},bankOperator.Id,true);
+        Check(await db.BankPaymentAllocations.Where(x=>x.BankPaymentId==seasonalRequestId).SumAsync(x=>x.Amount)==actual,"Season confirmation records actual funds, including partial payment or advance");
+        Check(await db.Payments.Where(x=>x.StudentId==seasonalClient.Id&&x.SeasonalStartMonth!=null).SumAsync(x=>x.Amount)==Math.Min(250,actual),"Season receives only its allocated portion of the bank transfer");
+    }
     StudentsController RegistrationController(){
         var c=new StudentsController(db,new FinancialService(db));
         c.ControllerContext=new(){HttpContext=paymentHttp};

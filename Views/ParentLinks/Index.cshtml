@@ -1,16 +1,23 @@
-@model Student
-@{ViewData["Title"]="Linku i prindit";}
+@model ParentLinkView
+@{ViewData["Title"]=Model.Family==null?"Linku i prindit":"Linku i familjes";}
 <section class="panel p-4" style="max-width:640px">
-<h1 class="h4">@Model.FullName</h1>
-@if(Model.ParentLinkToken != null){
-    var link=Url.Action("Index","ParentPortal",new{token=Model.ParentLinkToken},Context.Request.Scheme);
+<h1 class="h4">@Model.Name</h1>@if(Model.Family!=null){<p class="small text-secondary">Link i përbashkët për familjen · @string.Join(", ",Model.Members.Select(x=>x.FullName))</p>}
+@if(Model.Token != null){
+    var link=Url.Action("Index","ParentPortal",new{token=Model.Token},Context.Request.Scheme);
     <label for="parent-link" class="form-label">Linku privat</label>
     <input id="parent-link" class="form-control mb-3" value="@link" readonly onclick="this.select()"/>
-    <div class="d-flex gap-2 mb-3"><button type="button" class="btn btn-primary" id="copy-parent-link">Kopjo linkun</button><a href="@link" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Hap</a></div>
+    <div class="d-flex flex-wrap gap-2 mb-3"><button type="button" class="btn btn-primary" id="copy-parent-link">Kopjo linkun</button><a href="@link" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Hap</a></div>
+    <div class="d-flex align-items-center flex-wrap gap-3 py-3 mb-3 border-top border-bottom">
+        <img src="@Url.Action("Qr",new{id=Model.Student.Id})" alt="QR kodi për portalin e prindit të @Model.Name" width="180" height="180" style="max-width:100%;height:auto"/>
+        <div><h2 class="h6">@(Model.Family==null?"QR kodi i prindit":"QR kodi i familjes")</h2><div class="d-flex flex-wrap gap-2">
+            <a asp-action="Qr" asp-route-id="@Model.Student.Id" asp-route-download="true" class="btn btn-outline-primary" download="2Korriku-Prindi-@(Model.Student.Id).png">Ruaj foton</a>
+            <button type="button" class="btn btn-outline-secondary" id="share-parent-qr" data-url="@Url.Action("Qr",new{id=Model.Student.Id})" data-filename="2Korriku-Prindi-@(Model.Student.Id).png" hidden>Ndaje foton</button>
+        </div><p id="parent-qr-status" class="small text-secondary mt-2 mb-0" role="status"></p></div>
+    </div>
 }
-<div class="d-flex gap-2">
-<form asp-action="Save" method="post"><input name="id" value="@Model.Id" type="hidden"/><button class="btn btn-outline-secondary">@(Model.ParentLinkToken==null?"Krijo linkun":"Rikrijo linkun")</button></form>
-@if(Model.ParentLinkToken!=null){<form asp-action="Save" method="post"><input name="id" value="@Model.Id" type="hidden"/><input name="revoke" value="true" type="hidden"/><button class="btn btn-outline-danger">Çaktivizo linkun</button></form>}
+<div class="d-flex flex-wrap gap-2">
+<form asp-action="Save" method="post"><input name="id" value="@Model.Student.Id" type="hidden"/><button class="btn btn-outline-secondary">@(Model.Token==null?(Model.Family==null?"Krijo linkun":"Krijo linkun e familjes"):"Rikrijo linkun")</button></form>
+@if(Model.Token!=null){<form asp-action="Save" method="post"><input name="id" value="@Model.Student.Id" type="hidden"/><input name="revoke" value="true" type="hidden"/><button class="btn btn-outline-danger">Çaktivizo linkun</button></form>}
 </div></section>
-@section PageNavigation{<a asp-controller="Payments" asp-action="Account" asp-route-id="@Model.Id" class="btn btn-outline-secondary app-back-button">← Mbrapa</a>}
+@section PageNavigation{<a asp-controller="Payments" asp-action="Account" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary app-back-button">← Mbrapa</a>}
 @section Scripts{<script src="~/js/parent-link.js" asp-append-version="true"></script>}

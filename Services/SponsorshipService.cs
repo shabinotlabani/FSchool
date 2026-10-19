@@ -79,7 +79,7 @@ public class SponsorshipService(ApplicationDbContext db)
             ??throw new ValidationException("Zgjidhni buxhetin e kategorisë së faturës.");
         // Spend revalidates the selected budget under the global financial lock.
         await Spend(new(){RequestId=m.RequestId,ContractId=allocation.ContractId,AllocationId=allocation.Id,BeneficiaryId=m.BeneficiaryId,
-            Date=m.Date,SalaryMonth=m.SalaryMonth,SalaryRole=m.SalaryRole,Amount=m.Amount,Description=m.Description,DocumentReference=m.DocumentReference,BankReference=m.BankReference},actor);
+            Date=m.Date,InvoiceDate=m.InvoiceDate,SalaryMonth=m.SalaryMonth,SalaryRole=m.SalaryRole,Amount=m.Amount,Description=m.Description,DocumentReference=m.DocumentReference,BankReference=m.BankReference},actor);
         return await db.SponsorshipSpending.Where(x=>x.RequestId==m.RequestId).Select(x=>x.Id).SingleAsync();
     }
 
@@ -135,7 +135,7 @@ public class SponsorshipService(ApplicationDbContext db)
             if((receipts.Count>0||spending.Count>0)&&c.SponsorNumber!=sponsor)throw new ValidationException("Sponsori i një kontrate me veprime financiare nuk ndryshohet.");
             if(receipts.Where(x=>x.CancelledAt==null).Sum(x=>x.Amount)>m.Amount)throw new ValidationException("Kontrata nuk mund të ulet nën shumën e pranuar.");
             if(receipts.Any(x=>x.Date<m.From||x.Date>m.To)||spending.Any(x=>x.Date<m.From||x.Date>m.To||x.SalaryMonth.HasValue&&(x.SalaryMonth.Value>m.To||x.SalaryMonth.Value.AddMonths(1).AddDays(-1)<m.From)))throw new ValidationException("Periudha e re përjashton veprime të regjistruara.");
-            before=new{c.Sponsor,c.SponsorNumber,c.Reference,c.From,c.To,c.Amount,Allocations=c.Allocations.Select(x=>new{x.PlanLineId,x.Amount}).ToArray()};
+            before=new{c.Sponsor,c.SponsorNumber,c.Reference,c.CertificateNumber,c.CertificateDate,c.From,c.To,c.Amount,Allocations=c.Allocations.Select(x=>new{x.PlanLineId,x.Amount}).ToArray()};
             foreach(var a in c.Allocations.ToList()) {
                 var input=allocations.SingleOrDefault(x=>x.PlanLineId==a.PlanLineId);
                 if(input==null){if(spending.Any(x=>x.AllocationId==a.Id))throw new ValidationException("Kategoria me pagesa të regjistruara nuk mund të hiqet.");db.SponsorshipAllocations.Remove(a);continue;}
@@ -144,8 +144,8 @@ public class SponsorshipService(ApplicationDbContext db)
             }
         }
         foreach(var a in allocations.Where(x=>!c.Allocations.Any(v=>v.PlanLineId==x.PlanLineId)))c.Allocations.Add(new(){PlanLineId=a.PlanLineId,Amount=a.Amount});
-        c.Sponsor=m.Sponsor.Trim();c.SponsorNumber=sponsor;c.Reference=reference;c.From=m.From;c.To=m.To;c.Amount=m.Amount;c.Revision=Guid.NewGuid();
-        if(m.Id==0)db.SponsorshipContracts.Add(c);await db.SaveChangesAsync();Audit(actor,"Contract",c.Id,m.Id==0?"Regjistrim kontrate":m.Reason!.Trim(),before,new{m.PlanId,m.Sponsor,m.SponsorNumber,m.Reference,m.From,m.To,m.Amount,m.Allocations});return c.Id;
+        c.CertificateNumber=string.IsNullOrWhiteSpace(m.CertificateNumber)?null:m.CertificateNumber.Trim();c.CertificateDate=m.CertificateDate;c.Sponsor=m.Sponsor.Trim();c.SponsorNumber=sponsor;c.Reference=reference;c.From=m.From;c.To=m.To;c.Amount=m.Amount;c.Revision=Guid.NewGuid();
+        if(m.Id==0)db.SponsorshipContracts.Add(c);await db.SaveChangesAsync();Audit(actor,"Contract",c.Id,m.Id==0?"Regjistrim kontrate":m.Reason!.Trim(),before,new{m.PlanId,m.Sponsor,m.SponsorNumber,m.Reference,m.CertificateNumber,m.CertificateDate,m.From,m.To,m.Amount,m.Allocations});return c.Id;
     });
     public Task<int> CreateBeneficiary(SponsorshipBeneficiaryInput m,string actor) => Write(actor,async()=>{
         Validate(m);var identifier=Key(m.Identifier);
@@ -169,7 +169,9 @@ public class SponsorshipService(ApplicationDbContext db)
     });
     public Task<int> Spend(SponsorshipSpendInput m,string actor) => Write(actor,async()=>{
         Validate(m);Money(m.Amount);if(m.RequestId==Guid.Empty)throw new ValidationException("Rihapni formularin.");
-        var hash=Hash(new{m.ContractId,m.AllocationId,m.BeneficiaryId,m.Date,m.SalaryMonth,m.SalaryRole,m.Amount,Description=m.Description.Trim(),DocumentReference=Key(m.DocumentReference),BankReference=Key(m.BankReference)});
+        var hash=m.InvoiceDate.HasValue
+            ?Hash(new{m.ContractId,m.AllocationId,m.BeneficiaryId,m.Date,m.InvoiceDate,m.SalaryMonth,m.SalaryRole,m.Amount,Description=m.Description.Trim(),DocumentReference=Key(m.DocumentReference),BankReference=Key(m.BankReference)})
+            :Hash(new{m.ContractId,m.AllocationId,m.BeneficiaryId,m.Date,m.SalaryMonth,m.SalaryRole,m.Amount,Description=m.Description.Trim(),DocumentReference=Key(m.DocumentReference),BankReference=Key(m.BankReference)});
         var existing=await db.SponsorshipSpending.AsNoTracking().Include(x=>x.Allocation).SingleOrDefaultAsync(x=>x.RequestId==m.RequestId);
         if(existing!=null) { if(existing.PayloadHash!=hash)throw new ValidationException("Ky formular është përdorur. Rihapeni.");return existing.Allocation.ContractId; }
         var a=await db.SponsorshipAllocations.Include(x=>x.Contract).Include(x=>x.PlanLine).SingleOrDefaultAsync(x=>x.Id==m.AllocationId&&x.ContractId==m.ContractId)??throw new ValidationException("Kategoria nuk lejohet nga kjo kontratë.");
@@ -191,10 +193,10 @@ public class SponsorshipService(ApplicationDbContext db)
             throw new ValidationException("Kjo pagesë bankare është regjistruar më parë.");
         if(await db.SponsorshipSpending.Where(x=>x.AllocationId==a.Id&&x.CancelledAt==null).SumAsync(x=>x.Amount)+m.Amount>a.Amount) throw new ValidationException("Shpenzimi tejkalon buxhetin e kësaj kategorie në kontratë.");
         if(await db.SponsorshipSpending.Where(x=>x.Allocation.PlanLineId==a.PlanLineId&&x.CancelledAt==null).SumAsync(x=>x.Amount)+m.Amount>a.PlanLine.Budget) throw new ValidationException("Shpenzimi tejkalon planin vjetor të kategorisë.");
-        var r=new SponsorshipSpend{RequestId=m.RequestId,PayloadHash=hash,AllocationId=a.Id,BeneficiaryId=m.BeneficiaryId,Date=m.Date,SalaryMonth=month,SalaryRole=month.HasValue?m.SalaryRole:null,Amount=m.Amount,Description=m.Description.Trim(),DocumentReference=document,BankReference=bank};
+        var r=new SponsorshipSpend{RequestId=m.RequestId,PayloadHash=hash,AllocationId=a.Id,BeneficiaryId=m.BeneficiaryId,Date=m.Date,InvoiceDate=m.InvoiceDate,SalaryMonth=month,SalaryRole=month.HasValue?m.SalaryRole:null,Amount=m.Amount,Description=m.Description.Trim(),DocumentReference=document,BankReference=bank};
         db.SponsorshipSpending.Add(r);await db.SaveChangesAsync();
         await CheckFunds(a.ContractId);
-        Audit(actor,"Spend",r.Id,"Pagesë bankare",null,new{m.ContractId,r.AllocationId,r.BeneficiaryId,r.Date,r.SalaryMonth,r.SalaryRole,r.Amount,r.Description,r.DocumentReference,r.BankReference});return a.ContractId;
+        Audit(actor,"Spend",r.Id,"Pagesë bankare",null,new{m.ContractId,r.AllocationId,r.BeneficiaryId,r.Date,r.InvoiceDate,r.SalaryMonth,r.SalaryRole,r.Amount,r.Description,r.DocumentReference,r.BankReference});return a.ContractId;
     });
     // Check every daily closing balance, including backdated entries and reversals.
     private async Task CheckFunds(int contractId)

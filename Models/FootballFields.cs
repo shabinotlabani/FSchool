@@ -22,7 +22,8 @@ public class FieldBooking
     [Column(TypeName = "numeric(18,2)")] public decimal Price { get; set; }
     public ICollection<FieldPayment> Payments { get; set; } = new List<FieldPayment>();
     [NotMapped] public decimal Paid => Payments.Where(p => p.CancelledAt == null).Sum(p => p.Amount);
-    [NotMapped] public decimal Due => IsCancelled ? 0 : Price - Paid;
+    [NotMapped] public decimal Credit => IsCancelled?0:Math.Max(0,Paid-Price);
+    [NotMapped] public decimal Due => IsCancelled ? 0 : Math.Max(0,Price - Paid);
     public int Id { get; set; }
     public Guid RequestId { get; set; }
     public int FootballFieldId { get; set; }

@@ -1,0 +1,20 @@
+@model ParentNotificationsView
+@{ViewData["Title"]="Njoftimet për prindërit";}
+<div class="page-heading"><h1>Njoftimet për prindërit</h1><span>@Model.Devices pajisje aktive</span></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success" role="status">@message</div>}
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+@if(!Model.Configured){
+<form asp-action="Configure" method="post" class="panel p-4"><label for="push-subject" class="form-label">Adresa publike e platformës</label><div class="d-flex gap-2 flex-wrap"><input name="subject" id="push-subject" type="url" placeholder="https://..." required maxlength="300" class="form-control" style="max-width:500px"/><button class="btn btn-primary">Aktivizo njoftimet</button></div></form>
+}else{
+<form asp-action="Send" method="post" class="panel p-4 mb-4" id="parent-notification-form"><input asp-for="Input.RequestId" type="hidden"/>
+<div class="row g-3"><div class="col-md-6"><label asp-for="Input.TeamId" class="form-label">Ekipi</label><select asp-for="Input.TeamId" class="form-select"><option value="">Të gjitha ekipet</option>@foreach(var team in Model.Teams){<option value="@team.Id">@team.Name</option>}</select></div>
+<div class="col-md-6"><label asp-for="Input.StudentId" class="form-label">Lojtari</label><select asp-for="Input.StudentId" class="form-select"><option value="">Të gjithë lojtarët</option>@foreach(var student in Model.Students){<option value="@student.Id">@student.FirstName @student.LastName</option>}</select></div>
+<div class="col-12"><label asp-for="Input.Title" class="form-label">Titulli</label><input asp-for="Input.Title" class="form-control" required maxlength="80"/></div>
+<div class="col-12"><label asp-for="Input.Body" class="form-label">Njoftimi</label><textarea asp-for="Input.Body" class="form-control" required maxlength="400" rows="3"></textarea></div></div>
+<div class="d-flex justify-content-end mt-3"><button class="btn btn-primary">Dërgo njoftimin</button></div></form>
+}
+<h2>Historiku</h2><div class="panel table-responsive"><table class="table"><thead><tr><th>Data</th><th>Për</th><th>Njoftimi</th><th>Pranuar nga shërbimi</th><th>Në pritje</th><th>Pa dërguar</th></tr></thead><tbody>
+@foreach(var row in Model.Messages){<tr><td>@_2Korriku.Services.BillingClock.LocalDate(row.CreatedAt).ToString("dd.MM.yyyy HH:mm")</td><td>@row.Audience</td><td><strong>@row.Title</strong><small class="d-block">@row.Body</small></td><td>@row.Deliveries.Count(x=>x.SentAt!=null)</td><td>@row.Deliveries.Count(x=>x.SentAt==null&&!x.Failed)</td><td>@row.Deliveries.Count(x=>x.Failed)</td></tr>}
+@if(Model.Messages.Count==0){<tr><td colspan="6">Nuk ka njoftime të dërguara.</td></tr>}
+</tbody></table></div>
+@section Scripts{<script src="~/js/parent-notifications-admin.js" asp-append-version="true"></script>}

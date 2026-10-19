@@ -34,11 +34,34 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
         try { return WarningProtector.Unprotect(cookie) == WarningValue(token, debt); }
         catch (CryptographicException) { return false; }
     }
-    private Task<_2Korriku.Models.ParentPortalModel?> Load(string token, DateOnly month, bool finance = false)
-        => new ParentPortalService(db).LoadAsync(token, month, finance, debt => HasReadWarning(token, debt));
+    private Task<_2Korriku.Models.ParentPortalModel?> Load(string token, DateOnly month, bool finance = false, int? studentId = null)
+        => new ParentPortalService(db).LoadAsync(token, month, finance, debt => HasReadWarning(token, debt),studentId:studentId);
+
+    [HttpPost("p/{token}/notifications/{actionName}"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> Notifications(string token,string actionName,_2Korriku.Models.ParentPushInput input)
+    {
+        var model=await Load(token,TariffService.CurrentMonth);
+        if(model==null)return NotFound();
+        if(model.NeedsAcknowledgement)return StatusCode(403);
+        var access=await new ParentAccessService(db).Resolve(token);
+        var ids=access?.Students.Where(x=>x.IsActive||actionName=="disable").Select(x=>x.Id).ToList()??[];
+        if(ids.Count==0)return NotFound();
+        var settings=await db.ParentPushSettings.AsNoTracking().SingleOrDefaultAsync();
+        if(actionName=="status"){
+            var hash=ParentPushService.Hash(input.Endpoint??"");var tokenHash=ParentPushService.Hash(token);
+            return Json(new{publicKey=settings?.PublicKey,enabled=await db.ParentPushSubscriptions.CountAsync(x=>ids.Contains(x.StudentId)&&x.EndpointHash==hash&&x.TokenHash==tokenHash&&x.Enabled)==ids.Count});
+        }
+        if(actionName is not ("enable" or "disable")||!ModelState.IsValid)return BadRequest();
+        try{
+            await using var tx=await db.Database.BeginTransactionAsync();
+            foreach(var id in ids)await new ParentPushService(db).Save(id,token,input,actionName=="enable");
+            await tx.CommitAsync();return Json(new{enabled=actionName=="enable"});
+        }
+        catch(System.ComponentModel.DataAnnotations.ValidationException e){return BadRequest(new{message=e.Message});}
+    }
 
     [HttpPost("p/{token}/acknowledge"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> Acknowledge(string token, string? month, bool finance = false)
+    public async Task<IActionResult> Acknowledge(string token, string? month, bool finance = false, int? studentId = null)
     {
         var model = await new ParentPortalService(db).LoadAsync(token, TariffService.CurrentMonth, false);
         if (model == null) return NotFound();
@@ -47,34 +70,34 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
                 HttpOnly = true, Secure = Request.IsHttps, SameSite = SameSiteMode.Lax,
                 Path = Request.PathBase + "/p/" + token, IsEssential = true
             });
-        return RedirectToAction(nameof(Index), new { token, month, finance, continueVisit = true });
+        return RedirectToAction(nameof(Index), new { token, month, finance, studentId, continueVisit = true });
     }
 
     [HttpPost("p/{token}/parking"), ValidateAntiForgeryToken]
-    public async Task<IActionResult> GenerateParking(string token)
+    public async Task<IActionResult> GenerateParking(string token, int? studentId = null)
     {
-        var model = await Load(token, TariffService.CurrentMonth);
+        var model = await Load(token, TariffService.CurrentMonth,studentId:studentId);
         if (model == null) return NotFound();
         if (model.NeedsAcknowledgement) return RedirectToAction(nameof(Index), new { token });
         if (model.ParkingTicketId == null) return BadRequest("Bileta e parkimit lejohet vetëm në ditën e stërvitjes.");
-        return RedirectToAction(nameof(Parking), new { token, date = model.Today.ToString("yyyy-MM-dd") });
+        return RedirectToAction(nameof(Parking), new { token, studentId=model.StudentId, date = model.Today.ToString("yyyy-MM-dd") });
     }
 
     [HttpGet("p/{token}/parking/{date}")]
-    public async Task<IActionResult> Parking(string token, string date)
+    public async Task<IActionResult> Parking(string token, string date, int? studentId = null)
     {
         if (date != BillingClock.Today.ToString("yyyy-MM-dd")) return NotFound();
-        var model = await Load(token, TariffService.CurrentMonth);
+        var model = await Load(token, TariffService.CurrentMonth,studentId:studentId);
         if (model == null) return NotFound();
         if (model.NeedsAcknowledgement) return RedirectToAction(nameof(Index), new { token });
         return model.ParkingTicketId == null ? NotFound() : View(model);
     }
 
     [HttpGet("p/{token}/parking/{date}/qr.png")]
-    public async Task<IActionResult> ParkingQr(string token, string date)
+    public async Task<IActionResult> ParkingQr(string token, string date, int? studentId = null)
     {
         if (date != BillingClock.Today.ToString("yyyy-MM-dd")) return NotFound();
-        var model = await Load(token, TariffService.CurrentMonth);
+        var model = await Load(token, TariffService.CurrentMonth,studentId:studentId);
         if (model == null) return NotFound();
         if (model.NeedsAcknowledgement) return StatusCode(403);
         if (model.ParkingTicketId == null) return NotFound();
@@ -88,8 +111,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     {
         Response.Headers["Referrer-Policy"] = "no-referrer";
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
-        if (token.Length != 64 || token.Any(c => !char.IsAsciiHexDigit(c))
-            || !await db.Students.AsNoTracking().AnyAsync(s => s.ParentLinkToken == token)) return NotFound();
+        if (await new ParentAccessService(db).Resolve(token)==null) return NotFound();
         var root = Request.PathBase.ToString();
         var link = root + "/p/" + token;
         return Content(JsonSerializer.Serialize(new
@@ -113,7 +135,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     }
 
     [HttpGet("p/{token}")]
-    public async Task<IActionResult> Index(string token, string? month, bool finance = false, bool continueVisit = false)
+    public async Task<IActionResult> Index(string token, string? month, bool finance = false, bool continueVisit = false, int? studentId = null)
     {
         Response.Headers["Referrer-Policy"] = "no-referrer";
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
@@ -124,8 +146,8 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
         // Only links inside the current visit carry continueVisit.
         if (!continueVisit)
             Response.Cookies.Delete("ParentDebtRead", new CookieOptions { Path = Request.PathBase + "/p/" + token });
-        var model = continueVisit ? await Load(token, selected, finance)
-            : await new ParentPortalService(db).LoadAsync(token, selected, finance);
+        var model = continueVisit ? await Load(token, selected, finance,studentId)
+            : await new ParentPortalService(db).LoadAsync(token, selected, finance,studentId:studentId);
         return model == null ? NotFound() : View(model);
     }
 }

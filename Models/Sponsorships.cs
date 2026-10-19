@@ -26,6 +26,8 @@ public class SponsorshipPlanLine
 }
 public class SponsorshipContract
 {
+    [MaxLength(100)] public string? CertificateNumber { get; set; }
+    public DateOnly? CertificateDate { get; set; }
     public int Id { get; set; }
     public Guid Revision { get; set; } = Guid.NewGuid();
     public int PlanId { get; set; }
@@ -70,6 +72,7 @@ public class SponsorshipReceipt
 }
 public class SponsorshipSpend
 {
+    public DateOnly? InvoiceDate { get; set; }
     public int Id { get; set; }
     public Guid RequestId { get; set; }
     [MaxLength(64)] public string PayloadHash { get; set; } = "";
@@ -120,6 +123,8 @@ public class SponsorshipLineInput
 }
 public class SponsorshipContractInput
 {
+    [StringLength(100)] public string? CertificateNumber { get; set; }
+    public DateOnly? CertificateDate { get; set; }
     public int Id { get; set; }
     public Guid Revision { get; set; }
     [StringLength(300)] public string? Reason { get; set; }
@@ -155,6 +160,7 @@ public class SponsorshipReceiptInput
 }
 public class SponsorshipSpendInput
 {
+    public DateOnly? InvoiceDate { get; set; }
     public Guid RequestId { get; set; } = Guid.NewGuid();
     public int ContractId { get; set; }
     [Range(1,int.MaxValue)] public int AllocationId { get; set; }

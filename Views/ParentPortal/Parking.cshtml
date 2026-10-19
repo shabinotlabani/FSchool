@@ -2,12 +2,12 @@
 @{Layout=null;var token=Context.Request.RouteValues["token"]?.ToString();}
 <!doctype html>
 <html lang="sq"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex,nofollow"/><meta name="referrer" content="no-referrer"/><title>Biletë parkimi · 2 Korriku</title><link rel="stylesheet" href="~/css/parent-portal.css" asp-append-version="true"/></head>
-<body data-parent-reopen-url="@Url.Action("Index",new{token})"><main class="portal">
-    <a class="button secondary" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token">← Portali i prindit</a>
+<body data-parent-reopen-url="@Url.Action("Index",new{token,studentId=Model.StudentId})"><main class="portal">
+    <a class="button secondary" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId">← Portali i prindit</a>
     <section class="parking-ticket">
         <h1>Biletë Parkingu</h1><p>FC 2 Korriku</p>
         <h2>@Model.Name</h2><strong>@Model.Today.ToString("dd.MM.yyyy")</strong>
-        <img class="parking-qr" src="@Url.Action("ParkingQr",new{token,date=Model.Today.ToString("yyyy-MM-dd")})" alt="Kodi QR i biletës së parkimit" width="280" height="280"/>
+        <img class="parking-qr" src="@Url.Action("ParkingQr",new{token,studentId=Model.StudentId,date=Model.Today.ToString("yyyy-MM-dd")})" alt="Kodi QR i biletës së parkimit" width="280" height="280"/>
         <code>@Model.ParkingTicketId</code>
         <h2>Stërvitja e sotme</h2>
         @foreach(var session in Model.TodaySessions){<p class="parking-time">@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</p>}

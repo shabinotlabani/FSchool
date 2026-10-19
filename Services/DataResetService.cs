@@ -10,7 +10,8 @@ public static class DataResetService
 
     // Explicit list: new tables must be reviewed before becoming part of a reset.
     public static readonly string[] Tables = [
-        "PendingBankPayments", "AttendancePlayers", "AttendanceChanges", "TeamAttendances",
+        "ParentPushDeliveries", "ParentPushMessages", "ParentPushSubscriptions",
+        "BankPaymentAllocations", "PendingBankPayments", "AttendancePlayers", "AttendanceChanges", "TeamAttendances",
         "TreasuryEntries", "FieldPayments", "FieldBookingChanges", "FieldBookings",
         "CoachTeams", "FirstMonthFeeChanges", "ExpenseCategoryChanges", "Expenses",
         "PersonalTrainingAudits", "PersonalTrainingSlots", "PersonalCharges", "PersonalTrainings",

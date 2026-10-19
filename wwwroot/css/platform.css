@@ -1,0 +1,87 @@
+/* Shared screen treatment, loaded after module styles. Print keeps its own layout. */
+@media screen {
+    body.platform-ui { background:#f5f6f8; color:#243247; font-size:14px; --line:#e1e6ed; --muted:#64748b; }
+    .platform-ui .app-sidebar { background:#1e2c47; box-shadow:none; border-right:1px solid #263650; }
+    .platform-ui .app-sidebar .side-link { border-radius:6px; min-height:40px; padding:9px 12px; }
+    .platform-ui .app-sidebar .side-link.is-active { background:#eaf0fb; border-color:transparent; box-shadow:none; color:#253e71; }
+    .platform-ui .app-sidebar .side-group-title { color:#acbad0; letter-spacing:.65px; margin-top:18px; }
+    .platform-ui .app-topbar { background:#fff; border-top:0; border-bottom:1px solid var(--line); padding:14px 28px; min-height:66px; }
+    .platform-ui .breadcrumb-label { color:#66758a; font-size:12px; }
+    .platform-ui .breadcrumb-label strong { color:#263650; font-weight:600; }
+    .platform-ui .app-content { padding:28px; max-width:1640px; width:100%; margin-inline:auto; min-width:0; }
+    .platform-ui .app-content h1 { font-size:25px; font-weight:650; letter-spacing:-.6px; line-height:1.3; }
+    .platform-ui .app-content h2 { font-size:17px; font-weight:600; letter-spacing:-.2px; }
+    .platform-ui .app-content h3 { font-size:15px; font-weight:600; }
+    .platform-ui .page-heading { margin-bottom:22px; gap:16px; }
+    .platform-ui .eyebrow { color:#69788e; font-size:10px; letter-spacing:1px; margin-bottom:7px; }
+    .platform-ui .panel,.platform-ui .card,.platform-ui .search-panel,
+    .platform-ui .sp-invoice-fields,.platform-ui .sp-budget-panel,.platform-ui .sp-invoice-receipt {
+        border:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+        border-radius:0; box-shadow:none!important; background:#fff;
+    }
+    .platform-ui .panel-heading { padding:18px 20px; border-bottom:1px solid var(--line); }
+    .platform-ui .panel-heading p { margin-bottom:0; color:#69788e; }
+    .platform-ui .search-panel { padding:16px 20px; margin-bottom:20px; }
+    .platform-ui .dashboard-columns { grid-template-columns:1fr; gap:24px; }
+    .platform-ui .activity-list { padding-inline:20px; }
+    .platform-ui .activity-row { min-height:62px; padding-block:12px; border-color:#e8ecf1; }
+    .platform-ui .activity-description strong { font-size:14px; }
+    .platform-ui .activity-description small { font-size:12px; color:#68778b; }
+    .platform-ui .person-avatar { border-radius:6px; width:32px; height:32px; }
+    .platform-ui .debt-amount { font-size:15px; font-variant-numeric:tabular-nums; }
+    .platform-ui .daily-strip { border-radius:0; box-shadow:none; border:0; border-block:1px solid var(--line); background:#fff; padding:18px 20px; }
+    .platform-ui .stats-grid,.platform-ui .sp-stats { gap:0; background:white; border-block:1px solid var(--line); }
+    .platform-ui .stat-card,.platform-ui .sp-stats .panel { border:0; border-right:1px solid var(--line); border-radius:0; box-shadow:none; padding:18px; }
+    .platform-ui .stat-card>strong,.platform-ui .sp-stats strong { font-size:23px; }
+    .platform-ui .table-responsive,.platform-ui .sp-table-wrap { max-width:100%; overflow-x:auto; border-radius:0; scrollbar-width:thin; }
+    .platform-ui .table { --bs-table-color:#263650; font-size:13px; margin-bottom:0; }
+    .platform-ui .table>:not(caption)>*>* { padding:12px 16px; border-color:#e6ebf1; vertical-align:middle; }
+    .platform-ui .table thead th { background:#eef2f6; color:#526278; font-size:12px; font-weight:600; white-space:nowrap; }
+    .platform-ui .table tbody tr:hover>* { --bs-table-accent-bg:#f6f8fc; background-color:#f6f8fc; }
+    .platform-ui .table tfoot>* >* { background:#eef2f6; border-top:1px solid #cdd6e2; font-weight:600; }
+    .platform-ui .table a:not(.btn) { text-decoration:none; color:#304e86; }
+    .platform-ui .table a:not(.btn):hover { text-decoration:underline; }
+    .platform-ui .table .player-cell strong { font-size:13px; }
+    .platform-ui .table .player-cell small { font-size:11px; color:#68778b; }
+    .platform-ui .sp-report-table>:not(caption)>*>*,.platform-ui .sp-salary-grid>:not(caption)>*>* { padding:9px 12px; }
+    .platform-ui .btn { border-radius:6px; padding:9px 14px; min-height:38px; font-size:13px; font-weight:600; box-shadow:none; line-height:1.4; }
+    .platform-ui .btn-sm { padding:6px 10px; min-height:32px; font-size:12px; }
+    .platform-ui .btn-primary,.platform-ui .btn-dark { background:#304d84; border-color:#304d84; color:#fff; }
+    .platform-ui .btn-primary:hover,.platform-ui .btn-dark:hover { background:#233c6b; border-color:#233c6b; color:#fff; }
+    .platform-ui .btn-outline-primary { color:#304d84; border-color:#c4d0e2; background:#fff; }
+    .platform-ui .btn-outline-primary:hover { background:#edf2fa; border-color:#9aafd0; color:#233c6b; }
+    .platform-ui .btn-outline-secondary { background:#fff; color:#516076; border-color:#d2dae4; }
+    .platform-ui .btn-outline-secondary:hover { background:#edf1f6; color:#263650; }
+    .platform-ui .form-control,.platform-ui .form-select { border:1px solid #ccd5e0; border-radius:6px; min-height:40px; font-size:14px; padding:8px 11px; color:#263650; }
+    .platform-ui .form-select { padding-right:34px; }
+    .platform-ui .form-label { font-size:12px; font-weight:600; color:#536278; margin-bottom:6px; }
+    .platform-ui .form-control:focus,.platform-ui .form-select:focus { border-color:#6e8bbb; box-shadow:0 0 0 3px #304d8414; }
+    .platform-ui :is(a,button,input,select,textarea,summary):focus-visible { outline:2px solid #587bb3; outline-offset:3px; }
+    .platform-ui .status-pill,.platform-ui .stock-badge { border-radius:5px; font-size:11px; padding:5px 8px; font-weight:600; }
+    .platform-ui .alert,.platform-ui .billing-note { border-radius:6px; font-size:13px; padding:12px 16px; }
+    .platform-ui .selected-player,.platform-ui .issue-line { border-radius:0; box-shadow:none; }
+    .platform-ui .player-search-results { display:block; }
+    .platform-ui .player-search-result { border-radius:0; margin-top:-1px; }
+    .platform-ui .sp-module-nav,.platform-ui .stock-section-nav { gap:4px; border-bottom:1px solid var(--line); padding-bottom:8px; }
+    .platform-ui .sp-module-nav a { border-radius:5px; }
+    .platform-ui .coach-light .coach-team-card { border:0; border-block:1px solid var(--line); border-radius:0; box-shadow:none; padding:20px; }
+    .platform-ui .coach-team-top h2 { font-size:18px; }
+    .platform-ui .coach-light .coach-attendance-link { width:auto; }
+    .platform-ui .team-list { min-width:900px; }
+    .platform-ui .team-list .team-schedule { min-width:180px; margin:0; padding:0; }
+    .platform-ui .team-list .team-schedule li { padding:3px 0; font-size:12px; }
+    .platform-ui .team-list .team-capacity { min-width:110px; margin:0; }
+    .platform-ui .app-footer { color:#748197; padding:18px 28px; }
+}
+@media screen and (max-width:760px) {
+    .platform-ui .app-content { padding:20px 14px; }
+    .platform-ui .app-topbar { padding:12px 14px; }
+    .platform-ui .app-content h1 { font-size:22px; }
+    .platform-ui .app-topbar .today-label { display:none; }
+    .platform-ui .panel-heading,.platform-ui .search-panel { padding:14px; }
+    .platform-ui .activity-list { padding-inline:14px; }
+    .platform-ui .btn { min-height:42px; }
+    .platform-ui .form-control,.platform-ui .form-select { font-size:16px; min-height:44px; }
+    .platform-ui .table>:not(caption)>*>* { padding:10px 12px; }
+    .platform-ui .app-footer { padding:16px 14px; }
+}

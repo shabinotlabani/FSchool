@@ -5,6 +5,7 @@ namespace _2Korriku.Models;
 
 public class PlayerFamily
 {
+    [StringLength(64)] public string? ParentLinkToken { get; set; }
     [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
     [Required, StringLength(150)] public string Name { get; set; } = "";

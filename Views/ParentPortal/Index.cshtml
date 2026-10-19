@@ -2,35 +2,46 @@
 @using _2Korriku.Services
 @{Layout=null;var token=Context.Request.RouteValues["token"]?.ToString();ViewData["PwaManifest"]=Url.Action("Manifest","ParentPortal",new{token});}
 <!doctype html><html lang="sq"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex,nofollow"/><meta name="referrer" content="no-referrer"/><title>Prindi · 2 Korriku</title><link rel="stylesheet" href="~/css/parent-portal.css" asp-append-version="true"/><meta name="theme-color" content="#2c3f93"/><partial name="_PwaHead" /></head>
-<body data-parent-reopen-url="@(Model.NeedsAcknowledgement ? null : Url.Action("Index",new{token}))">
+<body data-parent-reopen-url="@(Model.NeedsAcknowledgement ? null : Url.Action("Index",new{token,studentId=Model.StudentId}))">
 @if(Model.NeedsAcknowledgement){
-<main class="blocked warning"><div><span class="notice-label">NJOFTIM PËR PAGESËN</span><h1>Shuma për t’u paguar: @Model.Debt.ToString("N2")</h1><p>Ju lutem kryeni pagesën e mbetur. Shtypni “Po e lexova” për të vazhduar në portal.</p><form asp-action="Acknowledge" asp-route-token="@token" method="post"><input type="hidden" name="month" value="@Model.Month.ToString("yyyy-MM")"/><input type="hidden" name="finance" value="@Model.Finance.ToString().ToLowerInvariant()"/><button class="button" type="submit">Po e lexova</button></form></div></main>
+<main class="blocked warning"><div><span class="notice-label">NJOFTIM PËR PAGESËN</span><h1>Shuma për t’u paguar: @Model.Debt.ToString("N2")</h1><p>Ju lutem kryeni pagesën e mbetur. Shtypni “Po e lexova” për të vazhduar në portal.</p><form asp-action="Acknowledge" asp-route-token="@token" method="post"><input type="hidden" name="studentId" value="@Context.Request.Query["studentId"]"/><input type="hidden" name="month" value="@Model.Month.ToString("yyyy-MM")"/><input type="hidden" name="finance" value="@Model.Finance.ToString().ToLowerInvariant()"/><button class="button" type="submit">Po e lexova</button></form></div></main>
 }else{
 <main class="portal">
-<header><span>2 Korriku</span><h1>@Model.Name</h1></header>
-@if(Model.Debt>0){<p class="debt-notice">Për t’u paguar: <strong>@Model.Debt.ToString("N2")</strong></p>}
-@if(Model.Finance){
-    <a class="button secondary" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-month="@Model.Month.ToString("yyyy-MM")">← Mbrapa</a>
-    <h2>Kartela financiare</h2><div class="balance">Për t’u paguar <strong>@Model.Debt.ToString("N2")</strong>@if(Model.Advance>0){<span>Parapagim <strong>@Model.Advance.ToString("N2")</strong></span>}</div>
-}else{
-    <a class="button" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-finance="true" asp-route-month="@Model.Month.ToString("yyyy-MM")">Kartela financiare</a>
-    <section class="parking-section"><h2>Parkingu</h2>
-    @if(Model.ParkingTicketId != null){
-        <p>Stërvitja sot · @Model.Today.ToString("dd.MM.yyyy")</p>
-        @foreach(var session in Model.TodaySessions){<p class="parking-time">@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</p>}
-        <form asp-action="GenerateParking" asp-route-token="@token" method="post"><button class="button secondary" type="submit">Gjenero Biletë Parkingu</button></form>
-        <p class="empty">Një biletë për nxënës në ditë. Hapja përsëri shfaq të njëjtën biletë.</p>
-    }else{<button class="button secondary" disabled>Gjenero Biletë Parkingu</button><p class="empty">Bileta mund të gjenerohet vetëm në ditën kur nxënësi ka stërvitje.</p>}
-    </section>
-    <section><h2>Orari</h2>@foreach(var session in Model.Schedule){<div class="row"><span>@TeamService.DayName(session.Day)</span><strong>@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</strong></div>}@if(Model.Schedule.Count==0){<p class="empty">Pa orar.</p>}</section>
-    <h2>Prezenca</h2>
+<header class="parent-header"><div class="parent-brand"><img src="/images/fc-2-korriku.svg" alt="" width="34" height="40"/><span>2 Korriku <small>Portali i prindit</small></span></div><h1>@(Model.FamilyName??Model.Name)</h1></header>
+@if(Model.Members.Count>0){
+<div class="parent-family-summary"><span>Për t’u paguar · Familja</span><strong>@Model.Debt.ToString("N2")</strong></div>
+<div class="parent-family-scroll" tabindex="0" role="region" aria-label="Fëmijët e familjes"><table class="parent-family-table"><thead><tr><th>Fëmija</th><th>Për t’u paguar</th><th>Parapagim</th></tr></thead><tbody>
+@foreach(var member in Model.Members){<tr class="@(member.Id==Model.StudentId?"selected":"")"><th scope="row"><a asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">@member.Name</a></th><td>@member.Debt.ToString("N2")</td><td>@member.Advance.ToString("N2")</td></tr>}
+</tbody></table></div><h2 class="parent-selected-child">@Model.Name</h2>
 }
-<nav class="months" aria-label="Muaji">
-@if(Model.Month.Year>2000||Model.Month.Month>1){<a asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.AddMonths(-1).ToString("yyyy-MM")" aria-label="Muaji i kaluar">‹</a>}else{<span></span>}
-<strong>@Model.Month.ToString("MMMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</strong>
-@if(Model.Month<TariffService.CurrentMonth){<a asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.AddMonths(1).ToString("yyyy-MM")" aria-label="Muaji tjetër">›</a>}else{<span></span>}
+<table class="parent-team" aria-label="Ekipi dhe trajneri"><tbody><tr><th scope="row">Ekipi</th><td>@(Model.TeamName??"Pa ekip të caktuar")</td></tr><tr><th scope="row">Trajneri</th><td>@(string.IsNullOrWhiteSpace(Model.CoachName)?"Pa trajner të caktuar":Model.CoachName)</td></tr>@if(!string.IsNullOrWhiteSpace(Model.AssistantCoachName)){<tr><th scope="row">Ndihmëstrajneri</th><td>@Model.AssistantCoachName</td></tr>}</tbody></table>
+<nav class="parent-tabs" aria-label="Portali i prindit">
+<a class="@(!Model.Finance?"active":"")" aria-current="@(!Model.Finance?"page":null)" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-month="@Model.Month.ToString("yyyy-MM")">Stërvitjet dhe prezenca</a>
+<a class="@(Model.Finance?"active":"")" aria-current="@(Model.Finance?"page":null)" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-finance="true" asp-route-month="@Model.Month.ToString("yyyy-MM")">Pagesat</a>
 </nav>
 @if(Model.Finance){
+
+    <h2 class="attendance-heading">@(Model.FamilyName==null?"Gjendja e pagesave":"Gjendja e familjes")</h2><div class="balance">Për t’u paguar <strong>@Model.Debt.ToString("N2")</strong>@if(Model.Advance>0){<span>Parapagim <strong>@Model.Advance.ToString("N2")</strong></span>}</div>
+}else{
+
+    <section class="parking-section"><div class="section-title"><h2>Stërvitja sot</h2><time>@Model.Today.ToString("dd.MM.yyyy")</time></div>
+    @if(Model.ParkingTicketId != null){
+
+        @foreach(var session in Model.TodaySessions){<p class="parking-time">@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</p>}
+
+    }else{<p class="empty">Sot nuk ka stërvitje të planifikuar.</p>}
+    </section>
+    <section><h2>Orari javor</h2>@foreach(var session in Model.Schedule){<div class="row"><span>@TeamService.DayName(session.Day)</span><strong>@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</strong></div>}@if(Model.Schedule.Count==0){<p class="empty">Pa orar.</p>}</section>
+    <a class="parent-payment-row" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-finance="true" asp-route-month="@Model.Month.ToString("yyyy-MM")"><span>Pagesat <small>@(Model.Debt>0?"Për t’u paguar":"Nuk ka pagesa të mbetura")</small></span><strong>@Model.Debt.ToString("N2") <span aria-hidden="true">→</span></strong></a>
+    <h2 class="attendance-heading">Prezenca mujore</h2>
+}
+<nav class="months" aria-label="Muaji">
+@if(Model.Month.Year>2000||Model.Month.Month>1){<a asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.AddMonths(-1).ToString("yyyy-MM")" aria-label="Muaji i kaluar">‹</a>}else{<span></span>}
+<strong>@Model.Month.ToString("MMMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</strong>
+@if(Model.Month<TariffService.CurrentMonth){<a asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.AddMonths(1).ToString("yyyy-MM")" aria-label="Muaji tjetër">›</a>}else{<span></span>}
+</nav>
+@if(Model.Finance){
+@if(Model.FamilyName!=null){<h2>Veprimet · @Model.Name</h2>}
 <section class="statement"><div class="entry headings"><span>Data</span><span>Detyrim</span><span>Pagesë / kredit</span></div>
 @foreach(var entry in Model.Movements){<div class="entry"><time>@BillingClock.LocalDate(entry.Date).ToString("dd.MM")</time><strong>@(entry.Debit>0?entry.Debit.ToString("N2"):"—")</strong><strong>@(entry.Credit>0?entry.Credit.ToString("N2"):"—")</strong></div>}
 @if(Model.Movements.Count==0){<p class="empty">Pa veprime.</p>}
@@ -38,12 +49,20 @@
 }else{
 <section>
 @if(Model.Attendance.Count>0){var present=Model.Attendance.Count(a=>a.Present);var percent=(int)new MonthlyAttendanceSummary(present,Model.Attendance.Count).Percent;
-<div class="row"><strong>@percent%</strong><span>@present/@Model.Attendance.Count</span></div><progress value="@percent" max="100" aria-label="Prezenca mujore">@percent%</progress>
+<div class="row attendance-summary"><strong>@percent% <small>pjesëmarrje</small></strong><span>@present nga @Model.Attendance.Count stërvitje</span></div><progress value="@percent" max="100" aria-label="Prezenca mujore">@percent%</progress>
 @foreach(var entry in Model.Attendance){<div class="row"><time>@entry.Date.ToString("dd.MM.yyyy")</time><span class="status @(entry.Present?"present":"absent")">@(entry.Present?"Prezent":"Mungon")</span></div>}
 }else{<p class="empty">Pa prezencë të regjistruar.</p>}
 </section>
 }
+<div class="parent-push" id="parent-push" data-status="@Url.Action("Notifications",new{token,actionName="status"})" data-enable="@Url.Action("Notifications",new{token,actionName="enable"})" data-disable="@Url.Action("Notifications",new{token,actionName="disable"})" data-worker="@Url.Content("~/sw.js")">
+@Html.AntiForgeryToken()
+<button class="parking-link" id="push-toggle" type="button" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Aktivizo njoftimet</span></button><p id="push-status" class="empty" role="status" aria-live="polite"></p>
+</div>
+@if(!Model.Finance && Model.ParkingTicketId != null){
+<footer class="parent-parking-footer"><form asp-action="GenerateParking" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post"><button class="parking-link" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M10 17V7h3a3 3 0 0 1 0 6h-3"/></svg><span>Bileta e parkingut</span></button></form></footer>
+}
 </main>
 }
 <script src="~/js/parent-portal-visit.js" asp-append-version="true"></script>
+<script src="~/js/parent-push.js" asp-append-version="true"></script>
 <partial name="_PwaInstall" /></body></html>

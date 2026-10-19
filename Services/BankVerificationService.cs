@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace _2Korriku.Services;
 public partial class BankVerificationService(ApplicationDbContext db)
 {
+    internal static Task<bool> IsConfirmedAmount(ApplicationDbContext db,Guid request,string kind,decimal amount,string actor) =>
+        db.Database.CurrentTransaction==null?Task.FromResult(false):db.PendingBankPayments.AnyAsync(x=>x.RequestId==request&&x.Kind==kind&&x.ReviewedAt!=null&&x.ReviewedById==actor&&x.ConfirmedAmount==amount&&x.PaymentId==null&&x.ResultId==null);
     public Task<int> QueueMonthly(RegisterPaymentModel input,string actor)=>Queue("Monthly",new RegisterPaymentModel{StudentId=input.StudentId,RequestId=input.RequestId,Amount=input.Amount,PaymentDate=input.PaymentDate,PaymentMethod="Bank",Notes=input.Notes?.Trim()},actor);
     public Task<int> QueueSeasonal(SeasonalPaymentModel input,string actor)=>Queue("Seasonal",new SeasonalPaymentModel{StudentId=input.StudentId,RequestId=input.RequestId,StartMonth=input.StartMonth,Months=input.Months,ExpectedRate=input.ExpectedRate,PaymentDate=input.PaymentDate,PaymentMethod="Bank",Notes=input.Notes?.Trim()},actor);
     private async Task CheckActor(string actor,bool admin,bool fieldPayment=false)
@@ -53,14 +55,20 @@ public partial class BankVerificationService(ApplicationDbContext db)
             if(!input.ReceivedOn.HasValue||input.ReceivedOn>BillingClock.Today||input.ReceivedOn<new DateOnly(2000,1,1))throw new InvalidOperationException("Zgjidhni datën reale të veprimit në bankë, jo në të ardhmen.");
             var received=input.ReceivedAmount??pending.Amount;
             if(received<=0||received>999999999.99m||decimal.Round(received,2)!=received)throw new InvalidOperationException("Shuma e pranuar duhet të jetë pozitive, deri në 999999999.99, me dy shifra dhjetore.");
-            if(pending.Kind is not ("Monthly" or "Family")&&received!=pending.Amount)throw new InvalidOperationException("Për këtë dokument konfirmoni shumën e kërkesës.");
+            BankClientBalance? client=null;
+            if(input.AllocateAll&&SupportsDistribution(pending.Kind)){
+                client=await ClientBalance(pending);
+                if(input.ExpectedClientState!=client.State)throw new InvalidOperationException("Detyrimet kanë ndryshuar. Rifreskoni listën para konfirmimit.");
+            }
+            if(client==null&&pending.Kind=="Seasonal"&&received!=pending.Amount)throw new InvalidOperationException("Për këtë dokument konfirmoni shumën e kërkesës.");
             // Close this request before posting, so automatic reconciliation can
             // create a distinct request for any remainder. The outer transaction
             // rolls back both the review and the receipt on failure.
             pending.ConfirmedAmount=received;pending.ReviewedAt=DateTime.UtcNow;pending.ReviewedById=actor;
             await db.SaveChangesAsync();
             var billing=new BillingService(db);
-            if(pending.Kind=="Seasonal"){
+            if(client!=null){await Distribute(pending,client,input.ReceivedOn.Value,actor);}
+            else if(pending.Kind=="Seasonal"){
                 var model=JsonSerializer.Deserialize<SeasonalPaymentModel>(pending.Payload)!;model.PaymentDate=input.ReceivedOn;
                 pending.PaymentId=await billing.RegisterSeasonalAsync(model,actor);
             }else if(pending.Kind=="Monthly"){

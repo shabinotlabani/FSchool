@@ -1,11 +1,11 @@
-@model SponsorshipDashboard
+﻿@model SponsorshipDashboard
 @{
     var today=_2Korriku.Services.BillingClock.Today;
     var spent=Model.Spending.Where(x=>x.CancelledAt==null).GroupBy(x=>x.AllocationId).ToDictionary(x=>x.Key,x=>x.Sum(s=>s.Amount));
 }
 @if(Model.Contracts.Any(c=>c.Allocations.Any(a=>a.Amount>0))){
 <div class="sp-section-heading"><h2>Buxhetet e mbetura</h2></div>
-<div class="sp-balance-cards">
+<div class="sp-table-wrap" tabindex="0" role="region" aria-label="Buxhetet e mbetura sipas sponsorit"><table class="table sp-table sp-report-table"><thead><tr><th>Sponsori / Kategoria</th><th class="sp-number">Buxheti</th><th class="sp-number">Shpenzuar</th><th class="sp-number">Mbetur</th><th>Afati</th><th>Statusi</th></tr></thead><tbody>
 @foreach(var contract in Model.Contracts){
     var cash=Model.Receipts.Where(x=>x.ContractId==contract.Id&&x.CancelledAt==null).Sum(x=>x.Amount)-Model.Spending.Where(x=>x.Allocation.ContractId==contract.Id&&x.CancelledAt==null).Sum(x=>x.Amount);
     @foreach(var allocation in contract.Allocations.Where(x=>x.Amount>0).OrderBy(x=>x.PlanLineId)){
@@ -14,17 +14,11 @@
         var category=Model.Plan!.Lines.First(x=>x.Id==allocation.PlanLineId).Category;
         var expired=contract.To<today;
         var upcoming=contract.From>today;
-        <a asp-action="Details" asp-route-id="@contract.Id" class="sp-balance-card @(remaining==0||expired?"sp-balance-muted":"")">
-            <div class="sp-balance-top"><span>@contract.Sponsor</span><span class="sp-balance-state">@(expired?"E përfunduar":upcoming?"Së shpejti":remaining==0?"I shfrytëzuar":"Aktiv")</span></div>
-            <h3>@category</h3>
-            <div class="sp-balance-amount">@remaining.ToString("N2")</div>
-            <p>Buxhet për t’u shpenzuar</p>
-            <progress value="@Math.Min(used,allocation.Amount).ToString(System.Globalization.CultureInfo.InvariantCulture)" max="@allocation.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" aria-label="Buxheti i shpenzuar për @category"></progress>
-            <div class="sp-balance-values"><span>Shpenzuar <strong>@used.ToString("N2")</strong></span><span>Buxheti <strong>@allocation.Amount.ToString("N2")</strong></span></div>
-            <footer><span>@contract.Reference</span><span>Deri @contract.To.ToString("dd.MM.yyyy")</span></footer>
-            @if(!expired&&!upcoming&&remaining>cash){<small class="sp-balance-funding">Gjendja bankare e sponsorit: @cash.ToString("N2")</small>}
-        </a>
+        <tr><td><a asp-action="Details" asp-route-id="@contract.Id">@contract.Sponsor</a><span class="d-block">@category</span><small>@contract.Reference</small></td>
+        <td class="sp-number">@allocation.Amount.ToString("N2")</td><td class="sp-number">@used.ToString("N2")</td><td class="sp-number"><strong>@remaining.ToString("N2")</strong>
+        @if(!expired&&!upcoming&&remaining>cash){<small class="d-block">Në bankë: @cash.ToString("N2")</small>}</td>
+        <td class="sp-nowrap">@contract.To.ToString("dd.MM.yyyy")</td><td>@(expired?"E përfunduar":upcoming?"Së shpejti":remaining==0?"I shfrytëzuar":"Aktiv")</td></tr>
     }
 }
-</div>
+</tbody></table></div>
 }

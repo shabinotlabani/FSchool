@@ -27,6 +27,8 @@ public class PendingBankPayment
 }
 public class BankReviewModel
 {
+    public bool AllocateAll { get; set; }
+    public string? ExpectedClientState { get; set; }
     public int Id { get; set; }
     public decimal? ExpectedAmount { get; set; }
     public decimal? ReceivedAmount { get; set; }

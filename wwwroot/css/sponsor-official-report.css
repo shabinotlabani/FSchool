@@ -1,0 +1,18 @@
+.official-report-page{max-width:1200px}.official-report{background:white;color:#111;padding:32px;font-family:Arial,sans-serif}.official-report h2{font-size:18px!important;text-align:center;font-weight:700!important;margin:0 0 28px}.official-meta{font-size:14px;margin-bottom:22px}.official-meta p{margin:8px 0}.official-scroll{overflow-x:auto}.official-table{width:100%;min-width:850px;border-collapse:collapse;table-layout:fixed;font-size:13px;line-height:1.4}.official-table th,.official-table td{border:1px solid #333;padding:9px 8px;overflow-wrap:anywhere;vertical-align:middle}.official-table thead th{text-align:center;background:#eee;font-weight:700}.official-table thead span{font-weight:400;font-size:11px}.official-table a{color:inherit;text-decoration:none}.official-table a:hover{text-decoration:underline}.official-detail{display:block;margin-top:3px;font-size:11px}.official-center{text-align:center}.official-amount{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.official-total{font-weight:700;background:#eee}.official-note{font-size:12px;margin:18px 0 30px}.official-signature{font-size:13px;break-inside:avoid}.official-signature p{margin:8px 0}.official-signature-line{width:210px;border-bottom:1px solid #111;height:40px}.official-missing{font-size:13px;color:#805d21}
+@media(max-width:760px){.official-report{padding:20px 14px}.official-meta{font-size:13px}}
+@media print{
+ @page sponsor-official{size:letter landscape;margin:11mm 6.35mm 17.5mm 25.4mm}
+ .official-report-page{page:sponsor-official;max-width:none;width:100%}
+ .official-report{padding:0;background:#fff}
+ .official-report h2{font-size:14pt!important;margin-bottom:18pt}
+ .official-meta{font-size:11pt;margin-bottom:14pt}
+ .official-scroll{overflow:visible}
+ .official-table{min-width:0;font-size:10pt;width:100%}
+ .official-table th,.official-table td{padding:6pt;border:1px solid #333}
+ .official-table thead{display:table-header-group}
+ .official-table tr{break-inside:avoid}
+ .official-table thead span,.official-detail{font-size:9pt}
+ .official-note{font-size:10pt}
+ .official-signature{font-size:11pt}
+ .sp-no-print{display:none!important}
+}

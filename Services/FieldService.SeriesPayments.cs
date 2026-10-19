@@ -21,11 +21,11 @@ public partial class FieldService
     public static string SeriesState(IEnumerable<FieldBooking> bookings) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
         JsonSerializer.Serialize(bookings.OrderBy(b => b.Id).Select(b => new { b.Id, b.Revision, b.Price, b.Paid, b.IsCancelled })))));
 
-    public async Task<List<FieldBooking>> ValidateSeriesPaymentAsync(FieldPaymentModel input)
+    public async Task<List<FieldBooking>> ValidateSeriesPaymentAsync(FieldPaymentModel input,bool confirmedBank=false)
     {
         var bookings = await SeriesBookingsAsync(input.BookingId);
         var due = bookings.Where(b => !b.IsCancelled && b.Due > 0).ToList();
-        if (SeriesState(bookings) != input.ExpectedState || due.Count == 0 || input.Amount != due.Sum(b => b.Due))
+        if (SeriesState(bookings) != input.ExpectedState || due.Count == 0 || !confirmedBank && input.Amount != due.Sum(b => b.Due))
             throw new InvalidOperationException("Rezervimet ose pagesat kanë ndryshuar. Rihapni pagesën e plotë.");
         return due;
     }
@@ -45,11 +45,15 @@ public partial class FieldService
             return existing[0].Id;
         }
         if (await db.FieldPayments.AnyAsync(p => p.RequestId == input.RequestId)) throw new InvalidOperationException("Ky formular është përdorur.");
-        var bookings = await ValidateSeriesPaymentAsync(input);
+        var confirmedBank=await BankVerificationService.IsConfirmedAmount(db,input.RequestId,"Field",input.Amount,actor);
+        var bookings = await ValidateSeriesPaymentAsync(input,confirmedBank);
+        var remaining=input.Amount;
         FieldPayment? first = null;
         foreach (var booking in bookings)
         {
-            var amount = booking.Due;
+            if(remaining<=0)break;
+            var amount = booking==bookings.Last()?remaining:Math.Min(remaining,booking.Due);
+            remaining-=amount;
             var payment = new FieldPayment { BatchId = input.RequestId, BatchState = input.ExpectedState,
                 RequestId = first == null ? input.RequestId : Guid.NewGuid(), FieldBookingId = booking.Id,
                 Amount = amount, Method = input.Method, ActorId = actor,
@@ -57,7 +61,7 @@ public partial class FieldService
             first ??= payment;
             db.FieldPayments.Add(payment);
             booking.Revision = Guid.NewGuid();
-            booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Pagesë e plotë e rezervimit · Ky termin: {amount:N2} · {BillingService.MethodLabel(input.Method)}" });
+            booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Pagesë e rezervimit · Ky termin: {amount:N2} · {BillingService.MethodLabel(input.Method)}" });
         }
         await db.SaveChangesAsync();
         if (tx != null) await tx.CommitAsync();

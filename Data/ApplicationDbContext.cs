@@ -6,6 +6,10 @@ namespace _2Korriku.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<ParentPushSettings> ParentPushSettings => Set<ParentPushSettings>();
+    public DbSet<ParentPushSubscription> ParentPushSubscriptions => Set<ParentPushSubscription>();
+    public DbSet<ParentPushMessage> ParentPushMessages => Set<ParentPushMessage>();
+    public DbSet<ParentPushDelivery> ParentPushDeliveries => Set<ParentPushDelivery>();
     public DbSet<SponsorshipPlan> SponsorshipPlans => Set<SponsorshipPlan>();
     public DbSet<SponsorshipPlanLine> SponsorshipPlanLines => Set<SponsorshipPlanLine>();
     public DbSet<SponsorshipContract> SponsorshipContracts => Set<SponsorshipContract>();
@@ -17,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<DemoImport> DemoImports => Set<DemoImport>();
     public DbSet<TeamAttendance> TeamAttendances => Set<TeamAttendance>();
     public DbSet<PendingBankPayment> PendingBankPayments => Set<PendingBankPayment>();
+    public DbSet<BankPaymentAllocation> BankPaymentAllocations => Set<BankPaymentAllocation>();
     public DbSet<AttendancePlayer> AttendancePlayers => Set<AttendancePlayer>();
     public DbSet<AttendanceChange> AttendanceChanges => Set<AttendanceChange>();
     public DbSet<TreasuryEntry> TreasuryEntries => Set<TreasuryEntry>();
@@ -69,6 +74,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<ParentPushSubscription>().HasIndex(x=>new{x.StudentId,x.EndpointHash}).IsUnique();
+        builder.Entity<ParentPushMessage>().HasIndex(x=>x.RequestId).IsUnique();
+        builder.Entity<ParentPushDelivery>().HasIndex(x=>new{x.MessageId,x.SubscriptionId}).IsUnique();
+        builder.Entity<ParentPushDelivery>().HasIndex(x=>new{x.SentAt,x.Failed,x.NextAttempt});
+        builder.Entity<BankPaymentAllocation>().HasIndex(x=>x.PaymentId).IsUnique();
+        builder.Entity<BankPaymentAllocation>().HasOne(x=>x.BankPayment).WithMany().HasForeignKey(x=>x.BankPaymentId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<BankPaymentAllocation>().HasOne(x=>x.Payment).WithMany().HasForeignKey(x=>x.PaymentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<SponsorshipPlan>().HasIndex(x=>x.Year).IsUnique();
         builder.Entity<SponsorshipPlan>().Property(x=>x.Revision).IsConcurrencyToken();
         builder.Entity<SponsorshipContract>().Property(x=>x.Revision).IsConcurrencyToken();

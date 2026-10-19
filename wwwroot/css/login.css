@@ -38,3 +38,4 @@ button:focus-visible, a:focus-visible, input[type="checkbox"]:focus-visible { ou
 .field-error { display: block; color: #a82b36; font-size: 12px; margin-top: 7px; }
 .field input.input-validation-error { border-color: #c94c58; }
 @media (max-width: 480px) { .login-shell { padding: 24px 16px; }.form-panel { padding: 28px 22px 22px; border-radius: 24px; }.login-brand { gap: 14px; }.login-brand>span { font-size: 17px; } }
+:root{background:#f5f6f8;color:#243247}.form-panel{background:transparent;border:0;border-radius:0;box-shadow:none}.field input{border-radius:6px;border-color:#ccd5e0;background:#fff}.submit-button{height:48px;border-radius:6px;background:#304d84;font-size:15px}.submit-button:hover{background:#233c6b}.submit-button:active{background:#1e335b}.field input:focus{border-color:#6e8bbb;box-shadow:0 0 0 3px #304d8414}.login-brand,.form-footer{border-color:#dce3ec}
