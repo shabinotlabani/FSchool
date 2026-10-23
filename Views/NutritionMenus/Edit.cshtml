@@ -1,0 +1,25 @@
+@model MenuInput
+@{ViewData["Title"]="Menuja javore";}
+<div class="page-heading"><div><h1>Menuja javore</h1><span>@ViewData["PlayerName"]</span></div></div>
+@if(ViewData["Measurements"] is string measurements){<p class="small text-muted">@measurements</p>}
+@if(TempData["Success"] is string message){<p role="status">@message</p>}
+@if(ViewData["Draft"] is true){<p class="alert alert-info">Draft nga AI · Rishikoje dhe ruaje për ta publikuar.</p>}
+@if(ViewData["AutoStatus"] is string status){<p role="status">@status</p>}
+@if(ViewData["ReferralReason"] is string reason){<p><strong>Ankesa e trajnerit:</strong> @reason</p>}
+<form asp-action="Edit" method="post">
+<input asp-for="DraftReferralId" type="hidden"/>
+<input asp-for="StudentId" type="hidden"/><input asp-for="Revision" type="hidden"/>
+<div asp-validation-summary="All" class="text-danger"></div>
+<details class="my-3"><summary>Propozo me AI</summary>
+<p class="small text-muted">Gemini përdor moshën, matjet dhe performancën e regjistruar, pa emër ose kontakt. Shkruaj vetëm kufizimet ushqimore dhe preferencat.</p>
+<label asp-for="AiInstructions">Alergjitë, kufizimet dhe preferencat</label><textarea asp-for="AiInstructions" class="form-control" rows="3" maxlength="2000"></textarea>
+<button asp-action="Generate" formnovalidate class="btn btn-outline-primary" type="submit">Gjenero propozimin</button></details>
+<label class="d-block my-2"><input asp-for="AllergiesReviewed"/> I kontrollova alergjitë dhe kufizimet.</label>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Dita</th><th>Mëngjesi</th><th>Dreka</th><th>Darka</th><th>Mesvakti</th></tr></thead><tbody>
+@for(var i=0;i<Model.Days.Count&&i<7;i++){<tr><th>@MenuInput.DayNames[i]</th><td><textarea asp-for="Days[i].Breakfast" aria-label="Mëngjesi @MenuInput.DayNames[i]" class="form-control" style="min-width:150px" rows="3" maxlength="500" required></textarea></td><td><textarea asp-for="Days[i].Lunch" aria-label="Dreka @MenuInput.DayNames[i]" class="form-control" style="min-width:150px" rows="3" maxlength="500" required></textarea></td><td><textarea asp-for="Days[i].Dinner" aria-label="Darka @MenuInput.DayNames[i]" class="form-control" style="min-width:150px" rows="3" maxlength="500" required></textarea></td><td><textarea asp-for="Days[i].Snack" aria-label="Mesvakti @MenuInput.DayNames[i]" class="form-control" style="min-width:150px" rows="3" maxlength="500" required></textarea></td></tr>}
+</tbody></table></div>
+<label asp-for="Recommendations" class="form-label">Rekomandime nga nutricisti</label><textarea asp-for="Recommendations" class="form-control" rows="3" maxlength="2000"></textarea>
+<button class="btn btn-primary my-3" type="submit">@(Model.StudentId==0?"Ruaj për të gjithë":"Ruaj për këtë lojtar")</button>
+</form>
+@if(Model.Individual){<form asp-action="Reset" method="post"><input name="studentId" value="@Model.StudentId" type="hidden"/><input name="revision" value="@Model.Revision" type="hidden"/><button class="btn btn-sm btn-outline-secondary">Përdor menunë e përbashkët</button></form>}
+@section PageNavigation{<a asp-controller="PlayerCare" asp-action="@(Model.StudentId==0?"Index":"Player")" asp-route-id="@(Model.StudentId==0?(int?)null:Model.StudentId)" class="btn btn-outline-secondary">← Mbrapa</a>}

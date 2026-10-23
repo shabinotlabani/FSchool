@@ -7,6 +7,7 @@
 <div class="account-toolbar">
 <a asp-action="PrintAccount" asp-route-id="@Model.Student.Id" class="btn btn-outline-primary">Printo / PDF</a>
 <button type="button" class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#player-attendance" aria-expanded="false" aria-controls="player-attendance">Prezenca</button>
+<a asp-action="Progress" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@Model.Student.Id" class="btn btn-outline-primary">Ecuria</a>
 @if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){
 <partial name="_AccountPaymentActions" model="Model"/>
 <a asp-controller="Students" asp-action="Edit" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Edito lojtarin</a>

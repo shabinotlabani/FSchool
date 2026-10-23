@@ -42,6 +42,8 @@ public class LoginModel(SignInManager<ApplicationUser> signInManager) : PageMode
             Input.Email.Trim(), Input.Password, Input.RememberMe, lockoutOnFailure: true);
         if (result.Succeeded) {
             var user = await signInManager.UserManager.FindByEmailAsync(Input.Email.Trim());
+            Response.Cookies.Delete(_2Korriku.Services.ClubContext.CookieName, new CookieOptions { Path = Request.PathBase.HasValue ? Request.PathBase.Value : "/" });
+            if (user?.IsPlatformOwner == true) return LocalRedirect(Url.Content("~/Clubs"));
             if (user != null && await signInManager.UserManager.IsInRoleAsync(user, Roles.FieldOperator))
                 return LocalRedirect(Url.Content("~/Fields"));
             return LocalRedirect(ReturnUrl);

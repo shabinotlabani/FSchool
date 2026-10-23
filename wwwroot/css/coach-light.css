@@ -3,7 +3,7 @@
 .coach-light .page-heading h1{color:#1c1c1e;font-size:clamp(1.8rem,4vw,2.25rem);font-weight:750;letter-spacing:-1px;margin:6px 0 8px}
 .coach-light .page-heading p{color:#73737c;font-size:.9rem;margin:0}
 .coach-kicker,.coach-light .eyebrow{color:#73737c;font-size:.68rem;font-weight:600;letter-spacing:1.4px}
-.coach-role-page{max-width:660px;padding-top:20px}
+.coach-role-page{max-width:1000px;padding-top:8px}
 .coach-light .coach-choices{gap:12px}
 .coach-light .coach-choice{display:flex;flex-direction:row;align-items:center;gap:16px;padding:22px;min-height:104px;border:1px solid #e9e9ee;border-radius:22px;background:#fff;box-shadow:0 4px 18px #1c1c1e04;text-decoration:none;transition:transform .15s,box-shadow .15s}
 .coach-light .coach-choice:hover{transform:translateY(-2px);box-shadow:0 8px 24px #1c1c1e09}
@@ -36,3 +36,44 @@
 .coach-directory .table a{color:#007aff;text-decoration:none}
 @media(max-width:480px){.coach-role-page{padding-top:8px}.coach-light .coach-choice{padding:18px 16px;gap:12px;min-height:96px;border-radius:19px}.coach-choice-icon{width:46px;height:46px;border-radius:14px}.coach-light .coach-choice-copy strong{font-size:.96rem}.coach-light .coach-team-card{padding:17px;border-radius:19px}.coach-directory form{flex-wrap:wrap}.coach-directory form input{flex-basis:100%;font-size:16px}}
 @media(prefers-reduced-motion:reduce){.coach-light .coach-choice{transition:none}.coach-light .coach-choice:hover{transform:none}}
+.coach-role-page .page-heading{margin-bottom:20px}
+.coach-role-page .page-heading h1{font-size:1.3rem;letter-spacing:-.4px;margin:0}
+.coach-role-page .coach-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.coach-role-page .coach-choice{position:relative;flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:200px;padding:24px;border:1px solid var(--choice-border);background:linear-gradient(145deg,#fff,var(--choice-tint));box-shadow:0 6px 20px #20365308;overflow:hidden}
+.coach-role-page .choice-head{--choice-tint:#e3efff;--choice-border:#c8dcfa;--choice-color:#195dc0}
+.coach-role-page .choice-assistant{--choice-tint:#def6ed;--choice-border:#bee7d7;--choice-color:#167453}
+.coach-role-page .choice-personal{--choice-tint:#eee5ff;--choice-border:#dacaf4;--choice-color:#7042ac}
+.coach-role-page .coach-choice-icon{width:58px;height:58px;background:var(--choice-color);color:#fff;border-radius:18px;box-shadow:0 5px 12px #20365312}
+.coach-role-page .coach-choice-copy{flex:0;padding-right:20px}
+.coach-role-page .coach-choice-copy strong{font-size:1.12rem;color:var(--choice-color);font-weight:750}
+.coach-role-page .coach-choice-arrow{position:absolute;right:22px;bottom:18px;color:var(--choice-color)}
+.coach-role-page .coach-choice:hover{border-color:var(--choice-color);box-shadow:0 10px 24px #20365312}
+.coach-team-page .coach-team-card{border-top:3px solid #5a9cf0;background:linear-gradient(135deg,#fff 60%,#f0f6ff)}
+.coach-team-page .coach-team-card.is-current{border-top-color:#24a875;background:linear-gradient(135deg,#fff 60%,#eaf9f1)}
+.coach-team-page .coach-next-session{background:#eaf2ff;color:#174e96}
+.coach-team-page .is-current .coach-next-session{background:#e0f5e9;color:#196342}
+@media(max-width:640px){.coach-role-page .coach-choices{grid-template-columns:1fr;gap:12px}.coach-role-page .coach-choice{flex-direction:row;align-items:center;justify-content:flex-start;min-height:112px;padding:22px 20px;gap:18px}.coach-role-page .coach-choice-copy{flex:1;padding-right:14px}.coach-role-page .coach-choice-copy strong{font-size:1.05rem}.coach-role-page .coach-choice-arrow{position:static;font-size:1.7rem}.coach-role-page .coach-choice-icon{width:52px;height:52px;border-radius:16px}}
+/* Calm, consistent coach workspace. */
+.coach-light{--coach-blue:#173955}
+.coach-light .page-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.coach-light .page-heading h1{font-size:1.45rem;letter-spacing:-.5px;margin:4px 0;color:#18334a}
+.coach-inbox-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 12px;border:1px solid #dfe6ee;border-radius:12px;color:#24465f;background:#fff;text-decoration:none;font-size:.82rem;font-weight:600;white-space:nowrap}
+.coach-inbox-link span{display:grid;place-items:center;min-width:23px;height:23px;border-radius:8px;background:#eef3f7;font-size:.72rem}
+.coach-inbox-link:hover{background:#f1f5f9;color:#142f45}
+.coach-role-page .coach-choice{min-height:164px;border-radius:18px;padding:22px;box-shadow:none}
+.coach-role-page .coach-choice-icon{width:46px;height:46px;border-radius:14px;box-shadow:none}
+.coach-role-page .coach-choice-copy strong{font-size:1rem}
+.coach-light .coach-team-card{border-radius:16px;padding:20px;box-shadow:none;background:#fff;border-top-width:1px;border-left:3px solid #6f94b2}
+.coach-light .coach-team-card.is-current{background:#fff;border-left-color:#39a77b;border-top-width:1px}
+.coach-light .coach-next-session{background:#f2f6fa;border-radius:10px;margin:16px 0;padding:12px}
+.coach-light .btn-primary{background:#193c56;border-color:#193c56;border-radius:10px;font-size:.9rem}
+.coach-light .btn-primary:hover{background:#102d43;border-color:#102d43}
+.coach-light .coach-attendance-link{min-height:46px;padding:10px 14px}
+@media(max-width:640px){.coach-role-page .coach-choice{min-height:94px;padding:18px;gap:14px}.coach-light .page-heading h1{font-size:1.25rem}.coach-light .coach-team-card{padding:16px}.coach-role-page .coach-choice-icon{width:44px;height:44px}}
+.coach-role-page .coach-choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+.coach-role-page .choice-players{--choice-tint:#e8f2f5;--choice-border:#cbdfe5;--choice-color:#246274}
+.coach-roster-link{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:18px;background:#edf4f7;border:1px solid #dbe7ed;border-radius:12px;color:#24516a;text-decoration:none;font-size:.9rem}
+.coach-roster-link .icon{width:20px;height:20px}.coach-roster-link>span{margin-left:auto}
+.coach-players-page{max-width:1100px;margin:auto}.coach-player-search{display:flex;gap:8px;max-width:530px;margin-bottom:18px}.coach-player-search input{min-width:0;border-radius:10px}.coach-player-search .btn{min-height:44px}
+.coach-player-grid{border:1px solid #e2e8ef;border-radius:12px;background:#fff}.coach-player-grid table{margin:0;min-width:600px}.coach-player-grid th{background:#f6f8fb;font-size:.76rem;font-weight:600;color:#607286;padding:14px 18px;border-color:#e8edf3}.coach-player-grid td{padding:16px 18px;border-color:#edf1f5;font-size:.84rem}.coach-player-grid small{display:block;font-size:.72rem;color:#81909e;font-weight:400;margin-top:4px}.coach-player-name{color:#203d53;text-decoration:none;font-weight:650}.coach-player-name:hover{text-decoration:underline}.coach-player-grid th:nth-child(3){width:230px}.coach-presence-label{display:flex;justify-content:space-between;gap:12px;font-size:.75rem;margin-bottom:7px;color:#657a89}.coach-presence-label strong{color:#247e69;font-size:.85rem}.coach-presence-track{height:6px;background:#e9f0f2;border-radius:6px;overflow:hidden}.coach-presence-track span{display:block;height:100%;background:#36a68a;border-radius:6px}.coach-player-open{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#35667f;text-decoration:none;white-space:nowrap}.coach-presence-note{font-size:.74rem;color:#7c8a98;margin-top:12px}
+@media(max-width:640px){.coach-role-page .coach-choices{grid-template-columns:1fr}.coach-player-grid td,.coach-player-grid th{padding:12px}.coach-player-search .btn{font-size:.82rem}}

@@ -1,0 +1,12 @@
+@model ClubTenantInput
+@{ Layout = "_ClubLayout"; ViewData["Title"] = Model.Id == 0 ? "Shto klub" : "Ndrysho klubin"; }
+<a class="club-back" asp-action="Index">← Klubet</a>
+<header class="club-heading"><div><h1>@ViewData["Title"]</h1></div></header>
+<form asp-action="Save" method="post" class="club-form">
+    <div asp-validation-summary="All" class="club-error"></div><input asp-for="Id" type="hidden"/>
+    <label asp-for="Name">Emri i klubit</label><input asp-for="Name" autocomplete="organization" required maxlength="100"/>
+    <label asp-for="Sport">Sporti</label><select asp-for="Sport" required>@foreach(var sport in _2Korriku.Services.SportDevelopmentService.Sports){<option value="@sport.Key">@sport.Value</option>}</select>
+    <label asp-for="ExpiresOn">Afati i skadencës</label><input asp-for="ExpiresOn" type="date" required/>
+    <label class="club-check"><input asp-for="IsActive"/> Klubi aktiv</label>
+    <div class="club-actions"><button class="club-button primary">Ruaj</button><a class="club-button" asp-action="Index">Anulo</a></div>
+</form>

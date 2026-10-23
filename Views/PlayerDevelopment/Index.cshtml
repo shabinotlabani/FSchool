@@ -1,0 +1,10 @@
+@model DevelopmentRoster
+@{ViewData["Title"]="Performanca dhe zhvillimi";}
+<link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
+<section class="development-ui">
+<div class="page-heading"><h1>Performanca dhe zhvillimi</h1></div>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Lojtari</th><th>Ekipi</th><th>Vlerësimi i fundit</th><th>Mesatarja / 5</th><th>Rishikimi</th><th></th></tr></thead><tbody>
+@foreach(var p in Model.Players){var last=Model.Latest.SingleOrDefault(x=>x.StudentId==p.Id);<tr><td><a asp-action="Player" asp-route-id="@p.Id">@p.FullName</a></td><td>@p.TrainingTeam?.Name</td><td>@(last?.Date.ToString("dd.MM.yyyy")??"—")</td><td>@(last?.Average.ToString("0.0")??"—")</td><td>@(last?.ReviewDate?.ToString("dd.MM.yyyy")??"—")</td><td><a asp-action="Edit" asp-route-studentId="@p.Id" class="btn btn-sm btn-outline-primary">Vlerëso</a></td></tr>}
+@if(Model.Players.Count==0){<tr><td colspan="6">Nuk keni lojtarë në ekipet tuaja aktive.</td></tr>}
+</tbody></table></div>
+</section>

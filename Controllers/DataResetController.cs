@@ -14,7 +14,7 @@ public class DataResetController(ApplicationDbContext db, UserManager<Applicatio
     private async Task<ApplicationUser?> OwnerAsync()
     {
         var user = await users.GetUserAsync(User);
-        return user != null && DataResetService.IsOwner(user.UserName) ? user : null;
+        return user?.IsPlatformOwner == true ? user : null;
     }
 
     [HttpGet]

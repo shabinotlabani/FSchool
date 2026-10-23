@@ -4,6 +4,11 @@ namespace _2Korriku.Models;
 
 public class ParentPushSettings
 {
+    public bool TrainingReminders { get; set; } = true;
+    public bool ScheduleNotifications { get; set; } = true;
+    public bool PaymentReminders { get; set; } = true;
+    public int PaymentDay { get; set; } = 5;
+    public int PaymentHour { get; set; } = 9;
     public int Id { get; set; }
     [MaxLength(300)] public string Subject { get; set; } = "";
     [MaxLength(100)] public string PublicKey { get; set; } = "";
@@ -25,6 +30,10 @@ public class ParentPushSubscription
 }
 public class ParentPushMessage
 {
+    [MaxLength(20)] public string? AutomaticKind { get; set; }
+    [MaxLength(50)] public string? SourceKey { get; set; }
+    [MaxLength(64)] public string? ScheduleHash { get; set; }
+    public DateTime? ExpiresAt { get; set; }
     public int Id { get; set; }
     public Guid RequestId { get; set; }
     [MaxLength(80)] public string Title { get; set; } = "";
@@ -62,10 +71,25 @@ public class ParentNotificationInput
 }
 public class ParentNotificationsView
 {
+    public ParentAutomationInput Automation { get; set; } = new();
     public bool Configured { get; set; }
     public int Devices { get; set; }
     public List<TrainingTeam> Teams { get; set; } = [];
     public List<Student> Students { get; set; } = [];
     public List<ParentPushMessage> Messages { get; set; } = [];
     public ParentNotificationInput Input { get; set; } = new();
+}
+public class ParentAutomationInput
+{
+    public bool TrainingReminders { get; set; } = true;
+    public bool ScheduleNotifications { get; set; } = true;
+    public bool PaymentReminders { get; set; } = true;
+    [Range(1,31)] public int PaymentDay { get; set; } = 5;
+    [Range(0,23)] public int PaymentHour { get; set; } = 9;
+}
+public class ParentScheduleState
+{
+    [Key,MaxLength(50)] public string SourceKey { get; set; } = "";
+    [MaxLength(64)] public string Hash { get; set; } = "";
+    public int Version { get; set; }
 }

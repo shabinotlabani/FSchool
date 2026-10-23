@@ -2,6 +2,10 @@ namespace _2Korriku.Models;
 
 public class ParentPortalModel
 {
+    public int UnreadMessages { get; set; }
+    public List<DevelopmentChart> Progress { get; set; } = [];
+    public MenuInput? WeeklyMenu { get; set; }
+    public List<ParentCareNotice> CareInstructions { get; set; } = [];
     public int StudentId { get; set; }
     public string? FamilyName { get; set; }
     public decimal StudentDebt { get; set; }

@@ -32,7 +32,7 @@ public class ParentLinksController(ApplicationDbContext db) : Controller
         using var data = generator.CreateQrCode(link, QRCodeGenerator.ECCLevel.Q);
         using var png = new PngByteQRCode(data);
         var bytes = png.GetGraphic(12);
-        return download ? File(bytes, "image/png", $"2Korriku-Prindi-{id}.png") : File(bytes, "image/png");
+        return download ? File(bytes, "image/png", $"Prindi-{id}.png") : File(bytes, "image/png");
     }
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Save(int id, bool revoke = false)

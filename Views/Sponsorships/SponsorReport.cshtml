@@ -1,3 +1,4 @@
+@{ var club = await Club.Get(); }
 @model SponsorshipSponsorReport
 @{ViewData["Title"]="Raporti i sponsorit";}
 <partial name="_Intro"/>
@@ -14,7 +15,7 @@ var c=report.Contract;var number=0;
 <p><strong>Vërtetimi nr.</strong> @(c.CertificateNumber??"________________"); <strong>Data:</strong> @(c.CertificateDate?.ToString("dd.MM.yyyy")??"________________")</p>
 <p><strong>Sponsorizuesi:</strong> @c.Sponsor, NUI @c.SponsorNumber</p>
 <p><strong>Shuma e sponsorizuar:</strong> @c.Amount.ToString("N2")</p>
-<p><strong>Përfituesi i Sponsorizimit:</strong> Klubi Futbollistik 2 Korriku O.J.Q., 5110633-4</p>
+<p><strong>Përfituesi i Sponsorizimit:</strong> @club.LegalName@(string.IsNullOrWhiteSpace(club.RegistrationNumber) ? "" : ", " + club.RegistrationNumber)</p>
 </div>
 <div class="official-scroll" tabindex="0" role="region" aria-label="Raporti financiar i shpenzimeve">
 <table class="official-table">

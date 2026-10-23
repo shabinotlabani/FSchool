@@ -1,13 +1,14 @@
+@{ var club = await Club.Get(); }
 @model ParentPortalModel
 @using _2Korriku.Services
 @{Layout=null;var token=Context.Request.RouteValues["token"]?.ToString();ViewData["PwaManifest"]=Url.Action("Manifest","ParentPortal",new{token});}
-<!doctype html><html lang="sq"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex,nofollow"/><meta name="referrer" content="no-referrer"/><title>Prindi · 2 Korriku</title><link rel="stylesheet" href="~/css/parent-portal.css" asp-append-version="true"/><meta name="theme-color" content="#2c3f93"/><partial name="_PwaHead" /></head>
+<!doctype html><html lang="sq"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="robots" content="noindex,nofollow"/><meta name="referrer" content="no-referrer"/><title>Prindi · @club.Name · @_2Korriku.Services.ClubBranding.PlatformName</title><link rel="stylesheet" href="~/css/parent-portal.css" asp-append-version="true"/><link rel="stylesheet" href="~/css/parent-refresh.css" asp-append-version="true"/><meta name="theme-color" content="#163c65"/><partial name="_PwaHead" /></head>
 <body data-parent-reopen-url="@(Model.NeedsAcknowledgement ? null : Url.Action("Index",new{token,studentId=Model.StudentId}))">
 @if(Model.NeedsAcknowledgement){
 <main class="blocked warning"><div><span class="notice-label">NJOFTIM PËR PAGESËN</span><h1>Shuma për t’u paguar: @Model.Debt.ToString("N2")</h1><p>Ju lutem kryeni pagesën e mbetur. Shtypni “Po e lexova” për të vazhduar në portal.</p><form asp-action="Acknowledge" asp-route-token="@token" method="post"><input type="hidden" name="studentId" value="@Context.Request.Query["studentId"]"/><input type="hidden" name="month" value="@Model.Month.ToString("yyyy-MM")"/><input type="hidden" name="finance" value="@Model.Finance.ToString().ToLowerInvariant()"/><button class="button" type="submit">Po e lexova</button></form></div></main>
 }else{
 <main class="portal">
-<header class="parent-header"><div class="parent-brand"><img src="/images/fc-2-korriku.svg" alt="" width="34" height="40"/><span>2 Korriku <small>Portali i prindit</small></span></div><h1>@(Model.FamilyName??Model.Name)</h1></header>
+<header class="parent-header"><div class="parent-brand"><img src="@Club.LogoUrl" alt="" width="34" height="40"/><span>@club.Name <small>Portali i prindit</small></span></div><h1>@(Model.FamilyName??Model.Name)</h1></header>
 @if(Model.Members.Count>0){
 <div class="parent-family-summary"><span>Për t’u paguar · Familja</span><strong>@Model.Debt.ToString("N2")</strong></div>
 <div class="parent-family-scroll" tabindex="0" role="region" aria-label="Fëmijët e familjes"><table class="parent-family-table"><thead><tr><th>Fëmija</th><th>Për t’u paguar</th><th>Parapagim</th></tr></thead><tbody>
@@ -16,6 +17,7 @@
 }
 <table class="parent-team" aria-label="Ekipi dhe trajneri"><tbody><tr><th scope="row">Ekipi</th><td>@(Model.TeamName??"Pa ekip të caktuar")</td></tr><tr><th scope="row">Trajneri</th><td>@(string.IsNullOrWhiteSpace(Model.CoachName)?"Pa trajner të caktuar":Model.CoachName)</td></tr>@if(!string.IsNullOrWhiteSpace(Model.AssistantCoachName)){<tr><th scope="row">Ndihmëstrajneri</th><td>@Model.AssistantCoachName</td></tr>}</tbody></table>
 <nav class="parent-tabs" aria-label="Portali i prindit">
+<a asp-controller="ParentChat" asp-action="Thread" asp-route-token="@token" asp-route-studentId="@Model.StudentId">Kontakto trajnerin @if(Model.UnreadMessages>0){<strong>(@Model.UnreadMessages)</strong>}</a>
 <a class="@(!Model.Finance?"active":"")" aria-current="@(!Model.Finance?"page":null)" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-month="@Model.Month.ToString("yyyy-MM")">Stërvitjet dhe prezenca</a>
 <a class="@(Model.Finance?"active":"")" aria-current="@(Model.Finance?"page":null)" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-finance="true" asp-route-month="@Model.Month.ToString("yyyy-MM")">Pagesat</a>
 </nav>
@@ -31,7 +33,8 @@
 
     }else{<p class="empty">Sot nuk ka stërvitje të planifikuar.</p>}
     </section>
-    <section><h2>Orari javor</h2>@foreach(var session in Model.Schedule){<div class="row"><span>@TeamService.DayName(session.Day)</span><strong>@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</strong></div>}@if(Model.Schedule.Count==0){<p class="empty">Pa orar.</p>}</section>
+    <partial name="_CareSections" model="Model"/>
+    <section class="weekly-schedule"><h2>Orari javor</h2>@foreach(var session in Model.Schedule){<div class="row"><span>@TeamService.DayName(session.Day)</span><strong>@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</strong></div>}@if(Model.Schedule.Count==0){<p class="empty">Pa orar.</p>}</section>
     <a class="parent-payment-row" asp-action="Index" asp-route-continueVisit="true" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-finance="true" asp-route-month="@Model.Month.ToString("yyyy-MM")"><span>Pagesat <small>@(Model.Debt>0?"Për t’u paguar":"Nuk ka pagesa të mbetura")</small></span><strong>@Model.Debt.ToString("N2") <span aria-hidden="true">→</span></strong></a>
     <h2 class="attendance-heading">Prezenca mujore</h2>
 }
@@ -64,5 +67,6 @@
 </main>
 }
 <script src="~/js/parent-portal-visit.js" asp-append-version="true"></script>
+<script src="~/js/player-progress.js" asp-append-version="true"></script>
 <script src="~/js/parent-push.js" asp-append-version="true"></script>
 <partial name="_PwaInstall" /></body></html>

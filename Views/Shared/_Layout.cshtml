@@ -1,4 +1,5 @@
-﻿@{
+@{ var club = await Club.Get(); }
+@{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var navigation = new[] {
         (Controller: "Home", Label: "Përmbledhja", Icon: "home", Group: ""),
@@ -20,28 +21,40 @@
     if (User.IsInRole(Roles.FieldOperator)) navigation = new[] { (Controller: "Fields", Label: "Rezervimet private", Icon: "calendar", Group: "") };
     if (User.IsInRole(Roles.SuperAdmin)) navigation = navigation.Append((Controller: "Sponsorships", Label: "Sponsorizimet", Icon: "wallet", Group: "Financat")).ToArray();
     var accountName = User.Identity?.Name?.Split('@')[0] ?? "Llogaria";
+    if(User.IsInRole(Roles.Admin))navigation=navigation.Append((Controller:"CareStaff",Label:"Stafi shëndetësor",Icon:"players",Group:"Shkolla")).ToArray();
+    if(User.IsInRole(Roles.Doctor)||User.IsInRole(Roles.Nutritionist))navigation=new[]{(Controller:"PlayerCare",Label:"Lojtarët dhe kontrollet",Icon:"players",Group:"")};
 }
 <!DOCTYPE html>
 <html lang="sq">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#2c3f93" />
-    <title>@ViewData["Title"] · 2 Korriku</title>
+    <meta name="theme-color" content="#0a2341" />
+    <title>@ViewData["Title"] · @club.Name · @_2Korriku.Services.ClubBranding.PlatformName</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/brand.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/sidebar.css" rel="stylesheet" asp-append-version="true" />
-    <link rel="icon" type="image/svg+xml" href="~/images/fc-2-korriku.svg" asp-append-version="true" />
+    <link rel="icon" href="~/images/upnext/favicon.ico" asp-append-version="true" />
     <partial name="_PwaHead" />
 </head>
 <body class="platform-ui">
     <partial name="_Icons" />
     <a class="skip-link" href="#main-content">Kalo te përmbajtja</a>
     <aside class="app-sidebar">
+        <a class="platform-brand" asp-controller="Home" asp-action="Index"><img src="~/images/upnext/symbol_only.svg" alt="" width="38" height="38"/><span>UPNEXT<small>SPORTS MANAGEMENT SOFTWARE</small></span></a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="sidebar-content"><svg class="icon" aria-hidden="true"><use href="#i-menu" /></svg><span>Menuja</span></button>
         <div class="sidebar-content" id="sidebar-content">
             <nav class="side-navigation" aria-label="Navigimi kryesor">
+                @if(User.IsInRole(Roles.Coach)){
+                    var chatDb=Context.RequestServices.GetRequiredService<_2Korriku.Data.ApplicationDbContext>();
+                    var chatActor=User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
+                    var chatStudents=new _2Korriku.Services.CoachChatService(chatDb).Assigned(chatActor).Select(x=>x.Id);
+                    var unread=await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync(chatDb.CoachMessages.Where(x=>x.CoachId==chatActor&&chatStudents.Contains(x.StudentId)&&x.FromParent&&x.ReadAt==null));
+                    <a asp-controller="CoachInbox" asp-action="Index" class="side-link @(currentController=="CoachInbox"?"is-active":"")">Mesazhet @if(unread>0){<strong>(@unread)</strong>}</a>
+                }
+                @if(Context.RequestServices.GetRequiredService<_2Korriku.Services.ClubContext>().IsOwner){<a asp-controller="Clubs" asp-action="Index" class="side-link">Klubet · Ndrysho klubin</a>}
+                @if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.SuperAdmin)){<a asp-controller="ClubSettings" asp-action="Index" class="side-link @(currentController=="ClubSettings"?"is-active":"")">Të dhënat e klubit</a>}
                 @if(User.IsInRole(Roles.Admin)){<a asp-controller="ParentNotifications" asp-action="Index" class="side-link @(currentController=="ParentNotifications"?"is-active":"")">Njoftimet për prindërit</a>}
                 @foreach (var group in navigation.GroupBy(x=>x.Group))
                 {
@@ -53,17 +66,26 @@
                 }
             </nav>
             @if(User.IsInRole(Roles.Admin)){<nav class="side-navigation" aria-label="Administrimi"><div class="side-group-title">Administrimi</div><a asp-controller="Users" asp-action="Index" class="side-link @(currentController == "Users" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg>Shfrytëzuesit</a><a asp-controller="Tariffs" asp-action="Index" class="side-link @(currentController == "Tariffs" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg>Tarifat</a></nav>}
-            @if(User.IsInRole(Roles.Admin) && _2Korriku.Services.DataResetService.IsOwner(User.Identity?.Name)){<nav class="side-navigation" aria-label="Mirëmbajtja"><a asp-controller="DataReset" asp-action="Index" class="side-link">Zerimi i të dhënave</a></nav>}
-            <div class="sidebar-account"><div class="account-avatar" aria-hidden="true">@(accountName.Length > 0 ? accountName[..1].ToUpperInvariant() : "K")</div><div class="account-details"><strong>@accountName</strong><span>@(User.IsInRole(Roles.SuperAdmin) ? "Super Admin" : User.IsInRole(Roles.Admin) ? "Admin" : User.IsInRole(Roles.Operator) ? "Operator" : User.IsInRole(Roles.Coach) ? "Trajner" : User.IsInRole(Roles.FieldOperator) ? "Rezervimet private" : "Shikues")</span></div></div>
+            @if(User.IsInRole(Roles.Admin) && Context.RequestServices.GetRequiredService<_2Korriku.Services.ClubContext>().IsOwner){<nav class="side-navigation" aria-label="Mirëmbajtja"><a asp-controller="DataReset" asp-action="Index" class="side-link">Zerimi i të dhënave</a></nav>}
+            <div class="sidebar-account"><div class="account-avatar" aria-hidden="true">@(accountName.Length > 0 ? accountName[..1].ToUpperInvariant() : "K")</div><div class="account-details"><strong>@accountName</strong><span>@(User.IsInRole(Roles.SuperAdmin) ? "Super Admin" : User.IsInRole(Roles.Admin) ? "Admin" : User.IsInRole(Roles.Operator) ? "Operator" : User.IsInRole(Roles.Coach) ? "Trajner" : User.IsInRole(Roles.Doctor) ? Roles.Doctor : User.IsInRole(Roles.Nutritionist) ? Roles.Nutritionist : User.IsInRole(Roles.FieldOperator) ? "Rezervimet private" : "Shikues")</span></div></div>
             <partial name="_LoginPartial" />
-            <div class="sidebar-credit">Programuar nga <strong>profix.ITS</strong></div>
+            <div class="sidebar-credit"><strong>@_2Korriku.Services.ClubBranding.PlatformName</strong> &middot; Programuar nga <a class="developer-credit" href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels</a></div>
         </div>
     </aside>
     <div class="app-workspace">
         <header class="app-topbar">
             <div class="topbar-navigation">
-                <div class="breadcrumb-label">Portali i shkollës <span>/</span> <strong>@ViewData["Title"]</strong></div>
-            @if (IsSectionDefined("PageNavigation"))
+                <div class="breadcrumb-label"><img src="@Club.LogoUrl" alt="" width="24" height="28" style="object-fit:contain;margin-right:8px" />@club.Name <span>/</span> <strong>@ViewData["Title"]</strong></div>
+            @{
+                var navigationReturnUrl = ViewData["PaymentReturnUrl"] as string ?? Context.Request.Query["returnUrl"].ToString();
+                var currentNavigationUrl = (Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString).ToString();
+            }
+            @if (Url.IsLocalUrl(navigationReturnUrl) && navigationReturnUrl != currentNavigationUrl)
+            {
+                if (IsSectionDefined("PageNavigation")) { IgnoreSection("PageNavigation"); }
+                <nav class="page-back-navigation" aria-label="Kthimi"><a href="@navigationReturnUrl" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a></nav>
+            }
+            else if (IsSectionDefined("PageNavigation"))
             {
                 <nav class="page-back-navigation" aria-label="Kthimi">@await RenderSectionAsync("PageNavigation", required: false)</nav>
             }
@@ -78,7 +100,7 @@
         <main class="app-content" id="main-content" tabindex="-1">
             @RenderBody()
         </main>
-        <footer class="app-footer"><span>© @DateTime.Today.Year 2 Korriku</span><span>Programuar nga <strong>profix.ITS</strong></span></footer>
+        <footer class="app-footer"><span>© @DateTime.Today.Year @club.Name</span><span>Programuar nga <a class="developer-credit" href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels</a></span></footer>
     </div>
     <link href="~/css/platform.css" rel="stylesheet" asp-append-version="true" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

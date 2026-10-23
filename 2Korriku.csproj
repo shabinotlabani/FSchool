@@ -10,6 +10,7 @@
     <Compile Remove="tests/**/*.cs" />
     <Content Remove="tests/**" />
     <None Remove="tests/**" />
+    <Content Update="appsettings.Local.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
   </ItemGroup>
 
   <ItemGroup>

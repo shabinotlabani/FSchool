@@ -1,3 +1,4 @@
+@{ var club = await Club.Get(); }
 @model StockOverviewModel
 @using _2Korriku.Services
 @{
@@ -15,7 +16,7 @@
 </div>
 <main class="stock-sheet stock-size-sheet">
     <header class="document-header">
-        <div class="document-brand"><img src="~/images/fc-2-korriku.svg" alt="FC 2 Korriku" /><div><strong>FC 2 KORRIKU</strong><span>MAGAZINA</span></div></div>
+        <div class="document-brand"><img src="@Club.LogoUrl" alt="@club.DisplayName" /><div><strong>@club.DisplayName</strong><span>MAGAZINA</span></div></div>
         <div class="document-heading"><span class="copy-label">RAPORTI I STOKUT</span><h1>Stoku sipas madhësive</h1><strong>Gjendja më @f.To.ToString("dd.MM.yyyy")</strong></div>
     </header>
     <div class="document-rule"></div>
@@ -65,5 +66,5 @@
     {
         <p>Nuk ka rekuizita për filtrat e zgjedhur.</p>
     }
-    <footer class="document-footer"><span>FC 2 Korriku · Raporti i magazinës</span><span>Gjeneruar @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</span></footer>
+    <footer class="document-footer"><span>@club.DisplayName · Raporti i magazinës</span><span>Gjeneruar @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</span></footer>
 </main>

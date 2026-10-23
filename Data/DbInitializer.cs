@@ -10,6 +10,9 @@ public static class DbInitializer
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Club.ClubId = 1;
+        db.Club.IdentityAccess = true;
+        db.Club.ManagePlatform = true;
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         await using var transaction = await db.Database.BeginTransactionAsync();
@@ -35,6 +38,18 @@ public static class DbInitializer
             };
             Ensure(await userManager.CreateAsync(admin));
             Ensure(await userManager.AddToRoleAsync(admin, Roles.Admin));
+        }
+        // The existing owner is explicitly authorized to administer UPNEXT clubs.
+        // Persist ownership on the account, never derive it from a mutable email at runtime.
+        if (!await db.Users.IgnoreQueryFilters().AnyAsync(x => x.IsPlatformOwner))
+        {
+            var owner = await userManager.FindByEmailAsync("labinot.shabani@gmail.com")
+                ?? throw new InvalidOperationException("The UPNEXT owner account was not found.");
+            owner.IsPlatformOwner = true;
+            Ensure(await userManager.UpdateAsync(owner));
+            foreach (var role in new[] { Roles.Admin, Roles.SuperAdmin })
+                if (!await userManager.IsInRoleAsync(owner, role)) Ensure(await userManager.AddToRoleAsync(owner, role));
+            Ensure(await userManager.UpdateSecurityStampAsync(owner));
         }
         await transaction.CommitAsync();
     }

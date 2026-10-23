@@ -1,8 +1,9 @@
+@{ var club = await Club.Get(); }
 @model ReportsViewModel
 @using _2Korriku.Services
 @{ViewData["Title"] = "Borxhet dhe stoku"; var total = Model.StudentsWithDebt.Sum(x => x.Balance);}
 <link rel="stylesheet" href="~/css/operations.css" asp-append-version="true" />
-<div class="page-heading"><div><p class="eyebrow">FC 2 KORRIKU / RAPORTET</p><h1>Borxhet dhe stoku</h1><p>Gjendja aktuale më @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</p></div><a asp-action="Index" class="btn btn-outline-primary">Hyrjet dhe shpenzimet →</a></div>
+<div class="page-heading"><div><p class="eyebrow">@club.DisplayName / RAPORTET</p><h1>Borxhet dhe stoku</h1><p>Gjendja aktuale më @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt,BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</p></div><a asp-action="Index" class="btn btn-outline-primary">Hyrjet dhe shpenzimet →</a></div>
 <div class="operations-metrics"><div><span>Borxhi i lojtarëve të shfaqur</span><strong>@total.ToString("N2")</strong></div><div><span>Lojtarë me borxh</span><strong>@Model.StudentsWithDebt.Count</strong></div><div><span>@(Model.Stock == "all" ? "Rekuizita aktive" : "Rekuizita në / nën minimum")</span><strong>@Model.LowStockProducts.Count</strong></div></div>
 <section class="panel operations-panel mb-4">
     <div class="operations-heading"><div><h2>Borxhet e lojtarëve</h2></div><a asp-action="PrintDebts" asp-route-search="@Model.Search" class="btn btn-primary">Printo borxhet / PDF</a></div>

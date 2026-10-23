@@ -114,22 +114,23 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
         if (await new ParentAccessService(db).Resolve(token)==null) return NotFound();
         var root = Request.PathBase.ToString();
         var link = root + "/p/" + token;
+        var club = await new ClubBranding(db).Get();
         return Content(JsonSerializer.Serialize(new
         {
             id = link,
-            name = "Prindi · 2 Korriku",
-            short_name = "Prindi · 2 Korriku",
+            name = ClubBranding.PlatformName + " · Prindi · " + club.Name,
+            short_name = ClubBranding.PlatformName,
             lang = "sq",
             start_url = link,
             scope = link,
             display = "standalone",
             background_color = "#ffffff",
             theme_color = "#2c3f93",
-            icons = new[]
+            icons = club.Logo != null ? new[] { new { src = root + "/ClubSettings/Logo?clubId=" + db.CurrentClubId, sizes = "any", type = club.LogoType!, purpose = "any" } } : new[]
             {
-                new { src = root + "/images/pwa/icon-192.png", sizes = "192x192", type = "image/png", purpose = "any" },
-                new { src = root + "/images/pwa/icon-512.png", sizes = "512x512", type = "image/png", purpose = "any" },
-                new { src = root + "/images/pwa/maskable-512.png", sizes = "512x512", type = "image/png", purpose = "maskable" }
+                new { src = root + new ClubBranding(db).PwaIcon(192), sizes = "192x192", type = "image/png", purpose = "any" },
+                new { src = root + new ClubBranding(db).PwaIcon(512), sizes = "512x512", type = "image/png", purpose = "any" },
+                new { src = root + new ClubBranding(db).PwaIcon(512), sizes = "512x512", type = "image/png", purpose = "maskable" }
             }
         }), "application/manifest+json");
     }

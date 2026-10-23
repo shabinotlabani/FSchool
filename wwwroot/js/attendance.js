@@ -1,6 +1,14 @@
 (() => {
     const form = document.getElementById('attendance-form');
     if (!form) return;
+    const menus = [...form.querySelectorAll('.attendance-more')];
+    menus.forEach(menu => menu.addEventListener('toggle', () => {
+        if (menu.open) menus.filter(other => other !== menu).forEach(other => { other.open = false; });
+    }));
+    document.addEventListener('click', event => menus.filter(menu => !menu.contains(event.target)).forEach(menu => { menu.open = false; }));
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') menus.filter(menu => menu.open).forEach(menu => { menu.open = false; menu.querySelector('summary').focus(); });
+    });
     const histories = [...form.querySelectorAll('.player-history')];
     histories.forEach(history => history.addEventListener('toggle', () => {
         if (history.open) histories.filter(other => other !== history).forEach(other => { other.open = false; });
@@ -18,6 +26,31 @@
     const count = document.getElementById('attendance-count');
     const next = document.getElementById('next-unmarked');
     let dirty = false;
+    const draftKey = 'attendance-draft-' + location.pathname + location.search;
+    const rosterToken = form.querySelector('[name=RosterToken]')?.value;
+    const revision = form.querySelector('[name=Revision]')?.value;
+    const attendanceDate = form.querySelector('[name=Date]')?.value;
+    try {
+        const draft = JSON.parse(sessionStorage.getItem(draftKey) || 'null');
+        if (draft && draft.rosterToken === rosterToken && draft.revision === revision && draft.attendanceDate === attendanceDate) {
+            draft.selected.forEach(saved => {
+                const input = document.getElementById(saved.id);
+                if (input && input.type === 'radio' && !input.disabled && input.value === saved.value) input.checked = true;
+            });
+            dirty = draft.selected.length > 0;
+            const indicator = document.getElementById('attendance-dirty');
+            if (indicator) indicator.hidden = !dirty;
+        }
+        sessionStorage.removeItem(draftKey);
+    } catch { /* Storage may be unavailable. */ }
+    form.querySelectorAll('[data-development-student]').forEach(link => link.addEventListener('click', () => {
+        try {
+            sessionStorage.setItem('development-return-' + link.dataset.developmentStudent, location.pathname + location.search);
+            if (dirty) sessionStorage.setItem(draftKey, JSON.stringify({ rosterToken, revision, attendanceDate,
+                selected: [...form.querySelectorAll('input[type=radio]:checked')].map(input => ({ id: input.id, value: input.value })) }));
+            dirty = false;
+        } catch { /* Keep the unsaved-changes warning when storage fails. */ }
+    }));
     const missing = () => rows.filter(row => !row.querySelector('input[type=radio]:checked'));
     function update() {
         if (!count) return;

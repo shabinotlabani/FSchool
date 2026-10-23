@@ -19,7 +19,7 @@
         const proposed=Math.min(rate,Math.ceil(Math.round(rate*100)*pricing.weeks/400));
         const explanation=document.querySelector('#first-month-calculation');
         if(explanation)explanation.textContent=waiting?'Zgjidhni familjen për të parë llogaritjen.':`Për regjistrimin sot: ${Number(rate).toFixed(2)} × ${pricing.weeks} ÷ 4 → ${proposed.toFixed(2)}.`;
-        const free=plan.value==='3';
+        const free=plan.selectedOptions[0]?.dataset.waiver==='true';
         if(free)manual.checked=false;
         manual.disabled=free||waiting;
         amount.disabled=!manual.checked||free||waiting;

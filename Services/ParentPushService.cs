@@ -40,10 +40,18 @@ public class ParentPushService(ApplicationDbContext db)
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2020)");
         var settings=await db.ParentPushSettings.SingleOrDefaultAsync();
-        if(settings==null){
-            using var ec=ECDsa.Create(ECCurve.NamedCurves.nistP256);var keys=ec.ExportParameters(true);
-            settings=new(){Id=1,PublicKey=WebEncoders.Base64UrlEncode(new byte[]{4}.Concat(keys.Q.X!).Concat(keys.Q.Y!).ToArray()),PrivateKey=WebEncoders.Base64UrlEncode(keys.D!)};
-            db.ParentPushSettings.Add(settings);
+        if(settings==null || string.IsNullOrEmpty(settings.PublicKey)){
+            // A browser push subscription belongs to this origin, not to one club.
+            // Reuse only the infrastructure key pair; messages and preferences stay scoped.
+            var platformKeys=await db.ParentPushSettings.IgnoreQueryFilters().AsNoTracking().Where(x=>x.PublicKey!="")
+                .OrderBy(x=>x.Id).Select(x=>new{x.PublicKey,x.PrivateKey}).FirstOrDefaultAsync();
+            if(settings==null){settings=new(){Id=db.CurrentClubId};db.ParentPushSettings.Add(settings);}
+            if(platformKeys!=null){settings.PublicKey=platformKeys.PublicKey;settings.PrivateKey=platformKeys.PrivateKey;}
+            else{
+                using var ec=ECDsa.Create(ECCurve.NamedCurves.nistP256);var keys=ec.ExportParameters(true);
+                settings.PublicKey=WebEncoders.Base64UrlEncode(new byte[]{4}.Concat(keys.Q.X!).Concat(keys.Q.Y!).ToArray());
+                settings.PrivateKey=WebEncoders.Base64UrlEncode(keys.D!);
+            }
         }
         settings.Subject=uri.GetLeftPart(UriPartial.Authority);
         await db.SaveChangesAsync();await tx.CommitAsync();

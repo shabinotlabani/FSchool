@@ -68,6 +68,24 @@ public class StudentWorkflowService(ApplicationDbContext db)
         await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();await tx.CommitAsync();return family.Id;
     }
 
+    public async Task<int> DeactivateByCoach(CoachDeactivateInput input,string actor)
+    {
+        Validator.ValidateObject(input,new ValidationContext(input),true);
+        if(string.IsNullOrWhiteSpace(input.Reason))throw new ValidationException("Shkruani arsyen.");
+        await using var tx=await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);
+        await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
+        await new CoachChatService(db).Authorize(input.StudentId,actor,null);
+        var student=await db.Students.SingleAsync(x=>x.Id==input.StudentId);
+        await db.Entry(student).ReloadAsync();
+        if(student.Revision!=input.Revision||!student.IsActive)throw new InvalidOperationException("Të dhënat kanë ndryshuar. Rihapni lojtarin.");
+        var before=JsonSerializer.Serialize(new{student.IsActive,student.TrainingTeamId});
+        student.IsActive=false;student.Revision=Guid.NewGuid();student.UpdatedAt=DateTime.UtcNow;
+        db.StudentChanges.Add(new(){StudentId=student.Id,ActorId=actor,Reason=input.Reason.Trim(),Before=before,
+            After=JsonSerializer.Serialize(new{student.IsActive,student.TrainingTeamId}),Summary="Pasivizim nga trajneri"});
+        await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();await tx.CommitAsync();
+        return student.TrainingTeamId!.Value;
+    }
     public async Task EditAsync(StudentEditModel input,string actor)
     {
         Validator.ValidateObject(input,new ValidationContext(input),true);

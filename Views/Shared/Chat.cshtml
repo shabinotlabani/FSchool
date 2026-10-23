@@ -1,0 +1,32 @@
+@model ChatView
+@using _2Korriku.Services
+@{
+    Layout=Model.Parent?"_ParentChatLayout":"_Layout";
+    ViewData["Title"]="Mesazhet · "+Model.Student.FullName;
+    var controller=Model.Parent?"ParentChat":"CoachInbox";
+    var route=new{token=Model.Token,studentId=Model.Student.Id,coachId=Model.CoachId};
+}
+<link rel="stylesheet" href="~/css/chat.css" asp-append-version="true"/>
+<section class="chat-page" data-chat data-poll="@(Model.Before.HasValue?null:Url.Action("Messages",controller,route))" data-read="@Url.Action("Read",controller,route)">
+<header class="chat-heading">
+<a class="chat-back" href="@(Model.Parent?Url.Action("Index","ParentPortal",new{token=Model.Token,studentId=Model.Student.Id,continueVisit=true}):(ViewData["ReturnUrl"] as string??Url.Action("Index","CoachInbox")))" aria-label="Mbrapa">←</a>
+<div><h1>@(Model.Parent?Model.CoachName:Model.Student.FullName)</h1><p>@(Model.Parent?Model.Student.FullName:Model.Student.ParentName??"Prindi / kujdestari")</p></div>
+</header>
+@if(Model.Parent&&Model.Coaches.Count>1){<nav class="chat-coaches" aria-label="Trajneri">@foreach(var coach in Model.Coaches){<a class="@(coach.Id==Model.CoachId?"selected":"")" asp-controller="ParentChat" asp-action="Thread" asp-route-token="@Model.Token" asp-route-studentId="@Model.Student.Id" asp-route-coachId="@coach.Id">@coach.Name</a>}</nav>}
+@if(Model.HasOlder){<a class="chat-older" href="@Url.Action("Thread",controller,new{token=Model.Token,studentId=Model.Student.Id,coachId=Model.CoachId,before=Model.Messages.First().Id,returnUrl=ViewData["ReturnUrl"]})">Mesazhe më të hershme</a>}
+@if(Model.Before.HasValue){<a class="chat-older" href="@Url.Action("Thread",controller,route)">Kthehu te mesazhet e fundit</a>}
+<div class="chat-messages" role="log" aria-label="Biseda" aria-live="polite" tabindex="0">
+@foreach(var message in Model.Messages){var mine=message.FromParent==Model.Parent;<article class="chat-message @(mine?"mine":"")" data-id="@message.Id"><p>@message.Body</p><small>@BillingClock.LocalTime(message.CreatedAt).ToString("dd.MM.yyyy HH:mm")@(mine?(message.ReadAt.HasValue?" · Lexuar":" · Dërguar"):"")</small></article>}
+@if(Model.Messages.Count==0){<p class="chat-empty">Shkruani mesazhin tuaj.</p>}
+</div>
+<form class="chat-compose" method="post" action="@Url.Action("Send",controller,new{token=Model.Token})">
+@if(!Model.Parent){<input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]"/>}
+
+@Html.AntiForgeryToken()
+<input type="hidden" name="StudentId" value="@Model.Student.Id"/><input type="hidden" name="CoachId" value="@Model.CoachId"/><input type="hidden" name="RequestId" value="@Model.Input.RequestId"/>
+<div asp-validation-summary="All" class="chat-error" role="alert"></div>
+<label for="chat-body" class="chat-label">Mesazhi</label><div class="chat-compose-row"><textarea id="chat-body" name="Body" maxlength="2000" rows="2" required placeholder="Shkruani mesazhin…">@Model.Input.Body</textarea><button type="submit">Dërgo <span aria-hidden="true">↑</span></button></div>
+<p class="chat-connection" role="status"></p>
+</form>
+</section>
+@section Scripts {<script src="~/js/chat.js" asp-append-version="true"></script>}

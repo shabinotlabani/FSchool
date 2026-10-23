@@ -1,0 +1,18 @@
+@model CoachMenuPage
+@{ViewData["Title"]="Menuja ushqimore";var pending=Model.Proposal?.MenuStatus is "Pending" or "Processing";}
+<div class="page-heading"><div><h1>Menuja ushqimore</h1><span>@Model.Player.FullName</span></div><span class="badge text-bg-light">@(Model.Current.Individual?"Menu individuale":"Menu e përbashkët")</span></div>
+@if(TempData["MenuSuccess"] is string success){<p class="alert alert-success">@success</p>}
+@if(TempData["MenuError"] is string error){<p class="alert alert-danger">@error</p>}
+<form asp-action="Propose" method="post"><input name="studentId" value="@Model.Player.Id" type="hidden"/>
+<label for="menu-instructions" class="form-label">Vëzhgimi, alergjitë ose kufizimet ushqimore</label><textarea id="menu-instructions" name="instructions" maxlength="2000" rows="2" class="form-control">@Model.Proposal?.Reason</textarea>
+<button class="btn btn-primary my-3" disabled="@pending">Propozo menu me AI</button></form>
+@if(pending){<p role="status" id="coach-menu-status" data-status-url="@Url.Action("Status",new{studentId=Model.Player.Id})">@CareMenuStatus.Label(Model.Proposal!.MenuStatus) @Model.Proposal.MenuError</p><a asp-action="Index" asp-route-studentId="@Model.Player.Id" class="btn btn-sm btn-outline-secondary">Rifresko propozimin</a>}
+@if(Model.Proposal?.MenuStatus=="Failed"){<p role="status">@Model.Proposal.MenuError</p>}
+@if(Model.Draft is {} draft){
+<h2 class="h5 mt-3">Propozimi nga AI</h2><partial name="_WeeklyMenu" model="draft" view-data='@(new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData){["ExpandedMenu"]=true})'/>
+@if(draft.Revision==Model.Current.Revision){<form asp-action="Approve" method="post"><input type="hidden" name="id" value="@Model.Proposal!.Id"/><input type="hidden" name="studentId" value="@Model.Player.Id"/><label class="d-block my-3"><input type="checkbox" name="reviewed" value="true" required/> E rishikova menunë, alergjitë dhe kufizimet.</label><button class="btn btn-primary">Aprovo dhe publiko te prindi</button></form>}
+else{<p class="text-muted">Menuja është ndryshuar ndërkohë. Gjeneroni një propozim të ri.</p>}
+}
+<h2 class="h5 mt-4">Menuja që sheh prindi</h2><partial name="_WeeklyMenu" model="Model.Current"/>
+@section PageNavigation{<a asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@Model.Player.Id" class="btn btn-outline-secondary">← Profili i lojtarit</a>}
+@section Scripts{<script src="~/js/coach-menu.js" asp-append-version="true"></script>}

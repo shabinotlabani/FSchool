@@ -14,12 +14,14 @@
 @for(var i=0;i<Model.Players.Count;i++){
 <div class="attendance-row panel" data-player role="group" aria-labelledby="player-name-@i">
 <div class="attendance-player-header"><h2 class="attendance-player-name" id="player-name-@i"><span class="attendance-number">@(i+1).</span> @Model.Players[i].Name
-@if(Model.Players[i].Debt>0){<span class="attendance-player-debt" aria-label="Borxh @Model.Players[i].Debt.ToString("N2") euro">@Model.Players[i].Debt.ToString("N2")</span>}
+@if(Model.Players[i].Debt>0){<span class="attendance-player-debt" aria-label="Për t’u paguar @Model.Players[i].Debt.ToString("N2")">@Model.Players[i].Debt.ToString("N2")</span>}
 @if(!string.IsNullOrWhiteSpace(Model.Players[i].Notes)){
 <span class="attendance-player-note">· @Model.Players[i].Notes</span>
 }
 </h2>
-<div class="attendance-player-actions">
+<details class="attendance-more"><summary aria-label="Veprimet për @Model.Players[i].Name"><span aria-hidden="true">⋯</span></summary><div class="attendance-player-actions"><partial name="_WhatsAppContact" model="@(new _2Korriku.Services.WhatsAppContact(Model.Players[i].ParentPhone,Model.Players[i].ParentName))"/>
+@if(User.IsInRole(Roles.Coach)){<a class="player-transfer-link" asp-controller="CoachInbox" asp-action="Thread" asp-route-studentId="@Model.Players[i].StudentId">Mesazh prindit</a><a class="player-transfer-link" asp-controller="CoachInbox" asp-action="Deactivate" asp-route-studentId="@Model.Players[i].StudentId">Pasivizo</a>}
+@if(User.IsInRole(Roles.Coach)){<a class="player-transfer-link" asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@Model.Players[i].StudentId" asp-route-section="Progress" data-development-student="@Model.Players[i].StudentId">Ecuria</a>}
 @if(Model.Players[i].CanChangeGroup){<a class="player-transfer-link" asp-action="ChangeGroup" asp-route-studentId="@Model.Players[i].StudentId" asp-route-sourceTeamId="@Model.TeamId" asp-route-coachRole="@Model.CoachRole">Ndrysho grupin</a>}
 <details class="player-history">
 <summary aria-label="Historiku i prezencës për @Model.Players[i].Name">Historiku</summary>
@@ -31,10 +33,14 @@
 <div class="player-history-entry"><time>@entry.Date.ToString("dd.MM.yyyy")</time><span class="@(present?"history-present":"history-absent")">@(present?"✓ Prezent":"− Mungon")</span></div>
 }
 </div>
-</details></div></div>
+</details>
+
+</div></details></div>
+<div class="player-profile-toolbar">@if(User.IsInRole(Roles.Coach)){<a class="player-profile-launch" asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@Model.Players[i].StudentId" data-development-student="@Model.Players[i].StudentId"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg><span class="player-profile-label"><span>Profili · @(Model.Players[i].PlayerRole??"Roli i pacaktuar")</span>@if(Model.Players[i].LastMeasurementDate.HasValue){<small>Matjet e fundit · @Model.Players[i].LastMeasurementDate?.ToString("dd.MM.yyyy")</small>}</span><span aria-hidden="true">↗</span></a>}</div>
 <input asp-for="Players[i].StudentId" type="hidden"/>
 <div class="attendance-options">
-<input asp-for="Players[i].Present" type="radio" value="true" id="present-@i" disabled="@Model.IsLocked" required/><label for="present-@i" class="present-option">✓ Prezent</label>
+@if(Model.Players[i].CareStatus is {} medical){<div class="care-training-status" style="grid-column:1/-1;font-size:.8rem;border-left:3px solid #879eb2;padding:6px 10px;background:#f5f8fa"><strong>@CareLabels.Status(medical.Status)</strong><span> · @medical.Date.ToString("dd.MM.yyyy")</span>@if(!string.IsNullOrWhiteSpace(medical.Instructions)){<div style="white-space:pre-wrap">@medical.Instructions</div>}@if(medical.ReviewDate.HasValue){<small>Rikontrolli: @medical.ReviewDate?.ToString("dd.MM.yyyy")</small>}</div>}
+<input asp-for="Players[i].Present" type="radio" value="true" id="present-@i" disabled="@(Model.IsLocked || Model.Players[i].CareStatus?.Status=="Unavailable")" required/><label for="present-@i" class="present-option">✓ Prezent</label>
 <input asp-for="Players[i].Present" type="radio" value="false" id="absent-@i" disabled="@Model.IsLocked" required/><label for="absent-@i" class="absent-option">− Mungon</label>
 </div></div>}
 @if(Model.Players.Count==0){<div class="panel p-4">Ekipi nuk ka lojtarë aktivë.</div>}

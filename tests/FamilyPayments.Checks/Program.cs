@@ -40,6 +40,7 @@ try
     var testSettings = new NpgsqlConnectionStringBuilder(source.ConnectionString) { Database = testDatabase, Pooling = false };
     var services = new ServiceCollection();
     services.AddLogging();
+    services.AddScoped(_ => new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });
     services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(testSettings.ConnectionString));
     services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
     await using var provider = services.BuildServiceProvider();
@@ -222,7 +223,7 @@ try
     var paymentsBeforeOther=await db.Payments.CountAsync();
     await Reject(()=>billing.RegisterPaymentAsync(new(){StudentId=guardedStudent.Id,Amount=10,PaymentMethod="Other"},actor.Id),"Monthly payment rejects unsupported payment method");
     Check(await db.Payments.CountAsync()==paymentsBeforeOther,"Rejected payment method does not create a payment");
-    var guardedInput=new FamilyEditModel{Name="Guard target",StudentIds=[guardedStudent.Id],Reason="Attempt transfer",ConfirmIndividualTransfer=true};
+    var guardedInput=new FamilyEditModel{FeePlanId=2,Name="Guard target",StudentIds=[guardedStudent.Id],Reason="Attempt transfer",ConfirmIndividualTransfer=true};
     await Reject(()=>guardService.SaveAsync(guardedInput,actor.Id),"Custom individual package cannot be silently replaced even with confirmation");
     guardedInput.StudentIds=[first.Id];
     await Reject(()=>guardService.SaveAsync(guardedInput,actor.Id),"Existing family membership cannot be overwritten by another family");
@@ -486,6 +487,11 @@ try
     await billing.GenerateDueFeesAsync(asOf:TariffService.NextMonth);
     Check((await billing.GetInvoicesAsync(advancePlayer.Id)).Single(x=>x.Period.Year==TariffService.NextMonth.Year&&x.Period.Month==TariffService.NextMonth.Month).Due==0,"The next monthly invoice is automatically covered by the advance");
     var realPlayers=await db.Students.CountAsync();
+    // This fixture already created other administrators; supply the existing owner
+    // account that the multi-club upgrade explicitly authorizes.
+    db.Users.Add(new ApplicationUser { UserName="labinot.shabani@gmail.com", Email="labinot.shabani@gmail.com",
+        NormalizedUserName="LABINOT.SHABANI@GMAIL.COM", NormalizedEmail="LABINOT.SHABANI@GMAIL.COM", SecurityStamp=Guid.NewGuid().ToString() });
+    await db.SaveChangesAsync();
     await DbInitializer.SeedAsync(provider);
     Check(await PresentationDemo.SeedAsync(provider),"Presentation data imports successfully into isolated database");
     db.ChangeTracker.Clear();
@@ -495,7 +501,7 @@ try
     Check(await db.PendingBankPayments.AnyAsync(x=>x.Student!.LastName=="DEMO"&&x.ReviewedAt==null),"Demo retains pending bank payments for presentation");
     var demoReport=await new ReasonReportService(db).LoadAsync(new(),search:"DEMO");
     Check(demoReport.Rows.Any(x=>x.Action=="Anulim")&&demoReport.Rows.Any(x=>x.Action=="Lirim"),"Demo fills cancellation and waiver reports");
-    Check(DataResetService.IsOwner("LABINOT.SHABANI@GMAIL.COM") && !DataResetService.IsOwner("other@example.com") && !DataResetService.IsOwner(null), "Reset is restricted to the exact owner username");
+    Check(db.Club.IsOwner && await db.Users.AnyAsync(x=>x.IsPlatformOwner), "Reset uses the platform owner's selected club");
     var keptTypes = new[]{typeof(ApplicationUser),typeof(FeePlan),typeof(FeePlanPrice),typeof(FootballField),typeof(ExpenseCategory),typeof(SizeGroup),typeof(PersonalTariff),typeof(DemoImport)};
     var keptTables = keptTypes.Select(t=>db.Model.FindEntityType(t)!.GetTableName()!).ToArray();
     async Task<long> TableCount(string table) => await db.Database.SqlQueryRaw<long>("SELECT count(*) AS \"Value\" FROM \""+table+"\"").SingleAsync();

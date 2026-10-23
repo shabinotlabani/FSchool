@@ -8,6 +8,8 @@ namespace _2Korriku.Services;
 
 public class TariffService(ApplicationDbContext db)
 {
+    public Task<int> StandardPlanIdAsync() => db.FeePlans.Where(p => !p.IsFamily && !p.IsWaiver).OrderBy(p => p.Id).Select(p => p.Id).FirstAsync();
+    public Task<int> DefaultFamilyPlanIdAsync() => db.FeePlans.Where(p => p.IsFamily).OrderBy(p => p.Id).Select(p => p.Id).FirstAsync();
     public async Task RenameAsync(RenameTariffModel input)
     {
         Validator.ValidateObject(input, new(input), true);
@@ -76,8 +78,10 @@ public class TariffService(ApplicationDbContext db)
             var position=members.FindIndex(a=>a.StudentId==student.Id)+1;
             if(position==0)throw new InvalidOperationException("Anëtarësimi në familje nuk është i vlefshëm.");
             var amount=position<=price.FamilyFirstCount?price.FamilyFirstAmount??40:price.FamilyAdditionalAmount??35;
-            if(members.Count==1 && price.SingleUsesStandard)
-                amount=await db.FeePlanPrices.Where(p=>p.FeePlanId==1 && p.EffectiveMonth<=month).OrderByDescending(p=>p.EffectiveMonth).ThenByDescending(p=>p.Id).Select(p=>p.Amount).FirstAsync();
+            if(members.Count==1 && price.SingleUsesStandard){
+                var standardId = await StandardPlanIdAsync();
+                amount=await db.FeePlanPrices.Where(p=>p.FeePlanId==standardId && p.EffectiveMonth<=month).OrderByDescending(p=>p.EffectiveMonth).ThenByDescending(p=>p.Id).Select(p=>p.Amount).FirstAsync();
+            }
             var family=await db.PlayerFamilies.AsNoTracking().SingleAsync(f=>f.Id==assignment.FamilyId);
             var familyLabel=family.Name.Length>45?family.Name[..45]+"…":family.Name;
             return new(amount,$"Familjare · {familyLabel} · Fëmija {position}/{members.Count}",false,assignment.Reason,$"{assignment.Notes} · Paketa: {price.FamilyFirstCount} të parët nga {price.FamilyFirstAmount??40:0.##}, të tjerët nga {price.FamilyAdditionalAmount??35:0.##}." );
@@ -107,6 +111,8 @@ public class TariffService(ApplicationDbContext db)
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
         if(!await db.Students.AnyAsync(s=>s.Id==input.StudentId))throw new InvalidOperationException("Lojtari nuk u gjet.");
         if(!await db.FeePlans.AnyAsync(p=>p.Id==input.FeePlanId && p.IsActive))throw new InvalidOperationException("Tarifa nuk u gjet.");
+        if(await db.FeePlans.AnyAsync(p=>p.Id==input.FeePlanId && p.IsWaiver) && string.IsNullOrWhiteSpace(input.Notes))
+            throw new InvalidOperationException("Për lirim nga pagesa kërkohet edhe shënimi.");
         TryMonth(input.EffectiveMonth,out var month);
         await new BillingService(db).EnsureNoSeasonalChangeAsync([input.StudentId], month);
         if((await db.FeePlans.SingleAsync(p=>p.Id==input.FeePlanId)).IsFamily)throw new InvalidOperationException("Paketa familjare caktohet te Familjet, duke zgjedhur fëmijët dhe renditjen.");

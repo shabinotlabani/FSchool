@@ -50,12 +50,13 @@ try
     var services = new ServiceCollection();
     services.AddLogging();
     services.AddAuthorization(o=>o.DefaultPolicy=new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().RequireRole(Roles.All).Build());
+    services.AddScoped(_ => new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });
     services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(testSettings.ConnectionString));
     services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
     await using var provider = services.BuildServiceProvider();
     var options = provider.GetRequiredService<DbContextOptions<ApplicationDbContext>>();
-    async Task<T> WithDb<T>(Func<ApplicationDbContext, Task<T>> action) { await using var db = new ApplicationDbContext(options); return await action(db); }
-    await using (var db = new ApplicationDbContext(options))
+    async Task<T> WithDb<T>(Func<ApplicationDbContext, Task<T>> action) { await using var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }); return await action(db); }
+    await using (var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }))
     {
         await db.Database.MigrateAsync();
         Check(!db.Database.HasPendingModelChanges(), "Migration matches the EF model");
@@ -107,12 +108,12 @@ try
     coachEdit.Role=Roles.Coach;coachEdit.TeamIds=[];
     await SaveCoach(coachEdit);
     Check(await WithDb(db=>db.CoachTeams.CountAsync(x=>x.TrainingTeamId==staffedTeam.Id))==2,"Editing a user cannot clear the team's coaching assignments");
-    await using(var db=new ApplicationDbContext(options)){
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){
         db.Students.AddRange(new Student{FirstName="Arben",LastName="Test",DateOfBirth=new(2015,1,1),TrainingTeamId=staffedTeam.Id},new Student{FirstName="Blerim",LastName="Test",DateOfBirth=new(2015,1,1),TrainingTeamId=staffedTeam.Id},new Student{FirstName="Inactive",LastName="Test",DateOfBirth=new(2015,1,1),TrainingTeamId=staffedTeam.Id,IsActive=false});
         await db.SaveChangesAsync();
     }
     Task<AttendanceModel> Attendance(string role="head",string user="test-coach-2")=>WithDb(db=>new AttendanceService(db).LoadAsync(staffedTeam.Id,role,BillingClock.Today,user));
-    async Task SaveAttendance(AttendanceModel model,string user="test-coach-2"){await using var db=new ApplicationDbContext(options);await new AttendanceService(db).SaveAsync(model,user);}
+    async Task SaveAttendance(AttendanceModel model,string user="test-coach-2"){await using var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });await new AttendanceService(db).SaveAsync(model,user);}
     async Task Denied(Func<Task> action,string message){try{await action();}catch(UnauthorizedAccessException){Check(true,message);return;}throw new Exception("Expected forbidden: "+message);}
     await Denied(()=>Attendance("head","test-coach-0"),"Unassigned coach cannot access roster");
     await Denied(()=>Attendance("assistant","test-coach-2"),"Role choice does not grant assistant access");
@@ -134,7 +135,7 @@ try
     var duplicate=await Attendance();duplicate.Players[0].StudentId=duplicate.Players[1].StudentId;
     await Reject(()=>SaveAttendance(duplicate),"Duplicate roster player rejected");
     await Reject(()=>WithDb(db=>new AttendanceService(db).LoadAsync(staffedTeam.Id,"head",BillingClock.Today.AddDays(1),actor)),"Future attendance rejected");
-    await using(var db=new ApplicationDbContext(options)){var student=await db.Students.SingleAsync(x=>x.FirstName=="Arben");student.TrainingTeamId=null;student.FirstName="Renamed";await db.SaveChangesAsync();}
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){var student=await db.Students.SingleAsync(x=>x.FirstName=="Arben");student.TrainingTeamId=null;student.FirstName="Renamed";await db.SaveChangesAsync();}
     var historical=await Attendance();Check(historical.Players.Count==1&&!historical.Players.Any(x=>x.Name=="Arben Test")&&await WithDb(db=>db.AttendancePlayers.AnyAsync(x=>x.StudentName=="Arben Test")),"Transferred player disappears from live roster while original attendance and name remain stored");
     Check(await WithDb(db=>db.AttendanceChanges.CountAsync())==2,"Attendance changes retain audit records");
     var firstSave=await WithDb(db=>db.AttendanceChanges.MinAsync(x=>x.CreatedAt));
@@ -151,7 +152,7 @@ try
         await Reject(()=>WithDb(async db=>{await new AttendanceService(db,atDeadline).SaveAsync(locked,user);return true;}),"Expired attendance rejected for "+user);
     }
     Check(await WithDb(db=>db.AttendanceChanges.CountAsync())==3,"Rejected late edits do not write attendance audit records");
-    await using(var db=new ApplicationDbContext(options)){
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){
         db.TeamAttendances.AddRange(new TeamAttendance{TrainingTeamId=staffedTeam.Id,Date=BillingClock.Today.AddDays(-13),SavedById=actor},new TeamAttendance{TrainingTeamId=staffedTeam.Id,Date=BillingClock.Today.AddDays(-14),SavedById=actor});
         await db.SaveChangesAsync();
     }
@@ -193,7 +194,7 @@ try
     await Reject(() => WithDb(db => new FieldService(db).PayAsync(overpay, actor)), "Overpayment rejected");
     input.Id = id; input.Revision = booking.Revision; input.Price = 19;
     await Reject(() => WithDb(db => new FieldService(db).SaveBookingAsync(input, actor)), "Price cannot fall below money received");
-    await Reject(async () => { await using var db = new ApplicationDbContext(options); await new FieldService(db).CancelAsync(new() { Id = id, Revision = booking.Revision, Reason = "Test" }, actor); }, "Paid booking requires payment reversal before cancellation");
+    await Reject(async () => { await using var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }); await new FieldService(db).CancelAsync(new() { Id = id, Revision = booking.Revision, Reason = "Test" }, actor); }, "Paid booking requires payment reversal before cancellation");
     var report = await WithDb(db => new ExpenseService(db).ReportAsync(new() { From = BillingClock.Today, To = BillingClock.Today }));
     Check(report.IncomeRows.Single(r => r.Name == "Termine private").Net == 20 && report.Closing == 20, "Field receipt enters cash report once; unpaid bookings create no cash");
     var categoryId = await WithDb(db => new ExpenseService(db).SaveCategoryAsync(new() { Name = "Test expense" }, actor));
@@ -205,7 +206,7 @@ try
     Check(booking.Paid == 0 && booking.Due == 60, "Reversal restores the booking debt");
     report = await WithDb(db => new ExpenseService(db).ReportAsync(new() { From = BillingClock.Today, To = BillingClock.Today }));
     Check(report.IncomeRows.Single(r => r.Name == "Termine private").Net == 0 && report.Closing == 0, "Reversal balances the financial report");
-    await using (var db = new ApplicationDbContext(options)) await new FieldService(db).CancelAsync(new() { Id = id, Revision = booking.Revision, Reason = "Cancelled" }, actor);
+    await using (var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })) await new FieldService(db).CancelAsync(new() { Id = id, Revision = booking.Revision, Reason = "Cancelled" }, actor);
     schedule = await WithDb(db => new FieldService(db).ScheduleAsync(day, 1, false));
     Check(schedule.Items.All(i => i.BookingId != id), "Cancelled booking excluded from default calendar");
     schedule = await WithDb(db => new FieldService(db).ScheduleAsync(day, 1, true));
@@ -252,13 +253,13 @@ try
     await Reject(() => WithDb(db => new FieldService(db).SaveBookingAsync(invalidWeeks, actor)), "Excessive repeat count rejected");
     invalidWeeks.Weeks = 2; invalidWeeks.Date = new DateOnly(2099,12,31);
     await Reject(() => WithDb(db => new FieldService(db).SaveBookingAsync(invalidWeeks, actor)), "Recurring end date respects supported date range");
-    await using(var cancelDb = new ApplicationDbContext(options))
+    await using(var cancelDb = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }))
         await new FieldService(cancelDb).CancelAsync(new() { Id = weeklyRows[2].Id, Revision = weeklyRows[2].Revision, Reason = "One week cancelled" }, actor);
     Check(await WithDb(db => db.FieldBookings.CountAsync(b => b.SeriesId == weekly.RequestId && !b.IsCancelled)) == 4, "Cancelling one occurrence preserves the other four weeks");
     var methodFilter = new MoneyDateFilter { From = BillingClock.Today.AddDays(-1), To = BillingClock.Today };
     var beforeMethods = await WithDb(db => new ExpenseService(db).ReportAsync(methodFilter));
     var olderDate = BillingClock.Today.AddDays(-2);
-    await using (var methodDb = new ApplicationDbContext(options))
+    await using (var methodDb = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }))
     {
         var player = new Student { FirstName = "Cash bank", LastName = "Test", DateOfBirth = new DateOnly(2015,1,1) };
         methodDb.Students.Add(player); await methodDb.SaveChangesAsync();
@@ -299,7 +300,7 @@ try
     var debtRoster=await Attendance();
     var debtPlayerId=debtRoster.Players[0].StudentId;
     var creditPlayerId=debtRoster.Players[1].StudentId;
-    await using(var db=new ApplicationDbContext(options)){
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){
         db.StudentTransactions.AddRange(
             new StudentTransaction{StudentId=debtPlayerId,TransactionType="MonthlyFee",Description="Attendance debt check",Debit=40},
             new StudentTransaction{StudentId=debtPlayerId,TransactionType="Payment",Description="Attendance payment check",Credit=15},
@@ -310,12 +311,12 @@ try
     var debtView=await Attendance();
     Check(debtView.Players.Single(x=>x.StudentId==debtPlayerId).Debt==25,"Attendance shows remaining debt after payment and ignores cancelled charges");
     Check(debtView.Players.Single(x=>x.StudentId==creditPlayerId).Debt==0,"Attendance does not show advances as debt");
-    await using(var db=new ApplicationDbContext(options)){
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){
         db.StudentTransactions.Add(new(){StudentId=debtPlayerId,TransactionType="Payment",Description="Settle attendance debt",Credit=25});await db.SaveChangesAsync();
     }
     Check((await Attendance()).Players.All(x=>x.Debt==0),"Attendance debt disappears when settled");
     var attendanceStudent=new Student{FirstName="Monthly",LastName="Attendance",RegistrationDate=new DateTime(2026,7,1,0,0,0,DateTimeKind.Utc),DateOfBirth=new(2015,1,1)};
-    await using(var db=new ApplicationDbContext(options)){
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){
         var monthlyTeam=new TrainingTeam{Name="Monthly attendance",Sessions=[new(){Day=1,StartsAt=new(17,0),EndsAt=new(18,0)},new(){Day=3,StartsAt=new(17,0),EndsAt=new(18,0)},new(){Day=5,StartsAt=new(17,0),EndsAt=new(18,0)}]};
         db.TrainingTeams.Add(monthlyTeam);attendanceStudent.TrainingTeam=monthlyTeam;db.Students.Add(attendanceStudent);await db.SaveChangesAsync();
         var dates=Enumerable.Range(1,31).Select(d=>new DateOnly(2026,7,d)).Where(d=>d.DayOfWeek is DayOfWeek.Monday or DayOfWeek.Wednesday or DayOfWeek.Friday).ToList();
@@ -342,7 +343,7 @@ try
         return (List<PersonalTraining>)((Microsoft.AspNetCore.Mvc.ViewResult)await controller.Personal()).Model!;
     });
     Check((await CoachPersonal("test-coach-0")).Single().Id==personalId&&!(await CoachPersonal("test-coach-1")).Any(),"Coach personal portal only shows assigned training");
-    await using(var db=new ApplicationDbContext(options)){
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){
         db.Sales.AddRange(new Sale{StudentId=attendanceStudent.Id,InvoiceNumber="DEBT-CHECK",GrandTotal=20,AmountPaid=5,RequestId=Guid.NewGuid()},new Sale{StudentId=attendanceStudent.Id,InvoiceNumber="PAID-CHECK",GrandTotal=10,AmountPaid=10,RequestId=Guid.NewGuid()});await db.SaveChangesAsync();
     }
     var otherDebts=await WithDb(db=>new OtherDebtService(db).LoadAsync("Monthly Attendance"));
@@ -363,7 +364,7 @@ try
     await Reject(()=>WithDb(db=>new BankVerificationService(db).Review(new(){Id=rejectedId},actor,false)),"Bank rejection requires a reason");
     await WithDb(db=>new BankVerificationService(db).Review(new(){Id=rejectedId,Reason="Not received"},actor,false));
     await Reject(()=>WithDb(db=>new BankVerificationService(db).Review(new(){Id=rejectedId},actor,true)),"Rejected bank request cannot later be confirmed");
-    await using(var db=new ApplicationDbContext(options)){db.StudentFeeAssignments.Add(new(){StudentId=attendanceStudent.Id,FeePlanId=1,EffectiveMonth=TariffService.CurrentMonth});await db.SaveChangesAsync();}
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })){db.StudentFeeAssignments.Add(new(){StudentId=attendanceStudent.Id,FeePlanId=1,EffectiveMonth=TariffService.CurrentMonth});await db.SaveChangesAsync();}
     var seasonInput=new SeasonalPaymentModel{StudentId=attendanceStudent.Id,StartMonth=TariffService.NextMonth.ToString("yyyy-MM"),Months=6,PaymentMethod="Bank"};
     seasonInput.ExpectedRate=(await WithDb(db=>new BillingService(db).QuoteSeasonalAsync(seasonInput))).Rate;
     var seasonQueue=await WithDb(db=>new BankVerificationService(db).QueueSeasonal(seasonInput,actor));
@@ -418,8 +419,9 @@ try
     await Reject(()=>WithDb(db=>new BankVerificationService(db).Review(new(){Id=permissionQueue},"bank-operator",true)),"Revoked bank permission takes effect immediately");
     var changedSale=await WithDb(db=>db.Sales.SingleAsync(x=>x.InvoiceNumber=="DEBT-CHECK"));
     var changedQueue=await WithDb(db=>new BankVerificationService(db).QueueSale(new(){SaleId=changedSale.Id,Amount=15},actor));
+    var changedClientState=await WithDb(async db=> (await new BankVerificationService(db).ClientBalance(await db.PendingBankPayments.SingleAsync(x=>x.Id==changedQueue))).State);
     await WithDb(db=>new IssueService(db).PayAsync(new(){SaleId=changedSale.Id,Amount=10,PaymentMethod="Cash"},actor));
-    await Reject(()=>WithDb(db=>new BankVerificationService(db).Review(new(){Id=changedQueue},actor,true)),"Bank confirmation rechecks debt changed by cash payment");
+    await Reject(()=>WithDb(db=>new BankVerificationService(db).Review(new(){Id=changedQueue,AllocateAll=true,ExpectedClientState=changedClientState,ReceivedAmount=15},actor,true)),"Bank confirmation rechecks debt changed by cash payment");
     Check(await WithDb(db=>db.PendingBankPayments.AnyAsync(x=>x.Id==changedQueue&&x.ReviewedAt==null&&x.PaymentId==null)),"Failed confirmation remains pending without a receipt");
     await WithDb(db=>new BankVerificationService(db).Review(new(){Id=changedQueue,Reason="Paid partly in cash"},actor,false));
     Check(await WithDb(db=>db.Sales.Where(x=>x.Id==changedSale.Id).Select(x=>x.AmountPaid).SingleAsync())==15,"Rejecting equipment bank request preserves actual cash payment");
@@ -541,6 +543,11 @@ try
     earlyTeam.Sessions[0].Day=((int)lateDate.AddDays(1).DayOfWeek+6)%7+1;
     await WithDb(db=>new TeamService(db).SaveAsync(earlyTeam,actor));
     await Reject(()=>WithDb(db=>new FieldService(db).SaveBookingAsync(Late(1,lateDate,23,30),actor)),"Late reservation checks next day's team training");
+    await WithDb(async db=>{
+        db.Users.Add(new ApplicationUser { UserName="labinot.shabani@gmail.com", Email="labinot.shabani@gmail.com",
+            NormalizedUserName="LABINOT.SHABANI@GMAIL.COM", NormalizedEmail="LABINOT.SHABANI@GMAIL.COM", SecurityStamp=Guid.NewGuid().ToString() });
+        return await db.SaveChangesAsync();
+    });
     await DbInitializer.SeedAsync(provider);
     string fieldUser;
     using(var roleScope=provider.CreateScope()){

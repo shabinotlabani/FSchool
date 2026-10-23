@@ -8,20 +8,20 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f2f2f7" />
+    <meta name="theme-color" content="#0a2341" />
     <meta name="color-scheme" content="light" />
-    <title>Hyr në llogari · 2 Korriku</title>
+    <title>Hyr në llogari · UPNEXT</title>
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
-    <link rel="icon" type="image/svg+xml" href="~/images/fc-2-korriku.svg" asp-append-version="true" />
-    <partial name="_PwaHead" />
+    <link rel="icon" href="~/images/upnext/favicon.ico" asp-append-version="true" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="~/images/upnext/app_icon_180.png" />
+    <link rel="stylesheet" href="~/css/pwa.css" asp-append-version="true" />
 </head>
 <body>
     <main class="login-shell">
         <section class="form-panel" aria-label="Identifikimi">
-            <a href="~/" class="login-brand" aria-label="FC 2 Korriku">
-                <img src="~/images/fc-2-korriku.svg" asp-append-version="true" alt="Stema e FC 2 Korriku" width="64" height="90" />
-                <span>FC 2 KORRIKU<small>Portali i menaxhimit</small></span>
-            </a>
+            <div class="login-identity"><a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_512.webp" srcset="@Url.Content("~/images/upnext/logo_256.webp") 256w, @Url.Content("~/images/upnext/logo_512.webp") 512w" sizes="(max-width: 700px) 104px, 260px" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="260" height="260" /></a><p>Klubi yt. Një hap përpara.</p><span class="identity-line" aria-hidden="true"></span></div>
+            <header class="login-heading"><span>PLATFORMA UPNEXT</span><h1>Hyr në llogari</h1><p>Vazhdo me llogarinë tënde.</p></header>
             <div class="form-content">
                 <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
                     <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
@@ -44,7 +44,7 @@
                     <button type="submit" class="submit-button">Hyr në llogari <span aria-hidden="true">→</span></button>
                 </form>
             </div>
-            <footer class="form-footer"><span>© @DateTime.UtcNow.Year 2 Korriku</span><span>Programuar nga <strong>profix.ITS</strong></span></footer>
+            <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>Programuar nga <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
         </section>
     </main>
     <script>

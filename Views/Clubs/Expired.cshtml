@@ -1,0 +1,4 @@
+@{ Layout = "_ClubLayout"; ViewData["Title"] = "Afati i klubit"; }
+<header class="club-heading"><div><h1>Qasja e klubit nuk është aktive</h1></div></header>
+<p>Kontaktoni administratorin për vazhdimin e afatit.</p>
+@if(Context.RequestServices.GetRequiredService<_2Korriku.Services.ClubContext>().IsOwner){<a class="club-button primary" asp-action="Index">Menaxho klubet</a>}

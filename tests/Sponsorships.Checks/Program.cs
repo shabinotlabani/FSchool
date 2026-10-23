@@ -26,12 +26,13 @@ await using var admin=new NpgsqlConnection(new NpgsqlConnectionStringBuilder(sou
 await admin.OpenAsync();await using(var create=new NpgsqlCommand($"CREATE DATABASE \"{name}\"",admin))await create.ExecuteNonQueryAsync();
 try {
     var testConnection=new NpgsqlConnectionStringBuilder(source.ConnectionString){Database=name,Pooling=false}.ConnectionString;
-    var services=new ServiceCollection();services.AddLogging();services.AddDbContext<ApplicationDbContext>(o=>o.UseNpgsql(testConnection));
+    var services=new ServiceCollection();services.AddLogging();services.AddScoped(_ => new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });
+    services.AddDbContext<ApplicationDbContext>(o=>o.UseNpgsql(testConnection));
     services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
     await using var provider=services.BuildServiceProvider();var options=provider.GetRequiredService<DbContextOptions<ApplicationDbContext>>();
-    async Task<T> Db<T>(Func<ApplicationDbContext,Task<T>> work){await using var db=new ApplicationDbContext(options);return await work(db);}
+    async Task<T> Db<T>(Func<ApplicationDbContext,Task<T>> work){await using var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });return await work(db);}
     Task<int> Run(Func<SponsorshipService,Task<int>> work)=>Db(db=>work(new(db)));
-    await using(var db=new ApplicationDbContext(options)) {
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })) {
         await db.Database.MigrateAsync();Check(!db.Database.HasPendingModelChanges(),"Migration matches model");
         db.Roles.AddRange(new IdentityRole(Roles.Admin){Id="admin-role",NormalizedName="ADMIN"},new IdentityRole(Roles.SuperAdmin){Id="super-role",NormalizedName="SUPERADMIN"});
         foreach(var id in new[]{"super","admin","target"})db.Users.Add(new(){Id=id,UserName=id+"@example.test",Email=id+"@example.test",NormalizedEmail=id.ToUpperInvariant()+"@EXAMPLE.TEST",NormalizedUserName=id.ToUpperInvariant()+"@EXAMPLE.TEST",FirstName=id,LastName="Test",SecurityStamp=Guid.NewGuid().ToString()});
@@ -140,7 +141,7 @@ try {
     await Reject(()=>Run(s=>s.CreateContract(editC,"super")),"Cannot reduce contract category below actual spending");
     editC.Allocations[2].Amount=500;editC.Allocations[0].Amount=1000;await Run(s=>s.CreateContract(editC,"super"));await Reject(()=>Run(s=>s.CreateContract(editC,"super")),"Stale contract amendment rejected");
     // Database constraint remains a second line of defense even outside the service.
-    await using(var db=new ApplicationDbContext(options)) {
+    await using(var db=new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true })) {
         db.SponsorshipSpending.Add(new(){RequestId=Guid.NewGuid(),AllocationId=Allocation(a,1),BeneficiaryId=person,Date=today,SalaryMonth=month,Amount=1,DocumentReference="DIRECT",BankReference="DIRECT"});
         try {await db.SaveChangesAsync();throw new Exception("Unique salary index missing");}catch(DbUpdateException e)when(e.InnerException is PostgresException{SqlState:PostgresErrorCodes.UniqueViolation}){Check(true,"Database rejects cross-sponsor duplicate salary");}
     }

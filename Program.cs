@@ -11,6 +11,7 @@ var migrateOnly = args.Contains("--migrate", StringComparer.Ordinal);
 var seedPresentation = args.Contains("--seed-presentation", StringComparer.Ordinal);
 var builder = WebApplication.CreateBuilder(args.Where(x => x != "--migrate" && x != "--seed-presentation").ToArray());
 
+if(builder.Environment.IsDevelopment())builder.Configuration.AddJsonFile("appsettings.Local.json",optional:true,reloadOnChange:false);
 builder.Configuration.AddEnvironmentVariables();
 
 var configuredConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -50,6 +51,8 @@ if (builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(connection
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddScoped<ClubContext>();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Antiforgery.IAntiforgeryAdditionalDataProvider, ClubAntiforgeryData>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
@@ -65,6 +68,9 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRateLimiter(options => {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("nutrition-ai", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     options.AddPolicy("parent-portal", context => RateLimitPartition.GetFixedWindowLimiter(
         context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -73,6 +79,10 @@ builder.Services.AddAuthorization(options => options.DefaultPolicy = new Microso
 builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 builder.Services.Configure<IdentityOptions>(options => options.User.RequireUniqueEmail = true);
 builder.Services.AddScoped<UserAdministrationService>();
+builder.Services.AddScoped<ClubBranding>();
+builder.Services.AddHttpClient<GeminiMenuService>(client=>client.Timeout=TimeSpan.FromSeconds(35));
+builder.Services.AddScoped<NutritionDraftProcessor>();
+builder.Services.AddHostedService<NutritionDraftWorker>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<FinancialService>();
 builder.Services.AddScoped<BillingService>();
@@ -131,8 +141,13 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 app.UseRouting();
-app.UseRateLimiter();
+app.Use(async (context, next) => {
+    context.RequestServices.GetRequiredService<ClubContext>().IdentityAccess = true;
+    await next();
+});
 app.UseAuthentication();
+app.UseMiddleware<ClubMiddleware>();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health");

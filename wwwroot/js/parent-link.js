@@ -18,7 +18,7 @@ document.getElementById('copy-parent-link')?.addEventListener('click', async fun
             const response = await fetch(button.dataset.url, { cache: 'no-store', credentials: 'same-origin' });
             if (!response.ok || !response.headers.get('content-type')?.startsWith('image/png')) throw new Error('QR unavailable');
             const file = new File([await response.blob()], button.dataset.filename, { type: 'image/png' });
-            await navigator.share({ files: [file], title: 'Portali i prindit · 2 Korriku' });
+            await navigator.share({ files: [file], title: 'Portali i prindit' });
         } catch (error) {
             if (error.name !== 'AbortError') status.textContent = 'Përdorni “Ruaj foton” dhe dërgojeni nga mesazhet.';
         } finally { button.disabled = false; }

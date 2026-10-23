@@ -1,0 +1,5 @@
+@model List<Student>
+@{var staff=(ApplicationUser)ViewData["Staff"]!;var selected=(List<int>)ViewData["Selected"]!;ViewData["Title"]="Cakto lojtarët";}
+<div class="page-heading"><div><h1>@staff.FirstName @staff.LastName</h1><p>@ViewData["Kind"]</p></div></div>
+<form method="post"><input type="hidden" name="id" value="@staff.Id"/><div class="table-responsive"><table class="table"><thead><tr><th>Cakto</th><th>Lojtari</th><th>Ekipi</th></tr></thead><tbody>@foreach(var p in Model){<tr><td><input type="checkbox" name="studentIds" value="@p.Id" checked="@selected.Contains(p.Id)" id="care-player-@p.Id" style="width:22px;height:22px"/></td><td><label for="care-player-@p.Id">@p.FullName</label></td><td>@p.TrainingTeam?.Name</td></tr>}</tbody></table></div><button class="btn btn-primary">Ruaj caktimin</button></form>
+@section PageNavigation{<a asp-action="Index" class="btn btn-outline-secondary">← Stafi shëndetësor</a>}

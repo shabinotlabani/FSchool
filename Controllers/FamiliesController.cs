@@ -20,11 +20,12 @@ public class FamiliesController(ApplicationDbContext db):Controller
         return View(await query.OrderBy(f=>f.Name).ToListAsync());
     }
     [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
-    public async Task<IActionResult> Prices(string month,int planId=2)
+    public async Task<IActionResult> Prices(string month,int planId=0)
     {
         if(!TariffService.TryMonth(month,out var date)||date.Year<2000||date.Year>9998)return BadRequest();
+        if(planId==0)planId=await new TariffService(db).DefaultFamilyPlanIdAsync();
         var options=await new TariffService(db).OptionsAsync(date,includeInactive:true);var family=options.SingleOrDefault(p=>p.Id==planId && p.IsFamily);if(family==null)return NotFound();
-        return Json(new{first=family.Amount,additional=family.FamilyAdditionalAmount,limit=family.FamilyFirstCount,singleStandard=family.SingleUsesStandard,standard=options.Single(p=>p.Id==1).Amount});
+        return Json(new{first=family.Amount,additional=family.FamilyAdditionalAmount,limit=family.FamilyFirstCount,singleStandard=family.SingleUsesStandard,standard=options.First(p=>!p.IsFamily && !p.IsWaiver).Amount});
     }
     public async Task<IActionResult> Details(int id,string? month)
     {
@@ -68,6 +69,6 @@ public class FamiliesController(ApplicationDbContext db):Controller
         var existing=model.Id==0?0:await new FamilyService(db).PlanIdAsync(model.Id,month);
         model.Plans=options.Where(p=>p.IsFamily && (p.IsActive || p.Id==existing)).ToList();
         if(!model.Plans.Any(p=>p.Id==model.FeePlanId))model.FeePlanId=model.Plans.FirstOrDefault()?.Id??0;
-        model.FamilyPrice=model.Plans.SingleOrDefault(p=>p.Id==model.FeePlanId);model.StandardPrice=options.Single(p=>p.Id==1).Amount;
+        model.FamilyPrice=model.Plans.SingleOrDefault(p=>p.Id==model.FeePlanId);model.StandardPrice=options.First(p=>!p.IsFamily && !p.IsWaiver).Amount;
     }
 }

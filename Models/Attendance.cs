@@ -45,6 +45,11 @@ public class AttendancePlayerInput
     [ValidateNever] public string? Notes { get; set; }
     [ValidateNever] public decimal Debt { get; set; }
     [ValidateNever] public bool CanChangeGroup { get; set; }
+    [ValidateNever] public string? PlayerRole { get; set; }
+    [ValidateNever] public string? ParentPhone { get; set; }
+    [ValidateNever] public string? ParentName { get; set; }
+    [ValidateNever] public CareNotice? CareStatus { get; set; }
+    [ValidateNever] public DateOnly? LastMeasurementDate { get; set; }
 }
 public class AttendanceModel : IValidatableObject
 {

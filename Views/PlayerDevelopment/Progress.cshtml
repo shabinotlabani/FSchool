@@ -1,0 +1,24 @@
+@model DevelopmentHistory
+@{
+    ViewData["Title"]="Ecuria";
+    var charts=_2Korriku.Services.DevelopmentCharts.Build(Model.Records);
+    foreach(var sport in Model.Evaluations.GroupBy(x=>x.Sport)){
+        charts.Add(new DevelopmentChart(_2Korriku.Services.SportDevelopmentService.Label(sport.Key)+" · Vlerësimi i përgjithshëm","/5",sport.GroupBy(x=>x.Date).OrderBy(x=>x.Key).Select(g=>new DevelopmentPoint(g.Key,g.OrderByDescending(x=>x.Id).First().Average)).ToList(),true));
+    }
+    var selected=charts.FindIndex(x=>x.Points.Count>0);
+    if(selected<0)selected=0;
+}
+<link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
+<section class="development-ui progress-page">
+
+<header class="progress-heading"><h1>Ecuria</h1><p>@Model.Player.FullName <span>· @Model.Player.TrainingTeam?.Name</span></p></header>
+<partial name="_CareProgress" model="Model"/>
+<h2 class="h6 mt-4">Zhvillimi dhe matjet</h2>
+<div class="progress-card-grid">
+@foreach(var chart in charts.Where(x=>x.Points.Count>0)){<div class="progress-mini-card"><partial name="_Chart" model="chart"/></div>}
+</div>
+@if(!charts.Any(x=>x.Points.Count>0)){<p class="progress-empty">Ende pa regjistrime.</p>}
+</section>
+@section Scripts {<script src="~/js/player-progress.js" asp-append-version="true"></script>}
+
+@section PageNavigation {<a asp-action="Player" asp-route-id="@Model.Player.Id" class="btn btn-outline-secondary app-back-button">← Profili i lojtarit</a>}

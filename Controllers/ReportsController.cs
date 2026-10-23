@@ -15,6 +15,21 @@ public class ReportsController : Controller
         _context = context;
     }
 
+    [Authorize(Roles = _2Korriku.Models.Roles.Admin)]
+    public async Task<IActionResult> CoachActivity(DateOnly? from, DateOnly? to)
+    {
+        var today = _2Korriku.Services.BillingClock.Today;
+        var start = from ?? new DateOnly(today.Year, today.Month, 1);
+        var end = to ?? today;
+        var model = new _2Korriku.Models.CoachActivityReport { From = start, To = end };
+        if (!ModelState.IsValid || start > end || end > today || start.Year < 1900)
+        {
+            ModelState.AddModelError("", "Zgjidhni periudhë të vlefshme deri sot.");
+            return View(model);
+        }
+        return View(await new _2Korriku.Services.CoachActivityService(_context).Load(start, end));
+    }
+
     public async Task<IActionResult> Index(_2Korriku.Models.MoneyDateFilter filter)
     {
         if(!ModelState.IsValid)return View(new _2Korriku.Models.CashReportModel{Filter=filter});

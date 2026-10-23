@@ -1,9 +1,10 @@
+@{ var club = await Club.Get(); }
 @model FamilyPayment
 @using _2Korriku.Services
 @{ Layout = "_PrintLayout"; ViewData["Title"] = $"Dëftesa familjare FAM-{Model.Id:000000}"; }
 <div class="print-toolbar"><partial name="_DocumentBack"/><button onclick="window.print()">Printo dëftesën</button></div>
 <main class="stock-sheet">
-<h1>FC 2 Korriku</h1><h2>Dëftesë e pagesës familjare</h2>
+<h1>@club.DisplayName</h1><h2>Dëftesë e pagesës familjare</h2>
 <p><strong>FAM-@Model.Id.ToString("000000")</strong> · @BillingClock.LocalDate(Model.PaymentDate).ToString("dd.MM.yyyy")</p>
 <h3>@Model.FamilyName</h3>
 @if(Model.CancelledAt.HasValue){<div class="cancelled-notice">ANULUAR · @Model.CancellationReason</div>}

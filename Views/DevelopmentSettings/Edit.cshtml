@@ -1,0 +1,20 @@
+@model MetricInput
+@using _2Korriku.Services
+@{ViewData["Title"]=Model.Key.Length==0?"Shto fushë":"Ndrysho fushën";}
+<div class="page-heading"><div><h1>@ViewData["Title"]</h1><p>@SportDevelopmentService.Label(Model.Sport)</p></div></div>
+<form method="post" class="panel p-4" data-metric-settings>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><input asp-for="Sport" type="hidden"/><input asp-for="Key" type="hidden"/>
+<div class="row g-3">
+<div class="col-md-6"><label asp-for="Section" class="form-label">Pjesa</label>@if(Model.Key.Length==0){<select asp-for="Section" class="form-select">@foreach(var part in SportDevelopmentService.Defaults(Model.Sport)){<option value="@part.Key">@part.Label</option>}</select>}else{<input asp-for="Section" type="hidden"/><div class="form-control">@SportDevelopmentService.Defaults(Model.Sport).FirstOrDefault(x=>x.Key==Model.Section)?.Label</div>}</div>
+<div class="col-md-6"><label asp-for="Label" class="form-label">Emri dhe njësia (p.sh. Pesha (kg))</label><input asp-for="Label" class="form-control" maxlength="150" required/></div>
+<div class="col-md-6"><label asp-for="Type" class="form-label">Lloji</label><select asp-for="Type" class="form-select" data-field-type><option value="Number">Numër / matje</option><option value="Rating">Vlerësim 1–5</option><option value="Scale">Shkallë me tërheqje</option><option value="Choice">Listë me opsione</option><option value="Text">Tekst</option></select></div>
+<div class="col-md-6"><label asp-for="SortOrder" class="form-label">Renditja</label><input asp-for="SortOrder" class="form-control" type="number" min="0" max="999"/></div>
+<div class="col-md-4" data-number-setting><label asp-for="Min" class="form-label">Minimumi</label><input asp-for="Min" class="form-control" type="number" step="any"/></div>
+<div class="col-md-4" data-number-setting><label asp-for="Max" class="form-label">Maksimumi</label><input asp-for="Max" class="form-control" type="number" step="any"/></div>
+<div class="col-md-4" data-number-setting><label asp-for="Step" class="form-label">Hapi (1, 0.1, 0.01)</label><input asp-for="Step" class="form-control"/></div>
+<div class="col-12" data-choice-setting><label asp-for="Choices" class="form-label">Opsionet · një për rresht</label><textarea asp-for="Choices" class="form-control" rows="6" maxlength="4000"></textarea></div>
+<div class="col-12"><label><input asp-for="Enabled"/> Fusha aktive</label></div>
+</div><div class="d-flex gap-2 mt-4"><button class="btn btn-primary">Ruaj</button><a class="btn btn-outline-secondary" asp-action="Index" asp-route-section="@Model.Section">Anulo</a></div>
+</form>
+@section Scripts{<script src="~/js/development-settings.js" asp-append-version="true"></script>}

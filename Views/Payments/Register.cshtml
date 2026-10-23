@@ -2,7 +2,7 @@
 @{ ViewData["Title"] = "Pagesë mujore"; }
 <link rel="stylesheet" href="~/css/payment-register.css" asp-append-version="true"/>
 <div class="payment-register">
-<div class="payment-heading"><div><h1>Pagesë mujore</h1><a asp-action="Account" asp-route-id="@Model.StudentId">@Model.StudentName</a></div><a asp-action="Seasonal" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-studentId="@Model.StudentId" class="payment-seasonal">Pagesë sezonale →</a></div>
+<div class="payment-heading"><div><h1>Pagesë mujore</h1><a asp-action="Account" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-id="@Model.StudentId">@Model.StudentName</a></div><a asp-action="Seasonal" asp-route-returnUrl="@(Context.Request.PathBase + Context.Request.Path + Context.Request.QueryString)" asp-route-studentId="@Model.StudentId" class="payment-seasonal">Pagesë sezonale →</a></div>
 <form asp-action="Register" method="post" data-financial-confirm data-automatic-bank="@(Model.AutomaticBankAmount>0?"true":"false")" class="panel payment-form"><input type="hidden" name="returnUrl" value="@(ViewData["PaymentReturnUrl"] ?? Context.Request.Query["returnUrl"].ToString())"/>
 <div class="payment-balance"><span>@(Model.Balance > 0 ? "Borxh mujor" : Model.Balance < 0 ? "Parapagim aktual" : "Bilanci mujor")</span><strong class="@(Model.Balance>0?"text-danger":"text-success")">@Math.Abs(Model.Balance).ToString("N2")</strong></div>
 <div class="payment-fields">

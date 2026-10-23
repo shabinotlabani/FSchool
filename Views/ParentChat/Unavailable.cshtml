@@ -1,0 +1,3 @@
+@model int
+@{Layout="_ParentChatLayout";}
+<h1>Kontakto trajnerin</h1><p>Lojtari nuk ka trajner aktiv të caktuar.</p><a asp-controller="ParentPortal" asp-action="Index" asp-route-token="@Context.Request.RouteValues["token"]" asp-route-studentId="@Model" asp-route-continueVisit="true">← Mbrapa</a>

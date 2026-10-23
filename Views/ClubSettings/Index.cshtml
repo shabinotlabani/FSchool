@@ -1,0 +1,25 @@
+@model ClubSettings
+@{ ViewData["Title"]="Të dhënat e klubit"; }
+<div class="page-heading"><h1>Të dhënat e klubit</h1></div>
+<a class="btn btn-outline-primary mb-3" asp-controller="DevelopmentSettings" asp-action="Index">Sporti · Matjet dhe vlerësimet</a>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
+<form method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="row g-3">
+        <div class="col-md-6"><label asp-for="Name" class="form-label">Emri i shkurtër</label><input asp-for="Name" class="form-control" required /></div>
+        <div class="col-md-6"><label asp-for="DisplayName" class="form-label">Emri i klubit</label><input asp-for="DisplayName" class="form-control" required /></div>
+        <div class="col-md-8"><label asp-for="LegalName" class="form-label">Emri zyrtar</label><input asp-for="LegalName" class="form-control" required /></div>
+        <div class="col-md-4"><label asp-for="RegistrationNumber" class="form-label">Numri i regjistrimit</label><input asp-for="RegistrationNumber" class="form-control" /></div>
+        <div class="col-md-6"><label asp-for="Address" class="form-label">Adresa</label><input asp-for="Address" class="form-control" /></div>
+        <div class="col-md-4"><label asp-for="City" class="form-label">Qyteti</label><input asp-for="City" class="form-control" /></div>
+        <div class="col-md-2"><label asp-for="FoundedYear" class="form-label">Viti i themelimit</label><input asp-for="FoundedYear" class="form-control" /></div>
+        <div class="col-md-6"><label asp-for="Phone" class="form-label">Telefoni</label><input asp-for="Phone" class="form-control" /></div>
+        <div class="col-md-6"><label asp-for="Email" class="form-label">Email</label><input asp-for="Email" class="form-control" /></div>
+        <div class="col-12 border-top pt-3 d-flex align-items-center gap-3 flex-wrap">
+            <img src="@Club.LogoUrl" alt="Logoja e klubit" style="width:72px;height:80px;object-fit:contain" />
+            <div><label for="logo" class="form-label">Logoja · PNG / JPG, deri në 2 MB</label><input id="logo" name="logo" type="file" accept="image/png,image/jpeg" class="form-control" /></div>
+            <label><input type="checkbox" name="removeLogo" value="true" /> Rikthe logon fillestare</label>
+        </div>
+        <div class="col-12"><button class="btn btn-primary">Ruaj ndryshimet</button></div>
+    </div>
+</form>

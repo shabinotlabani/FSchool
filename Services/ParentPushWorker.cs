@@ -13,10 +13,18 @@ public class ParentPushWorker(IServiceScopeFactory scopes,ILogger<ParentPushWork
     {
         using var http=new HttpClient(new HttpClientHandler{AllowAutoRedirect=false}){Timeout=TimeSpan.FromSeconds(15)};
         var client=new PushServiceClient(http){AutoRetryAfter=false,DefaultTimeToLive=3600};
+        var nextScan=DateTime.MinValue;
         while(!stoppingToken.IsCancellationRequested){
             try {
+              foreach(var clubId in await ClubJobs.ActiveIds(scopes,stoppingToken)){
+               try{
+                if(DateTime.UtcNow>=nextScan){
+                    using var scanScope=scopes.CreateScope();
+                    var scanDb=ClubJobs.SetClub(scanScope.ServiceProvider,clubId);
+                    await new ParentAutomationService(scanDb).Scan(DateTime.UtcNow);
+                }
                 for(var i=0;i<30&&!stoppingToken.IsCancellationRequested;i++){
-                    using var scope=scopes.CreateScope();var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                    using var scope=scopes.CreateScope();var db=ClubJobs.SetClub(scope.ServiceProvider,clubId);
                     await using var tx=await db.Database.BeginTransactionAsync(stoppingToken);
                     // Serialize workers across Railway replicas; one delivery is committed at a time.
                     await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2020)",stoppingToken);
@@ -26,14 +34,19 @@ public class ParentPushWorker(IServiceScopeFactory scopes,ILogger<ParentPushWork
                     if(delivery==null)break;
                     var sub=delivery.Subscription;var token=await new ParentPushService(db).AccessToken(sub);
                     if(!sub.Enabled||!sub.Student.IsActive||token==null||sub.TokenHash!=ParentPushService.Hash(token)||!ParentPushService.AllowedEndpoint(sub.Endpoint)
-                        ||delivery.Message.CreatedAt<DateTime.UtcNow.AddDays(-1))delivery.Failed=true;
+                        ||delivery.Message.CreatedAt<DateTime.UtcNow.AddDays(-1)
+                        ||!await new ParentAutomationService(db).IsCurrent(delivery,settings,DateTime.UtcNow))delivery.Failed=true;
                     else {
                         delivery.Attempts++;
                         try {
                             using var auth=new VapidAuthentication(settings.PublicKey,settings.PrivateKey){Subject=settings.Subject};
                             var subscription=new PushSubscription{Endpoint=sub.Endpoint,Keys=new Dictionary<string,string>{{"p256dh",sub.P256dh},{"auth",sub.Auth}}};
-                            var payload=JsonSerializer.Serialize(new{title=delivery.Message.Title,body=delivery.Message.Body,url="/p/"+token+"?studentId="+sub.StudentId,tag="parent-"+delivery.Id});
-                            await client.RequestPushMessageDeliveryAsync(subscription,new PushMessage(payload),auth,stoppingToken);
+                            var body=delivery.Message.AutomaticKind=="Payment"
+                                ?$"Keni {await new ParentAutomationService(db).Debt(sub):N2} për t’u paguar. Ju lutem kontrolloni pagesat në portal."
+                                :delivery.Message.Body;
+                            var payload=JsonSerializer.Serialize(new{title=delivery.Message.Title,body,icon="/ClubSettings/Logo?clubId="+clubId,url="/p/"+token+"?studentId="+sub.StudentId+(delivery.Message.AutomaticKind=="Menu"?"#menu":""),tag="parent-"+delivery.Id});
+                            var ttl=delivery.Message.ExpiresAt.HasValue?Math.Clamp((int)(delivery.Message.ExpiresAt.Value-DateTime.UtcNow).TotalSeconds,0,3600):3600;
+                            await client.RequestPushMessageDeliveryAsync(subscription,new PushMessage(payload){TimeToLive=ttl},auth,stoppingToken);
                             delivery.SentAt=DateTime.UtcNow;
                         }catch(PushServiceClientException e){
                             if(e.StatusCode is HttpStatusCode.Gone or HttpStatusCode.NotFound){sub.Enabled=false;delivery.Failed=true;}
@@ -45,6 +58,9 @@ public class ParentPushWorker(IServiceScopeFactory scopes,ILogger<ParentPushWork
                     }
                     await db.SaveChangesAsync(stoppingToken);await tx.CommitAsync(stoppingToken);
                 }
+               }catch(Exception e)when(!stoppingToken.IsCancellationRequested){logger.LogWarning("Club {ClubId}: push deferred: {ErrorType}",clubId,e.GetType().Name);}
+              }
+              if(DateTime.UtcNow>=nextScan)nextScan=DateTime.UtcNow.AddMinutes(1);
             }catch(OperationCanceledException)when(stoppingToken.IsCancellationRequested){break;}
             catch(Exception e){logger.LogWarning("Push worker deferred: {ErrorType}",e.GetType().Name);}
             try{await Task.Delay(TimeSpan.FromSeconds(15),stoppingToken);}catch(OperationCanceledException){break;}

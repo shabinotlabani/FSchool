@@ -4,9 +4,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace _2Korriku.Data;
 
-public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<DevelopmentMetric> DevelopmentMetrics => Set<DevelopmentMetric>();
+    public DbSet<CoachMessage> CoachMessages => Set<CoachMessage>();
+    public DbSet<CareAssignment> CareAssignments => Set<CareAssignment>();
+    public DbSet<CareEntry> CareEntries => Set<CareEntry>();
+    public DbSet<NutritionMenu> NutritionMenus => Set<NutritionMenu>();
+    public DbSet<CareReferral> CareReferrals => Set<CareReferral>();
+    public DbSet<PlayerEvaluation> PlayerEvaluations => Set<PlayerEvaluation>();
+    public DbSet<DevelopmentRecord> DevelopmentRecords => Set<DevelopmentRecord>();
+    public DbSet<ClubSettings> ClubSettings => Set<ClubSettings>();
     public DbSet<ParentPushSettings> ParentPushSettings => Set<ParentPushSettings>();
+    public DbSet<ParentScheduleState> ParentScheduleStates => Set<ParentScheduleState>();
     public DbSet<ParentPushSubscription> ParentPushSubscriptions => Set<ParentPushSubscription>();
     public DbSet<ParentPushMessage> ParentPushMessages => Set<ParentPushMessage>();
     public DbSet<ParentPushDelivery> ParentPushDeliveries => Set<ParentPushDelivery>();
@@ -29,9 +39,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<FieldPayment> FieldPayments => Set<FieldPayment>();
     public DbSet<FieldBooking> FieldBookings => Set<FieldBooking>();
     public DbSet<FieldBookingChange> FieldBookingChanges => Set<FieldBookingChange>();
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, _2Korriku.Services.ClubContext? club = null)
         : base(options)
     {
+        Club = club ?? new();
     }
 
     public DbSet<CoachTeam> CoachTeams => Set<CoachTeam>();
@@ -74,6 +85,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Entity<ParentPushSettings>().Property(x=>x.TrainingReminders).HasDefaultValue(true);
+        builder.Entity<ParentPushSettings>().Property(x=>x.ScheduleNotifications).HasDefaultValue(true);
+        builder.Entity<ParentPushSettings>().Property(x=>x.PaymentReminders).HasDefaultValue(true);
+        builder.Entity<ParentPushSettings>().Property(x=>x.PaymentDay).HasDefaultValue(5);
+        builder.Entity<ParentPushSettings>().Property(x=>x.PaymentHour).HasDefaultValue(9);
         builder.Entity<ParentPushSubscription>().HasIndex(x=>new{x.StudentId,x.EndpointHash}).IsUnique();
         builder.Entity<ParentPushMessage>().HasIndex(x=>x.RequestId).IsUnique();
         builder.Entity<ParentPushDelivery>().HasIndex(x=>new{x.MessageId,x.SubscriptionId}).IsUnique();
@@ -282,5 +298,17 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.UnitPrice).HasColumnType("numeric(18,2)");
             entity.Property(x => x.Total).HasColumnType("numeric(18,2)");
         });
+        builder.Entity<CoachMessage>(e => {
+            e.HasIndex(x => x.RequestId).IsUnique();
+            e.HasIndex(x => new { x.StudentId, x.CoachId, x.Id });
+            e.HasOne(x => x.Student).WithMany().HasForeignKey(x => x.StudentId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Coach).WithMany().HasForeignKey(x => x.CoachId).OnDelete(DeleteBehavior.Restrict);
+        });
+        builder.Entity<ClubTenant>().Property(x=>x.Sport).HasDefaultValue("Football");
+        builder.Entity<DevelopmentRecord>().Property(x=>x.Sport).HasDefaultValue("Football");
+        builder.Entity<DevelopmentRecord>().Property(x=>x.SchemaData).HasDefaultValue("");
+        builder.Entity<PlayerEvaluation>().Property(x=>x.Sport).HasDefaultValue("Football");
+        builder.Entity<DevelopmentMetric>().HasIndex(x=>new{x.Sport,x.Section,x.Key}).IsUnique();
+        ConfigureClubs(builder);
     }
 }

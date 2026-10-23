@@ -1,0 +1,10 @@
+@model MetricManagement
+@using _2Korriku.Services
+@{ViewData["Title"]="Matjet dhe vlerësimet";var selected=ViewData["Section"] as string;var sections=SportDevelopmentService.Defaults(Model.Sport);}
+<div class="page-heading"><div><h1>Matjet dhe vlerësimet</h1><p>@SportDevelopmentService.Label(Model.Sport)</p></div><a class="btn btn-primary" asp-action="Edit" asp-route-section="@(selected??"Measurements")">+ Shto fushë</a></div>
+@if(TempData["Success"] is string success){<div class="alert alert-success">@success</div>}
+<form method="get" class="d-flex gap-2 mb-3"><label for="metric-section" class="visually-hidden">Pjesa</label><select name="section" id="metric-section" class="form-select"><option value="">Të gjitha</option>@foreach(var s in sections){<option value="@s.Key" selected="@(s.Key==selected)">@s.Label</option>}</select><button class="btn btn-outline-primary">Shfaq</button></form>
+<div class="table-responsive"><table class="table"><thead><tr><th>Pjesa</th><th>Fusha</th><th>Lloji</th><th>Kufijtë</th><th>Statusi</th><th></th></tr></thead><tbody>
+@foreach(var row in Model.Fields){<tr><td>@sections.First(x=>x.Key==row.Section).Label</td><td>@row.Label</td><td>@(row.Type=="Rating"?"Vlerësim 1–5":row.Type=="Number"?"Numër":row.Type=="Scale"?"Shkallë":row.Type=="Choice"?"Listë":"Tekst")</td><td>@(row.Type is "Number" or "Rating" or "Scale"?$"{row.Min} – {row.Max}":"—")</td><td>@(row.Enabled?"Aktive":"Joaktive")</td><td><a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-section="@row.Section" asp-route-key="@row.Key">Ndrysho</a></td></tr>}
+</tbody></table></div>
+@section PageNavigation{<a class="btn btn-outline-secondary" asp-controller="ClubSettings" asp-action="Index">← Klubi</a>}

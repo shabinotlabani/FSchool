@@ -1,0 +1,32 @@
+@model DevelopmentRecordInput
+@{var section=(DevelopmentSection)ViewData["Section"]!;var player=(Student)ViewData["Player"]!;ViewData["Title"]=section.Label;}
+<link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
+<section class="development-ui">
+<div class="page-heading"><div><h1>@(section.Label)</h1><span>@player.FullName · @player.TrainingTeam?.Name</span></div></div>
+<form method="post" class="development-form">
+<div asp-validation-summary="All" class="text-danger"></div>
+<input asp-for="Id" type="hidden"/><input asp-for="StudentId" type="hidden"/><input asp-for="Kind" type="hidden"/><input asp-for="Revision" type="hidden"/>
+<input asp-for="Sport" type="hidden"/>
+<div class="mb-3" style="max-width:240px"><label asp-for="Date" class="form-label">Data</label><input asp-for="Date" type="date" class="form-control" required/></div>
+@if(Model.Kind=="Load"){<p class="small text-secondary">RPE: 0 pushim · 10 përpjekje maksimale. Shëno përgjigjen e lojtarit.</p>}
+else if(section.Fields.Any(x=>x.Slider)){<p class="small text-secondary">Fusha bosh = pa vlerësim.</p>}
+<div class="development-fields">
+@foreach(var field in section.Fields){var value=Model.Values.GetValueOrDefault(field.Key);var inputId="field-"+field.Key;
+<div class="development-field"><div class="development-label"><label for="@inputId">@field.Label</label></div><div class="development-control">
+@if(field.Choices!=null){<select id="@inputId" name="Values[@field.Key]" class="form-select"><option value="">Pa përcaktuar</option>@foreach(var choice in field.Choices){<option value="@choice" selected="@(value==choice)">@choice</option>}</select>}
+else if(field.Min.HasValue){
+<div class="d-flex gap-2 align-items-center" data-metric>
+@if(field.Slider){<input type="range" min="@(field.Min?.ToString(System.Globalization.CultureInfo.InvariantCulture))" max="@(field.Max?.ToString(System.Globalization.CultureInfo.InvariantCulture))" step="@field.Step" value="@(string.IsNullOrEmpty(value)?"3":value)" class="form-range" data-metric-range aria-label="@field.Label"/>}
+else{<button type="button" class="btn btn-outline-secondary" data-step="-1" aria-label="Zvogëlo @field.Label">−</button>}
+<input id="@inputId" name="Values[@field.Key]" type="number" inputmode="decimal" min="@(field.Min?.ToString(System.Globalization.CultureInfo.InvariantCulture))" max="@(field.Max?.ToString(System.Globalization.CultureInfo.InvariantCulture))" step="@field.Step" value="@value" class="form-control" style="max-width:130px" data-metric-value/>
+@if(!field.Slider){<button type="button" class="btn btn-outline-secondary" data-step="1" aria-label="Rrit @field.Label">+</button>}
+</div>}
+else{<textarea id="@inputId" name="Values[@field.Key]" maxlength="2000" rows="2" class="form-control">@value</textarea>}
+</div></div>}
+</div>
+<details class="development-extra" open="@(!string.IsNullOrWhiteSpace(Model.Notes))"><summary>Shënime</summary><label asp-for="Notes" class="form-label">Shënime</label><textarea asp-for="Notes" class="form-control mb-3" rows="2" maxlength="2000"></textarea></details>
+<div class="development-save"><button class="btn btn-primary">Ruaj</button></div>
+</form>
+</section>
+@section Scripts {<script src="~/js/player-development.js" asp-append-version="true"></script>}
+@section PageNavigation {<a asp-action="Player" asp-route-id="@Model.StudentId" class="btn btn-outline-secondary app-back-button">← Profili i lojtarit</a>}

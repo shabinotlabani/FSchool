@@ -1,0 +1,40 @@
+/* Parent portal: restrained colour, compact sections, mobile-first meals. */
+body{background:#f2f5fa;color:#24334b}
+.portal{max-width:720px;padding:20px 20px 32px}
+.parent-header{background:linear-gradient(120deg,#163c65,#24577b);color:#fff;margin:-20px -20px 16px;padding:26px 24px 24px;border:0;border-bottom:4px solid #8fc7bb}
+.parent-brand{color:#fff;gap:12px}.parent-brand small{color:#d4e3ed}.parent-brand img{background:#fff;padding:5px;border-radius:8px;width:42px;height:46px}
+.parent-header h1{font-size:26px;margin-top:22px;color:#fff;line-height:1.25}
+.parent-team{margin-bottom:8px}.parent-team th{color:#60728a;font-size:12px}.parent-team td{color:#244d6d;font-size:13px}
+.parent-tabs{background:#e7edf5;border:0;border-radius:9px;padding:4px;gap:4px;margin:18px 0}
+.parent-tabs a{flex:1;justify-content:center;text-align:center;min-height:42px;margin:0;padding:8px;border:0;border-radius:6px;color:#4b6079;font-size:12px}
+.parent-tabs a.active{background:#fff;color:#194569;box-shadow:0 1px 3px #1b355514}
+.portal .parking-section{background:#e8f3f0;border:0;border-left:3px solid #4c9884;padding:16px 18px;margin:0 0 20px}
+.parking-section .section-title h2{margin:0;color:#246d5b;font-size:14px}.section-title time{font-size:11px;color:#4e7168}
+.portal .parking-time{color:#1f6353;font-size:24px;margin:12px 0 0;letter-spacing:-.4px}.parking-section .empty{margin-bottom:0}
+.parent-care-sections{background:#fff;border:1px solid #dfe7ef;border-radius:10px;margin:20px 0;overflow:hidden}
+.parent-care-sections>details+details{border-top:1px solid #e7edf3}
+.parent-care-sections>details>summary{display:flex;gap:10px;min-height:62px;padding:12px 14px;font-size:14px;line-height:1.25;color:#263c56}
+.parent-care-sections>details>summary>span{min-width:0}.parent-care-sections summary small{font-size:10px;line-height:1.4;text-align:right;max-width:104px;color:#617187;flex-shrink:0}
+.parent-care-sections>details>summary::after{font-weight:400;font-size:19px;flex-shrink:0;color:#6a7f96;margin-left:2px}
+.care-icon{display:grid;place-items:center;width:32px;height:32px;flex:0 0 32px;border-radius:8px;background:#eaf0fa;color:#3c659b}
+.care-icon svg{width:18px;height:18px}.care-menu .care-icon{background:#e7f3eb;color:#38825b}.care-doctor .care-icon{background:#fff0e8;color:#ab6241}.care-psychologist .care-icon{background:#f0ecf8;color:#7e659d}
+.care-progress[open]>summary{background:#f3f7fc}.care-menu[open]>summary{background:#eff7f1}.care-doctor[open]>summary{background:#fff6ef}.care-psychologist[open]>summary{background:#f6f3fb}
+.parent-care-content{padding:0 16px 16px}.parent-care-content .empty{font-size:12px;margin:12px 0 0}
+.parent-care-content .progress-chart{margin-top:12px;border-color:#e6edf3}.parent-care-content .progress-chart h3{color:#315877}
+.parent-menu{min-width:0}.menu-byline{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:14px 0;font-size:11px;line-height:1.5;color:#62746a}.menu-byline time{font-variant-numeric:tabular-nums}
+.menu-day{border-bottom:1px solid #e5ede7}.menu-day>summary{display:flex;align-items:center;gap:10px;min-height:46px;padding:11px 0;list-style:none;cursor:pointer;font-size:13px;font-weight:600;color:#2b5140}
+.menu-day>summary::-webkit-details-marker{display:none}.menu-day>summary small{padding:3px 7px;background:#dcefe2;color:#276344;border-radius:4px;font-size:10px;margin:0}
+.menu-day .day-toggle{margin-left:auto;color:#648472}.menu-day[open] .day-toggle{transform:rotate(180deg)}
+.menu-meals{margin:0 0 12px}.menu-meals>div{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;padding:10px 0;border-top:1px solid #eef2ef}
+.menu-meals dt{font-size:11px;font-weight:500;color:#687d6f;padding-top:2px}.menu-meals dd{margin:0;font-size:13px;line-height:1.6;color:#2d4035;overflow-wrap:anywhere;white-space:pre-wrap}
+.menu-guidance{background:#f0f6ed;border-left:3px solid #8bad73;margin-top:16px;padding:12px 14px}.menu-guidance h3{font-size:12px;color:#426039;margin:0 0 7px}.menu-guidance p{font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;color:#52634b}
+.portal .weekly-schedule{background:transparent;padding:0;border-top:0;margin-top:24px}.weekly-schedule h2{color:#2d4b68;font-size:14px}.weekly-schedule .row{font-size:13px;border-color:#dfe7ef}
+.parent-payment-row{background:#fff7e8;border:0;border-left:3px solid #d4ae62;border-radius:0;padding:14px 16px;margin:22px 0;color:#765b2d}.parent-payment-row strong{color:#85602a;font-size:17px}.parent-payment-row small{color:#847151}.parent-payment-row:hover{background:#fff1d7}
+.attendance-heading{color:#31516f;font-size:14px}.portal .months{margin-top:14px}.months a{background:#e6edf5;color:#365b80;min-height:40px;font-size:24px}.months strong{font-size:13px;color:#3c5470}
+.portal .attendance-summary strong{font-size:19px;color:#267b61}.attendance-summary small{display:block;margin-top:4px}.portal progress{accent-color:#399c7e;height:7px}.status.present{color:#286b52;background:#e5f2e9}.status.absent{color:#9f554b;background:#faeae6}
+.portal .balance{background:#fff7e8;border-color:#eddfc6}.portal .balance>strong{color:#86612d}.parent-family-table .selected{background:#e5eff7}.parent-family-table .selected th{border-color:#447e9d}.parent-family-table{min-width:0}.parent-family-table th,.parent-family-table td{padding:9px 6px}.parent-family-table th:first-child{max-width:170px;overflow-wrap:anywhere}
+.parent-push{margin-top:28px}.parent-parking-footer{margin-top:10px}.parking-link{font-size:11px;color:#63788e;min-height:40px}.parent-push .parking-link{color:#315d85}
+.parent-care-sections summary:focus-visible,.menu-day summary:focus-visible{outline:2px solid #457eaa;outline-offset:-2px}
+@media(max-width:380px){.portal{padding-inline:14px}.parent-header{margin-inline:-14px;padding-inline:18px}.parent-header h1{font-size:23px}.parent-care-sections>details>summary{gap:8px;padding-inline:11px;font-size:13px}.parent-care-sections summary small{font-size:9px;max-width:78px}.parent-care-content{padding-inline:12px}.menu-meals>div{grid-template-columns:64px minmax(0,1fr);gap:8px}.parent-tabs a{font-size:11px}.parent-family-summary strong{font-size:16px}}
+
+.parent-care-content .star-rating-chart .progress-comparison strong{color:#946600;font-size:16px;letter-spacing:1px;white-space:nowrap}.parent-care-content .star-rating-chart .plot-readout{color:#946600}

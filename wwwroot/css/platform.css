@@ -85,3 +85,16 @@
     .platform-ui .table>:not(caption)>*>* { padding:10px 12px; }
     .platform-ui .app-footer { padding:16px 14px; }
 }
+.whatsapp-contact{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;min-height:0;margin:0 0 0 4px;padding:4px;color:#248047;text-decoration:none;border-radius:50%;vertical-align:middle;flex:none}.whatsapp-contact svg{width:20px;height:20px;flex:none}.whatsapp-contact span{display:flex;align-items:baseline;flex-wrap:wrap;gap:3px 8px}.whatsapp-contact strong{font-size:.76rem;font-weight:500}.whatsapp-contact small{font-size:.72rem;color:#688075}.whatsapp-contact:hover{background:#edf8f0;color:#176636}.whatsapp-contact:focus-visible{outline:2px solid #399660;outline-offset:2px}.contact-unavailable{display:block;font-size:.75rem;color:#718096;margin:0 0 9px}.contact-unavailable small{font-size:.68rem}
+
+.whatsapp-contact{width:auto;height:32px;padding:5px 8px;gap:5px;border-radius:6px;background:#edf8f0}.whatsapp-contact span{font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap}
+/* UPNEXT: navy foundation, restrained gold accents, light working surfaces. */
+@media screen {
+body.platform-ui{--brand:#0a2341;--primary:#0a2341;background:#f6f7f9}
+.platform-ui .app-sidebar{background:#0a2341;border-right:1px solid #173653}
+.platform-brand{display:flex;align-items:center;gap:10px;margin:0 10px 22px;text-decoration:none;color:#fff;flex-shrink:0}.platform-brand span{font-size:20px;letter-spacing:1.2px;font-weight:750;line-height:1.1}.platform-brand small{display:block;font-size:8px;letter-spacing:2px;color:#e7bd68;margin-top:6px}.platform-brand:hover{color:white}.platform-brand img{object-fit:contain}
+.platform-ui .app-sidebar .side-link.is-active{background:#ffffff12;color:#f4d592;border-color:#e7bd6833}.platform-ui .nav-dot{background:#e7bd68}.platform-ui .btn-primary,.platform-ui .btn-dark{background:#0a2341;border-color:#0a2341}.platform-ui .btn-primary:hover,.platform-ui .btn-dark:hover{background:#173956;border-color:#173956}.platform-ui .btn-outline-primary{color:#0a2341;border-color:#b8c4d1}.platform-ui .table thead th,.platform-ui .table tfoot>*>*{background:#f0f3f6;color:#43546a}.platform-ui .form-control:focus,.platform-ui .form-select:focus{border-color:#ad8747;box-shadow:0 0 0 3px #e7bd6820}.platform-ui :is(a,button,input,select,textarea,summary):focus-visible{outline-color:#b88c43}.platform-ui .app-topbar{border-top:3px solid #e7bd68}.platform-ui .account-avatar{background:#ffffff12;color:#e7bd68}
+}
+@media screen and (max-width:991px){.platform-brand{margin:0 10px 8px}.platform-brand img{width:30px;height:32px}.platform-brand span{font-size:17px}.platform-brand small{font-size:7px}}
+@media screen{.platform-brand small{font-size:7px;letter-spacing:.65px;max-width:142px;line-height:1.5}}@media screen and (max-width:760px){.platform-brand small{font-size:6px;letter-spacing:.5px}}
+.developer-credit{color:inherit;font-weight:600;text-decoration:none}.developer-credit:hover{text-decoration:underline}.sidebar-credit .developer-credit{color:#e4eaff}

@@ -28,7 +28,7 @@ public class StudentRegistrationModel : IValidatableObject
     [Phone(ErrorMessage = "Shkruani një numër telefoni të vlefshëm."), Display(Name = "Telefoni i prindit")]
     public string? ParentPhone { get; set; }
     [Range(1,int.MaxValue,ErrorMessage="Zgjidhni kategorinë e tarifës.")]
-    public int FeePlanId { get; set; } = 1;
+    public int FeePlanId { get; set; }
     public int? FamilyId { get; set; }
     public Dictionary<int,int> FamilyCounts { get; set; } = [];
     public Dictionary<int,int> FamilyPlanIds { get; set; } = [];
@@ -54,8 +54,5 @@ public class StudentRegistrationModel : IValidatableObject
         if(FirstMonthAmount.HasValue && (decimal.Round(FirstMonthAmount.Value,2)!=FirstMonthAmount.Value || string.IsNullOrWhiteSpace(FirstMonthReason)))yield return new("Për shumën e caktuar të muajit të parë shkruani arsyen dhe përdorni deri në dy shifra dhjetore.");
         if (DateOfBirth.HasValue && (DateOfBirth.Value == DateOnly.MinValue || DateOfBirth.Value > DateOnly.FromDateTime(DateTime.Today)))
             yield return new ValidationResult("Datëlindja duhet të jetë një datë e vlefshme, jo në të ardhmen.", [nameof(DateOfBirth)]);
-        if(FeePlanId==2 && (!FamilyId.HasValue || FamilyId<=0)) yield return new ValidationResult("Zgjidhni familjen për paketën familjare.");
-        if(FeePlanId==3 && (string.IsNullOrWhiteSpace(FeeReason) || string.IsNullOrWhiteSpace(FeeNotes)))
-            yield return new ValidationResult("Për lirim nga pagesa kërkohen arsyeja dhe shënimi.");
     }
 }

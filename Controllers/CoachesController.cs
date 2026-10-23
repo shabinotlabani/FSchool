@@ -9,11 +9,18 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles=Roles.Read+","+Roles.Coach)]
 public class CoachesController(ApplicationDbContext db, UserManager<ApplicationUser> users) : Controller
 {
+ [Authorize(Roles=Roles.Coach)]
+ public async Task<IActionResult> Players(string? search)
+ {
+  return View(await new _2Korriku.Services.CoachPlayersService(db).Load(User.FindFirstValue(ClaimTypes.NameIdentifier)!,search));
+ }
  public async Task<IActionResult> Index(string? search,string? coachRole)
  {
   if(User.IsInRole(Roles.Coach))
   {
    var id=User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+   var assigned=new _2Korriku.Services.CoachChatService(db).Assigned(id).Select(x=>x.Id);
+   ViewData["UnreadMessages"]=await db.CoachMessages.CountAsync(x=>x.CoachId==id&&assigned.Contains(x.StudentId)&&x.FromParent&&x.ReadAt==null);
    if(coachRole==null)return View("RoleChoice");
    if(coachRole is not ("head" or "assistant"))return BadRequest();
    ViewData["CoachRole"]=coachRole;

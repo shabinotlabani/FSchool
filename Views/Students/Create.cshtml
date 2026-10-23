@@ -1,3 +1,4 @@
+@{ var club = await Club.Get(); }
 @model StudentRegistrationModel
 <link rel="stylesheet" href="~/css/first-month-help.css" asp-append-version="true"/>
 @using _2Korriku.Services
@@ -6,7 +7,7 @@
 <div class="player-registration mx-auto">
     
     <div class="mb-4">
-        <div class="text-uppercase text-secondary small fw-semibold mb-2">2 Korriku · Shkolla e futbollit</div>
+        <div class="text-uppercase text-secondary small fw-semibold mb-2">@club.Name · Shkolla e futbollit</div>
         <h1 class="h2 mb-2">Regjistro lojtar të ri</h1>
         
     </div>
@@ -20,7 +21,7 @@
                 <div class="col-md-6"><label asp-for="FirstName" class="form-label"></label> *<input asp-for="FirstName" class="form-control" autocomplete="given-name" maxlength="100" required aria-describedby="first-error" /><span asp-validation-for="FirstName" id="first-error" class="text-danger small"></span></div>
                 <div class="col-md-6"><label asp-for="LastName" class="form-label"></label> *<input asp-for="LastName" class="form-control" autocomplete="family-name" maxlength="100" required aria-describedby="last-error" /><span asp-validation-for="LastName" id="last-error" class="text-danger small"></span></div>
                 <div class="col-md-6"><label asp-for="DateOfBirth" class="form-label"></label> *<input asp-for="DateOfBirth" type="date" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" required aria-describedby="birth-error" /><span asp-validation-for="DateOfBirth" id="birth-error" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="FeePlanId" class="form-label">Kategoria e pagesës *</label><select asp-for="FeePlanId" class="form-select" required>@foreach(var plan in Model.FeePlans){<option value="@plan.Id" data-family="@plan.IsFamily.ToString().ToLowerInvariant()">@plan.Name · @plan.PriceLabel</option>}</select></div>
+                <div class="col-md-6"><label asp-for="FeePlanId" class="form-label">Kategoria e pagesës *</label><select asp-for="FeePlanId" class="form-select" required>@foreach(var plan in Model.FeePlans){<option value="@plan.Id" data-waiver="@plan.IsWaiver.ToString().ToLowerInvariant()" data-family="@plan.IsFamily.ToString().ToLowerInvariant()">@plan.Name · @plan.PriceLabel</option>}</select></div>
                 <div class="col-12" id="fee-family"><label asp-for="FamilyId" class="form-label">Familja *</label><select asp-for="FamilyId" class="form-select"><option value="">Zgjidhni familjen</option>@foreach(var family in Model.Families){<option value="@family.Id" data-plan="@Model.FamilyPlanIds.GetValueOrDefault(family.Id)" data-payment-method="@family.PreferredPaymentMethod">@family.Name · @family.Phone · #@family.Id</option>}</select><small class="text-secondary">@if(User.IsInRole(Roles.Admin)){<a asp-controller="Families" asp-action="Edit" target="_blank">Krijo familje</a>}</small></div>
                 <div class="col-12" id="fee-waiver"><label asp-for="FeeReason" class="form-label">Arsyeja e lirimit *</label><input asp-for="FeeReason" class="form-control mb-3" maxlength="200"/><label asp-for="FeeNotes" class="form-label">Shënimi i lirimit *</label><textarea asp-for="FeeNotes" class="form-control" maxlength="400"></textarea></div>
             </div>
@@ -74,7 +75,7 @@
     </form>
 </div>
 <script type="application/json" id="first-month-pricing">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new{standard=Model.StandardPrice,weeks=FirstMonthPricing.Weeks(BillingClock.Today),counts=Model.FamilyCounts,plans=Model.FeePlans.Select(p=>new{id=p.Id,isFamily=p.IsFamily,amount=p.Amount,additional=p.FamilyAdditionalAmount,limit=p.FamilyFirstCount,singleStandard=p.SingleUsesStandard})}))</script>
-@section Scripts{<script src="~/js/registration-seasonal.js" asp-append-version="true" defer></script><script src="~/js/first-month-registration.js" asp-append-version="true"></script><script>const plan=document.querySelector('#FeePlanId');function waiver(){const family=plan.selectedOptions[0]?.dataset.family==='true';document.querySelector('#fee-family').hidden=!family;document.querySelector('#FamilyId').required=family;const method=document.querySelector('#PreferredPaymentMethod');method.disabled=family;if(family)method.value=document.querySelector('#FamilyId').selectedOptions[0]?.dataset.paymentMethod||'Cash';const free=plan.value==='3';document.querySelector('#fee-waiver').hidden=!free;document.querySelector('#FeeReason').required=free;document.querySelector('#FeeNotes').required=free;}document.querySelector('#FamilyId').addEventListener('change',waiver);plan.addEventListener('change',waiver);waiver();</script><script src="~/js/team-suggestions.js" asp-append-version="true"></script>}
+@section Scripts{<script src="~/js/registration-seasonal.js" asp-append-version="true" defer></script><script src="~/js/first-month-registration.js" asp-append-version="true"></script><script>const plan=document.querySelector('#FeePlanId');function waiver(){const family=plan.selectedOptions[0]?.dataset.family==='true';document.querySelector('#fee-family').hidden=!family;document.querySelector('#FamilyId').required=family;const method=document.querySelector('#PreferredPaymentMethod');method.disabled=family;if(family)method.value=document.querySelector('#FamilyId').selectedOptions[0]?.dataset.paymentMethod||'Cash';const free=plan.selectedOptions[0]?.dataset.waiver==='true';document.querySelector('#fee-waiver').hidden=!free;document.querySelector('#FeeReason').required=free;document.querySelector('#FeeNotes').required=free;}document.querySelector('#FamilyId').addEventListener('change',waiver);plan.addEventListener('change',waiver);waiver();</script><script src="~/js/team-suggestions.js" asp-append-version="true"></script>}
 
 @section PageNavigation {
     <a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>

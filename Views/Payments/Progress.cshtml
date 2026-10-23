@@ -1,0 +1,22 @@
+@model AccountProgress
+@{ViewData["Title"]="Ecuria · "+Model.Player.FullName;var latest=Model.Medical.FirstOrDefault();var restrictions=Model.Medical.Where(x=>x.Status is "Limited" or "Unavailable").ToList();}
+<link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
+<section class="development-ui progress-page">
+<header class="progress-heading"><h1>Ecuria</h1><p>@Model.Player.FullName <span>· @Model.Player.TrainingTeam?.Name</span></p></header>
+<div class="care-progress-grid">
+<details class="care-progress-item"><summary><span>Lëndimet</span><small>Pushimi dhe kufizimet</small></summary><div class="care-progress-body">
+@if(restrictions.Count==0){<p class="text-muted small">Pa pushim ose kufizime të regjistruara.</p>}
+@foreach(var entry in restrictions){<div class="care-progress-entry"><time>@entry.Date.ToString("dd.MM.yyyy")</time><strong>@CareLabels.Status(entry.Status)</strong><p>@entry.Instructions</p></div>}
+</div></details>
+<details class="care-progress-item"><summary><span>Mjeku</span><small>@CareLabels.Status(latest?.Status)</small></summary><div class="care-progress-body">
+@if(Model.Medical.Count==0){<p class="text-muted small">Ende pa vlerësim mjekësor.</p>}
+@foreach(var entry in Model.Medical){<div class="care-progress-entry"><time>@entry.Date.ToString("dd.MM.yyyy")</time><strong>@CareLabels.Status(entry.Status)</strong><p>@entry.Instructions</p>@if(entry.ReviewDate.HasValue){<small>Rikontrolli: @entry.ReviewDate.Value.ToString("dd.MM.yyyy")</small>}</div>}
+</div></details>
+<details class="care-progress-item"><summary><span>Psikologu</span><small>Së shpejti</small></summary><div class="care-progress-body"><p class="text-muted small">Ky shërbim do të shtohet më vonë.</p></div></details>
+</div>
+<h2 class="h6 mt-4">Zhvillimi dhe matjet</h2><div class="progress-card-grid">
+@foreach(var chart in Model.Charts){<div class="progress-mini-card"><partial name="~/Views/PlayerDevelopment/_Chart.cshtml" model="chart"/></div>}
+</div>@if(Model.Charts.Count==0){<p class="progress-empty">Ende pa regjistrime.</p>}
+</section>
+@section PageNavigation{<a asp-action="Account" asp-route-id="@Model.Player.Id" class="btn btn-outline-secondary">← Kartela e lojtarit</a>}
+@section Scripts{<script src="~/js/player-progress.js" asp-append-version="true"></script>}

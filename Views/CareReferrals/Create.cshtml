@@ -1,0 +1,9 @@
+@model ReferralInput
+@{ViewData["Title"]="Rast i ri";var player=(Student)ViewData["Player"]!;var cases=(List<CareReferral>)ViewData["Cases"]!;}
+<h1 class="h4">@player.FullName</h1>
+@if(TempData["Success"] is string message){<p role="status">@message</p>}
+<form method="post"><input asp-for="StudentId" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
+<label asp-for="Kind" class="form-label">Refero te</label><select asp-for="Kind" class="form-select"><option value="Mjek">Mjeku</option><option value="Nutricist">Nutricisti</option></select>
+<label asp-for="Reason" class="form-label mt-3">Arsyeja</label><textarea asp-for="Reason" class="form-control" rows="3" maxlength="2000" required></textarea><button class="btn btn-primary my-3">Krijo rastin</button></form>
+<div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Për</th><th>Arsyeja</th><th>Statusi</th></tr></thead><tbody>@foreach(var r in cases){<tr><td>@r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</td><td>@r.Kind</td><td style="white-space:pre-wrap">@r.Reason</td><td>@(r.ClosedAt==null?"Në pritje":"Përfunduar") @if(r.MenuStatus!=null){<small class="d-block">@CareMenuStatus.Label(r.MenuStatus)</small>@if(r.MenuForCoach){<a asp-controller="CoachMenus" asp-action="Index" asp-route-studentId="@r.StudentId">Shiko menunë</a>}}</td></tr>}</tbody></table></div>
+@section PageNavigation{<a asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@Model.StudentId" class="btn btn-outline-secondary">← Profili</a>}

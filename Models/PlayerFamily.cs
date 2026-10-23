@@ -29,7 +29,7 @@ public class FamilyEditModel : IValidatableObject
     [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public bool ConfirmIndividualTransfer { get; set; }
     public Dictionary<int,string> JoinBlocks { get; set; } = [];
-    [Range(1,int.MaxValue)] public int FeePlanId { get; set; } = 2;
+    [Range(1,int.MaxValue)] public int FeePlanId { get; set; }
     public List<FeePlanOption> Plans { get; set; } = [];
     public int Id { get; set; }
     public Guid Revision { get; set; }

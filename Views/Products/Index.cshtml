@@ -1,3 +1,4 @@
+@{ var club = await Club.Get(); }
 @model StockOverviewModel
 @{
     ViewData["Title"] = "Rekuizitat";
@@ -8,7 +9,7 @@
 <link rel="stylesheet" href="~/css/product-shop.css" asp-append-version="true" />
 <div class="product-shop">
     <header class="shop-heading">
-        <div><p class="eyebrow">FC 2 KORRIKU</p><h1>Rekuizitat</h1><p>Gjithçka për lojën.</p></div>
+        <div><p class="eyebrow">@club.DisplayName</p><h1>Rekuizitat</h1><p>Gjithçka për lojën.</p></div>
         <details class="shop-management">
             <summary>Menaxhimi <span aria-hidden="true">⌄</span></summary>
             <nav aria-label="Menaxhimi i rekuizitave">

@@ -6,6 +6,15 @@
 @if(!Model.Configured){
 <form asp-action="Configure" method="post" class="panel p-4"><label for="push-subject" class="form-label">Adresa publike e platformës</label><div class="d-flex gap-2 flex-wrap"><input name="subject" id="push-subject" type="url" placeholder="https://..." required maxlength="300" class="form-control" style="max-width:500px"/><button class="btn btn-primary">Aktivizo njoftimet</button></div></form>
 }else{
+<h2>Njoftimet automatike</h2>
+<form asp-action="Automation" method="post" class="panel p-3 mb-4">
+<div class="table-responsive"><table class="table"><thead><tr><th>Njoftimi</th><th>Koha</th><th>Aktiv</th></tr></thead><tbody>
+<tr><th scope="row">Kujtesë për stërvitjen</th><td>1 orë përpara</td><td><input asp-for="Automation.TrainingReminders" aria-label="Aktivizo kujtesën e stërvitjes"/></td></tr>
+<tr><th scope="row">Ndryshim ose anulim orari</th><td>Pas ndryshimit</td><td><input asp-for="Automation.ScheduleNotifications" aria-label="Aktivizo njoftimet e orarit"/></td></tr>
+<tr><th scope="row">Kujtesë për pagesën</th><td><div class="d-flex gap-2 align-items-center flex-wrap"><label asp-for="Automation.PaymentDay">Data</label><input asp-for="Automation.PaymentDay" type="number" min="1" max="31" required class="form-control" style="width:80px"/><label asp-for="Automation.PaymentHour">Ora</label><select asp-for="Automation.PaymentHour" class="form-select" style="width:100px">@for(var hour=0;hour<24;hour++){<option value="@hour">@hour.ToString("00"):00</option>}</select></div><small class="text-secondary">Çdo muaj · vetëm kur ka shumë për t’u paguar. Datat 29–31 përshtaten me fundin e muajit.</small></td><td><input asp-for="Automation.PaymentReminders" aria-label="Aktivizo kujtesën e pagesës"/></td></tr>
+</tbody></table></div><div class="d-flex justify-content-end mt-3"><button class="btn btn-outline-primary">Ruaj kujtesat</button></div>
+</form>
+<h2>Njoftim manual</h2>
 <form asp-action="Send" method="post" class="panel p-4 mb-4" id="parent-notification-form"><input asp-for="Input.RequestId" type="hidden"/>
 <div class="row g-3"><div class="col-md-6"><label asp-for="Input.TeamId" class="form-label">Ekipi</label><select asp-for="Input.TeamId" class="form-select"><option value="">Të gjitha ekipet</option>@foreach(var team in Model.Teams){<option value="@team.Id">@team.Name</option>}</select></div>
 <div class="col-md-6"><label asp-for="Input.StudentId" class="form-label">Lojtari</label><select asp-for="Input.StudentId" class="form-select"><option value="">Të gjithë lojtarët</option>@foreach(var student in Model.Students){<option value="@student.Id">@student.FirstName @student.LastName</option>}</select></div>
@@ -14,7 +23,7 @@
 <div class="d-flex justify-content-end mt-3"><button class="btn btn-primary">Dërgo njoftimin</button></div></form>
 }
 <h2>Historiku</h2><div class="panel table-responsive"><table class="table"><thead><tr><th>Data</th><th>Për</th><th>Njoftimi</th><th>Pranuar nga shërbimi</th><th>Në pritje</th><th>Pa dërguar</th></tr></thead><tbody>
-@foreach(var row in Model.Messages){<tr><td>@_2Korriku.Services.BillingClock.LocalDate(row.CreatedAt).ToString("dd.MM.yyyy HH:mm")</td><td>@row.Audience</td><td><strong>@row.Title</strong><small class="d-block">@row.Body</small></td><td>@row.Deliveries.Count(x=>x.SentAt!=null)</td><td>@row.Deliveries.Count(x=>x.SentAt==null&&!x.Failed)</td><td>@row.Deliveries.Count(x=>x.Failed)</td></tr>}
+@foreach(var row in Model.Messages){<tr><td>@TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(row.CreatedAt, DateTimeKind.Utc), _2Korriku.Services.BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</td><td>@row.Audience</td><td><strong>@row.Title</strong><small class="d-block">@row.Body</small></td><td>@row.Deliveries.Count(x=>x.SentAt!=null)</td><td>@row.Deliveries.Count(x=>x.SentAt==null&&!x.Failed)</td><td>@row.Deliveries.Count(x=>x.Failed)</td></tr>}
 @if(Model.Messages.Count==0){<tr><td colspan="6">Nuk ka njoftime të dërguara.</td></tr>}
 </tbody></table></div>
 @section Scripts{<script src="~/js/parent-notifications-admin.js" asp-append-version="true"></script>}

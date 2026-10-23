@@ -16,17 +16,18 @@ public class FamilyService(ApplicationDbContext db)
         var current=await Latest(TariffService.CurrentMonth).Include(x=>x.FeePlan).Where(x=>ids.Contains(x.StudentId)).ToListAsync();
         var future=await db.StudentFeeAssignments.AsNoTracking().Where(x=>ids.Contains(x.StudentId)&&x.EffectiveMonth>month).ToListAsync();
         var result=new Dictionary<int,string>();
+        var standardId=await new TariffService(db).StandardPlanIdAsync();
         foreach(var id in ids.Where(id=>!existing.Contains(id))){
             var assignments=states.Concat(current).Where(x=>x.StudentId==id).ToList();
             if(assignments.Any(x=>x.FamilyId.HasValue&&x.FamilyId!=familyId))result[id]="Është në një familje tjetër";
             else if(future.Any(x=>x.StudentId==id))result[id]="Ka ndryshim pakete të planifikuar";
-            else if(assignments.Any(x=>x.FeePlanId!=1))result[id]="Ka paketë të veçantë: "+assignments.First(x=>x.FeePlanId!=1).FeePlan?.Name;
+            else if(assignments.Any(x=>x.FeePlanId!=standardId))result[id]="Ka paketë të veçantë: "+assignments.First(x=>x.FeePlanId!=standardId).FeePlan?.Name;
         }
         return result;
     }
     public async Task<int> PlanIdAsync(int familyId, DateOnly month) =>
         await db.FamilyTariffAssignments.AsNoTracking().Where(a => a.FamilyId == familyId && a.EffectiveMonth <= month)
-            .OrderByDescending(a => a.EffectiveMonth).ThenByDescending(a => a.Id).Select(a => (int?)a.FeePlanId).FirstOrDefaultAsync() ?? 2;
+            .OrderByDescending(a => a.EffectiveMonth).ThenByDescending(a => a.Id).Select(a => (int?)a.FeePlanId).FirstOrDefaultAsync() ?? await new TariffService(db).DefaultFamilyPlanIdAsync();
     public IQueryable<StudentFeeAssignment> Latest(DateOnly month) => db.StudentFeeAssignments.AsNoTracking()
         .Where(a=>a.EffectiveMonth<=month && !db.StudentFeeAssignments.Any(b=>b.StudentId==a.StudentId && b.EffectiveMonth<=month && (b.EffectiveMonth>a.EffectiveMonth || b.EffectiveMonth==a.EffectiveMonth && b.Id>a.Id)));
     public Task<List<StudentFeeAssignment>> MembersAsync(int familyId, DateOnly month) => Latest(month).Include(a=>a.Student)
@@ -71,7 +72,7 @@ public class FamilyService(ApplicationDbContext db)
         db.FamilyTariffAssignments.Add(new() { FamilyId = family.Id, FeePlanId = input.FeePlanId,
             EffectiveMonth = input.Id == 0 ? TariffService.CurrentMonth : month, CreatedByUserId = actor });
         foreach(var previous in members.Where(m=>!input.StudentIds.Contains(m.StudentId)))
-            db.StudentFeeAssignments.Add(new(){StudentId=previous.StudentId,FeePlanId=1,EffectiveMonth=month,Reason=input.Reason.Trim(),Notes="Largim nga familja "+family.Name,CreatedByUserId=actor});
+            db.StudentFeeAssignments.Add(new(){StudentId=previous.StudentId,FeePlanId=await new TariffService(db).StandardPlanIdAsync(),EffectiveMonth=month,Reason=input.Reason.Trim(),Notes="Largim nga familja "+family.Name,CreatedByUserId=actor});
         for(var i=0;i<input.StudentIds.Count;i++)
             db.StudentFeeAssignments.Add(new(){StudentId=input.StudentIds[i],FeePlanId=input.FeePlanId,FamilyId=family.Id,FamilyOrder=i+1,EffectiveMonth=month,Reason=input.Reason.Trim(),Notes=$"Familja {family.Name} · Renditja {i+1}",CreatedByUserId=actor});
         db.FamilyChanges.Add(new(){FamilyId=family.Id,EffectiveMonth=month,Reason=input.Reason.Trim(),ActorId=actor,

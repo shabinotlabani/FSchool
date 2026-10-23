@@ -27,20 +27,36 @@ public class AttendanceService(ApplicationDbContext db, TimeProvider? clock=null
     private static string Token(IEnumerable<AttendancePlayerInput> players) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
         JsonSerializer.Serialize(players.OrderBy(x=>x.StudentId).Select(x=>new{x.StudentId,x.Name})))));
     private Task<List<AttendancePlayerInput>> Roster(int teamId) => db.Students.AsNoTracking().Where(x=>x.TrainingTeamId==teamId && x.IsActive)
-        .OrderBy(x=>x.FirstName).ThenBy(x=>x.LastName).ThenBy(x=>x.Id).Select(x=>new AttendancePlayerInput{StudentId=x.Id,Name=x.FirstName+" "+x.LastName,Notes=x.Notes}).ToListAsync();
+        .OrderBy(x=>x.FirstName).ThenBy(x=>x.LastName).ThenBy(x=>x.Id).Select(x=>new AttendancePlayerInput{StudentId=x.Id,Name=x.FirstName+" "+x.LastName,Notes=x.Notes,ParentPhone=x.ParentPhone,ParentName=x.ParentName}).ToListAsync();
     public async Task<AttendanceModel> LoadAsync(int teamId, string role, DateOnly date, string actor)
     {
         if(date<new DateOnly(1900,1,1)||date>BillingClock.Today) throw new ValidationException("Zgjidhni datë deri sot.");
         var team=await Team(teamId,role,actor);
         var saved=await db.TeamAttendances.AsNoTracking().Include(x=>x.Players).ThenInclude(x=>x.Student).Include(x=>x.SavedBy).SingleOrDefaultAsync(x=>x.TrainingTeamId==teamId&&x.Date==date);
         var players=saved==null||date==BillingClock.Today?await Roster(teamId):saved.Players.Where(x=>x.Student?.IsActive==true).OrderBy(x=>x.StudentName).ThenBy(x=>x.StudentId)
-            .Select(x=>new AttendancePlayerInput{StudentId=x.StudentId,Name=x.StudentName,Present=x.Present,Notes=x.Student?.Notes}).ToList();
+            .Select(x=>new AttendancePlayerInput{StudentId=x.StudentId,Name=x.StudentName,Present=x.Present,Notes=x.Student?.Notes,ParentPhone=x.Student?.ParentPhone,ParentName=x.Student?.ParentName}).ToList();
         if(saved!=null&&date==BillingClock.Today)
             foreach(var player in players)player.Present=saved.Players.SingleOrDefault(x=>x.StudentId==player.StudentId)?.Present;
         var deadline=saved==null?(DateTime?)null:await Deadline(saved);
         var currentPlayers=await db.Students.Where(s=>s.IsActive&&s.TrainingTeamId==teamId).Select(s=>s.Id).ToListAsync();
         foreach(var player in players)player.CanChangeGroup=currentPlayers.Contains(player.StudentId);
+        var medical=await new PlayerCareService(db).TrainingNotices(currentPlayers,date);
+        foreach(var player in players)player.CareStatus=medical.SingleOrDefault(x=>x.StudentId==player.StudentId);
         if(players.Count>0){
+            var ids=players.Select(x=>x.StudentId).ToList();
+            var sport=await new SportDevelopmentService(db).Sport();
+            var development=await db.DevelopmentRecords.AsNoTracking()
+                .Where(x=>x.Sport==sport&&ids.Contains(x.StudentId)&&(x.Kind=="Profile"||x.Kind=="Measurements"))
+                .OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).ToListAsync();
+            var byPlayer=development.ToLookup(x=>x.StudentId);
+            foreach(var player in players){
+                var records=byPlayer[player.StudentId];
+                player.PlayerRole=records.Where(x=>x.Kind=="Profile"&&x.Values.ContainsKey("PlayerRole"))
+                    .FirstOrDefault()?.Values.GetValueOrDefault("PlayerRole");
+                player.PlayerRole=DevelopmentSections.RoleLabel(player.PlayerRole);
+                player.LastMeasurementDate=records.Where(x=>x.Kind=="Measurements"&&x.Values.Any(v=>v.Key is "Weight" or "Height" or "ArmSpan" && !string.IsNullOrWhiteSpace(v.Value)))
+                    .Select(x=>(DateOnly?)x.Date).FirstOrDefault();
+            }
             var positions=await new BillingService(db).GetFinancialPositionsAsync();
             foreach(var player in players) player.Debt=positions.GetValueOrDefault(player.StudentId)?.Debt??0;
         }
@@ -59,6 +75,7 @@ public class AttendanceService(ApplicationDbContext db, TimeProvider? clock=null
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2004)");
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2022)");
         var team=await Team(model.TeamId,model.CoachRole,actor);
         var saved=await db.TeamAttendances.Include(x=>x.Players).ThenInclude(x=>x.Student).SingleOrDefaultAsync(x=>x.TrainingTeamId==model.TeamId&&x.Date==model.Date);
         if(saved!=null && Now>=await Deadline(saved)) throw new InvalidOperationException("Ka kaluar një orë nga ruajtja e parë. Prezenca nuk mund të ndryshohet.");
@@ -67,6 +84,9 @@ public class AttendanceService(ApplicationDbContext db, TimeProvider? clock=null
         var roster=saved==null||model.Date==BillingClock.Today?await Roster(model.TeamId):saved.Players.Where(x=>x.Student?.IsActive==true).Select(x=>new AttendancePlayerInput{StudentId=x.StudentId,Name=x.StudentName}).ToList();
         if(Token(roster)!=model.RosterToken || !roster.Select(x=>x.StudentId).Order().SequenceEqual(model.Players.Select(x=>x.StudentId).Order()))
             throw new InvalidOperationException("Lojtarët e ekipit kanë ndryshuar. Rihapni listën e prezencës.");
+        var restrictions=await new PlayerCareService(db).TrainingNotices(roster.Select(x=>x.StudentId).ToList(),model.Date);
+        var blocked=restrictions.Where(x=>x.Status=="Unavailable"&&model.Players.Any(p=>p.StudentId==x.StudentId&&p.Present==true)).ToList();
+        if(blocked.Count>0)throw new InvalidOperationException("Nuk mund të shënohet Prezent gjatë pushimit mjekësor: "+string.Join(", ",roster.Where(x=>blocked.Any(b=>b.StudentId==x.StudentId)).Select(x=>x.Name))+".");
         if(saved==null){saved=new(){TrainingTeamId=model.TeamId,Date=model.Date!.Value};db.TeamAttendances.Add(saved);
             saved.Players=roster.Select(x=>new AttendancePlayer{StudentId=x.StudentId,StudentName=x.Name}).ToList();}
         // Preserve departed players as historical records; update only the current roster.

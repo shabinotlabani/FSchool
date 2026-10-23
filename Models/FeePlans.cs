@@ -66,7 +66,7 @@ public class FeePriceModel : IValidatableObject
 public class AssignFeeModel : IValidatableObject
 {
     public int StudentId { get; set; }
-    [Range(1,int.MaxValue)] public int FeePlanId { get; set; } = 1;
+    [Range(1,int.MaxValue)] public int FeePlanId { get; set; }
     [Required] public string EffectiveMonth { get; set; } = TariffService.NextMonth.ToString("yyyy-MM");
     [Required, StringLength(200)] public string Reason { get; set; } = "";
     [StringLength(400)] public string? Notes { get; set; }
@@ -75,7 +75,6 @@ public class AssignFeeModel : IValidatableObject
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
         if(!TariffService.TryMonth(EffectiveMonth,out var month) || month<TariffService.NextMonth) yield return new("Zgjidhni muajin e ardhshëm ose një muaj pas tij.");
-        if(FeePlanId==3 && string.IsNullOrWhiteSpace(Notes)) yield return new("Për lirim nga pagesa kërkohet edhe shënimi.");
     }
 }
 public record FeePlanOption(int Id,string Name,decimal Amount,bool IsWaiver,decimal? FamilyAdditionalAmount=null,int FamilyFirstCount=2,bool SingleUsesStandard=true,bool IsFamily=false,bool IsActive=true)

@@ -28,11 +28,14 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
         await using var transaction = await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2004)");
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2022)");
         var actor = await users.FindByIdAsync(actorId) ?? throw new InvalidOperationException("Hyni përsëri në llogari.");
         await db.Entry(actor).ReloadAsync();
         if (IsDisabled(actor) || !await users.IsInRoleAsync(actor, Roles.Admin)) throw new InvalidOperationException("Vetëm administratori mund të menaxhojë shfrytëzuesit.");
         var isNew = string.IsNullOrEmpty(input.Id);
         var user = isNew ? new ApplicationUser() : await users.FindByIdAsync(input.Id!) ?? throw new InvalidOperationException("Shfrytëzuesi nuk u gjet.");
+        if (!isNew && (user.IsPlatformOwner || user.ClubId != db.CurrentClubId))
+            throw new InvalidOperationException("Kjo llogari nuk menaxhohet nga klubi.");
         if (!isNew) await db.Entry(user).ReloadAsync();
         var actorSuper = await users.IsInRoleAsync(actor, Roles.SuperAdmin);
         var targetSuper = !isNew && await users.IsInRoleAsync(user, Roles.SuperAdmin);
@@ -54,8 +57,11 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
             && await db.TrainingTeams.AnyAsync(t=>t.CoachId==user.Id || t.AssistantCoachId==user.Id))
             throw new InvalidOperationException("Zëvendësoni trajnerin në ekipet përkatëse para çaktivizimit ose ndryshimit të rolit.");
         var email = input.Email.Trim();
-        var duplicate = await users.FindByEmailAsync(email);
-        if (duplicate != null && duplicate.Id != user.Id) throw new InvalidOperationException("Ky email është përdorur nga një llogari tjetër.");
+        var normalizedEmail = users.NormalizeEmail(email);
+        var normalizedName = users.NormalizeName(email);
+        // Email membership is globally unique; reveal no details about the other club.
+        if (await db.Users.IgnoreQueryFilters().AnyAsync(x => x.Id != user.Id && (x.NormalizedEmail == normalizedEmail || x.NormalizedUserName == normalizedName)))
+            throw new InvalidOperationException("Ky email është përdorur nga një llogari tjetër.");
         user.CanVerifyBank = input.Role == Roles.Operator && input.CanVerifyBank;
         user.PhoneNumber = input.Phone?.Trim(); user.Specialization = input.Specialization?.Trim();
         user.FirstName = input.FirstName.Trim(); user.LastName = input.LastName.Trim();
@@ -74,6 +80,10 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
             Check(await users.ResetPasswordAsync(user, token, input.Password));
         }
         // Existing sessions must re-authenticate after permission or account changes.
+        if(!isNew){
+            var assignments=await db.CareAssignments.Where(x=>x.StaffId==user.Id&&x.Active).ToListAsync();
+            foreach(var assignment in assignments.Where(x=>!input.IsActive||x.Kind!=input.Role)){assignment.Active=false;assignment.UpdatedAt=DateTime.UtcNow;assignment.AssignedBy=actorId;}
+        }
         Check(await users.UpdateSecurityStampAsync(user));
         await db.SaveChangesAsync();
         await transaction.CommitAsync();

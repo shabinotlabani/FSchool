@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using _2Korriku.Models;
 using _2Korriku.Services;
@@ -15,7 +15,7 @@ public class UsersController(UserManager<ApplicationUser> users, UserAdministrat
     public async Task<IActionResult> Index(string? search, string? role)
     {
         ViewData["Search"] = search; ViewData["Role"] = role;
-        var query = users.Users.AsNoTracking();
+        var query = users.Users.AsNoTracking().Where(x => x.ClubId == db.CurrentClubId && !x.IsPlatformOwner);
         if (!string.IsNullOrWhiteSpace(search))
             foreach(var term in search.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries))
             {
@@ -31,11 +31,12 @@ public class UsersController(UserManager<ApplicationUser> users, UserAdministrat
         }
         return View(list);
     }
-    [HttpGet] public async Task<IActionResult> Create(string? role) => View("Edit", new UserEditModel { Role = role == Roles.Coach ? Roles.Coach : role == Roles.FieldOperator ? Roles.FieldOperator : Roles.Operator, Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync() });
+    [HttpGet] public async Task<IActionResult> Create(string? role) => View("Edit", new UserEditModel { Role = role is Roles.Coach or Roles.FieldOperator or Roles.Doctor or Roles.Nutritionist ? role : Roles.Operator, Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync() });
     [HttpGet]
     public async Task<IActionResult> Edit(string id)
     {
         var user = await users.FindByIdAsync(id); if (user == null) return NotFound();
+        if (user.IsPlatformOwner || user.ClubId != db.CurrentClubId) return Forbid();
         var roles = await users.GetRolesAsync(user);
         if (roles.Contains(Roles.SuperAdmin) && !User.IsInRole(Roles.SuperAdmin)) return Forbid();
         return View(new UserEditModel { Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync(), TeamIds = await db.CoachTeams.Where(x=>x.UserId==id).Select(x=>x.TrainingTeamId).ToListAsync(), CanVerifyBank = user.CanVerifyBank, Phone = user.PhoneNumber, Specialization = user.Specialization, Id = id, FirstName = user.FirstName ?? "", LastName = user.LastName ?? "", Email = user.Email ?? "", Role = Roles.All.FirstOrDefault(roles.Contains) ?? Roles.Viewer, IsActive = !UserAdministrationService.IsDisabled(user) });

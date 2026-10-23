@@ -12,6 +12,15 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles = Roles.Read)]
 public class PaymentsController(ApplicationDbContext db, BillingService billing) : Controller
 {
+    [HttpGet,ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+    public async Task<IActionResult> Progress(int id)
+    {
+        var player=await db.Students.AsNoTracking().Include(x=>x.TrainingTeam).SingleOrDefaultAsync(x=>x.Id==id);
+        if(player==null)return NotFound();
+        var medical=await db.CareEntries.AsNoTracking().Where(x=>x.Assignment.StudentId==id&&x.Assignment.Kind==Roles.Doctor&&x.Date<=BillingClock.Today)
+            .OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).Select(x=>new CareNotice(id,x.TrainingStatus!,x.CoachInstructions,x.Date,x.ReviewDate)).ToListAsync();
+        return View(new AccountProgress(player,await new ParentProgressService(db).Load(id,BillingClock.Today),medical));
+    }
     private IActionResult AfterPayment(string? returnUrl)
     {
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -153,17 +162,17 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
     public async Task<IActionResult> Debt(int id, string? returnUrl = null)
     {
         if (!User.IsInRole(Roles.Admin) && !User.IsInRole(Roles.Operator))
-            return RedirectToAction(nameof(Account), new { id });
+            return RedirectToAction(nameof(Account), new { id, returnUrl });
         var account = await billing.GetAccountAsync(id);
         if (account == null) return NotFound();
         // Pay an existing debt in its own ledger, never turn equipment/training debt into a monthly advance.
         if (account.MonthlyDue > 0)
             return RedirectToAction(nameof(Register), new { studentId = id, returnUrl });
         var sale = account.Sales.Where(s => s.Status != "Cancelled" && s.Due > 0 && s.RequestId.HasValue).OrderBy(s => s.Date).ThenBy(s => s.Id).FirstOrDefault();
-        if (sale != null) return RedirectToAction("Pay", "Sales", new { id = sale.Id });
+        if (sale != null) return RedirectToAction("Pay", "Sales", new { id = sale.Id, returnUrl });
         var charge = account.PersonalTrainings.SelectMany(t => t.Charges).Where(c => c.Due > 0).OrderBy(c => c.Period).ThenBy(c => c.Id).FirstOrDefault();
-        if (charge != null) return RedirectToAction("Pay", "PersonalTraining", new { id = charge.Id });
-        return RedirectToAction(nameof(Account), new { id });
+        if (charge != null) return RedirectToAction("Pay", "PersonalTraining", new { id = charge.Id, returnUrl });
+        return RedirectToAction(nameof(Account), new { id, returnUrl });
     }
 
     [HttpGet, Authorize(Roles = Roles.Write)]

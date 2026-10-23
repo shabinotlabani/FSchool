@@ -25,6 +25,11 @@ public class ParentPortalService(ApplicationDbContext db)
         // The gate is enforced before loading any private data, including parking.
         if (result.NeedsAcknowledgement) return result;
         result.StudentId=student.Id;result.FamilyName=access.Family?.Name;
+        var chatCoaches=(await new CoachChatService(db).Recipients(student.Id)).Select(x=>x.Id).ToList();
+        result.UnreadMessages=await db.CoachMessages.CountAsync(x=>x.StudentId==student.Id&&chatCoaches.Contains(x.CoachId)&&!x.FromParent&&x.ReadAt==null);
+        result.Progress=await new ParentProgressService(db).Load(student.Id,today);
+        result.WeeklyMenu=await new NutritionMenuService(db).Effective(student.Id);
+        result.CareInstructions=await new PlayerCareService(db).ParentNotices(student.Id);
         if(access.Family!=null)result.Members=members;
         result.StudentDebt=members.Single(x=>x.Id==student.Id).Debt;
         result.Name = student.FirstName + " " + student.LastName;

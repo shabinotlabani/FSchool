@@ -1,0 +1,26 @@
+@model EvaluationInput
+@{ViewData["Title"]="Vlerësimi i lojtarit";var player=(Student)ViewData["Player"]!;}
+<link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
+<section class="development-ui">
+<div class="page-heading"><div><h1>@player.FullName</h1><span class="text-secondary">@player.TrainingTeam?.Name</span></div></div>
+<form method="post" class="development-form">
+<div asp-validation-summary="All" class="text-danger"></div>
+<input asp-for="Id" type="hidden"/><input asp-for="StudentId" type="hidden"/><input asp-for="Revision" type="hidden"/>
+<div class="row g-3 mb-3"><div class="col-md-6"><label asp-for="Date" class="form-label">Data e vlerësimit</label><input asp-for="Date" type="date" class="form-control" required/></div><div class="col-md-6"><label asp-for="ReviewDate" class="form-label">Rishikimi i ardhshëm</label><input asp-for="ReviewDate" type="date" class="form-control"/></div></div>
+<p class="small text-secondary">1 Fillestar · 2 Në zhvillim · 3 Mirë · 4 Shumë mirë · 5 Shkëlqyeshëm</p>
+<div class="development-fields">
+<div class="development-field"><div class="development-label"><label asp-for="Technique">Teknika</label></div><div class="development-control"><input asp-for="Technique" type="range" min="1" max="5" step="1" class="form-range" data-score/><output for="Technique"></output></div></div>
+<div class="development-field"><div class="development-label"><label asp-for="Tactics">Taktika</label></div><div class="development-control"><input asp-for="Tactics" type="range" min="1" max="5" step="1" class="form-range" data-score/><output for="Tactics"></output></div></div>
+<div class="development-field"><div class="development-label"><label asp-for="Fitness">Përgatitja fizike</label></div><div class="development-control"><input asp-for="Fitness" type="range" min="1" max="5" step="1" class="form-range" data-score/><output for="Fitness"></output></div></div>
+<div class="development-field"><div class="development-label"><label asp-for="Discipline">Disiplina</label></div><div class="development-control"><input asp-for="Discipline" type="range" min="1" max="5" step="1" class="form-range" data-score/><output for="Discipline"></output></div></div>
+<div class="development-field"><div class="development-label"><label asp-for="Teamwork">Bashkëpunimi në ekip</label></div><div class="development-control"><input asp-for="Teamwork" type="range" min="1" max="5" step="1" class="form-range" data-score/><output for="Teamwork"></output></div></div>
+</div>
+<label asp-for="Goals" class="form-label">Objektivat</label><textarea asp-for="Goals" class="form-control" rows="2" maxlength="2000" required></textarea>
+<details class="development-extra" open="@(!string.IsNullOrWhiteSpace(Model.Strengths)||!string.IsNullOrWhiteSpace(Model.Improvements))"><summary>Shënime të tjera</summary><div class="row g-3 pb-3"><div class="col-md-6"><label asp-for="Strengths" class="form-label">Pikat e forta</label><textarea asp-for="Strengths" class="form-control" rows="2" maxlength="2000"></textarea></div><div class="col-md-6"><label asp-for="Improvements" class="form-label">Për t’u përmirësuar</label><textarea asp-for="Improvements" class="form-control" rows="2" maxlength="2000"></textarea></div></div></details>
+<div class="development-save"><button class="btn btn-primary">Ruaj</button></div>
+</form>
+
+</section>
+@section Scripts {<script src="~/js/player-development.js" asp-append-version="true"></script>}
+
+@section PageNavigation {<a asp-action="Player" asp-route-id="@Model.StudentId" class="btn btn-outline-secondary app-back-button">← Profili i lojtarit</a>}

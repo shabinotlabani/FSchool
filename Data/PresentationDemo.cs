@@ -14,6 +14,7 @@ public static class PresentationDemo
     {
         using var scope=services.CreateScope();
         var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Club.ClubId=1;
         var users=scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2007)");

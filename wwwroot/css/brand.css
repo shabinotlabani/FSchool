@@ -1,8 +1,8 @@
-/* Palette sampled from the original club SVG. The artwork is used unchanged. */
+/* UPNEXT Navy / Gold platform palette. Club artwork remains independent. */
 :root {
-    --club-blue: #2c3f93;
-    --club-yellow: #ffee12;
-    --club-deep: #233276;
+    --club-blue: #0a2341;
+    --club-yellow: #e7bd68;
+    --club-deep: #0a2341;
     --navy: var(--club-deep);
     --yellow: var(--club-yellow);
     --bs-primary: var(--club-blue);
@@ -20,11 +20,11 @@
 .sidebar-note p, .account-details span, .logout-button { color: #cad3f4; }
 .account-avatar { background: #ffffff16; color: var(--club-yellow); }
 .app-topbar { border-top: 3px solid var(--club-blue); }
-.btn-primary { --bs-btn-hover-bg: #f1df00; --bs-btn-hover-border-color: #f1df00; --bs-btn-active-bg: #e1d100; --bs-btn-active-border-color: #e1d100; --bs-btn-color: var(--club-deep); }
+.btn-primary { --bs-btn-hover-bg: #d8ae59; --bs-btn-hover-border-color: #d8ae59; --bs-btn-active-bg: #c99c47; --bs-btn-active-border-color: #c99c47; --bs-btn-color: var(--club-deep); }
 .btn-outline-primary { --bs-btn-color: var(--club-blue); --bs-btn-hover-bg: var(--club-blue); --bs-btn-hover-border-color: var(--club-blue); }
 .btn-dark { --bs-btn-bg: var(--club-blue); --bs-btn-border-color: var(--club-blue); --bs-btn-hover-bg: var(--club-deep); --bs-btn-hover-border-color: var(--club-deep); }
 .dashboard-hero { background: var(--club-blue); border-bottom: 4px solid var(--club-yellow); }
-.dashboard-hero::before { content: ""; position: absolute; inset: 0 0 0 48%; background: repeating-linear-gradient(90deg, transparent 0, transparent 60px, #ffee1209 60px, #ffee1209 102px); transform: skewX(-14deg); pointer-events: none; }
+.dashboard-hero::before { content: ""; position: absolute; inset: 0 0 0 48%; background: repeating-linear-gradient(90deg, transparent 0, transparent 60px, #e7bd6809 60px, #e7bd6809 102px); transform: skewX(-14deg); pointer-events: none; }
 .hero-tag, .hero-link { color: var(--club-yellow); }
 .hero-copy p { color: #d1d9f6; }
 .hero-identity { position: absolute; right: 11%; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 12px; }
@@ -34,7 +34,7 @@
 .tint-gold, .search-emblem { color: var(--club-blue); background: #fffcdc; }
 .debt-avatar { background: #fdf1f1; color: #c48386; }
 .text-link, .billing-actions a, .player-cell a { color: var(--club-blue); }
-.search-input-wrap:focus-within, .form-control:focus, .form-select:focus { border-color: var(--club-blue); box-shadow: 0 0 0 3px #2c3f9315; }
+.search-input-wrap:focus-within, .form-control:focus, .form-select:focus { border-color: var(--club-blue); box-shadow: 0 0 0 3px #0a234115; }
 .search-panel { border-top: 3px solid var(--club-blue); }
 .invoice-brand { display: flex; align-items: center; gap: 19px; }
 .invoice-brand .brand-logo { width: 58px; }
@@ -43,7 +43,7 @@
 .invoice-paper .table thead th { background: #f0f2fc; color: var(--club-blue); }
 /* Login uses the same crest and club palette. */
 .club-panel { background: var(--club-blue); border-right: 4px solid var(--club-yellow); }
-.club-panel::before { width: auto; height: auto; border-radius: 0; inset: 0; background: repeating-linear-gradient(90deg, transparent 0, transparent 80px, #ffee1205 80px, #ffee1205 133px); }
+.club-panel::before { width: auto; height: auto; border-radius: 0; inset: 0; background: repeating-linear-gradient(90deg, transparent 0, transparent 80px, #e7bd6805 80px, #e7bd6805 133px); }
 .club-brand .brand-logo { width: 72px; }
 .brand-name { font-size: 21px; letter-spacing: 1px; }
 .brand-name small { color: #d4dcfa; letter-spacing: 2.7px; }
@@ -55,8 +55,8 @@
 .pitch-line, .halfway, .centre, .penalty, .goal { border-color: #8290c7; }
 .welcome-icon { color: var(--club-blue); background: #fffcdc; border-color: #ede7a2; }
 .submit-button { background: var(--club-yellow); color: var(--club-deep); }
-.submit-button:hover { background: #f1df00; }
-.field input:focus { border-color: var(--club-blue); box-shadow: 0 0 0 3px #2c3f9315; }
+.submit-button:hover { background: #d8ae59; }
+.field input:focus { border-color: var(--club-blue); box-shadow: 0 0 0 3px #0a234115; }
 .remember input { accent-color: var(--club-blue); }
 @media (min-width: 1600px) { .hero-identity .brand-logo { width: 142px; }.club-message { margin-top: 100px; } }
 @media (max-width: 1000px) { .brand-name { font-size: 17px; }.club-brand { gap: 12px; }.club-brand .brand-logo { width: 61px; } }

@@ -1,0 +1,11 @@
+@model CoachDeactivateInput
+@{ViewData["Title"]="Pasivizo lojtarin";}
+<div class="page-heading"><div><h1>Pasivizo lojtarin</h1><p>@Model.Name</p></div></div>
+<form method="post" class="panel p-4">
+<input asp-for="StudentId" type="hidden"/><input asp-for="Revision" type="hidden"/>
+<input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]"/>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<p>Lojtari do të hiqet nga lista aktive dhe prezenca. Historiku dhe detyrimet ekzistuese ruhen.</p>
+<label asp-for="Reason" class="form-label">Arsyeja</label><textarea asp-for="Reason" class="form-control mb-3" maxlength="200" rows="2" required></textarea>
+<div class="d-flex gap-2"><button type="submit" class="btn btn-danger">Po, pasivizo</button><a class="btn btn-outline-secondary" href="@ViewData["ReturnUrl"]">Jo, kthehu</a></div>
+</form>

@@ -1,0 +1,14 @@
+@model DevelopmentHistory
+@{var medical=ViewData["MedicalHistory"] as List<CareNotice>??[];var latest=medical.FirstOrDefault();var cases=ViewData["ReportedCases"] as List<CareReferral>??[];}
+<div class="care-progress-grid">
+<details class="care-progress-item" id="injuries"><summary><span>Lëndimet</span><small>@cases.Count(x=>x.ClosedAt==null) raste të hapura</small></summary>
+<div class="care-progress-body"><a asp-controller="CareReferrals" asp-action="Create" asp-route-studentId="@Model.Player.Id" class="btn btn-sm btn-outline-secondary">Raporto rast</a>
+@if(cases.Count==0){<p class="text-muted small mt-2">Ende pa raste të raportuara nga ju.</p>}
+@foreach(var item in cases){<div class="care-progress-entry"><time>@_2Korriku.Services.BillingClock.LocalDate(item.CreatedAt).ToString("dd.MM.yyyy")</time><span class="care-case-state">@(item.ClosedAt==null?"Në pritje":"Përfunduar")</span><p>@item.Reason</p></div>}
+</div></details>
+<details class="care-progress-item" id="doctor"><summary><span>Mjeku</span><small>@CareLabels.Status(latest?.Status)</small></summary><div class="care-progress-body">
+@if(latest==null){<p class="text-muted small">Ende pa vlerësim mjekësor.</p>}
+@foreach(var item in medical){<div class="care-progress-entry"><time>@item.Date.ToString("dd.MM.yyyy")</time><strong>@CareLabels.Status(item.Status)</strong>@if(!string.IsNullOrWhiteSpace(item.Instructions)){<p>@item.Instructions</p>}@if(item.ReviewDate.HasValue){<small>Rikontrolli: @item.ReviewDate.Value.ToString("dd.MM.yyyy")</small>}</div>}
+</div></details>
+<details class="care-progress-item" id="psychologist"><summary><span>Psikologu</span><small>Së shpejti</small></summary><div class="care-progress-body"><p class="text-muted small">Ky shërbim do të shtohet më vonë.</p></div></details>
+</div>

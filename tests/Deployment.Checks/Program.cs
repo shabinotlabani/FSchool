@@ -31,11 +31,12 @@ try
     var testSettings = new NpgsqlConnectionStringBuilder(source.ConnectionString) { Database = testDatabase, Pooling = false };
     var services = new ServiceCollection();
     services.AddLogging();
+    services.AddScoped(_ => new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });
     services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(testSettings.ConnectionString));
     services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
     await using var provider = services.BuildServiceProvider();
     var options = provider.GetRequiredService<DbContextOptions<ApplicationDbContext>>();
-    async Task<T> WithDb<T>(Func<ApplicationDbContext, Task<T>> action) { await using var db = new ApplicationDbContext(options); return await action(db); }
+    async Task<T> WithDb<T>(Func<ApplicationDbContext, Task<T>> action) { await using var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }); return await action(db); }
     var dll = Path.Combine(root, "bin", "RailwayPublishCheck", "2Korriku.dll");
     var password = "Test-Aa9!" + Guid.NewGuid().ToString("N");
     System.Diagnostics.ProcessStartInfo StartInfo(string? adminPassword, bool migrate)
@@ -72,7 +73,7 @@ try
     Check(new PasswordHasher<ApplicationUser>().VerifyHashedPassword(initialAdmin, initialAdmin.PasswordHash!, verificationPassword)
         != PasswordVerificationResult.Failed, "Requested initial password verifies against the stored Identity hash");
     Check(await Migrate("weak") == 0, "Legacy invalid ADMIN_PASSWORD no longer blocks startup");
-    Check(await WithDb(db => db.Users.CountAsync()) == 1 && await WithDb(db => db.UserRoles.CountAsync()) == 1, "Exactly one administrator is created");
+    Check(await WithDb(db => db.Users.CountAsync()) == 1 && await WithDb(db => db.UserRoles.CountAsync()) == 2 && await WithDb(db => db.Users.AnyAsync(x => x.IsPlatformOwner)), "Exactly one platform owner with Admin and Super Admin access is created");
     Check(await WithDb(db => db.Students.CountAsync()) == 0 && await WithDb(db => db.Payments.CountAsync()) == 0
         && await WithDb(db => db.Products.CountAsync()) == 0 && await WithDb(db => db.TreasuryEntries.CountAsync()) == 0
         && await WithDb(db => db.FieldBookings.CountAsync()) == 0, "No players, receipts, inventory, treasury balances or bookings are imported");

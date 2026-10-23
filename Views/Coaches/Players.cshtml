@@ -1,0 +1,19 @@
+@model CoachPlayers
+@{ViewData["Title"]="Lojtarët e mi";}
+<link rel="stylesheet" href="~/css/coach-light.css" asp-append-version="true"/>
+<div class="coach-light coach-players-page">
+<div class="page-heading"><div><h1>Lojtarët e mi</h1><p>@Model.Players.Count lojtarë · Prezenca në 30 ditët e fundit</p></div></div>
+@if(TempData["Success"] is string success){<div class="alert alert-success" role="status">@success</div>}
+<form method="get" class="coach-player-search"><input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Kërko lojtarin" aria-label="Kërko lojtarin"/><button class="btn btn-primary">Kërko</button>@if(!string.IsNullOrWhiteSpace(Model.Search)){<a asp-action="Players" class="btn btn-outline-secondary">Pastro</a>}</form>
+<div class="coach-player-grid table-responsive"><table class="table align-middle"><thead><tr><th>Lojtari</th><th>Ekipi</th><th>Prezenca <small>@Model.From.ToString("dd.MM")–@Model.To.ToString("dd.MM.yyyy")</small></th><th></th></tr></thead><tbody>
+@foreach(var player in Model.Players){
+<tr><td><a class="coach-player-name" asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">@player.Name</a><small>@player.Age vjeç</small></td><td>@player.Team</td><td>
+@if(player.Percent is int percent){<div class="coach-presence-label"><strong>@percent%</strong><span>@player.Present / @player.Total ditë</span></div><div class="coach-presence-track" role="progressbar" aria-label="Prezenca e @player.Name" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100"><span style="width:@(percent)%"></span></div>}
+else{<span class="text-secondary">Pa prezencë të regjistruar</span>}
+</td><td><a class="coach-player-open" asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)" aria-label="Profili i @player.Name">Profili <span aria-hidden="true">↗</span></a><a class="coach-player-open ms-3" asp-controller="CoachInbox" asp-action="Thread" asp-route-studentId="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Mesazh</a><a class="coach-player-open ms-3" asp-controller="CoachInbox" asp-action="Deactivate" asp-route-studentId="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Pasivizo</a></td></tr>
+}
+@if(Model.Players.Count==0){<tr><td colspan="4" class="text-secondary py-4">Nuk u gjet asnjë lojtar aktiv në ekipet tuaja.</td></tr>}
+</tbody></table></div>
+<p class="coach-presence-note">Llogariten vetëm ditët me prezencë të regjistruar në ekipin aktual.</p>
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index">← Mbrapa</a>}

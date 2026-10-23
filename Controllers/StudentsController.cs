@@ -66,12 +66,12 @@ public class StudentsController : Controller
     public async Task<IActionResult> Create(bool familyPicker=false)
     {
         ViewData["FamilyPicker"]=familyPicker;
-        var model=new StudentRegistrationModel();await RegistrationChoices(model);return View(model);
+        var model=new StudentRegistrationModel{FeePlanId=await new TariffService(_context).StandardPlanIdAsync()};await RegistrationChoices(model);return View(model);
     }
     private async Task RegistrationChoices(StudentRegistrationModel model)
     {
         model.FeePlans=(await AvailablePlans()).Where(p=>!p.IsFamily).ToList();
-        model.StandardPrice=(await new TariffService(_context).OptionsAsync(includeInactive:true)).Single(p=>p.Id==1).Amount;
+        model.StandardPrice=(await new TariffService(_context).OptionsAsync(includeInactive:true)).First(p=>!p.IsFamily && !p.IsWaiver).Amount;
         model.Families=await _context.PlayerFamilies.AsNoTracking().OrderBy(f=>f.Name).ToListAsync();
         foreach(var family in model.Families){model.FamilyCounts[family.Id]=(await new FamilyService(_context).MembersAsync(family.Id,TariffService.CurrentMonth)).Count;model.FamilyPlanIds[family.Id]=await new FamilyService(_context).PlanIdAsync(family.Id,TariffService.CurrentMonth);}
     }
@@ -85,7 +85,7 @@ public class StudentsController : Controller
         ViewData["FamilyPicker"]=familyPicker;
         await RegistrationChoices(model);
         if(model.DateOfBirth.HasValue)model.SuggestedTeams=await new TeamService(_context).OptionsAsync(model.DateOfBirth);
-        if(model.FeePlanId==3 && (!User.IsInRole(Roles.Admin) || string.IsNullOrWhiteSpace(model.FeeReason) || string.IsNullOrWhiteSpace(model.FeeNotes)))
+        if(await _context.FeePlans.AnyAsync(p=>p.Id==model.FeePlanId && p.IsWaiver) && (!User.IsInRole(Roles.Admin) || string.IsNullOrWhiteSpace(model.FeeReason) || string.IsNullOrWhiteSpace(model.FeeNotes)))
             ModelState.AddModelError("", "Lirimi kërkon administratorin, arsyen dhe shënimin.");
         if (!ModelState.IsValid) return View(model);
         var now = DateTime.UtcNow;

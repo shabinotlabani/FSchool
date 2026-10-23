@@ -1,0 +1,10 @@
+@model List<CoachInboxRow>
+@using _2Korriku.Services
+@{ ViewData["Title"]="Mesazhet";var page=(int)(ViewData["Page"]??1); }
+<link rel="stylesheet" href="~/css/chat.css" asp-append-version="true"/>
+<div class="page-heading"><h1>Mesazhet</h1><span class="text-secondary">@Model.Sum(x=>x.Unread) të palexuara në këtë faqe</span></div>
+<div class="table-responsive"><table class="table chat-inbox"><thead><tr><th>Lojtari / prindi</th><th>Mesazhi i fundit</th><th>Data</th><th></th></tr></thead><tbody>
+@foreach(var row in Model){<tr class="@(row.Unread>0?"unread":"")"><td><a asp-action="Thread" asp-route-studentId="@row.StudentId"><strong>@row.Name</strong></a><small>@row.ParentName</small></td><td><span class="chat-preview">@row.Body</span></td><td>@BillingClock.LocalTime(row.Date).ToString("dd.MM HH:mm")</td><td><a class="btn btn-sm btn-outline-primary" asp-action="Thread" asp-route-studentId="@row.StudentId">Hap @(row.Unread>0?$"({row.Unread})":"")</a></td></tr>}
+@if(Model.Count==0){<tr><td colspan="4">Nuk ka mesazhe.</td></tr>}
+</tbody></table></div>
+<nav class="chat-pagination" aria-label="Faqet">@if(page>1){<a asp-action="Index" asp-route-page="@(page-1)">← Mbrapa</a>}@if(Model.Count==50){<a asp-action="Index" asp-route-page="@(page+1)">Tjetër →</a>}</nav>

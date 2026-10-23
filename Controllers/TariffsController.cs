@@ -67,7 +67,7 @@ public class TariffsController(ApplicationDbContext db,TariffService tariffs):Co
     {
         var student=await db.Students.AsNoTracking().SingleOrDefaultAsync(s=>s.Id==id);if(student==null)return NotFound();
         var current=await db.StudentFeeAssignments.AsNoTracking().Where(a=>a.StudentId==id && a.EffectiveMonth<=TariffService.NextMonth).OrderByDescending(a=>a.EffectiveMonth).ThenByDescending(a=>a.Id).FirstOrDefaultAsync();
-        return View(new AssignFeeModel{StudentId=id,Student=student,FeePlanId=current?.FeePlanId??1,Plans=await tariffs.OptionsAsync(TariffService.NextMonth)});
+        return View(new AssignFeeModel{StudentId=id,Student=student,FeePlanId=current?.FeePlanId??await tariffs.StandardPlanIdAsync(),Plans=await tariffs.OptionsAsync(TariffService.NextMonth)});
     }
     [HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Assign(AssignFeeModel model)
     {

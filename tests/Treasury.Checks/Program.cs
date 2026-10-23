@@ -37,12 +37,13 @@ try
     var testSettings = new NpgsqlConnectionStringBuilder(source.ConnectionString) { Database = testDatabase, Pooling = false };
     var services = new ServiceCollection();
     services.AddLogging();
+    services.AddScoped(_ => new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true });
     services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(testSettings.ConnectionString));
     services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
     await using var provider = services.BuildServiceProvider();
     var options = provider.GetRequiredService<DbContextOptions<ApplicationDbContext>>();
-    async Task<T> WithDb<T>(Func<ApplicationDbContext, Task<T>> action) { await using var db = new ApplicationDbContext(options); return await action(db); }
-    await using (var db = new ApplicationDbContext(options))
+    async Task<T> WithDb<T>(Func<ApplicationDbContext, Task<T>> action) { await using var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }); return await action(db); }
+    await using (var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }))
     {
         await db.Database.MigrateAsync();
         Check(!db.Database.HasPendingModelChanges(), "Migration matches the EF model");
@@ -118,7 +119,7 @@ try
     var cancelled = await WithDb(db => db.TreasuryEntries.AsNoTracking().SingleAsync(x => x.Id == drawId));
     Check(cancelled.CancelledAt.HasValue && cancelled.CancelledById == actor && cancelled.CancellationReason == "Correction" && cancelled.Owner == "Test owner", "Cancellation preserves owner and complete audit metadata");
     // Controller history must include reversals of older documents in the selected period.
-    await using (var db = new ApplicationDbContext(options))
+    await using (var db = new ApplicationDbContext(options, new _2Korriku.Services.ClubContext { ClubId = 1, IsOwner = true }))
     {
         var controller = new _2Korriku.Controllers.TreasuryController(db);
         var view = (Microsoft.AspNetCore.Mvc.ViewResult)await controller.Index(new() { From = today, To = today });

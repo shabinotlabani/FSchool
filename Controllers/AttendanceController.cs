@@ -67,6 +67,11 @@ public class AttendanceController(ApplicationDbContext db):Controller
             row.Notes=player?.Notes;
             row.Debt=player?.Debt??0;
             row.CanChangeGroup=player?.CanChangeGroup??false;
+            row.PlayerRole=player?.PlayerRole;
+            row.ParentPhone=player?.ParentPhone;
+            row.ParentName=player?.ParentName;
+            row.CareStatus=player?.CareStatus;
+            row.LastMeasurementDate=player?.LastMeasurementDate;
         }
         return View("Index",model);
     }
