@@ -77,3 +77,17 @@
 .coach-players-page{max-width:1100px;margin:auto}.coach-player-search{display:flex;gap:8px;max-width:530px;margin-bottom:18px}.coach-player-search input{min-width:0;border-radius:10px}.coach-player-search .btn{min-height:44px}
 .coach-player-grid{border:1px solid #e2e8ef;border-radius:12px;background:#fff}.coach-player-grid table{margin:0;min-width:600px}.coach-player-grid th{background:#f6f8fb;font-size:.76rem;font-weight:600;color:#607286;padding:14px 18px;border-color:#e8edf3}.coach-player-grid td{padding:16px 18px;border-color:#edf1f5;font-size:.84rem}.coach-player-grid small{display:block;font-size:.72rem;color:#81909e;font-weight:400;margin-top:4px}.coach-player-name{color:#203d53;text-decoration:none;font-weight:650}.coach-player-name:hover{text-decoration:underline}.coach-player-grid th:nth-child(3){width:230px}.coach-presence-label{display:flex;justify-content:space-between;gap:12px;font-size:.75rem;margin-bottom:7px;color:#657a89}.coach-presence-label strong{color:#247e69;font-size:.85rem}.coach-presence-track{height:6px;background:#e9f0f2;border-radius:6px;overflow:hidden}.coach-presence-track span{display:block;height:100%;background:#36a68a;border-radius:6px}.coach-player-open{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:#35667f;text-decoration:none;white-space:nowrap}.coach-presence-note{font-size:.74rem;color:#7c8a98;margin-top:12px}
 @media(max-width:640px){.coach-role-page .coach-choices{grid-template-columns:1fr}.coach-player-grid td,.coach-player-grid th{padding:12px}.coach-player-search .btn{font-size:.82rem}}
+.coach-player-grid table{min-width:760px}
+.coach-player-grid .coach-actions-cell{position:sticky;right:0;z-index:2;background:#fff;width:122px;min-width:122px;border-left:1px solid #edf1f5;padding:10px}
+.coach-player-grid th.coach-actions-cell{background:#f6f8fb}
+.coach-row-actions summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;min-height:44px;padding:10px 12px;border:1px solid #d9e3ed;border-radius:9px;background:#f1f6fa;color:#244e6a;font-size:.8rem;font-weight:600}
+.coach-row-actions summary::-webkit-details-marker{display:none}
+.coach-row-actions>div{display:grid;gap:5px;padding-top:6px}
+.coach-row-actions .coach-player-open{display:flex;justify-content:center;min-height:44px;padding:8px 10px;border:1px solid #e1e8ef;border-radius:8px;background:#f8fafc;font-size:.8rem}
+.coach-row-actions .coach-player-open:hover{background:#eaf2f8}
+.coach-row-actions .coach-player-open[href*="Deactivate"]{color:#a3444b;background:#fff5f5;border-color:#f1dadd}
+.coach-row-actions summary:focus-visible,.coach-row-actions a:focus-visible{outline:3px solid #91b8d7;outline-offset:2px}
+.coach-rating{display:flex;align-items:center;gap:8px;white-space:nowrap}.coach-rating strong{font-size:.8rem;color:#86652b;font-variant-numeric:tabular-nums}
+.coach-rating-stars{position:relative;display:inline-block;color:#e2e6eb;font-size:17px;letter-spacing:1px;line-height:1.3}.coach-rating-stars>span{position:absolute;left:0;top:0;overflow:hidden;white-space:nowrap;color:#c99736}
+.coach-rating-cell{min-width:150px}
+@media(max-width:640px){.coach-player-grid .coach-actions-cell{width:110px;min-width:110px;padding:8px}.coach-player-grid table{min-width:720px}.coach-row-actions summary{padding:10px}}

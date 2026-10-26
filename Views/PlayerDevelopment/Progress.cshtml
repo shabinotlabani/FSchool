@@ -12,6 +12,17 @@
 <section class="development-ui progress-page">
 
 <header class="progress-heading"><h1>Ecuria</h1><p>@Model.Player.FullName <span>· @Model.Player.TrainingTeam?.Name</span></p></header>
+@if(ViewData["MatchMinutes"] is PlayerMatchMinutes minutes){
+<section class="progress-mini-card player-match-summary" aria-label="Minutazhi në ndeshje">
+<header class="d-flex justify-content-between align-items-center gap-2"><h2 class="h6 mb-0">Minutazhi</h2><small>@(Model.Year.HasValue?Model.Year.Value.ToString():"Gjithë periudha")</small></header>
+@if(minutes.Appearances>0){<div class="progress-comparison">
+<div><span>Mesatarja / ndeshje</span><strong data-match-average>@minutes.Average.ToString("0.#") min</strong></div>
+<div><span>Gjithsej</span><strong>@minutes.TotalMinutes min</strong></div>
+<div><span>Ndeshje të luajtura</span><strong>@minutes.Appearances</strong></div>
+</div><p class="progress-caption mb-0">Vetëm ndeshjet e përfunduara ku ka luajtur.</p>}
+else{<p class="progress-empty mb-0">Ende pa minuta në ndeshje të përfunduara.</p>}
+</section>
+}
 <partial name="_CareProgress" model="Model"/>
 <h2 class="h6 mt-4">Zhvillimi dhe matjet</h2>
 <div class="progress-card-grid">

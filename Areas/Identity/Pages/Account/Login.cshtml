@@ -4,13 +4,13 @@
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="sq">
+<html lang="@(Model.Language=="sr"?"sr-Latn":Model.Language)">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0a2341" />
     <meta name="color-scheme" content="light" />
-    <title>Hyr në llogari · UPNEXT</title>
+    <title>@Model.T("Title") · UPNEXT</title>
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
     <link rel="icon" href="~/images/upnext/favicon.ico" asp-append-version="true" />
     <link rel="manifest" href="~/manifest.webmanifest" />
@@ -19,44 +19,62 @@
 </head>
 <body>
     <main class="login-shell">
-        <section class="form-panel" aria-label="Identifikimi">
-            <div class="login-identity"><a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_512.webp" srcset="@Url.Content("~/images/upnext/logo_256.webp") 256w, @Url.Content("~/images/upnext/logo_512.webp") 512w" sizes="(max-width: 700px) 104px, 260px" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="260" height="260" /></a><p>Klubi yt. Një hap përpara.</p><span class="identity-line" aria-hidden="true"></span></div>
-            <header class="login-heading"><span>PLATFORMA UPNEXT</span><h1>Hyr në llogari</h1><p>Vazhdo me llogarinë tënde.</p></header>
+        <section class="form-panel" aria-label="@Model.T("Identity")">
+            <div class="login-identity"><a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_512.webp" srcset="@Url.Content("~/images/upnext/logo_256.webp") 256w, @Url.Content("~/images/upnext/logo_512.webp") 512w" sizes="(max-width: 700px) 104px, 260px" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="260" height="260" /></a><p>@Model.T("Tagline")</p><span class="identity-line" aria-hidden="true"></span></div>
+            <header class="login-heading"><h1>@Model.T("Title")</h1><p>@Model.T("Continue")</p></header>
             <div class="form-content">
+                @{var languages=new[]{("sq","Shqip"),("en","English"),("sr","Srpski"),("tr","Türkçe")};}
+                <details class="login-language-combo">
+                <summary aria-label="@Model.T("Language")"><partial name="_LanguageFlag" model="Model.Language"/><span>@languages.Single(x=>x.Item1==Model.Language).Item2</span><svg class="language-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></summary>
+                <nav class="login-language-options" aria-label="@Model.T("Language")">
+                @foreach(var item in languages){
+                    <a asp-page="./Login" asp-route-language="@item.Item1" asp-route-returnUrl="@Model.ReturnUrl" lang="@(item.Item1=="sr"?"sr-Latn":item.Item1)" hreflang="@(item.Item1=="sr"?"sr-Latn":item.Item1)" aria-current="@(Model.Language==item.Item1?"true":null)" class="@(Model.Language==item.Item1?"is-selected":null)"><partial name="_LanguageFlag" model="item.Item1"/><span>@item.Item2</span>@if(Model.Language==item.Item1){<span class="language-check" aria-hidden="true">✓</span>}</a>
+                }
+                </nav>
+                </details>
                 <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                    <input type="hidden" name="language" value="@Model.Language"/>
                     <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
                     <div class="field">
-                        <label asp-for="Input.Email">Adresa e emailit</label>
-                        <input asp-for="Input.Email" type="email" autocomplete="username" placeholder="emri@shembull.com" spellcheck="false" aria-describedby="email-error" />
+                        <label asp-for="Input.Email">@Model.T("Email")</label>
+                        <input asp-for="Input.Email" type="email" autocomplete="username" placeholder="@Model.T("EmailPlaceholder")" spellcheck="false" aria-describedby="email-error" />
                         <span asp-validation-for="Input.Email" id="email-error" class="field-error"></span>
                     </div>
                     <div class="field">
-                        <label asp-for="Input.Password">Fjalëkalimi</label>
+                        <label asp-for="Input.Password">@Model.T("Password")</label>
                         <div class="password-field">
-                            <input asp-for="Input.Password" autocomplete="current-password" placeholder="Shkruani fjalëkalimin" aria-describedby="password-error" />
-                            <button type="button" class="password-toggle" aria-label="Shfaq fjalëkalimin" aria-pressed="false" aria-controls="Input_Password">
+                            <input asp-for="Input.Password" autocomplete="current-password" placeholder="@Model.T("PasswordPlaceholder")" aria-describedby="password-error" />
+                            <button type="button" class="password-toggle" aria-label="@Model.T("Show")" data-show="@Model.T("Show")" data-hide="@Model.T("Hide")" aria-pressed="false" aria-controls="Input_Password">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /><path class="eye-slash" d="m3 3 18 18" /></svg>
                             </button>
                         </div>
                         <span asp-validation-for="Input.Password" id="password-error" class="field-error"></span>
                     </div>
-                    <label class="remember"><input asp-for="Input.RememberMe" /> Më mbaj të kyçur</label>
-                    <button type="submit" class="submit-button">Hyr në llogari <span aria-hidden="true">→</span></button>
+                    <label class="remember"><input asp-for="Input.RememberMe" /> @Model.T("Remember")</label>
+                    <button type="submit" class="submit-button">@Model.T("Title") <span aria-hidden="true">→</span></button>
                 </form>
             </div>
-            <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>Programuar nga <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
+            <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>@Model.T("Credit") <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
         </section>
     </main>
     <script>
+        const languages = document.querySelector('.login-language-combo');
+        document.addEventListener('click', event => { if (!languages.contains(event.target)) languages.open = false; });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && languages.open) { languages.open = false; languages.querySelector('summary').focus(); } });
         const toggle = document.querySelector('.password-toggle');
         const password = document.getElementById('Input_Password');
         toggle.addEventListener('click', () => {
             const visible = password.type === 'password';
             password.type = visible ? 'text' : 'password';
             toggle.setAttribute('aria-pressed', String(visible));
-            toggle.setAttribute('aria-label', visible ? 'Fshih fjalëkalimin' : 'Shfaq fjalëkalimin');
+            toggle.setAttribute('aria-label', visible ? toggle.dataset.hide : toggle.dataset.show);
         });
     </script>
-    <partial name="_PwaInstall" />
+    <div class="pwa-install" hidden>
+        <button type="button" class="pwa-install-button" hidden>@Model.T("Install")</button>
+        <p class="pwa-ios-help" hidden>@Model.T("InstallHelp")</p>
+        <button type="button" class="pwa-dismiss" aria-label="@Model.T("Dismiss")">×</button>
+    </div>
+    <script src="~/js/pwa.js" asp-append-version="true" data-service-worker="@Url.Content("~/sw.js")" defer></script>
 </body>
 </html>

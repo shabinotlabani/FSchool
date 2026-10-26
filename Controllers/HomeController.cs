@@ -18,8 +18,19 @@ public class HomeController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int? teamId,int? year)
     {
+        if(User.IsInRole(_2Korriku.Models.Roles.Admin)||User.IsInRole(_2Korriku.Models.Roles.SuperAdmin)){
+            var today=BillingClock.Today;
+            var weekStart=today.AddDays(-(((int)today.DayOfWeek+6)%7));
+            var weekEnd=weekStart.AddDays(7);
+            var teams=await _context.TrainingTeams.AsNoTracking().Include(t=>t.Coach).OrderBy(t=>t.Name).ToListAsync();
+            if(teamId.HasValue&&!teams.Any(t=>t.Id==teamId))return NotFound();
+            var matches=await _context.MatchGames.AsNoTracking().Include(g=>g.TrainingTeam)
+                .Where(g=>g.Date>=weekStart&&g.Date<weekEnd&&(!teamId.HasValue||g.TrainingTeamId==teamId))
+                .OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).ToListAsync();
+            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year});
+        }
         if(User.IsInRole(_2Korriku.Models.Roles.Doctor)||User.IsInRole(_2Korriku.Models.Roles.Nutritionist))return RedirectToAction("Index","PlayerCare");
         if (User.IsInRole(_2Korriku.Models.Roles.FieldOperator)) return RedirectToAction("Index", "Fields");
         if (User.IsInRole(_2Korriku.Models.Roles.Coach)) return RedirectToAction("Index", "Coaches");
@@ -44,6 +55,16 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View();
+    }
+
+    [Authorize(Roles=_2Korriku.Models.Roles.Admin+","+_2Korriku.Models.Roles.SuperAdmin)]
+    [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+    public async Task<IActionResult> MatchReport(int id)
+    {
+        var game=await _context.MatchGames.AsNoTracking().Include(g=>g.TrainingTeam).Include(g=>g.Players).SingleOrDefaultAsync(g=>g.Id==id);
+        if(game==null)return NotFound();
+        ViewData["ReadOnlyMatch"]=true;
+        return View("~/Views/Matches/Summary.cshtml",game);
     }
 }
 

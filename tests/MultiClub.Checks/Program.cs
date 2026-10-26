@@ -181,6 +181,7 @@ try
     await HttpChecks.Run(root, connection.ConnectionString, args.Contains("--ui"));
     await ChatChecks.Run(options);
     await SportChecks.Run(options);
+    await MatchChecks.Run(options);
     Console.WriteLine("All multi-club checks passed.");
 }
 finally

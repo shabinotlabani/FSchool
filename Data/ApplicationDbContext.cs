@@ -6,6 +6,10 @@ namespace _2Korriku.Data;
 
 public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
+    public DbSet<MatchGame> MatchGames => Set<MatchGame>();
+    public DbSet<DisciplineRule> DisciplineRules => Set<DisciplineRule>();
+    public DbSet<MatchPlayer> MatchPlayers => Set<MatchPlayer>();
+    public DbSet<MatchChange> MatchChanges => Set<MatchChange>();
     public DbSet<DevelopmentMetric> DevelopmentMetrics => Set<DevelopmentMetric>();
     public DbSet<CoachMessage> CoachMessages => Set<CoachMessage>();
     public DbSet<CareAssignment> CareAssignments => Set<CareAssignment>();
@@ -309,6 +313,19 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<DevelopmentRecord>().Property(x=>x.SchemaData).HasDefaultValue("");
         builder.Entity<PlayerEvaluation>().Property(x=>x.Sport).HasDefaultValue("Football");
         builder.Entity<DevelopmentMetric>().HasIndex(x=>new{x.Sport,x.Section,x.Key}).IsUnique();
+        builder.Entity<MatchGame>().HasIndex(x=>x.RequestId).IsUnique();
+        builder.Entity<MatchGame>().Property(x=>x.EventData).HasDefaultValue("[]");
+        builder.Entity<DisciplineRule>().HasIndex(x=>new{x.TrainingTeamId,x.Kind,x.StartsOn}).IsUnique();
+        builder.Entity<DisciplineRule>().HasOne(x=>x.TrainingTeam).WithMany().HasForeignKey(x=>x.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<DisciplineRule>().HasOne(x=>x.UpdatedBy).WithMany().HasForeignKey(x=>x.UpdatedById).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchGame>().HasIndex(x=>new{x.TrainingTeamId,x.Date});
+        builder.Entity<MatchGame>().HasOne(x=>x.TrainingTeam).WithMany().HasForeignKey(x=>x.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchGame>().HasOne(x=>x.UpdatedBy).WithMany().HasForeignKey(x=>x.UpdatedById).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchPlayer>().HasIndex(x=>new{x.MatchGameId,x.StudentId}).IsUnique();
+        builder.Entity<MatchPlayer>().HasOne(x=>x.MatchGame).WithMany(x=>x.Players).HasForeignKey(x=>x.MatchGameId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchPlayer>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchChange>().HasOne(x=>x.MatchGame).WithMany().HasForeignKey(x=>x.MatchGameId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchChange>().HasOne(x=>x.Actor).WithMany().HasForeignKey(x=>x.ActorId).OnDelete(DeleteBehavior.Restrict);
         ConfigureClubs(builder);
     }
 }

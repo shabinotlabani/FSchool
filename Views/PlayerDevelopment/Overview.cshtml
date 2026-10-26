@@ -54,6 +54,7 @@
 </section>
 
 <div class="d-flex gap-3 flex-wrap mt-3">
+<a class="btn btn-outline-secondary" asp-controller="Matches" asp-action="Report" asp-route-studentId="@Model.Player.Id">Ndeshjet · Minutazhi</a>
 <a class="btn btn-outline-secondary" asp-controller="CoachInbox" asp-action="Thread" asp-route-studentId="@Model.Player.Id" asp-route-returnUrl="@Url.Action("Player","PlayerDevelopment",new{id=Model.Player.Id})">Mesazh prindit</a>
 <a class="btn btn-outline-secondary" asp-controller="CoachInbox" asp-action="Deactivate" asp-route-studentId="@Model.Player.Id" asp-route-returnUrl="@Url.Action("Players","Coaches")">Pasivizo</a>
 </div>

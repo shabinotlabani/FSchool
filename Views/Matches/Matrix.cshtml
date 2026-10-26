@@ -1,0 +1,19 @@
+@model MatchMatrix
+@{var report=Model.Report;var football=report.Matches.Any(m=>m.Sport=="Football");ViewData["Title"]="Matrica e lojtarëve";}
+<link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
+<div class="matches-page match-matrix">
+<div class="page-heading"><div><h1>@report.Teams.Single(t=>t.Id==report.TeamId).Name</h1><p>Minutazhi dhe statistikat · Ndeshjet e përfunduara</p></div><a class="btn btn-outline-secondary" asp-action="Index" asp-route-teamId="@report.TeamId" asp-route-year="@report.Year">Ndeshjet</a></div>
+<form method="get" class="match-filters"><label>Ekipi<select name="teamId" class="form-select">@foreach(var t in report.Teams){<option value="@t.Id" selected="@(t.Id==report.TeamId)">@t.Name</option>}</select></label><label>Viti<input name="year" value="@report.Year" type="number" min="1900" max="2200" class="form-control"/></label><label>Gara<select name="kind" class="form-select"><option value="">Të gjitha</option>@foreach(var k in new[]{"Official","Cup","Friendly"}){<option value="@k" selected="@(report.Kind==k)">@MatchLabels.Kind(k)</option>}</select></label><button class="btn btn-outline-secondary">Shfaq</button></form>
+<p class="match-hint">Min = minuta · R = rezervë pa hyrë · — = jashtë listës @if(football){<span> · G = gola · A = asiste · V = të verdhë · K = të kuq</span>}</p>
+<div class="table-responsive match-grid" tabindex="0" role="region" aria-label="Matrica e minutave sipas lojtarit dhe ndeshjes"><table class="table align-middle"><thead><tr><th scope="col">Lojtari</th><th scope="col">Min total</th>@if(football){<th scope="col">G</th><th scope="col">A</th><th scope="col">V</th><th scope="col">K</th>}
+@foreach(var g in report.Matches){<th scope="col"><a asp-action="Edit" asp-route-id="@g.Id">@g.Date.ToString("dd.MM")<small>@g.Opponent</small></a><small>@MatchLabels.Kind(g.Kind) · @g.ScoreFor:@g.ScoreAgainst</small></th>}
+</tr></thead><tbody>
+@foreach(var row in Model.Players){<tr><th scope="row"><a asp-action="Report" asp-route-teamId="@report.TeamId" asp-route-year="@report.Year" asp-route-kind="@report.Kind" asp-route-studentId="@row.StudentId">@row.Name</a></th><td class="matrix-total">@(row.OfficialMinutes+row.CupMinutes+row.FriendlyMinutes)</td>@if(football){<td>@row.Goals</td><td>@row.Assists</td><td><span class="matrix-yellow">@row.YellowCards</span></td><td><span class="matrix-red">@row.RedCards</span></td>}
+@foreach(var g in report.Matches){var p=g.Players.SingleOrDefault(p=>p.StudentId==row.StudentId);var events=g.Events;var goals=events.Count(e=>e.PlayerId==row.StudentId&&(e.Kind is "Goal" or "PenaltyGoal"));var assists=events.Count(e=>e.AssistId==row.StudentId&&e.Kind=="Goal");var yellow=events.Count(e=>e.PlayerId==row.StudentId&&(e.Kind is "Yellow" or "SecondYellow"));var red=events.Count(e=>e.PlayerId==row.StudentId&&FootballLabels.Dismissal(e));
+<td class="matrix-game"><a asp-action="Edit" asp-route-id="@g.Id" aria-label="@row.Name, @g.Opponent, @(p==null?"jashtë listës":p.Minutes+" minuta")"><strong class="@(p?.Minutes>0?"matrix-played":"matrix-empty")">@(p==null?"—":p.Role=="Unused"?"R":p.Minutes.ToString())</strong>@if(p!=null&&p.Role!="Unused"){<small>@MatchLabels.Role(p.Role)</small>}<span class="matrix-events">@if(goals>0){<span>G @goals</span>}@if(assists>0){<span>A @assists</span>}@if(yellow>0){<span class="matrix-yellow">V @yellow</span>}@if(red>0){<span class="matrix-red">K @red</span>}</span></a></td>}
+</tr>}
+@if(Model.Players.Count==0){<tr><td colspan="@(2+(football?4:0)+report.Matches.Count)">Ekipi nuk ka lojtarë për këtë periudhë.</td></tr>}
+</tbody></table></div>
+@if(report.Matches.Count==0){<p class="match-hint">Ende pa ndeshje të përfunduara për këtë periudhë.</p>}
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="Coaches" asp-action="Team" asp-route-id="@report.TeamId">← Ekipi</a>}

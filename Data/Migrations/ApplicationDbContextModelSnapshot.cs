@@ -914,6 +914,72 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("DevelopmentRecords");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.DisciplineRule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<bool>("CountDismissalYellows")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("EndsOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("RedBan")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SecondYellowBan")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StartsOn")
+                        .HasColumnType("date");
+
+                    b.Property<int>("TrainingTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("YellowBan")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("YellowThreshold")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TrainingTeamId");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("ClubId", "TrainingTeamId", "Kind", "StartsOn")
+                        .IsUnique();
+
+                    b.ToTable("DisciplineRules");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.Expense", b =>
                 {
                     b.Property<int>("Id")
@@ -1765,6 +1831,211 @@ namespace _2Korriku.Data.Migrations
                             Name = "Fusha 3",
                             Revision = new Guid("a6333333-3333-4333-8333-333333333333")
                         });
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchChange", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MatchGameId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("MatchGameId");
+
+                    b.HasIndex("ClubId", "MatchGameId");
+
+                    b.ToTable("MatchChanges");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchGame", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Competition")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("EventData")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("[]");
+
+                    b.Property<string>("Formation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("Home")
+                        .HasColumnType("boolean");
+
+                    b.Property<TimeOnly?>("Kickoff")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Opponent")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("PlayersOnCourt")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ScoreAgainst")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ScoreFor")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sport")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("TrainingTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Venue")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("ClubId", "TrainingTeamId");
+
+                    b.HasIndex("TrainingTeamId", "Date");
+
+                    b.ToTable("MatchGames");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchPlayer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("CoachNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("CoachRating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Intervals")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("MatchGameId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(201)
+                        .HasColumnType("character varying(201)");
+
+                    b.Property<int?>("PitchSlot")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MatchGameId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("ClubId", "StudentId");
+
+                    b.HasIndex("ClubId", "MatchGameId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("MatchPlayers");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.MonthlyFeePeriod", b =>
@@ -4728,6 +4999,38 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.DisciplineRule", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.TrainingTeam", "TrainingTeam")
+                        .WithMany()
+                        .HasForeignKey("TrainingTeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.TrainingTeam", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "TrainingTeamId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TrainingTeam");
+
+                    b.Navigation("UpdatedBy");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.Expense", b =>
                 {
                     b.HasOne("_2Korriku.Models.ApplicationUser", "CancelledBy")
@@ -5135,6 +5438,109 @@ namespace _2Korriku.Data.Migrations
                         .HasForeignKey("ClubId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchChange", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.MatchGame", "MatchGame")
+                        .WithMany()
+                        .HasForeignKey("MatchGameId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.MatchGame", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "MatchGameId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("MatchGame");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchGame", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.TrainingTeam", "TrainingTeam")
+                        .WithMany()
+                        .HasForeignKey("TrainingTeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.TrainingTeam", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "TrainingTeamId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TrainingTeam");
+
+                    b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchPlayer", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.MatchGame", "MatchGame")
+                        .WithMany("Players")
+                        .HasForeignKey("MatchGameId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.MatchGame", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "MatchGameId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Student", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "StudentId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("MatchGame");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.MonthlyFeePeriod", b =>
@@ -6321,6 +6727,11 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Changes");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.MatchGame", b =>
+                {
+                    b.Navigation("Players");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.ParentPushMessage", b =>

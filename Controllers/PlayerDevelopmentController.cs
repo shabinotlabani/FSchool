@@ -44,6 +44,7 @@ public class PlayerDevelopmentController(ApplicationDbContext db) : Controller
             var catalog=await new SportDevelopmentService(db).Catalog();
             ViewData["IndividualMenu"]=await db.NutritionMenus.AnyAsync(x=>x.Scope==id);
             if(section=="Progress"){
+                ViewData["MatchMinutes"]=await new MatchService(db).PlayerMinutes(Actor,id,year);
                 ViewData["MedicalHistory"]=await db.CareEntries.AsNoTracking().Where(x=>x.Assignment.StudentId==id&&x.Assignment.Kind==Roles.Doctor&&x.Date<=BillingClock.Today)
                     .OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).Select(x=>new CareNotice(id,x.TrainingStatus!,x.CoachInstructions,x.Date,x.ReviewDate)).ToListAsync();
                 ViewData["ReportedCases"]=await db.CareReferrals.AsNoTracking().Where(x=>x.StudentId==id&&x.CoachId==Actor&&x.Kind==Roles.Doctor).OrderByDescending(x=>x.CreatedAt).ToListAsync();

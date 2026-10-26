@@ -10,4 +10,6 @@ public class CoachPlayers
 public record CoachPlayerRow(int Id, string Name, string Team, int Age, int Present, int Total)
 {
     public int? Percent => Total == 0 ? null : (int)Math.Round(100d * Present / Total);
+    public decimal? Rating { get; init; }
+    public DateOnly? RatingDate { get; init; }
 }

@@ -1,0 +1,62 @@
+@model MatchInput
+@using _2Korriku.Services
+@{ViewData["Title"]=Model.Id==0?"Ndeshje e re":"Ndeshja";var staged=Model.Sport=="Football";var preparing=Model.Status=="Draft";}
+<link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/pitch-ui.css" asp-append-version="true"/>
+<div class="matches-page @(Model.Id!=0&&Model.Sport=="Football"?"match-football-page":"")">
+<div class="page-heading"><div><h1>@(Model.Id==0?"Ndeshje e re":Model.Opponent)</h1><p>@Model.TeamName · @SportDevelopmentService.Sports.GetValueOrDefault(Model.Sport,Model.Sport)</p></div></div>
+@if(TempData["Success"] is string success){<div class="alert alert-success" role="status">@success</div>}
+@if(staged){<nav class="match-steps" aria-label="Hapat e ndeshjes"><span class="@(Model.Id==0?"current":"done")">1 · Ndeshja</span><span class="@(Model.Id!=0&&preparing?"current":!preparing?"done":"")">2 · Formacioni</span><span class="@(Model.Status=="Live"?"current":Model.Status=="Completed"?"done":"")">3 · Ngjarjet</span><span class="@(Model.Status=="Completed"?"current":"")">4 · Raporti</span></nav>}
+<form method="post" id="match-form" data-stage="@(staged?Model.Status:"Other")" class="@(staged?"stage-"+Model.Status.ToLowerInvariant():"")">
+@if(staged){<input asp-for="Status" type="hidden"/>}
+<input asp-for="Id" type="hidden"/><input asp-for="TeamId" type="hidden"/><input asp-for="RequestId" type="hidden"/><input asp-for="Revision" type="hidden"/>
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<details class="match-metadata" open="@(Model.Id==0||Model.Sport!="Football")"><summary>Ndeshja dhe rezultati</summary>
+<div class="match-fields">
+<label>Kundërshtari<input asp-for="Opponent" class="form-control" maxlength="150" required/></label>
+<label>Gara<select asp-for="Kind" class="form-select"><option value="Official">Për pikë</option><option value="Cup">Për kupë</option><option value="Friendly">Miqësore</option></select></label>
+<label>Data<input asp-for="Date" type="date" class="form-control" required/></label><label>Ora<input asp-for="Kickoff" type="time" class="form-control"/></label>
+<input asp-for="Competition" type="hidden"/><label>Vendi<input asp-for="Venue" class="form-control" maxlength="150"/></label>
+<label>Fusha<select asp-for="Home" class="form-select"><option value="true">Vendas</option><option value="false">Mysafir</option></select></label>
+</div>
+@if(Model.Id!=0){
+<h2>Rezultati</h2><div class="match-fields">
+<label>Kohëzgjatja (min)<input asp-for="Duration" type="number" min="1" max="300" class="form-control" required/></label>
+<label>Lojtarë në fushë<input asp-for="PlayersOnCourt" type="number" min="1" max="30" class="form-control" required/></label>
+@if(!staged){<label>Rezultati ynë<input asp-for="ScoreFor" type="number" min="0" max="999" class="form-control"/></label><label>Kundërshtari<input asp-for="ScoreAgainst" type="number" min="0" max="999" class="form-control"/></label>
+<label>Statusi<select asp-for="Status" class="form-select"><option value="Draft">Në përgatitje</option><option value="Completed">Përfunduar</option><option value="Cancelled">Anuluar</option></select></label>}
+</div>
+}
+</details>
+@if(Model.Id!=0){
+@if(staged&&!preparing){<section class="match-live-score"><label>@Model.TeamName<input asp-for="ScoreFor" type="number" min="0" max="999" inputmode="numeric" required/></label><span>:</span><label>@Model.Opponent<input asp-for="ScoreAgainst" type="number" min="0" max="999" inputmode="numeric" required/></label><button type="button" id="opponent-goal" class="btn btn-outline-secondary">+ Gol kundërshtari</button></section>}
+@if(Model.Sport=="Football"){<partial name="_Pitch" model="Model"/>}
+<details id="lineup-details" open><summary>Minutazhi i detajuar</summary>
+<div class="match-lineup-heading"><h2>Formacioni dhe minutazhi</h2><span id="match-lineup-count" role="status"></span></div>
+<p class="match-hint">Minutat nga fillimi i ndeshjes, pa pushimet. Titullari fillon në 0; për rikthim në lojë shto një hyrje tjetër. Përfshi shtesën në kohëzgjatje.</p>
+<details class="match-substitution"><summary>Zëvendësim i shpejtë</summary><div class="match-substitution-fields">
+<label>Del<select id="sub-out" class="form-select"><option value="">Zgjidh lojtarin</option>@for(var i=0;i<Model.Players.Count;i++){<option value="@i">@Model.Players[i].Name</option>}</select></label>
+<label>Hyn<select id="sub-in" class="form-select"><option value="">Zgjidh lojtarin</option>@for(var i=0;i<Model.Players.Count;i++){<option value="@i">@Model.Players[i].Name</option>}</select></label>
+<label>Minuta<input id="sub-minute" type="number" min="1" max="299" class="form-control"/></label><button type="button" id="apply-substitution" class="btn btn-outline-secondary">Zbato</button>
+</div><p id="sub-message" role="status"></p></details>
+<div class="table-responsive match-grid"><table class="table align-middle match-lineup"><thead><tr><th>Lojtari</th><th>Roli</th><th>Hyrja → dalja</th><th>Min</th><th>Vlerësimi</th><th>Vërejtje</th></tr></thead><tbody>
+@for(var i=0;i<Model.Players.Count;i++){var p=Model.Players[i];<tr data-match-player data-index="@i" data-name="@p.Name" data-student="@p.StudentId">
+<td><input asp-for="Players[i].StudentId" type="hidden"/><input asp-for="Players[i].PitchSlot" type="hidden" class="pitch-slot"/><strong>@p.Name</strong>@if(p.Care!=null){<small class="match-care">@p.Care</small>}</td>
+<td><select asp-for="Players[i].Role" class="form-select match-role" aria-label="Roli i @p.Name"><option value="NotSelected">Jashtë listës</option><option value="Starter">Titullar</option><option value="Substitute">Nga stoli</option><option value="Unused">Rezervë pa hyrë</option></select></td>
+<td><div class="match-stints">@for(var j=0;j<p.Intervals.Count;j++){<div class="match-stint"><input asp-for="Players[i].Intervals[j].From" type="number" min="0" max="300" aria-label="Minuta e hyrjes" placeholder="Hyrja"/><span>→</span><input asp-for="Players[i].Intervals[j].To" type="number" min="0" max="300" aria-label="Minuta e daljes" placeholder="Dalja"/><button type="button" data-remove-stint aria-label="Hiq intervalin">×</button></div>}</div><button type="button" class="match-add-stint" data-add-stint>+ Hyrje / dalje</button></td><td><output class="match-minutes">@p.Intervals.Where(x=>x.From.HasValue&&x.To.HasValue).Sum(x=>x.To-x.From)</output></td><td><select asp-for="Players[i].CoachRating" class="form-select match-rating" aria-label="Vlerësimi i @p.Name"><option value="">Pa vlerësim</option>@for(var star=1;star<=5;star++){<option value="@star">@(new string('★',star))</option>}</select></td><td><textarea asp-for="Players[i].CoachNote" class="form-control match-note" maxlength="1000" rows="2" aria-label="Vërejtje për @p.Name"></textarea></td>
+</tr>}
+@if(Model.Players.Count==0){<tr><td colspan="4">Ekipi nuk ka lojtarë aktivë.</td></tr>}
+</tbody></table></div>
+</details>
+@if(Model.Sport=="Football"){<partial name="_Football" model="Model"/>}
+<div class="match-save"><span>@(staged&&preparing?"Zgjidh titullarët dhe konfirmo":"Ruaj ngjarjet e regjistruara")</span>
+@if(staged&&preparing){<button type="submit" name="command" value="Confirm" class="btn btn-primary">Konfirmo formacionin</button>}else{<button type="submit" class="btn btn-primary">Ruaj ndeshjen</button>@if(staged){<button type="button" class="btn btn-outline-primary" id="finish-match">@(Model.Status=="Completed"?"Shiko raportin":"Përfundo lojën")</button>}}
+</div>
+@if(staged&&!preparing){<dialog id="finish-dialog" aria-labelledby="finish-heading"><h2 id="finish-heading">Përfundo lojën?</h2><p>Kontrollo rezultatin dhe minutat. Ndeshja kalon në raportet e lojtarëve.</p><div class="d-flex gap-2"><button type="button" id="finish-cancel" class="btn btn-outline-secondary">Kthehu</button><button type="submit" name="command" value="Finish" class="btn btn-primary">Përfundo dhe hap raportin</button></div></dialog>}
+}else{
+<input asp-for="Duration" type="hidden"/><input asp-for="PlayersOnCourt" type="hidden"/>
+<div class="match-save"><span></span><button type="submit" class="btn btn-primary">Krijo ndeshjen</button></div>
+}
+</form></div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-teamId="@Model.TeamId" asp-route-year="@Model.Date.Year">← Ndeshjet</a>}
+@section Scripts { @if(Model.Id!=0){<script src="~/js/matches.js" asp-append-version="true"></script><script src="~/js/football.js" asp-append-version="true"></script><script src="~/js/pitch.js" asp-append-version="true"></script>} }

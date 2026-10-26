@@ -1,0 +1,16 @@
+@model MatchGame
+@{ViewData["Title"]="Raporti i ndeshjes";var readOnly=ViewData["ReadOnlyMatch"] is true;var football=Model.Sport=="Football";string Name(int? id)=>Model.Players.FirstOrDefault(p=>p.StudentId==id)?.Name??"—";}
+<link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/pitch-ui.css" asp-append-version="true"/>
+<div class="matches-page match-summary"><div class="page-heading"><div><h1>Raporti i ndeshjes</h1><p>@Model.Date.ToString("dd.MM.yyyy") · @MatchLabels.Kind(Model.Kind) · @MatchLabels.Status(Model.Status)</p></div>@if(!readOnly){<a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id">Korrigjo të dhënat</a>}</div>
+<div class="match-result"><strong>@Model.TrainingTeam.Name</strong><b>@(Model.ScoreFor?.ToString()??"—") : @(Model.ScoreAgainst?.ToString()??"—")</b><strong>@Model.Opponent</strong></div>
+<p class="match-hint">@Model.Duration minuta · @(Model.Home?"Vendas":"Mysafir") · @Model.Formation</p>
+<div class="table-responsive match-grid"><table class="table"><thead><tr><th>Lojtari</th><th>Roli</th><th>Hyrja → Dalja</th><th>Min</th>@if(football){<th>Gola</th><th>Asiste</th><th>Të verdhë</th><th>Të kuq</th>}<th>Vlerësimi</th><th>Vërejtje</th></tr></thead><tbody>
+@foreach(var p in Model.Players.OrderBy(p=>p.Role=="Starter"?0:1).ThenBy(p=>p.Name)){<tr><th scope="row">@p.Name</th><td>@MatchLabels.Role(p.Role)</td><td>@string.Join(" · ",p.Stints.Select(s=>$"{s.From}–{s.To}"))</td><td>@p.Minutes</td>@if(football){<td>@Model.Events.Count(e=>e.PlayerId==p.StudentId&&(e.Kind is "Goal" or "PenaltyGoal"))</td><td>@Model.Events.Count(e=>e.AssistId==p.StudentId)</td><td>@Model.Events.Count(e=>e.PlayerId==p.StudentId&&(e.Kind is "Yellow" or "SecondYellow"))</td><td>@Model.Events.Count(e=>e.PlayerId==p.StudentId&&FootballLabels.Dismissal(e))</td>}<td class="match-rating-display" aria-label="@(p.CoachRating.HasValue?$"{p.CoachRating} yje":"Pa vlerësim")">@(p.CoachRating.HasValue?new string('★',p.CoachRating.Value):"—")</td><td class="match-note-display">@(p.CoachNote??"—")</td></tr>}
+</tbody></table></div>
+@if(football){<h2 class="mt-4">Rrjedha e ndeshjes</h2><ol class="match-timeline">
+@foreach(var item in Model.Events.Select(e=>(Minute:e.Minute,Text:FootballLabels.Events.GetValueOrDefault(e.Kind,e.Kind)+" · "+(e.PlayerId.HasValue?Name(e.PlayerId):"Kundërshtari")+(e.AssistId.HasValue?" · Asist: "+Name(e.AssistId):""))).Concat(Model.Players.SelectMany(p=>p.Stints.SelectMany(s=>new[]{(Minute:s.From??0,Text:"Hyrje · "+p.Name),(Minute:s.To??Model.Duration,Text:"Dalje · "+p.Name)})).Where(e=>e.Minute>0&&e.Minute<Model.Duration)).OrderBy(e=>e.Minute)){<li><strong>@item.Minute′</strong><span>@item.Text</span></li>}
+@if(Model.Events.Count==0&&!Model.Players.Any(p=>p.Role=="Substitute")){<li>Pa ngjarje të regjistruara.</li>}
+</ol>}
+@if(!readOnly){<a class="btn btn-outline-primary mt-3" asp-action="Matrix" asp-route-teamId="@Model.TrainingTeamId" asp-route-year="@Model.Date.Year">Matrica e ekipit</a>}</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="@(readOnly?"Home":"Matches")" asp-action="Index" asp-route-teamId="@Model.TrainingTeamId" asp-route-year="@Model.Date.Year">← Ndeshjet</a>}

@@ -39,11 +39,17 @@ static class ChatChecks
             Check((await roster.Load("chat-coach",null)).Players.Single().Percent==null,"Coach roster has no artificial zero for unrecorded attendance");
             Check((await roster.Load("chat-assistant",null)).Players.Single().Id==studentId,"Assistant sees assigned players");
             Check((await roster.Load("chat-outsider",null)).Players.Count==0,"Unassigned coach cannot list players");
+            Check((await roster.Load("chat-coach",null)).Players.Single().Rating==null,"Roster does not invent stars for unevaluated players");
+            db.PlayerEvaluations.AddRange(
+                new(){StudentId=studentId,CoachId="chat-coach",Date=BillingClock.Today.AddDays(-2),Technique=1,Tactics=1,Fitness=1,Discipline=1,Teamwork=1},
+                new(){StudentId=studentId,CoachId="chat-coach",Date=BillingClock.Today.AddDays(-1),Technique=5,Tactics=4,Fitness=3,Discipline=4,Teamwork=5},
+                new(){StudentId=studentId,CoachId="chat-coach",Sport="Basketball",Date=BillingClock.Today,Technique=1,Tactics=1,Fitness=1,Discipline=1,Teamwork=1});
             foreach(var entry in new[]{(Days:1,Role:"head",Present:true),(Days:2,Role:"head",Present:false),(Days:40,Role:"head",Present:true)})
                 db.TeamAttendances.Add(new(){TrainingTeamId=teamId,Date=BillingClock.Today.AddDays(-entry.Days),CoachRole=entry.Role,SavedById="chat-coach",Players=[new(){StudentId=studentId,StudentName="Chat Player",Present=entry.Present}]});
             await db.SaveChangesAsync();
             var row=(await roster.Load("chat-coach","Chat")).Players.Single();
             Check(row.Total==2&&row.Present==1&&row.Percent==50,"Roster percentage counts registered days and excludes old records");
+            Check(row.Rating==4.2m&&row.RatingDate==BillingClock.Today.AddDays(-1),"Roster stars average the latest assessment for the current sport");
         }
         await using(var db=Db(2))Check((await new CoachPlayersService(db).Load("chat-coach",null)).Players.Count==0,"Coach roster is isolated by club");
         await using(var db=Db()){

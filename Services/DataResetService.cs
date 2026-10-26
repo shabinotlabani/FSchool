@@ -7,6 +7,8 @@ public static class DataResetService
 {
     // Explicit list: new tables must be reviewed before becoming part of a reset.
     public static readonly string[] Tables = [
+        "MatchChanges", "MatchPlayers", "MatchGames",
+        "DisciplineRules",
         "CoachMessages",
         "NutritionMenus", "CareReferrals", "CareEntries", "CareAssignments",
         "PlayerEvaluations",
