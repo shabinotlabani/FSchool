@@ -69,6 +69,12 @@
             message.textContent = 'Zgjidhni dy lojtarë të ndryshëm dhe minutën brenda ndeshjes.'; return;
         }
         const outgoing = rows[Number(out)], incoming = rows[Number(into)];
+        if(document.getElementById('football-events')){
+            const dismissed=row=>[...form.querySelectorAll('[data-football-event]')].some(e=>e.querySelector('[data-field=PlayerId]').value===row.dataset.student&&['Red','SecondYellow'].includes(e.querySelector('[data-field=Kind]').value));
+            if(incoming.querySelector('.match-role').value!=='Unused'||incoming.querySelector('.match-stint')||dismissed(incoming)||dismissed(outgoing)||incoming.querySelector('.match-care')){
+                message.textContent='Zgjidh një rezervë të disponueshme që ende nuk ka hyrë. Lojtari i përjashtuar nuk zëvendësohet.';return;
+            }
+        }
         const active = [...outgoing.querySelectorAll('.match-stint')].find(stint => {
             const [a,b] = stint.querySelectorAll('input[type=number]');
             return a.value !== '' && b.value !== '' && Number(a.value) < minute && Number(b.value) >= minute;

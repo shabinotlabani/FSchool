@@ -10,7 +10,7 @@
  if(el('finish-cancel'))el('finish-cancel').onclick=()=>el('finish-dialog').close();
  if(el('opponent-goal'))el('opponent-goal').onclick=()=>{const score=form.querySelector('[name=ScoreAgainst]');score.value=(Number(score.value)||0)+1;changed();};
  let selected=null,targetSlot=null;
- let lastMinute='';
+ let pendingAction=null,selectedReserve=null;
  const editor=document.querySelector('.formation-editor');
  document.querySelectorAll('[data-pitch-tab]').forEach(button=>button.onclick=()=>{
   editor.classList.toggle('show-bench',button.dataset.pitchTab==='bench');
@@ -19,9 +19,9 @@
  function markUnsaved(){el('pitch-save-state').textContent='Pa ruajtur';el('pitch-save-state').classList.add('is-dirty');}
  form.addEventListener('change',e=>{if(e.target.name)markUnsaved();});
  form.addEventListener('input',e=>{if(e.target===form||e.target.name)markUnsaved();});
- el('pitch-minute').addEventListener('input',()=>{lastMinute=el('pitch-minute').value;});
+
  for(const [id,step] of [['pitch-minute-down',-1],['pitch-minute-up',1]])el(id).onclick=()=>{
-  const value=Math.max(1,Math.min(duration(),(Number(el('pitch-minute').value)||0)+step));el('pitch-minute').value=value;lastMinute=String(value);
+  const value=Math.max(1,Math.min(duration(),(Number(el('pitch-minute').value)||0)+step));el('pitch-minute').value=value;
  };
  const wide=window.matchMedia('(min-width:1100px)');
  const panelHost=el('pitch-panel-host');panelHost.append(dialog);
@@ -69,15 +69,14 @@
   dialog.querySelectorAll('[data-rating]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rating!==''&&Number(b.dataset.rating)<=Number(rating))));
   el('pitch-note').value=selected?.querySelector('.match-note').value||'';
   el('pitch-selected-avatar').textContent=selected?initials(selected):'+';
-  el('pitch-pick-label').hidden=!!selected;dialog.querySelectorAll('[data-pitch-role],#pitch-enter,#pitch-leave,#pitch-swap-apply,[data-pitch-event],#pitch-details').forEach(b=>b.disabled=!selected);
+  el('pitch-pick-label').hidden=!!selected;dialog.querySelectorAll('[data-pitch-role],[data-pitch-event],#pitch-details').forEach(b=>b.disabled=!selected);
   dialog.querySelectorAll('[data-pitch-role]').forEach(b=>b.setAttribute('aria-pressed',String(!!selected&&role(selected)===b.dataset.pitchRole)));
-  [...el('pitch-swap-player').options].forEach(o=>o.disabled=!!selected&&o.value===selected.dataset.index);
   if(!preparing){dialog.querySelectorAll('[data-pitch-role]').forEach(b=>b.hidden=b.dataset.pitchRole==='Starter'||!!selected&&['Starter','Substitute'].includes(role(selected)));}
-  el('pitch-swap-label').textContent=selected&&role(selected)==='Unused'?'Kush del nga loja?':'Me kë zëvendësohet?';
+
  }
  dialog.querySelectorAll('[data-rating]').forEach(b=>b.onclick=()=>{if(!selected)return;selected.querySelector('.match-rating').value=b.dataset.rating;changed();});
  el('pitch-note').oninput=()=>{if(!selected)return;selected.querySelector('.match-note').value=el('pitch-note').value;markUnsaved();};
- function open(row,place=null){selected=row;targetSlot=place;el('pitch-message').textContent='';el('pitch-minute').value=lastMinute;el('pitch-swap-player').value='';el('pitch-pick').value='';dialog.querySelector('.pitch-swap').open=false;render();refreshDialog();if(!dialog.open){if(wide.matches)dialog.show();else dialog.showModal();}panelHost.querySelector('.pitch-selection-empty').hidden=true;}
+ function open(row,place=null){selected=row;targetSlot=place;el('pitch-message').textContent='';resetAction();el('pitch-pick').value='';render();refreshDialog();if(!dialog.open){if(wide.matches)dialog.show();else dialog.showModal();}panelHost.querySelector('.pitch-selection-empty').hidden=true;}
  dialog.addEventListener('close',()=>{panelHost.querySelector('.pitch-selection-empty').hidden=dialog.open;});
  wide.addEventListener('change',()=>{if(dialog.open){dialog.close();if(wide.matches)dialog.show();else dialog.showModal();panelHost.querySelector('.pitch-selection-empty').hidden=true;}});
  function change(row,newRole){const control=row.querySelector('.match-role');control.value=newRole;control.dispatchEvent(new Event('change',{bubbles:true}));markUnsaved();}
@@ -95,28 +94,52 @@
  el('pitch-close').onclick=()=>dialog.close();
  el('pitch-pick').onchange=()=>{if(el('pitch-pick').value==='')return;selected=rows[Number(el('pitch-pick').value)];slot(selected).value=targetSlot;change(selected,'Starter');message('U vendos në formacion.');};
  dialog.querySelectorAll('[data-pitch-role]').forEach(b=>b.onclick=()=>{if(!selected)return;if(b.dataset.pitchRole==='Starter'&&role(selected)!=='Starter'&&rows.filter(r=>role(r)==='Starter').length>=capacity()){message('Formacioni është plot. Liro një vend ose përdor ndërrimin.');return;}change(selected,b.dataset.pitchRole);message('Roli u ndryshua. Ruaj ndeshjen.');});
- el('pitch-enter').onclick=()=>{if(!selected)return;const m=minute();if(m===null)return;if(intervals(selected).some(s=>s.from===null||s.to===null||s.to>m)){message('Lojtari ka minuta të regjistruara pas kësaj minute. Përdor rregullimin e minutave.');return;}
-  if(rows.filter(r=>active(r,m)).length>=capacity()){message('Fusha është plot. Përdor ndërrimin.');return;}
-  if(role(selected)!=='Starter')change(selected,'Substitute');
-  let stint=intervals(selected).find(s=>s.from===null&&s.to===null);if(!stint){selected.querySelector('[data-add-stint]').click();stint=intervals(selected).at(-1);}stint.inputs[0].value=m;stint.inputs[1].value=duration();changed();message('Hyrja në lojë u regjistrua.');
- };
  function leave(m){const stint=intervals(selected).find(s=>s.from!==null&&s.to!==null&&s.from<m&&s.to>=m);if(!stint)return false;stint.inputs[1].value=m;changed();return true;}
- el('pitch-leave').onclick=()=>{if(!selected)return;const m=minute();if(m!==null)message(leave(m)?'Dalja u regjistrua.':'Lojtari nuk është në lojë në këtë minutë.');};
- el('pitch-swap-apply').onclick=()=>{if(!selected)return;const m=minute(),other=rows[Number(el('pitch-swap-player').value)];if(m===null)return;if(el('pitch-swap-player').value===''||!other||other===selected){message('Zgjidh lojtarin tjetër.');return;}
-  const outgoing=active(selected,m)?selected:other,incoming=outgoing===selected?other:selected;
-  el('sub-out').value=outgoing.dataset.index;el('sub-in').value=incoming.dataset.index;el('sub-minute').value=m;el('apply-substitution').click();render();markUnsaved();message(el('sub-message').textContent);
+ function dismissed(row){return [...form.querySelectorAll('[data-football-event]')].some(e=>e.querySelector('[data-field=PlayerId]').value===row.dataset.student&&['Red','SecondYellow'].includes(e.querySelector('[data-field=Kind]').value));}
+ function eligibleReserve(row){return row!==selected&&role(row)==='Unused'&&intervals(row).length===0&&!dismissed(row)&&!row.querySelector('.match-care');}
+ function resetAction(){pendingAction=null;selectedReserve=null;dialog.classList.remove('action-pending');el('pitch-action-prompt').hidden=true;el('pitch-minute').value='';}
+ function reserveOptions(){
+  const candidates=rows.filter(eligibleReserve);el('pitch-reserve-options').replaceChildren();el('pitch-no-reserves').hidden=candidates.length>0;
+  candidates.forEach(row=>{const button=document.createElement('button');button.type='button';button.dataset.reserveIndex=row.dataset.index;button.textContent=row.dataset.name;button.setAttribute('aria-pressed',String(selectedReserve===row));button.onclick=()=>{selectedReserve=row;reserveOptions();};el('pitch-reserve-options').append(button);});
+ }
+ dialog.querySelectorAll('[data-pitch-event]').forEach(button=>button.onclick=()=>{
+  if(!selected||preparing)return;
+  message('');
+  if(dismissed(selected)){message('Lojtari është përjashtuar.');return;}
+  pendingAction=button.dataset.pitchEvent;selectedReserve=null;
+  el('pitch-action-title').textContent={Goal:'Gol',Yellow:'Karton i verdhë',Red:'Karton i kuq',Swap:'Zëvendësim'}[pendingAction];
+  el('pitch-minute').value='';el('pitch-minute').max=pendingAction==='Swap'?duration()-1:duration();
+  el('pitch-swap-options').hidden=pendingAction!=='Swap';if(pendingAction==='Swap')reserveOptions();
+  el('pitch-action-prompt').hidden=false;dialog.classList.add('action-pending');el('pitch-minute').focus();
+ });
+ el('pitch-action-back').onclick=()=>{resetAction();message('');};
+ el('pitch-action-apply').onclick=()=>{
+  if(!pendingAction||!selected)return;
+  const m=minute(pendingAction!=='Swap');if(m===null)return;
+  if(pendingAction==='Swap'){
+   if(!selectedReserve||!eligibleReserve(selectedReserve)){message('Zgjidh një rezervë që ende nuk ka hyrë.');return;}
+   if(dismissed(selected)||!active(selected,m)||!intervals(selected).some(s=>s.from!==null&&s.from<m&&s.to===duration())){message('Lojtari ka dalë ose nuk është në lojë në këtë minutë.');return;}
+   const incoming=selectedReserve;
+   el('sub-out').value=selected.dataset.index;el('sub-in').value=incoming.dataset.index;el('sub-minute').value=m;el('apply-substitution').click();
+   if(role(incoming)!=='Substitute'){message(el('sub-message').textContent);return;}
+   changed();resetAction();message('Zëvendësimi u regjistrua. Ruaj ndryshimet.');
+  }else if(recordEvent(pendingAction,m)){resetAction();}
  };
- dialog.querySelectorAll('[data-pitch-event]').forEach(b=>b.onclick=()=>{if(!selected)return;const m=minute(true);if(m===null)return;if(role(selected)==='NotSelected'){message('Vendose lojtarin në listën e ndeshjes.');return;}
-  let kind=b.dataset.pitchEvent;if(kind==='Goal'&&!active(selected,m)){message('Golashënuesi duhet të jetë në lojë.');return;}
+ el('pitch-minute').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();el('pitch-action-apply').click();}});
+ function recordEvent(kind,m){
+  if(role(selected)==='NotSelected'){message('Vendose lojtarin në listën e ndeshjes.');return false;}
+  if(kind==='Goal'&&!active(selected,m)){message('Lojtari nuk është në lojë në këtë minutë.');return false;}
   const existing=[...form.querySelectorAll('[data-football-event]')].filter(e=>e.querySelector('[data-field=PlayerId]').value===selected.dataset.student);
+  if(kind==='Yellow'&&existing.some(e=>e.querySelector('[data-field=Kind]').value==='Yellow'&&Number(e.querySelector('[data-field=Minute]').value)>m)){message('Kartoni i dytë duhet të jetë pas të parit.');return false;}
   if(existing.some(e=>['Red','SecondYellow'].includes(e.querySelector('[data-field=Kind]').value))){message('Lojtari ka një përjashtim të regjistruar.');return;}
   if(kind==='Yellow'&&existing.some(e=>e.querySelector('[data-field=Kind]').value==='Yellow'))kind='SecondYellow';
-  el(kind==='Goal'?'add-goal':'add-card').click();const row=el('football-events').lastElementChild;
+  const row=window.matchEvents.add(kind);
   row.querySelector('[data-field=Kind]').value=kind;row.querySelector('[data-field=PlayerId]').value=selected.dataset.student;row.querySelector('[data-field=Minute]').value=m;row.querySelector('[data-field=Kind]').dispatchEvent(new Event('change',{bubbles:true}));
   if(kind==='Goal'){const score=form.querySelector('[name=ScoreFor]');score.value=(Number(score.value)||0)+1;}
   if(['Red','SecondYellow'].includes(kind)){leave(m);intervals(selected).filter(s=>s.from!==null&&s.from>=m).forEach(s=>s.node.querySelector('[data-remove-stint]').click());}
   changed();message(kind==='SecondYellow'?'I dyti i verdhë: përjashtim. Dalja u përditësua.':'Ngjarja u shtua. Ruaj ndeshjen.');
- });
+  return true;
+ }
  el('pitch-details').onclick=()=>{dialog.close();el('lineup-details').open=true;selected?.scrollIntoView({block:'center',behavior:'smooth'});};
  form.addEventListener('match:updated',render);
  form.addEventListener('change',render);

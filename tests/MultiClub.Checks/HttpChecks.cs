@@ -166,6 +166,27 @@ static class HttpChecks
             Check(adminDashboard.Contains("Monday fixture")&&adminDashboard.Contains("Sunday fixture")&&!adminDashboard.Contains("Outside previous week")&&!adminDashboard.Contains("Outside next week"),"Weekly dashboard includes Monday and Sunday and excludes adjacent weeks");
             var reportUrl="/Home/MatchReport/"+MatchHidden("Id");
             var adminMatch=await staffClient.GetStringAsync(reportUrl);
+            var playerCardUrl="/Home/MatchPlayer?matchId="+MatchHidden("Id")+"&studentId="+chatStudent;
+            Check((await staffClient.GetStringAsync(playerCardUrl)).Contains("data-stat=\"minutes\">40"),"Admin player card aggregates completed minutes");
+            using(var scope=app.Services.CreateScope()){
+                var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();db.Club.ClubId=3;
+                var currentId=int.Parse(MatchHidden("Id"));
+                var current=await db.MatchGames.SingleAsync(g=>g.Id==currentId);
+                current.Status="Live";await db.SaveChangesAsync();
+                Check((await staffClient.GetStringAsync(playerCardUrl)).Contains("data-stat=\"minutes\">40"),"Current live match included in player totals");
+                current.Status="Cancelled";await db.SaveChangesAsync();
+                Check((await staffClient.GetStringAsync(playerCardUrl)).Contains("data-stat=\"minutes\">0"),"Cancelled current match excluded from player totals");
+                current.Status="Completed";await db.SaveChangesAsync();
+                Check((await staffClient.GetStringAsync(playerCardUrl)).Contains("data-stat=\"minutes\">40"),"Completed current match counted exactly once");
+            }
+
+            Check((await ownerClient.GetAsync(playerCardUrl)).StatusCode==HttpStatusCode.NotFound,"Other club cannot open player statistics");
+            Check((await coachClient.GetAsync(playerCardUrl)).StatusCode!=HttpStatusCode.OK,"Coach cannot use administrator player statistics");
+            var adminProgressUrl="/Home/PlayerProgress?matchId="+MatchHidden("Id")+"&studentId="+chatStudent;
+            var adminProgress=await staffClient.GetStringAsync(adminProgressUrl);
+            Check(adminProgress.Contains("progress-page")&&!adminProgress.Contains("Raporto rast"),"Administrator opens read-only player progress");
+            Check((await ownerClient.GetAsync(adminProgressUrl)).StatusCode==HttpStatusCode.NotFound,"Other club cannot open player progress");
+
             Check(adminMatch.Contains("Luan")&&!adminMatch.Contains("Korrigjo"),"Administrator can read match report without coach editing controls");
             Check((await ownerClient.GetAsync(reportUrl)).StatusCode==HttpStatusCode.NotFound,"Match report cannot expose another selected club");
             Check((await coachClient.GetAsync(reportUrl)).StatusCode!=HttpStatusCode.OK,"Coach cannot bypass team assignment through admin report");

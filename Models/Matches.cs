@@ -129,6 +129,8 @@ public class MatchMatrix
     public MatchReport Report { get; set; } = new();
     public List<MatchPlayerTotal> Players { get; set; } = [];
 }
+public record MatchPitchCard(MatchGame Game, MatchPlayer Player);
+public record AdminMatchPlayer(MatchPlayer Current,List<MatchPlayer> History);
 public record PlayerMatchMinutes(int TotalMinutes,int Appearances)
 {
     public decimal Average => Appearances==0?0:Math.Round((decimal)TotalMinutes/Appearances,1);

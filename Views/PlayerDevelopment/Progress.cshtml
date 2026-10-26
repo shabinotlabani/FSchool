@@ -19,17 +19,18 @@
 <div><span>Mesatarja / ndeshje</span><strong data-match-average>@minutes.Average.ToString("0.#") min</strong></div>
 <div><span>Gjithsej</span><strong>@minutes.TotalMinutes min</strong></div>
 <div><span>Ndeshje të luajtura</span><strong>@minutes.Appearances</strong></div>
-</div><p class="progress-caption mb-0">Vetëm ndeshjet e përfunduara ku ka luajtur.</p>}
+</div><p class="progress-caption mb-0">@(ViewData["IncludesCurrentMatch"] is true?"Përfshirë minutat e regjistruara në këtë ndeshje, nëse nuk është anuluar.":"Vetëm ndeshjet e përfunduara ku ka luajtur.")</p>}
 else{<p class="progress-empty mb-0">Ende pa minuta në ndeshje të përfunduara.</p>}
 </section>
 }
-<partial name="_CareProgress" model="Model"/>
+<partial name="~/Views/PlayerDevelopment/_CareProgress.cshtml" model="Model"/>
 <h2 class="h6 mt-4">Zhvillimi dhe matjet</h2>
 <div class="progress-card-grid">
-@foreach(var chart in charts.Where(x=>x.Points.Count>0)){<div class="progress-mini-card"><partial name="_Chart" model="chart"/></div>}
+@foreach(var chart in charts.Where(x=>x.Points.Count>0)){<div class="progress-mini-card"><partial name="~/Views/PlayerDevelopment/_Chart.cshtml" model="chart"/></div>}
 </div>
 @if(!charts.Any(x=>x.Points.Count>0)){<p class="progress-empty">Ende pa regjistrime.</p>}
 </section>
 @section Scripts {<script src="~/js/player-progress.js" asp-append-version="true"></script>}
 
-@section PageNavigation {<a asp-action="Player" asp-route-id="@Model.Player.Id" class="btn btn-outline-secondary app-back-button">← Profili i lojtarit</a>}
+@section PageNavigation {
+@if(ViewData["AdminMatchId"] is int matchId){<a asp-controller="Home" asp-action="MatchReport" asp-route-id="@matchId" class="btn btn-outline-secondary app-back-button">← Ndeshja</a>}else{<a asp-action="Player" asp-route-id="@Model.Player.Id" class="btn btn-outline-secondary app-back-button">← Profili i lojtarit</a>}}

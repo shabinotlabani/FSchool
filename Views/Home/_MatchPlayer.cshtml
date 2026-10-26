@@ -1,0 +1,12 @@
+@model AdminMatchPlayer
+@{
+ var p=Model.Current;var history=Model.History;var played=history.Count(x=>x.Minutes>0);var minutes=history.Sum(x=>x.Minutes);
+ var goals=history.Sum(x=>x.MatchGame.Events.Count(e=>e.PlayerId==p.StudentId&&(e.Kind is "Goal" or "PenaltyGoal")));
+ var assists=history.Sum(x=>x.MatchGame.Events.Count(e=>e.AssistId==p.StudentId&&e.Kind=="Goal"));
+ var starts=history.Count(x=>x.Role=="Starter"&&x.Minutes>0);var subs=history.Count(x=>x.Role=="Substitute"&&x.Minutes>0);
+}
+<header class="admin-player-heading"><span class="admin-player-avatar" aria-hidden="true">@(string.IsNullOrWhiteSpace(p.Name)?"L":p.Name[..1])</span><div><h2 id="admin-player-title">@p.Name</h2><p>@p.MatchGame.TrainingTeam.Name</p></div></header>
+<div class="admin-player-match"><span>Kjo ndeshje · @p.MatchGame.Date.ToString("dd.MM.yyyy")</span><strong>@MatchLabels.Role(p.Role) · @p.Minutes min</strong><small>@p.MatchGame.Events.Count(e=>e.PlayerId==p.StudentId&&(e.Kind is "Goal" or "PenaltyGoal")) gola · @p.MatchGame.Events.Count(e=>e.AssistId==p.StudentId&&e.Kind=="Goal") asiste</small></div>
+<p class="admin-player-period">Gjithë periudha · @(p.MatchGame.Status=="Cancelled"?"Pa ndeshjen e anuluar":"Përfshirë këtë ndeshje")</p>
+<dl class="admin-player-stats"><div><dt>Minuta</dt><dd data-stat="minutes">@minutes</dd></div><div><dt>Ndeshje</dt><dd data-stat="games">@played</dd></div><div><dt>Gola</dt><dd data-stat="goals">@goals</dd></div><div><dt>Asiste</dt><dd data-stat="assists">@assists</dd></div><div><dt>Titullar</dt><dd data-stat="starts">@starts</dd></div><div><dt>Nga stoli</dt><dd data-stat="substitutions">@subs</dd></div></dl>
+<a class="btn btn-primary admin-player-progress" asp-controller="Home" asp-action="PlayerProgress" asp-route-matchId="@p.MatchGameId" asp-route-studentId="@p.StudentId">Ecuria <span aria-hidden="true">↗</span></a>

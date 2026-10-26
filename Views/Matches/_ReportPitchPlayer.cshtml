@@ -1,0 +1,23 @@
+@model MatchPitchCard
+@{
+ var player=Model.Player;var game=Model.Game;
+ var events=game.Events.Where(e=>e.PlayerId==player.StudentId).ToList();
+ var goals=events.Count(e=>e.Kind is "Goal" or "PenaltyGoal");
+ var ownGoals=events.Count(e=>e.Kind=="OwnGoal");
+ var yellows=events.Count(e=>e.Kind is "Yellow" or "SecondYellow");
+ var red=events.FirstOrDefault(e=>FootballLabels.Dismissal(e));
+ var entries=player.Stints.Where(s=>s.From>0).Select(s=>s.From).ToList();
+ var exits=player.Stints.Where(s=>s.To<game.Duration&&s.To>0&&(red==null||s.To!=red.Minute)).Select(s=>s.To).ToList();
+ var names=player.Name.Split(' ',StringSplitOptions.RemoveEmptyEntries);var initials=names.Length==0?"?":names[0][..1]+(names.Length>1?names[^1][..1]:"");
+}
+<a asp-controller="Home" asp-action="MatchPlayer" asp-route-matchId="@game.Id" asp-route-studentId="@player.StudentId" aria-haspopup="dialog" class="report-player @(red!=null?"dismissed":"")" data-report-player="@player.StudentId" aria-label="@player.Name">
+<div class="report-player-badges">
+@if(goals>0){<span class="report-goal" aria-label="@goals gola" title="@string.Join(", ",events.Where(e=>e.Kind is "Goal" or "PenaltyGoal").Select(e=>$"{e.Minute}′"))">⚽@if(goals>1){<b>×@goals</b>}</span>}
+@if(ownGoals>0){<span class="report-own-goal" title="Autogol">AG @ownGoals</span>}
+@if(yellows>0){<span class="report-card-count" aria-label="@yellows kartonë të verdhë"><i class="report-yellow"></i>@if(yellows>1){<b>×@yellows</b>}</span>}
+@if(red!=null){<span class="report-card-count" aria-label="I kuq në minutën @red.Minute"><i class="report-red"></i><b>@red.Minute′</b></span>}
+</div>
+<span class="report-player-avatar" aria-hidden="true">@initials</span><strong class="report-player-name">@player.Name</strong>
+<div class="report-player-changes">@foreach(var minute in entries){<span class="in" aria-label="Hyri në minutën @minute">↗ @minute′</span>}@foreach(var minute in exits){<span class="out" aria-label="Doli në minutën @minute">↙ @minute′</span>}</div>
+<small>@(player.Role=="Unused"?"Pa hyrë":game.Status=="Completed"?$"{player.Minutes} min":MatchLabels.Role(player.Role))</small>
+</a>

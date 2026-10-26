@@ -1,0 +1,26 @@
+@model MatchGame
+@{
+ var capacity=Math.Clamp(Model.PlayersOnCourt,1,30);
+ var bands=new List<int>{1};
+ if(capacity==11&&new[]{"4-4-2","4-3-3","3-5-2","4-2-3-1"}.Contains(Model.Formation)){bands.AddRange(Model.Formation.Split('-').Select(int.Parse));}
+ else if(capacity>1){var remaining=capacity-1;var lines=(int)Math.Ceiling(remaining/4d);for(var i=0;i<lines;i++)bands.Add(remaining/lines+(i<remaining%lines?1:0));}
+ var starters=Model.Players.Where(p=>p.Role=="Starter").ToList();
+ var slots=new Dictionary<int,MatchPlayer>();
+ foreach(var p in starters.Where(p=>p.PitchSlot.HasValue&&p.PitchSlot>=0&&p.PitchSlot<capacity)){slots.TryAdd(p.PitchSlot!.Value,p);}
+ foreach(var p in starters.Where(p=>!slots.Values.Contains(p))){var free=Enumerable.Range(0,capacity).FirstOrDefault(i=>!slots.ContainsKey(i),-1);if(free>=0)slots[free]=p;}
+ var bench=Model.Players.Where(p=>p.Role!="Starter").OrderBy(p=>p.Role=="Substitute"?0:1).ThenBy(p=>p.Stints.FirstOrDefault()?.From).ThenBy(p=>p.Name).ToList();
+ var index=0;
+}
+<link rel="stylesheet" href="~/css/report-pitch.css" asp-append-version="true"/>
+<section class="report-lineup" aria-label="Formacioni dhe ngjarjet e lojtarëve">
+<header class="report-lineup-heading"><div><h2>Formacioni bazë</h2><span>@Model.TrainingTeam.Name</span></div><strong>@(Model.Formation=="Auto"?$"{capacity} lojtarë":Model.Formation)</strong></header>
+@if(starters.Count==0){<p class="report-lineup-empty">Formacioni ende nuk është regjistruar.</p>}else{
+<div class="report-lineup-layout"><div class="report-pitch">
+<svg class="report-pitch-markings" viewBox="0 0 500 680" preserveAspectRatio="none" aria-hidden="true"><rect x="14" y="14" width="472" height="652" rx="3"/><path d="M14 340H486 M115 14V125H385V14 M185 14V56H315V14 M115 666V555H385V666 M185 666V624H315V666"/><circle cx="250" cy="340" r="62"/><circle cx="250" cy="340" r="3"/><path d="M198 125Q250 174 302 125 M198 555Q250 506 302 555"/></svg>
+<div class="report-pitch-lines">@foreach(var count in bands){<div class="report-pitch-row" style="--players:@count">@for(var i=0;i<count;i++,index++){@if(slots.TryGetValue(index,out var player)){<partial name="~/Views/Matches/_ReportPitchPlayer.cshtml" model="@(new MatchPitchCard(Model,player))"/>}else{<span class="report-pitch-vacant" aria-label="Vend i paplotësuar">—</span>}}</div>}</div>
+</div><aside class="report-bench"><h3>Rezervat <span>@bench.Count</span></h3>@foreach(var player in bench){<partial name="~/Views/Matches/_ReportPitchPlayer.cshtml" model="@(new MatchPitchCard(Model,player))"/>}@if(bench.Count==0){<p>Pa rezerva të regjistruara.</p>}</aside></div>}
+<div class="report-pitch-legend"><span>⚽ Gol</span><span class="in">↗ Hyrje</span><span class="out">↙ Dalje</span><span><i class="report-yellow"></i> I verdhë</span><span><i class="report-red"></i> I kuq</span></div>
+</section>
+
+<dialog id="admin-player-dialog" aria-labelledby="admin-player-title"><button type="button" id="admin-player-close" aria-label="Mbyll">×</button><div id="admin-player-content" aria-live="polite"></div></dialog>
+<script src="~/js/admin-match-player.js" asp-append-version="true" defer></script>

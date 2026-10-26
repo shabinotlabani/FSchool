@@ -4,7 +4,7 @@
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="@(Model.Language=="sr"?"sr-Latn":Model.Language)">
+<html lang="@Model.Language">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,12 +23,12 @@
             <div class="login-identity"><a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_512.webp" srcset="@Url.Content("~/images/upnext/logo_256.webp") 256w, @Url.Content("~/images/upnext/logo_512.webp") 512w" sizes="(max-width: 700px) 104px, 260px" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="260" height="260" /></a><p>@Model.T("Tagline")</p><span class="identity-line" aria-hidden="true"></span></div>
             <header class="login-heading"><h1>@Model.T("Title")</h1><p>@Model.T("Continue")</p></header>
             <div class="form-content">
-                @{var languages=new[]{("sq","Shqip"),("en","English"),("sr","Srpski"),("tr","Türkçe")};}
+                @{var languages=new[]{("sq","Shqip"),("en","English"),("hr","Hrvatski"),("tr","Türkçe")};}
                 <details class="login-language-combo">
                 <summary aria-label="@Model.T("Language")"><partial name="_LanguageFlag" model="Model.Language"/><span>@languages.Single(x=>x.Item1==Model.Language).Item2</span><svg class="language-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></summary>
                 <nav class="login-language-options" aria-label="@Model.T("Language")">
                 @foreach(var item in languages){
-                    <a asp-page="./Login" asp-route-language="@item.Item1" asp-route-returnUrl="@Model.ReturnUrl" lang="@(item.Item1=="sr"?"sr-Latn":item.Item1)" hreflang="@(item.Item1=="sr"?"sr-Latn":item.Item1)" aria-current="@(Model.Language==item.Item1?"true":null)" class="@(Model.Language==item.Item1?"is-selected":null)"><partial name="_LanguageFlag" model="item.Item1"/><span>@item.Item2</span>@if(Model.Language==item.Item1){<span class="language-check" aria-hidden="true">✓</span>}</a>
+                    <a asp-page="./Login" asp-route-language="@item.Item1" asp-route-returnUrl="@Model.ReturnUrl" lang="@item.Item1" hreflang="@item.Item1" aria-current="@(Model.Language==item.Item1?"true":null)" class="@(Model.Language==item.Item1?"is-selected":null)"><partial name="_LanguageFlag" model="item.Item1"/><span>@item.Item2</span>@if(Model.Language==item.Item1){<span class="language-check" aria-hidden="true">✓</span>}</a>
                 }
                 </nav>
                 </details>

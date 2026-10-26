@@ -1,4 +1,4 @@
-import {pathToFileURL} from 'node:url';
+﻿import {pathToFileURL} from 'node:url';
 import {mkdir} from 'node:fs/promises';
 const {chromium}=await import(pathToFileURL(process.env.CLUB_TEST_PLAYWRIGHT).href);
 const browser=await chromium.launch({channel:'msedge',headless:true});
@@ -104,15 +104,16 @@ try {
  await coachPage.locator('#pitch-available .pitch-player-card').filter({hasText:'Ardit Hoxha'}).click();
  await coachPage.locator('[data-pitch-role="Unused"]').click();
  await coachPage.locator('#pitch-close').click();
- if(await coachPage.locator('#add-goal').isVisible())throw new Error('Events must stay hidden before lineup confirmation');
+ if(await coachPage.locator('[data-pitch-event="Goal"]').isVisible())throw new Error('Events must stay hidden before lineup confirmation');
  await coachPage.locator('.match-save button[value="Confirm"]').click();
  await coachPage.locator('.alert-success').waitFor();
  if(await coachPage.locator('#match-form').getAttribute('data-stage')!=='Live')throw new Error('Confirmation did not open event stage');
  await coachPage.locator('#pitch-players .pitch-player-card').filter({hasText:'Luan Krasniqi'}).click();
+ await coachPage.locator('[data-pitch-event="Swap"]').click();
+ if(await coachPage.locator('#pitch-reserve-options').textContent().then(t=>t.includes('Luan Krasniqi')))throw new Error('Starter appears in unused reserve list');
  await coachPage.locator('#pitch-minute').fill('30');
- await coachPage.locator('.pitch-swap summary').click();
- await coachPage.locator('#pitch-swap-player').selectOption({label:'Ardit Hoxha'});
- await coachPage.locator('#pitch-swap-apply').click();
+ await coachPage.locator('#pitch-reserve-options button').filter({hasText:'Ardit Hoxha'}).click();
+ await coachPage.locator('#pitch-action-apply').click();
  if(!(await coachPage.locator('#pitch-player-stats').textContent()).includes('30 min'))throw new Error('Pitch substitution did not update minutes');
  await coachPage.locator('#pitch-close').click();
  await coachPage.setViewportSize({width:1440,height:1000});
@@ -127,15 +128,24 @@ try {
  await coachPage.screenshot({path:'tests/MultiClub.Checks/artifacts/football-pitch-mobile.png'});
  await coachPage.locator('[data-pitch-tab="bench"]').click();
  await coachPage.locator('#pitch-bench .pitch-player-card').filter({hasText:'Ardit Hoxha'}).click();
- if(await coachPage.locator('#pitch-minute').inputValue()!=='30')throw new Error('Last event minute was not retained');
+ await coachPage.locator('[data-pitch-event="Swap"]').click();
+ if((await coachPage.locator('#pitch-reserve-options').textContent()).includes('Ardit Hoxha'))throw new Error('Used substitute appears in reserve list');
+ await coachPage.locator('#pitch-action-back').click();
  await coachPage.locator('#pitch-close').click();
  await coachPage.locator('[data-pitch-tab="field"]').click();
  await coachPage.locator('#pitch-players .pitch-player-card').filter({hasText:'Luan Krasniqi'}).click();
- await coachPage.locator('#pitch-minute').fill('10');
  await coachPage.locator('[data-pitch-event="Goal"]').click();
+ if(await coachPage.locator('[data-football-event]').count()!==0)throw new Error('Goal recorded before minute confirmation');
+ await coachPage.locator('#pitch-minute').fill('10');
+ await coachPage.screenshot({path:'tests/MultiClub.Checks/artifacts/pitch-goal-prompt-mobile.png'});
+ await coachPage.locator('#pitch-action-apply').click();
+ await coachPage.locator('[data-pitch-event="Goal"]').click();
+ await coachPage.locator('#pitch-minute').fill('11');
+ await coachPage.locator('#pitch-action-apply').click();
+ await coachPage.locator('[data-pitch-event="Yellow"]').click();
  await coachPage.locator('#pitch-minute').fill('19');
  await coachPage.locator('#pitch-minute-up').click();
- await coachPage.locator('[data-pitch-event="Yellow"]').click();
+ await coachPage.locator('#pitch-action-apply').click();
  await coachPage.screenshot({path:'tests/MultiClub.Checks/artifacts/pitch-actions-mobile.png'});
  await coachPage.locator('#pitch-close').click();
  for(const width of [320,390,768]){
@@ -150,7 +160,20 @@ try {
  await coachPage.locator('#pitch-note').fill('Good positioning');
  await coachPage.locator('.pitch-action-save').click();
  await coachPage.locator('.alert-success').waitFor();
- if(await coachPage.locator('[data-football-event]').count()!==2)throw new Error('Football events did not persist');
+ if(await coachPage.locator('[data-football-event]').count()!==3)throw new Error('Football events did not persist');
+ await coachPage.locator('#pitch-players .pitch-player-card').filter({hasText:'Arben Gashi'}).click();
+ for(const minute of ['40','50']){
+  await coachPage.locator('[data-pitch-event="Yellow"]').click();
+  await coachPage.locator('#pitch-minute').fill(minute);
+  await coachPage.locator('#pitch-action-apply').click();
+ }
+ if(!(await coachPage.locator('#pitch-player-stats').textContent()).includes('50 min'))throw new Error('Second yellow did not end playing interval');
+ if(await coachPage.locator('[data-field="Kind"]').evaluateAll(nodes=>nodes.filter(n=>n.value==='SecondYellow').length)!==1)throw new Error('Second yellow was not converted to dismissal');
+ await coachPage.locator('[data-pitch-event="Swap"]').click();
+ if(await coachPage.locator('#pitch-action-prompt').isVisible())throw new Error('Dismissed player can open substitution prompt');
+ await coachPage.locator('.pitch-action-save').click();
+ await coachPage.locator('.alert-success').waitFor();
+
  await coachPage.locator('#finish-match').click();
  await coachPage.locator('#finish-dialog button[value="Finish"]').click();
  await coachPage.waitForURL(u=>u.pathname.includes('/Matches/Summary'));
@@ -159,7 +182,8 @@ try {
  if(await ratedPlayer.locator('.match-rating-display').getAttribute('aria-label')!=='4 yje'||!(await ratedPlayer.textContent()).includes('Good positioning'))throw new Error('Coach rating and note did not persist in report');
  await coachPage.screenshot({path:'tests/MultiClub.Checks/artifacts/match-summary-mobile.png',fullPage:true});
  await coachPage.locator('.page-heading a[href*="Edit"]').click();
- await coachPage.locator('#add-card').scrollIntoViewIfNeeded();
+ await coachPage.locator('#recorded-events > summary').click();
+ await coachPage.locator('#recorded-events').scrollIntoViewIfNeeded();
  await coachPage.screenshot({path:'tests/MultiClub.Checks/artifacts/football-events-mobile.png'});
  await coachPage.locator('a[href*="Discipline"]').click();
  await coachPage.locator('#YellowThreshold').fill('3');
@@ -174,7 +198,7 @@ try {
  }
  const luan=coachPage.locator('.match-matrix tbody tr').filter({hasText:'Luan Krasniqi'});
  if(await luan.locator('.matrix-total').textContent()!=='60')throw new Error('Matrix total does not sum match minutes');
- if(!(await luan.textContent()).includes('G 1')||!(await luan.textContent()).includes('V 1'))throw new Error('Matrix missing goal/card statistics');
+ if(!(await luan.textContent()).includes('G 2')||!(await luan.textContent()).includes('V 1'))throw new Error('Matrix missing goal/card statistics');
  await coachPage.setViewportSize({width:390,height:844});
  await coachPage.locator('.match-matrix .match-grid').evaluate(el=>el.scrollLeft=el.scrollWidth);
  const sticky=await luan.locator('th').boundingBox();
@@ -193,6 +217,34 @@ try {
  await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/admin-matches-mobile.png',fullPage:true});
  await adminPage.locator('a.week-game').filter({hasText:'Football visitors'}).click();
  if(await adminPage.locator('.page-heading a[href*="Edit"]').count())throw new Error('Administrator report exposes coach editing');
+ await adminPage.locator('.report-pitch').waitFor();
+ const scorer=adminPage.locator('.report-player').filter({hasText:'Luan Krasniqi'});
+ if(!(await scorer.locator('.report-goal').textContent()).includes('2'))throw new Error('Multiple goals missing from pitch card');
+ if(!(await scorer.locator('.report-player-changes .out').textContent()).includes('30'))throw new Error('Outgoing substitution missing from pitch');
+ const incoming=adminPage.locator('.report-bench .report-player').filter({hasText:'Ardit Hoxha'});
+ if(!(await incoming.locator('.in').textContent()).includes('30'))throw new Error('Incoming substitute missing from bench');
+ const dismissed=adminPage.locator('.report-player').filter({hasText:'Arben Gashi'});
+ if(await dismissed.locator('.report-red').count()!==1||await dismissed.locator('.out').count())throw new Error('Dismissal shown as substitution');
+ for(const width of [320,390,768,1440]){await adminPage.setViewportSize({width,height:1000});if(await adminPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error('Report pitch overflows '+width);}
+ await adminPage.locator('.report-lineup').screenshot({path:'tests/MultiClub.Checks/artifacts/admin-report-pitch-desktop.png'});
+ await adminPage.setViewportSize({width:390,height:844});
+ await adminPage.locator('.report-lineup').screenshot({path:'tests/MultiClub.Checks/artifacts/admin-report-pitch-mobile.png'});
+ await scorer.click();
+ await adminPage.locator('#admin-player-dialog [data-stat="goals"]').waitFor();
+ for(const [key,value] of [['minutes','60'],['goals','2'],['assists','0'],['starts','2'],['substitutions','0']]){
+  if(await adminPage.locator('#admin-player-dialog [data-stat="'+key+'"]').textContent()!==value)throw new Error('Incorrect player stat '+key);
+ }
+ await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/admin-player-card-mobile.png'});
+ await adminPage.locator('.admin-player-progress').click();
+ await adminPage.locator('.progress-page').waitFor();
+ await adminPage.locator('.app-back-button').click();
+ await adminPage.locator('.report-pitch').waitFor();
+ await adminPage.locator('.report-bench .report-player').filter({hasText:'Ardit Hoxha'}).click();
+ await adminPage.locator('#admin-player-dialog [data-stat="substitutions"]').waitFor();
+ if(await adminPage.locator('#admin-player-dialog [data-stat="substitutions"]').textContent()!=='2')throw new Error('Substitute appearances incorrectly counted');
+ await adminPage.locator('#admin-player-close').click();
+
+
  await adminPage.locator('.match-grid').evaluate(el=>el.scrollLeft=el.scrollWidth);
  await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/admin-match-rating-mobile.png',fullPage:true});
  console.log('PASS: admin match dashboard and read-only report fit mobile and tablet');

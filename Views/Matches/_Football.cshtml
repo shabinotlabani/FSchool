@@ -1,8 +1,8 @@
 @model MatchInput
 <section class="football-recording">
-<h2>Golat dhe kartonët</h2>
+<details id="recorded-events"><summary>Ngjarjet e regjistruara</summary>
 @if(Model.DisciplineAlerts.Count>0){<div class="alert alert-warning" role="alert">@foreach(var a in Model.DisciplineAlerts){<div><strong>@a.Name</strong> · @a.Message</div>}</div>}
-<div class="d-flex gap-2 flex-wrap mb-3"><button type="button" class="btn btn-outline-primary" id="add-goal">+ Gol</button><button type="button" class="btn btn-outline-secondary" id="add-card">+ Karton</button><a class="btn btn-link" asp-action="Discipline" asp-route-teamId="@Model.TeamId" asp-route-kind="@Model.Kind" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Rregullat e kartonëve</a></div>
+<div><a class="btn btn-link" asp-action="Discipline" asp-route-teamId="@Model.TeamId" asp-route-kind="@Model.Kind" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Rregullat e kartonëve</a></div>
 @if(!Model.HasDisciplineRule){<p class="match-hint">Pragu i pezullimit ende pa konfirmuar për këtë garë.</p>}
 <div class="table-responsive match-grid"><table class="table football-events"><thead><tr><th>Ngjarja</th><th>Lojtari</th><th>Asistuesi</th><th>Min</th><th>Vendimi disiplinor</th><th></th></tr></thead><tbody id="football-events">
 @for(var i=0;i<Model.Events.Count;i++){
@@ -21,4 +21,4 @@
 <td><input type="number" min="0" max="@Model.Duration" class="form-control" data-field="Minute" value="0" aria-label="Minuta"/></td>
 <td><details data-decision><summary>Masa</summary><label>Ndeshje pezullimi<input type="number" min="0" max="20" class="form-control" data-field="SuspensionGames" placeholder="Sipas rregullit"/></label><label>Vendimi<input maxlength="200" class="form-control" data-field="Decision"/></label></details></td>
 <td><button type="button" data-remove-event class="btn btn-outline-danger" aria-label="Hiq ngjarjen">×</button></td></tr></template>
-</section>
+</details></section>

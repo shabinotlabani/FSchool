@@ -1,5 +1,6 @@
 ﻿using _2Korriku.Data;
 using _2Korriku.Services;
+using _2Korriku.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,34 @@ public class HomeController : Controller
         if(game==null)return NotFound();
         ViewData["ReadOnlyMatch"]=true;
         return View("~/Views/Matches/Summary.cshtml",game);
+    }
+
+    [Authorize(Roles=Roles.Admin+","+Roles.SuperAdmin)]
+    [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+    public async Task<IActionResult> MatchPlayer(int matchId,int studentId)
+    {
+        var current=await _context.MatchPlayers.AsNoTracking().Include(p=>p.MatchGame).ThenInclude(g=>g.TrainingTeam).SingleOrDefaultAsync(p=>p.MatchGameId==matchId&&p.StudentId==studentId);
+        if(current==null)return NotFound();
+        var history=await _context.MatchPlayers.AsNoTracking().Include(p=>p.MatchGame).Where(p=>p.StudentId==studentId&&(p.MatchGame.Status=="Completed"||(p.MatchGameId==matchId&&p.MatchGame.Status!="Cancelled"))).ToListAsync();
+        return PartialView("_MatchPlayer",new AdminMatchPlayer(current,history));
+    }
+
+    [Authorize(Roles=Roles.Admin+","+Roles.SuperAdmin)]
+    [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+    public async Task<IActionResult> PlayerProgress(int matchId,int studentId)
+    {
+        if(!await _context.MatchPlayers.AnyAsync(p=>p.MatchGameId==matchId&&p.StudentId==studentId))return NotFound();
+        var player=await _context.Students.AsNoTracking().Include(s=>s.TrainingTeam).SingleOrDefaultAsync(s=>s.Id==studentId);
+        if(player==null)return NotFound();
+        var minutes=await _context.MatchPlayers.AsNoTracking().Where(p=>p.StudentId==studentId&&(p.MatchGame.Status=="Completed"||(p.MatchGameId==matchId&&p.MatchGame.Status!="Cancelled"))&&p.Minutes>0).Select(p=>p.Minutes).ToListAsync();
+        ViewData["MatchMinutes"]=new PlayerMatchMinutes(minutes.Sum(),minutes.Count);
+        ViewData["AdminMatchId"]=matchId;
+        ViewData["IncludesCurrentMatch"]=true;
+        ViewData["MedicalHistory"]=await _context.CareEntries.AsNoTracking().Where(x=>x.Assignment.StudentId==studentId&&x.Assignment.Kind==Roles.Doctor&&x.Date<=BillingClock.Today).OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).Select(x=>new CareNotice(studentId,x.TrainingStatus!,x.CoachInstructions,x.Date,x.ReviewDate)).ToListAsync();
+        ViewData["ReportedCases"]=await _context.CareReferrals.AsNoTracking().Where(x=>x.StudentId==studentId&&x.Kind==Roles.Doctor).OrderByDescending(x=>x.CreatedAt).ToListAsync();
+        var evaluations=await _context.PlayerEvaluations.AsNoTracking().Where(x=>x.StudentId==studentId).OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).ToListAsync();
+        var records=await _context.DevelopmentRecords.AsNoTracking().Where(x=>x.StudentId==studentId).OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).ToListAsync();
+        return View("~/Views/PlayerDevelopment/Progress.cshtml",new DevelopmentHistory(player,evaluations,""){Catalog=await new SportDevelopmentService(_context).Catalog(),Records=records,Section="Progress"});
     }
 }
 
