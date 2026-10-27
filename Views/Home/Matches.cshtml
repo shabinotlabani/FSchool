@@ -8,19 +8,27 @@
 <link rel="stylesheet" href="~/css/club-matches.css" asp-append-version="true"/>
 <div class="club-matches">
 @if(ViewData["ExpiringContracts"] is List<PlayerContract> contracts){<partial name="~/Views/PlayerContracts/_Expiry.cshtml" model="contracts"/>}
-<header class="week-heading"><div><span class="week-eyebrow">NDESHJET E KLUBIT</span><h1>Java në fushë</h1><p>@start.ToString("dd.MM") — @start.AddDays(6).ToString("dd.MM.yyyy")</p></div><a class="week-teams" asp-controller="Teams" asp-action="Index">Ekipet ↗</a></header>
-<div class="week-toolbar"><div class="week-counts"><span><strong>@Model.Matches.Count</strong> ndeshje</span><span><i class="week-dot completed"></i>@Model.Matches.Count(g=>g.Status=="Completed") përfunduar</span><span><i class="week-dot upcoming"></i>@Model.Matches.Count(g=>g.Status=="Draft") në pritje</span></div><form method="get"><label for="week-team" class="visually-hidden">Ekipi</label><select id="week-team" name="teamId" class="form-select"><option value="">Të gjitha ekipet</option>@foreach(var team in Model.Teams){<option value="@team.Id" selected="@(Model.TeamId==team.Id)">@team.Name</option>}</select><button class="week-filter" type="submit">Shfaq</button></form></div>
-<nav class="week-navigation" aria-label="Ditët e javës">@for(var i=0;i<7;i++){var date=start.AddDays(i);var count=Model.Matches.Count(g=>g.Date==date);<a href="#week-day-@i" class="@(date==today?"is-today":"")" aria-current="@(date==today?"date":null)"><span>@days[i]</span><strong>@date.Day</strong><small>@(count>0?$"{count} ndeshje":"—")</small></a>}</nav>
+@if(Model.ActivePlayersByMonth.Count>0){var peak=Math.Max(1,Model.ActivePlayersByMonth.Max(x=>x.Count));var current=Model.ActivePlayersByMonth.Last();
+<section class="player-year-chart" aria-labelledby="player-year-title">
+<header><div><span>@Model.Year</span><h2 id="player-year-title">Lojtarët aktivë</h2></div><strong>@current.Count<small>@current.Label</small></strong></header>
+<div class="player-bars">@foreach(var point in Model.ActivePlayersByMonth){var height=point.Count==0?3:Math.Max(10,(int)Math.Round(point.Count*100d/peak));<div class="player-bar @(point.Month==current.Month?"is-current":"")" style="--bar-height:@height%"><span class="player-bar-value">@point.Count</span><i></i><small>@point.Label</small></div>}</div>
+</section>}
+<div class="week-toolbar"><div class="week-counts"><span><strong>@Model.Matches.Count</strong> ndeshje</span><span><i class="week-dot completed"></i>@Model.Matches.Count(g=>g.Status=="Completed") përfunduar</span><span><i class="week-dot upcoming"></i>@Model.Matches.Count(g=>g.Status=="Draft") në pritje</span></div><div class="week-tools"><form method="get"><label for="week-team" class="visually-hidden">Ekipi</label><select id="week-team" name="teamId" class="form-select"><option value="">Të gjitha ekipet</option>@foreach(var team in Model.Teams){<option value="@team.Id" selected="@(Model.TeamId==team.Id)">@team.Name</option>}</select><button class="week-filter" type="submit">Shfaq</button></form><a class="week-teams" asp-controller="Teams" asp-action="Index">Ekipet ↗</a></div></div>
+<nav class="week-navigation" aria-label="Ditët me ndeshje">@for(var i=0;i<7;i++){var date=start.AddDays(i);var count=Model.Matches.Count(g=>g.Date==date);if(count==0){continue;}<a href="#week-day-@i" class="@(date<today?"is-past":date==today?"is-today":"is-future")" aria-current="@(date==today?"date":null)"><span>@days[i]</span><strong>@date.Day</strong><small>@count ndeshje</small></a>}</nav>
 <div class="week-agenda">
 @for(var i=0;i<7;i++){
 var date=start.AddDays(i);var games=Model.Matches.Where(g=>g.Date==date).OrderBy(g=>g.Kickoff??TimeOnly.MaxValue).ThenBy(g=>g.TrainingTeam.Name).ToList();
-<section id="week-day-@i" class="week-day @(date==today?"is-today":"") @(games.Count==0?"is-empty":"")">
-<header class="week-day-heading"><div><span class="week-date">@date.ToString("dd.MM")</span><h2>@days[i]</h2>@if(date==today){<span class="week-today">Sot</span>}</div><span class="week-day-count">@(games.Count==0?"Pa ndeshje":$"{games.Count} ndeshje")</span></header>
-@if(games.Count>0){<div class="week-games">@foreach(var game in games){var done=game.Status=="Completed";var live=game.Status=="Live";var cancelled=game.Status=="Cancelled";
+if(games.Count==0){continue;}
+<section id="week-day-@i" class="week-day @(date<today?"is-past":date==today?"is-today":"is-future")">
+<header class="week-day-heading"><div><span class="week-date">@date.ToString("dd.MM")</span><h2>@days[i]</h2><span class="week-day-state">@(date<today?"Kaluar":date==today?"Sot":"Pritet")</span></div><span class="week-day-count">@games.Count ndeshje</span></header>
+<div class="week-games">@foreach(var game in games){var done=game.Status=="Completed";var live=game.Status=="Live"&&game.Date==today;var cancelled=game.Status=="Cancelled";var scorers=game.Events.Where(e=>e.PlayerId.HasValue&&(e.Kind is "Goal" or "PenaltyGoal")).GroupBy(e=>e.PlayerId!.Value).Select(g=>new{Name=game.Players.FirstOrDefault(p=>p.StudentId==g.Key)?.Name??"Lojtar",Goals=g.Count()}).ToList();var coach=string.Join(" ",new[]{game.TrainingTeam.Coach?.FirstName,game.TrainingTeam.Coach?.LastName}.Where(x=>!string.IsNullOrWhiteSpace(x)));if(string.IsNullOrWhiteSpace(coach)){coach=game.TrainingTeam.Coach?.Email??"Pa trajner";}
 <a class="week-game @(done?"completed":live?"live":cancelled?"cancelled":"upcoming")" asp-action="MatchReport" asp-route-id="@game.Id">
-<div class="week-game-top"><span>@(game.Competition??"Miqësore")</span><span class="week-game-status"><i></i>@(done?"Përfunduar":live?"Në lojë":cancelled?"Anuluar":game.Date<today?"Në pritje të rezultatit":"E planifikuar")</span></div>
+<div class="week-game-top"><span>@(game.Competition??"Miqësore")</span><span class="week-game-status"><i></i>@(done?"Përfunduar":live?"Në lojë":cancelled?"Anuluar":game.Date<today?"Pa rezultat":"E planifikuar")</span></div>
 <div class="week-matchup"><div class="week-team"><span class="week-team-mark" aria-hidden="true">@(string.IsNullOrWhiteSpace(game.TrainingTeam.Name)?"K":game.TrainingTeam.Name[..1])</span><strong>@game.TrainingTeam.Name</strong></div><div class="week-score">@if(done||live){<strong>@game.ScoreFor <span>:</span> @game.ScoreAgainst</strong>}else{<strong class="week-kickoff">@(game.Kickoff?.ToString("HH:mm")??"—")</strong><small>@(game.Kickoff.HasValue?"Fillimi":"Pa orar")</small>}</div><div class="week-team opponent"><span class="week-team-mark" aria-hidden="true">@(string.IsNullOrWhiteSpace(game.Opponent)?"K":game.Opponent[..1])</span><strong>@game.Opponent</strong></div></div>
+@if(scorers.Count>0){<div class="week-scorers">@foreach(var scorer in scorers){<span>⚽ @scorer.Name@if(scorer.Goals>1){<b>×@scorer.Goals</b>}</span>}</div>}
+<div class="week-coach"><span aria-hidden="true">◉</span> @coach</div>
 <div class="week-game-bottom"><span>@(game.Home?"Vendas":"Mysafir")@if(!string.IsNullOrWhiteSpace(game.Venue)){<text> · @game.Venue</text>}@if((done||live)&&game.Kickoff.HasValue){<text> · @game.Kickoff.Value.ToString("HH:mm")</text>}</span><strong>@(done?"Raporti":"Detajet") ↗</strong></div>
-</a>}</div>}
+</a>}</div>
 </section>}
-</div></div>
+</div>
+</div>

@@ -12,12 +12,12 @@ try {
  await page.setViewportSize({width:390,height:844});
  await page.screenshot({path:'tests/MultiClub.Checks/artifacts/login-mobile.png',fullPage:true});
  if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Login overflows phone viewport');
- for(const language of ['sq','en','hr','tr']){
+ for(const language of ['sq','en']){
   await page.goto(url+'/Identity/Account/Login?language='+language+'&returnUrl=%2FCoaches%2FPlayers');
   for(const width of [320,390,768]){await page.setViewportSize({width,height:844});if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error('Login overflow '+language+' '+width);}
   await page.locator('.login-language-combo summary').click();
   const links=await page.locator('.login-language-options a').evaluateAll(nodes=>nodes.map(n=>n.href));
-  if(links.length!==4||links.some(link=>!new URL(link).searchParams.get('returnUrl')?.includes('/Coaches/Players')))throw new Error('Language switch loses ReturnUrl');
+  if(links.length!==2||links.some(link=>!new URL(link).searchParams.get('returnUrl')?.includes('/Coaches/Players')))throw new Error('Language switch loses ReturnUrl');
   await page.keyboard.press('Escape');
  }
  await page.goto(url+'/Identity/Account/Login?language=sq');

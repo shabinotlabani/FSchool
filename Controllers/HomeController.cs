@@ -28,10 +28,25 @@ public class HomeController : Controller
             var weekEnd=weekStart.AddDays(7);
             var teams=await _context.TrainingTeams.AsNoTracking().Include(t=>t.Coach).OrderBy(t=>t.Name).ToListAsync();
             if(teamId.HasValue&&!teams.Any(t=>t.Id==teamId))return NotFound();
-            var matches=await _context.MatchGames.AsNoTracking().Include(g=>g.TrainingTeam)
+            var matches=await _context.MatchGames.AsNoTracking().Include(g=>g.TrainingTeam).ThenInclude(t=>t.Coach).Include(g=>g.Players)
                 .Where(g=>g.Date>=weekStart&&g.Date<weekEnd&&(!teamId.HasValue||g.TrainingTeamId==teamId))
                 .OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).ToListAsync();
-            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year});
+            var students=await _context.Students.AsNoTracking().ToListAsync();
+            var studentIds=students.Select(s=>s.Id).ToList();
+            var changes=await _context.StudentChanges.AsNoTracking().Where(c=>studentIds.Contains(c.StudentId)).OrderBy(c=>c.CreatedAt).ThenBy(c=>c.Id).ToListAsync();
+            var contracts=await _context.PlayerContracts.AsNoTracking().Where(c=>c.StudentId.HasValue&&c.Status!="Draft").ToListAsync();
+            var monthNames=new[]{"Jan","Shk","Mar","Pri","Maj","Qer","Kor","Gus","Sht","Tet","Nën","Dhj"};
+            var monthly=new List<PlayerMonthlyCount>();
+            var lastMonth=today.Month;
+            for(var month=1;month<=lastMonth;month++){
+                var monthStart=new DateOnly(today.Year,month,1);var monthEnd=monthStart.AddMonths(1);
+                var endUtc=BillingClock.UtcDate(monthEnd);
+                var count=students.Count(student=>BillingClock.LocalDate(student.RegistrationDate)<monthEnd
+                    &&ActiveAt(student,changes,endUtc)
+                    &&!contracts.Any(c=>c.StudentId==student.Id&&c.StartsOn<monthEnd&&(c.EndedOn??c.EndsOn)>=monthStart));
+                monthly.Add(new(month,monthNames[month-1],count));
+            }
+            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year,ActivePlayersByMonth=monthly});
         }
         if(User.IsInRole(_2Korriku.Models.Roles.Doctor)||User.IsInRole(_2Korriku.Models.Roles.Nutritionist))return RedirectToAction("Index","PlayerCare");
         if (User.IsInRole(_2Korriku.Models.Roles.FieldOperator)) return RedirectToAction("Index", "Fields");
@@ -51,6 +66,14 @@ public class HomeController : Controller
         };
 
         return View(model);
+    }
+
+    private static bool ActiveAt(Student student,List<StudentChange> changes,DateTime endUtc)
+    {
+        var snapshot=changes.LastOrDefault(c=>c.StudentId==student.Id&&c.CreatedAt<endUtc)?.After;
+        if(string.IsNullOrWhiteSpace(snapshot))return true;
+        try{using var json=System.Text.Json.JsonDocument.Parse(snapshot);return json.RootElement.TryGetProperty("IsActive",out var active)&&active.GetBoolean();}
+        catch(System.Text.Json.JsonException){return student.IsActive;}
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

@@ -16,7 +16,7 @@ else{<div class="portrait-placeholder"><svg viewBox="0 0 200 240" aria-hidden="t
 <div><dt>Ekipi</dt><dd>@(Model.TeamName??"Pa caktuar")</dd></div>
 <div><dt>Këmba e preferuar</dt><dd>@(Model.Foot??"Pa plotësuar")</dd></div>
 <div><dt>Datëlindja</dt><dd>@Model.BirthDate.ToString("dd.MM.yyyy")</dd></div>
-<div><dt>Trajneri</dt><dd>@(string.IsNullOrWhiteSpace(Model.CoachName)?"Pa caktuar":Model.CoachName)@if(!string.IsNullOrWhiteSpace(Model.AssistantCoachName)){<small>@Model.AssistantCoachName · Ndihmëstrajner</small>}</dd></div>
+<div><dt>Trajneri</dt><dd>@(string.IsNullOrWhiteSpace(Model.CoachName)?"Pa caktuar":Model.CoachName)</dd></div>
 </dl></div>
 <div class="passport-ratings"><div class="passport-section-title"><h3>Vlerësimet</h3><span>NGA 100</span></div>
 @if(ratings.Count==0){<p class="passport-empty">Ende pa vlerësime të regjistruara.</p>}
