@@ -1,0 +1,13 @@
+@model ContractStaffInput
+@{ViewData["Title"]="Personat e kontratave";var people=(List<SponsorshipBeneficiary>)ViewData["Staff"]!;var categories=new Dictionary<string,string>{{"ContractPlayer","Lojtar me kontratë"},{"Management","Stafi drejtues"},{"Technical","Stafi teknik"},{"Medical","Stafi mjekësor"},{"Performance","Performanca dhe nutricioni"},{"Administration","Administrata"},{"Operations","Logjistika dhe operacionet"},{"Other","Tjetër"}};}
+<link rel="stylesheet" href="~/css/contracts.css" asp-append-version="true"/>
+<div class="contracts-page"><div class="page-heading"><div><h1>Personat</h1><p>Regjistri i pavarur i personave me kontratë</p></div><a asp-action="Create" class="btn btn-primary">+ Kontratë</a></div>
+<form method="post" class="mb-4"><div asp-validation-summary="All" class="text-danger"></div><div class="contract-fields">
+<label>Emri dhe mbiemri<input asp-for="Name" class="form-control" required/></label><label>Numri personal<input asp-for="Identifier" class="form-control" required/></label>
+<label>Datëlindja<input asp-for="BirthDate" type="date" class="form-control" required/></label><label>Kategoria<select asp-for="Category" class="form-select">@foreach(var c in categories){<option value="@c.Key">@c.Value</option>}</select></label>
+</div><button class="btn btn-primary mt-3">Shto personin</button></form>
+<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Personi</th><th>Kategoria</th><th></th></tr></thead><tbody>
+@foreach(var p in people){<tr><td><strong>@p.Name</strong><small class="d-block text-secondary">@p.Identifier</small></td><td>@categories.GetValueOrDefault(p.StaffCategory!,"Tjetër")</td><td><a class="btn btn-sm btn-outline-primary" asp-action="Create" asp-route-staffId="@p.Id">+ Kontratë</a></td></tr>}
+@if(people.Count==0){<tr><td colspan="3">Nuk ka persona të regjistruar.</td></tr>}
+</tbody></table></div></div>
+@section PageNavigation {<a asp-action="Index" class="btn btn-outline-secondary">← Kontratat</a>}

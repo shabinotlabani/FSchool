@@ -8,6 +8,10 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public DbSet<MatchGame> MatchGames => Set<MatchGame>();
     public DbSet<DisciplineRule> DisciplineRules => Set<DisciplineRule>();
+    public DbSet<League> Leagues => Set<League>();
+    public DbSet<PlayerContract> PlayerContracts => Set<PlayerContract>();
+    public DbSet<PlayerContractAudit> PlayerContractAudits => Set<PlayerContractAudit>();
+    public DbSet<LeagueTeam> LeagueTeams => Set<LeagueTeam>();
     public DbSet<MatchPlayer> MatchPlayers => Set<MatchPlayer>();
     public DbSet<MatchChange> MatchChanges => Set<MatchChange>();
     public DbSet<DevelopmentMetric> DevelopmentMetrics => Set<DevelopmentMetric>();
@@ -326,6 +330,25 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<MatchPlayer>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<MatchChange>().HasOne(x=>x.MatchGame).WithMany().HasForeignKey(x=>x.MatchGameId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<MatchChange>().HasOne(x=>x.Actor).WithMany().HasForeignKey(x=>x.ActorId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<League>().Ignore(l=>l.Rule);
+        builder.Entity<League>().HasIndex(l=>new{l.Name,l.StartsOn}).IsUnique();
+        builder.Entity<League>().HasOne(l=>l.UpdatedBy).WithMany().HasForeignKey(l=>l.UpdatedById).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<LeagueTeam>().HasIndex(t=>new{t.LeagueId,t.TrainingTeamId}).IsUnique();
+        builder.Entity<LeagueTeam>().HasOne(t=>t.League).WithMany(l=>l.Teams).HasForeignKey(t=>t.LeagueId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<LeagueTeam>().HasOne(t=>t.TrainingTeam).WithMany().HasForeignKey(t=>t.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchGame>().HasOne(g=>g.League).WithMany().HasForeignKey(g=>g.LeagueId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContract>().HasIndex(c=>c.Number).IsUnique();
+        builder.Entity<StudentPhoto>().HasIndex(p=>p.StudentId).IsUnique();
+        builder.Entity<StudentPhoto>().HasOne(p=>p.Student).WithMany().HasForeignKey(p=>p.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContract>().ToTable(t=>t.HasCheckConstraint("CK_PlayerContracts_Person","\"StudentId\" IS NOT NULL OR \"BeneficiaryId\" IS NOT NULL"));
+        builder.Entity<SponsorshipBeneficiary>().HasOne(b=>b.StaffTeam).WithMany().HasForeignKey(b=>b.StaffTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContract>().HasIndex(c=>c.RequestId).IsUnique();
+        builder.Entity<PlayerContract>().HasOne(c=>c.Student).WithMany().HasForeignKey(c=>c.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContract>().HasOne(c=>c.Beneficiary).WithMany().HasForeignKey(c=>c.BeneficiaryId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContract>().HasOne(c=>c.Actor).WithMany().HasForeignKey(c=>c.ActorId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContractAudit>().HasOne(c=>c.PlayerContract).WithMany().HasForeignKey(c=>c.PlayerContractId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipBeneficiary>().HasOne(c=>c.Student).WithMany().HasForeignKey(c=>c.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<SponsorshipBeneficiary>().HasIndex(c=>c.StudentId).IsUnique().HasFilter("\"StudentId\" IS NOT NULL");
         ConfigureClubs(builder);
     }
 }

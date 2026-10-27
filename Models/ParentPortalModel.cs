@@ -2,6 +2,11 @@ namespace _2Korriku.Models;
 
 public class ParentPortalModel
 {
+    public DateOnly BirthDate { get; set; }
+    public int Age { get; set; }
+    public string? Position { get; set; }
+    public string? Foot { get; set; }
+    public bool HasPhoto { get; set; }
     public int UnreadMessages { get; set; }
     public List<DevelopmentChart> Progress { get; set; } = [];
     public MenuInput? WeeklyMenu { get; set; }

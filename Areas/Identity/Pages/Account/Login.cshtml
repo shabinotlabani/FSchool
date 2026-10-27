@@ -18,11 +18,23 @@
     <link rel="stylesheet" href="~/css/pwa.css" asp-append-version="true" />
 </head>
 <body>
+    <svg class="login-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+        <symbol id="login-players" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6m2 3a5 5 0 0 1 3 4v3"/></symbol>
+        <symbol id="login-training" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 5 3 3 5-5"/></symbol>
+        <symbol id="login-finance" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18m-6 4h6v4h-6a2 2 0 0 1 0-4Z"/></symbol>
+        <symbol id="login-stats" viewBox="0 0 24 24"><path d="M4 3v17h17M8 16v-4m5 4V8m5 8V4"/></symbol>
+        <symbol id="login-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></symbol>
+        <symbol id="login-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></symbol>
+    </defs></svg>
     <main class="login-shell">
+        <section class="login-identity" aria-label="UPNEXT Sports Management Software">
+            <a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_256.webp" srcset="@Url.Content("~/images/upnext/logo_256.webp") 256w, @Url.Content("~/images/upnext/logo_512.webp") 512w" sizes="(max-width: 700px) 68px, 112px" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="112" height="112" fetchpriority="high" /></a>
+            <div class="identity-copy"><span class="identity-rule" aria-hidden="true"></span><h2>@Model.T("HeroLead")<br/><span>@Model.T("HeroAccent")</span></h2><p>@Model.T("HeroDescription")</p></div>
+            <div class="sport-art" aria-hidden="true"><svg viewBox="0 0 560 250" fill="none"><defs><linearGradient id="court-line" x1="20" y1="230" x2="520" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#b89a59" stop-opacity=".1"/><stop offset=".6" stop-color="#d9bd80" stop-opacity=".65"/><stop offset="1" stop-color="#d9bd80" stop-opacity=".12"/></linearGradient></defs><g stroke="url(#court-line)" stroke-width="1"><rect x="32" y="30" width="496" height="190" rx="95"/><rect x="47" y="45" width="466" height="160" rx="80"/><rect x="62" y="60" width="436" height="130" rx="65"/><path d="M160 60v130m240-130v130M280 60v130M160 98h35v54h-35m240-54h-35v54h35"/><circle cx="280" cy="125" r="42"/><circle cx="280" cy="125" r="3"/></g><path class="sport-trajectory" d="M98 166c90 0 104-98 182-41s122 19 171-49" stroke="#dbbb79" stroke-width="1.5" stroke-dasharray="4 8"/><circle cx="98" cy="166" r="5" fill="#dbbb79"/><circle cx="451" cy="76" r="5" fill="#dbbb79"/><circle class="sport-beacon" cx="451" cy="76" r="13" stroke="#dbbb79" stroke-opacity=".4"/></svg></div>
+            <div class="identity-bottom"><ul class="login-benefits"><li><svg aria-hidden="true"><use href="#login-players"/></svg>@Model.T("Players")</li><li><svg aria-hidden="true"><use href="#login-training"/></svg>@Model.T("Training")</li><li><svg aria-hidden="true"><use href="#login-finance"/></svg>@Model.T("Finances")</li><li><svg aria-hidden="true"><use href="#login-stats"/></svg>@Model.T("Statistics")</li></ul><p class="identity-sports">@Model.T("Sports")</p></div>
+        </section>
         <section class="form-panel" aria-label="@Model.T("Identity")">
-            <div class="login-identity"><a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_512.webp" srcset="@Url.Content("~/images/upnext/logo_256.webp") 256w, @Url.Content("~/images/upnext/logo_512.webp") 512w" sizes="(max-width: 700px) 104px, 260px" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="260" height="260" /></a><p>@Model.T("Tagline")</p><span class="identity-line" aria-hidden="true"></span></div>
-            <header class="login-heading"><h1>@Model.T("Title")</h1><p>@Model.T("Continue")</p></header>
-            <div class="form-content">
+            <div class="form-topbar">
                 @{var languages=new[]{("sq","Shqip"),("en","English"),("hr","Hrvatski"),("tr","Türkçe")};}
                 <details class="login-language-combo">
                 <summary aria-label="@Model.T("Language")"><partial name="_LanguageFlag" model="Model.Language"/><span>@languages.Single(x=>x.Item1==Model.Language).Item2</span><svg class="language-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></summary>
@@ -32,18 +44,22 @@
                 }
                 </nav>
                 </details>
-                <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+            </div>
+            <div class="form-content">
+                <header class="login-heading"><span>@Model.T("Workspace")</span><h1>@Model.T("Title")</h1><p>@Model.T("Continue")</p></header>
+                <form id="login-form" method="post" asp-route-returnUrl="@Model.ReturnUrl" novalidate>
+
                     <input type="hidden" name="language" value="@Model.Language"/>
                     <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
                     <div class="field">
                         <label asp-for="Input.Email">@Model.T("Email")</label>
-                        <input asp-for="Input.Email" type="email" autocomplete="username" placeholder="@Model.T("EmailPlaceholder")" spellcheck="false" aria-describedby="email-error" />
+                        <div class="input-wrap"><svg class="input-icon" aria-hidden="true"><use href="#login-mail"/></svg><input asp-for="Input.Email" type="email" autocomplete="username" placeholder="@Model.T("EmailPlaceholder")" spellcheck="false" autocapitalize="none" inputmode="email" required data-required="@Model.T("EmailRequired")" data-invalid="@Model.T("EmailInvalid")" aria-describedby="email-error" /></div>
                         <span asp-validation-for="Input.Email" id="email-error" class="field-error"></span>
                     </div>
                     <div class="field">
                         <label asp-for="Input.Password">@Model.T("Password")</label>
-                        <div class="password-field">
-                            <input asp-for="Input.Password" autocomplete="current-password" placeholder="@Model.T("PasswordPlaceholder")" aria-describedby="password-error" />
+                        <div class="password-field input-wrap"><svg class="input-icon" aria-hidden="true"><use href="#login-lock"/></svg>
+                            <input asp-for="Input.Password" autocomplete="current-password" placeholder="@Model.T("PasswordPlaceholder")" required data-required="@Model.T("PasswordRequired")" aria-describedby="password-error" />
                             <button type="button" class="password-toggle" aria-label="@Model.T("Show")" data-show="@Model.T("Show")" data-hide="@Model.T("Hide")" aria-pressed="false" aria-controls="Input_Password">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /><path class="eye-slash" d="m3 3 18 18" /></svg>
                             </button>
@@ -51,7 +67,7 @@
                         <span asp-validation-for="Input.Password" id="password-error" class="field-error"></span>
                     </div>
                     <label class="remember"><input asp-for="Input.RememberMe" /> @Model.T("Remember")</label>
-                    <button type="submit" class="submit-button">@Model.T("Title") <span aria-hidden="true">→</span></button>
+                    <button type="submit" class="submit-button" data-loading="@Model.T("Loading")"><span class="submit-label">@Model.T("Title")</span><span class="submit-arrow" aria-hidden="true">→</span><span class="submit-spinner" aria-hidden="true"></span></button><span id="login-status" class="visually-hidden" role="status" aria-live="polite"></span>
                 </form>
             </div>
             <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>@Model.T("Credit") <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
@@ -68,6 +84,36 @@
             password.type = visible ? 'text' : 'password';
             toggle.setAttribute('aria-pressed', String(visible));
             toggle.setAttribute('aria-label', visible ? toggle.dataset.hide : toggle.dataset.show);
+        });
+        const form = document.getElementById('login-form');
+        const submit = form.querySelector('.submit-button');
+        const submitLabel = submit.querySelector('.submit-label');
+        const idleLabel = submitLabel.textContent;
+        const fields = [document.getElementById('Input_Email'), password];
+        function validate(field) {
+            const error = field.validity.valueMissing ? field.dataset.required : field.validity.typeMismatch ? field.dataset.invalid : '';
+            document.getElementById(field.getAttribute('aria-describedby')).textContent = error;
+            field.classList.toggle('input-validation-error', Boolean(error));
+            field.setAttribute('aria-invalid', String(Boolean(error)));
+            return !error;
+        }
+        fields.forEach(field => {
+            if (field.classList.contains('input-validation-error')) field.setAttribute('aria-invalid', 'true');
+            field.addEventListener('input', () => { if (field.getAttribute('aria-invalid') === 'true') validate(field); });
+            field.addEventListener('blur', () => { if (field.value) validate(field); });
+        });
+        form.addEventListener('submit', event => {
+            if (submit.disabled) { event.preventDefault(); return; }
+            const valid = fields.map(validate).every(Boolean);
+            if (!valid) { event.preventDefault(); fields.find(field => field.getAttribute('aria-invalid') === 'true').focus(); return; }
+            submit.disabled = true;
+            form.setAttribute('aria-busy', 'true');
+            submitLabel.textContent = submit.dataset.loading;
+            document.getElementById('login-status').textContent = submit.dataset.loading;
+        });
+        window.addEventListener('pageshow', () => {
+            submit.disabled = false; form.removeAttribute('aria-busy'); submitLabel.textContent = idleLabel;
+            document.getElementById('login-status').textContent = '';
         });
     </script>
     <div class="pwa-install" hidden>

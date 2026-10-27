@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,6 +50,7 @@ public partial class BillingService
         Validator.ValidateObject(input, new ValidationContext(input), true);
         TariffService.TryMonth(input.StartMonth, out var start);
         var end = start.AddMonths(input.Months - 1);
+        if(await db.Students.AnyAsync(s=>s.Id==input.StudentId&&s.ContractPending)||await db.PlayerContracts.AnyAsync(c=>c.StudentId==input.StudentId&&c.Status!="Draft"&&c.StartsOn<end.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=start))throw new InvalidOperationException("Periudha mbulohet nga kontrata e lojtarit dhe nuk ka pagesë sezonale.");
         var student = await db.Students.AsNoTracking().SingleOrDefaultAsync(s => s.Id == input.StudentId)
             ?? throw new InvalidOperationException("Lojtari nuk u gjet.");
         if (!student.IsActive) throw new InvalidOperationException("Pagesa sezonale lejohet vetëm për lojtarë aktivë.");

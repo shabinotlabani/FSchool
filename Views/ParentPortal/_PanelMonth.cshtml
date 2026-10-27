@@ -1,0 +1,8 @@
+@model ParentPortalModel
+@using _2Korriku.Services
+@{var token=Context.Request.RouteValues["token"]?.ToString();var panel=(string)ViewData["Panel"]!;string Link(DateOnly month)=>Url.Action("Index",new{token,studentId=Model.StudentId,continueVisit=true,month=month.ToString("yyyy-MM"),finance=panel=="finance"})+"#"+panel;}
+<nav class="months" aria-label="Muaji">
+@if(Model.Month.Year>2000||Model.Month.Month>1){<a href="@Link(Model.Month.AddMonths(-1))" aria-label="Muaji i kaluar">‹</a>}else{<span></span>}
+<strong>@Model.Month.ToString("MMMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</strong>
+@if(Model.Month<TariffService.CurrentMonth){<a href="@Link(Model.Month.AddMonths(1))" aria-label="Muaji tjetër">›</a>}else{<span></span>}
+</nav>

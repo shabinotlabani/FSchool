@@ -37,11 +37,17 @@ public class FootballService(ApplicationDbContext db)
         }
         if(input.ScoreFor.HasValue&&input.Events.Count(e=>e.Kind is "Goal" or "PenaltyGoal" or "OpponentOwnGoal")>input.ScoreFor || input.ScoreAgainst.HasValue&&input.Events.Count(e=>e.Kind is "OwnGoal" or "OpponentGoal")>input.ScoreAgainst)throw new ValidationException("Golat e regjistruar tejkalojnë rezultatin. Përditësoni rezultatin.");
     }
-    public async Task<List<DisciplineAlert>> Alerts(int team,string kind,DateOnly date,TimeOnly? kickoff,int exclude=0)
+    public async Task<DisciplineRule?> Rule(int team,string kind,DateOnly date,int? leagueId)
     {
-        var rule=await db.DisciplineRules.AsNoTracking().SingleOrDefaultAsync(r=>r.TrainingTeamId==team&&r.Kind==kind&&r.StartsOn<=date&&r.EndsOn>=date);
-        var start=rule?.StartsOn??new DateOnly(date.Month>=7?date.Year:date.Year-1,7,1);
-        var games=await db.MatchGames.AsNoTracking().Include(g=>g.Players).Where(g=>g.TrainingTeamId==team&&g.Kind==kind&&g.Sport=="Football"&&g.Status=="Completed"&&g.Id!=exclude&&g.Date>=start&&g.Date<=date).OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).ThenBy(g=>g.Id).ToListAsync();
+        if(leagueId.HasValue)return (await db.Leagues.AsNoTracking().SingleOrDefaultAsync(l=>l.Id==leagueId))?.Rule;
+        return await db.DisciplineRules.AsNoTracking().SingleOrDefaultAsync(r=>r.TrainingTeamId==team&&r.Kind==kind&&r.StartsOn<=date&&r.EndsOn>=date);
+    }
+    public async Task<List<DisciplineAlert>> Alerts(int team,string kind,DateOnly date,TimeOnly? kickoff,int exclude=0,int? leagueId=null)
+    {
+        if(!leagueId.HasValue&&exclude!=0)leagueId=await db.MatchGames.Where(g=>g.Id==exclude&&g.TrainingTeamId==team).Select(g=>g.LeagueId).SingleOrDefaultAsync();
+        var rule=await Rule(team,kind,date,leagueId);
+        var start=leagueId.HasValue?await db.Leagues.Where(l=>l.Id==leagueId).Select(l=>l.StartsOn).SingleAsync():rule?.StartsOn??new DateOnly(date.Month>=7?date.Year:date.Year-1,7,1);
+        var games=await db.MatchGames.AsNoTracking().Include(g=>g.Players).Where(g=>g.TrainingTeamId==team&&g.LeagueId==leagueId&&g.Kind==kind&&g.Sport=="Football"&&g.Status=="Completed"&&g.Id!=exclude&&g.Date>=start&&g.Date<=date).OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).ThenBy(g=>g.Id).ToListAsync();
         var state=new Dictionary<int,DisciplineAlert>();
         foreach(var g in games.Where(g=>g.Date<date||!kickoff.HasValue||g.Kickoff<kickoff)){
             foreach(var id in state.Keys.ToList())if(!g.Players.Any(p=>p.StudentId==id))state[id]=state[id] with{Remaining=Math.Max(0,state[id].Remaining-1)};

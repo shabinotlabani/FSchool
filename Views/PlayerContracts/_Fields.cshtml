@@ -1,0 +1,30 @@
+@model PlayerContractInput
+<input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><input asp-for="RequestId" type="hidden"/>
+<div class="contract-fields">
+<label>Numri i kontratës<input asp-for="Number" class="form-control"/></label><label>Paga mujore bruto<input asp-for="GrossSalary" type="number" min="0.01" step="0.01" class="form-control"/></label>
+<label>Fillimi<input asp-for="StartsOn" type="date" class="form-control"/></label><label>Skadimi<input asp-for="EndsOn" type="date" class="form-control"/></label>
+</div>
+<h2>Punëdhënësi</h2><div class="contract-fields">
+<label>Emri ligjor<input asp-for="Terms.EmployerName" class="form-control"/></label><label>Numri fiskal / NUI<input asp-for="Terms.EmployerNumber" class="form-control"/></label>
+<label>Adresa<input asp-for="Terms.EmployerAddress" class="form-control"/></label><label>Përfaqësuesi<input asp-for="Terms.Representative" class="form-control"/></label>
+</div>
+<h2>Personi dhe pagesa</h2><div class="contract-fields">
+<label>Numri personal / identifikues<input asp-for="Terms.PersonalNumber" class="form-control"/></label><label>Adresa<input asp-for="Terms.Address" class="form-control"/></label>
+<label>Kualifikimi<input asp-for="Terms.Qualification" class="form-control"/></label><label>Shtetësia<input asp-for="Terms.Nationality" class="form-control"/></label>
+<label>Llogaria bankare<input asp-for="Terms.BankAccount" class="form-control"/></label><label>Punëdhënësi<select asp-for="Terms.EmployerType" class="form-select"><option value="Primary">Primar</option><option value="Secondary">Sekondar</option></select></label>
+<label>Kontributi i punonjësit (%)<input asp-for="Terms.EmployeePensionPercent" type="number" min="0" max="15" step="0.01" class="form-control"/></label><label>Kontributi i klubit (%)<input asp-for="Terms.EmployerPensionPercent" type="number" min="0" max="15" step="0.01" class="form-control"/></label>
+<label>Baza e përjashtimit nga kontributi<input asp-for="Terms.PensionException" class="form-control"/></label>
+</div>
+<details class="contract-section" open><summary>Kushtet e punës</summary><div class="contract-fields">
+<label>Pozita<input asp-for="Terms.Position" class="form-control"/></label><label>Vendi i punës<input asp-for="Terms.Workplace" class="form-control"/></label>
+<label>Orë në javë<input asp-for="Terms.WeeklyHours" type="number" min="1" max="60" class="form-control"/></label><label>Orari<input asp-for="Terms.Schedule" class="form-control"/></label>
+<label>Detyrat<textarea asp-for="Terms.Duties" class="form-control" rows="3"></textarea></label><label>Pushimet<textarea asp-for="Terms.Leave" class="form-control" rows="3"></textarea></label>
+<label>Përfundimi i marrëdhënies së punës<textarea asp-for="Terms.Termination" class="form-control" rows="3"></textarea></label><label>Shtesa dhe kushte të tjera<textarea asp-for="Terms.OtherTerms" class="form-control" rows="3"></textarea></label>
+</div></details>
+<details class="contract-section"><summary>Kujdestari dhe regjistrimi në ATK</summary><div class="contract-fields">
+<label>Kujdestari (nën 18 vjeç)<input asp-for="Terms.GuardianName" class="form-control"/></label><label class="contract-check"><input asp-for="Terms.GuardianConsent"/> Pëlqimi i kujdestarit është në dokument</label>
+<label>Data e regjistrimit në ATK<input asp-for="Terms.AtkRegisteredOn" type="date" class="form-control"/></label><label>Referenca në ATK<input asp-for="Terms.AtkReference" class="form-control"/></label>
+</div><small>Regjistrimi në EDI kryhet veçmas.</small></details>
+<label class="d-block my-3">Kontrata e nënshkruar · PDF deri në 5 MB<input asp-for="Document" type="file" accept="application/pdf,.pdf" class="form-control mt-2"/></label>
+@if(Model.HasDocument){<small>Dokumenti ekzistues ruhet nëse nuk ngarkoni tjetër.</small>}
+<p id="contract-waiver" class="text-secondary small">Lirim nga pagesa mujore për muajt që përfshihen në kontratë.</p>

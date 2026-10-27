@@ -2,14 +2,14 @@
 @{ViewData["Title"]="Raporti i pagave";}
 <partial name="_Intro"/>
 <section class="sp-report sp-salary-report">
-<header class="sp-report-heading"><h1>Pagat <span>@Model.Year</span></h1><button type="button" id="print-sponsorship" class="btn btn-sm btn-outline-secondary sp-no-print">Printo</button></header>
+<header class="sp-report-heading"><h1>Pagat <span>@Model.Year</span></h1><a asp-controller="PlayerContracts" asp-action="Payroll" class="btn btn-sm btn-outline-secondary sp-no-print">Bruto / Neto</a><button type="button" id="print-sponsorship" class="btn btn-sm btn-outline-secondary sp-no-print">Printo</button></header>
 <form method="get" class="sp-year sp-report-filter sp-no-print"><label for="year">Viti</label><select id="year" name="year" class="form-select form-select-sm">@foreach(var y in Model.Years.Append(Model.Year).Distinct().OrderDescending()){<option value="@y" selected="@(y==Model.Year)">@y</option>}</select><button class="btn btn-sm btn-outline-primary">Shfaq</button></form>
 @{
     var months=new[]{"Janar","Shkurt","Mars","Prill","Maj","Qershor","Korrik","Gusht","Shtator","Tetor","Nëntor","Dhjetor"};
-    var people=Model.Invoices.GroupBy(x=>x.BeneficiaryId).Select(g=>new{
-        Person=g.First().Beneficiary,
-        Role=g.OrderByDescending(x=>x.SalaryMonth).ThenByDescending(x=>x.Id).First().SalaryRole??"",
-        Payments=g.ToList()
+    var people=Model.Invoices.Select(x=>x.Beneficiary).Concat(Model.PlayerContracts.Select(c=>c.Beneficiary!)).DistinctBy(b=>b.Id).Select(b=>new{
+        Person=b,
+        Role=Model.PlayerContracts.Any(c=>c.BeneficiaryId==b.Id)?Model.PlayerContracts.First(c=>c.BeneficiaryId==b.Id).SalaryRole:Model.Invoices.Where(x=>x.BeneficiaryId==b.Id).OrderByDescending(x=>x.SalaryMonth).ThenByDescending(x=>x.Id).FirstOrDefault()?.SalaryRole??"",
+        Payments=Model.Invoices.Where(x=>x.BeneficiaryId==b.Id).ToList()
     }).OrderBy(x=>x.Person.Name).ToList();
 }
 <div class="sp-table-wrap sp-salary-scroll" tabindex="0" role="region" aria-label="Pagat mujore"><table class="table sp-table sp-report-table sp-salary-grid">
@@ -27,7 +27,10 @@ var title=role=="Player"?"Lojtarë":role=="Staff"?"Staf":"Pa klasifikim";
 var payment=row.Payments.SingleOrDefault(x=>x.SalaryMonth!.Value.Month==month);
 <td class="sp-salary-month @(payment==null?"sp-salary-unpaid":"sp-salary-paid")">
 @if(payment!=null){<a asp-action="InvoiceDetails" asp-route-id="@payment.Id" title="@payment.DocumentReference"><strong>@payment.Amount.ToString("N2")</strong><span>@payment.Allocation.Contract.Sponsor</span></a>}
-else{<span aria-label="Pa pagesë" title="Pa pagesë">—</span>}
+else{
+var date=new DateOnly(Model.Year,month,1);var contracts=Model.PlayerContracts.Where(c=>c.BeneficiaryId==row.Person.Id&&c.StartsOn<date.AddMonths(1)&&c.EffectiveEnd>=date).ToList();
+if(contracts.Count>0){var net=_2Korriku.Services.PlayerContractService.MonthPayroll(contracts,date).Net;<a asp-action="Invoice" asp-route-beneficiaryId="@row.Person.Id" asp-route-salaryMonth="@date.ToString("yyyy-MM")" title="Paga neto sipas kontratës · pa regjistruar"><strong>@net.ToString("N2")</strong><span>@(date>_2Korriku.Services.TariffService.CurrentMonth?"Planifikuar":"Për pagesë")</span></a>}
+else{<span aria-label="Pa pagesë" title="Pa pagesë">—</span>}}
 </td>
 }
 <td class="sp-salary-month sp-salary-annual">@row.Payments.Sum(x=>x.Amount).ToString("N2")</td></tr>

@@ -8,6 +8,8 @@ namespace _2Korriku.Models;
 
 public class MatchGame
 {
+    public int? LeagueId { get; set; }
+    public League? League { get; set; }
     public int Id { get; set; }
     public Guid RequestId { get; set; } = Guid.NewGuid();
     [ConcurrencyCheck] public Guid Revision { get; set; } = Guid.NewGuid();
@@ -78,6 +80,8 @@ public class MatchPlayerInput
 }
 public class MatchInput
 {
+    public int? LeagueId { get; set; }
+    [ValidateNever] public List<League> Leagues { get; set; } = [];
     public int Id { get; set; }
     public Guid RequestId { get; set; } = Guid.NewGuid();
     public Guid Revision { get; set; }
@@ -104,12 +108,14 @@ public class MatchInput
 }
 public class MatchList
 {
+    public int? LeagueId { get; set; }
+    public List<League> Leagues { get; set; } = [];
     public List<TrainingTeam> Teams { get; set; } = [];
     public int? TeamId { get; set; }
     public int Year { get; set; }
     public string? Kind { get; set; }
     public List<MatchGame> Matches { get; set; } = [];
-    public List<(int TeamId,string TeamName,string Kind,DisciplineAlert Alert)> DisciplineAlerts { get; set; } = [];
+    public List<(int TeamId,string TeamName,string Competition,DisciplineAlert Alert)> DisciplineAlerts { get; set; } = [];
 }
 public record MatchPlayerTotal(int StudentId, string Name, int Games, int Starts, int Substitutions, int Unused, int OfficialMinutes, int FriendlyMinutes)
 {

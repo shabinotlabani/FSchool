@@ -9,6 +9,8 @@ public static class DataResetService
     public static readonly string[] Tables = [
         "MatchChanges", "MatchPlayers", "MatchGames",
         "DisciplineRules",
+        "LeagueTeams", "Leagues",
+        "StudentPhoto", "PlayerContractAudits", "PlayerContracts",
         "CoachMessages",
         "NutritionMenus", "CareReferrals", "CareEntries", "CareAssignments",
         "PlayerEvaluations",
@@ -34,6 +36,8 @@ public static class DataResetService
             await db.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(20260929, {key})");
         // Delete dependents before their principals, within this club only.
         var remaining = Tables.ToHashSet();
+        await db.SponsorshipBeneficiaries.Where(b=>b.StaffTeamId!=null).ExecuteUpdateAsync(s=>s.SetProperty(b=>b.StaffTeamId,(int?)null));
+        await db.SponsorshipBeneficiaries.Where(b=>b.StudentId!=null).ExecuteUpdateAsync(s=>s.SetProperty(b=>b.StudentId,(int?)null));
         while (remaining.Count > 0)
         {
             var ready = remaining.Where(table => !db.Model.GetEntityTypes().Any(e => remaining.Contains(e.GetTableName()!)

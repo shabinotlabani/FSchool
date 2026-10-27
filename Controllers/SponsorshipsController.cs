@@ -31,7 +31,9 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
     public async Task<IActionResult> Salaries(int? year)
     {
         var y=year??BillingClock.Today.Year;
+        if(y<2020||y>2100)return BadRequest();
         return View(new SponsorshipInvoiceList {
+            PlayerContracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Where(c=>c.Status!="Draft"&&c.StartsOn.Year<=y&&(c.EndedOn??c.EndsOn).Year>=y).ToListAsync(),
             Year=y,Years=await db.SponsorshipPlans.OrderByDescending(x=>x.Year).Select(x=>x.Year).ToListAsync(),
             Invoices=await db.SponsorshipSpending.AsNoTracking().Include(x=>x.Beneficiary).Include(x=>x.Allocation.Contract)
                 .Where(x=>x.Allocation.Contract.Plan.Year==y&&x.SalaryMonth!=null&&x.CancelledAt==null)
@@ -66,9 +68,14 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
         if(m.PlanLineId>0&&m.Amount>0)try {m.Suggestions=await Service.SuggestBudgets(m.PlanLineId,m.Date,m.Amount);}
         catch(ValidationException e){ModelState.AddModelError("",e.Message);}
     }
-    [HttpGet] public async Task<IActionResult> Invoice(int? beneficiaryId)
+    [HttpGet] public async Task<IActionResult> Invoice(int? beneficiaryId,string? salaryMonth)
     {
-        var m=new SponsorshipInvoiceInput{BeneficiaryId=beneficiaryId??0};await InvoiceChoices(m);return View(m);
+        var m=new SponsorshipInvoiceInput{BeneficiaryId=beneficiaryId??0};
+        if(beneficiaryId.HasValue&&TariffService.TryMonth(salaryMonth,out var month)){
+            var contracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Beneficiary).Where(c=>c.BeneficiaryId==beneficiaryId&&c.Status!="Draft"&&c.StartsOn<month.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=month).ToListAsync();
+            if(contracts.Count>0){m.SalaryMonth=salaryMonth;m.SalaryRole=contracts[0].SalaryRole;m.Amount=PlayerContractService.MonthPayroll(contracts,month).Net;m.Description="Paga neto "+salaryMonth;m.DocumentReference="PAGA-"+beneficiaryId+"-"+salaryMonth;m.PlanLineId=await db.SponsorshipPlanLines.Where(l=>l.IsSalary&&l.Plan.Year==month.Year).Select(l=>l.Id).FirstOrDefaultAsync();}
+        }
+        await InvoiceChoices(m);return View(m);
     }
     [HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Invoice(SponsorshipInvoiceInput m,string? intent)
     {
@@ -125,7 +132,7 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
             return View(new SponsorshipContractInput{Id=c.Id,Revision=c.Revision,PlanId=c.PlanId,Plan=plan,Sponsor=c.Sponsor,SponsorNumber=c.SponsorNumber,Reference=c.Reference,CertificateNumber=c.CertificateNumber,CertificateDate=c.CertificateDate,From=c.From,To=c.To,Amount=c.Amount,Allocations=plan!.Lines.OrderBy(x=>x.Id).Select(x=>new SponsorshipAllocationInput{PlanLineId=x.Id,Amount=c.Allocations.SingleOrDefault(a=>a.PlanLineId==x.Id)?.Amount??0}).ToList()});
         }
         var p=await FindPlan(planId);if(p==null)return NotFound();
-        return View(new SponsorshipContractInput{PlanId=p.Id,Plan=p,From=new(p.Year,1,1),To=new(p.Year,12,31),Allocations=p.Lines.OrderBy(x=>x.Id).Select(x=>new SponsorshipAllocationInput{PlanLineId=x.Id}).ToList()});
+        return View(new SponsorshipContractInput{PlanId=p.Id,Plan=p,Allocations=p.Lines.OrderBy(x=>x.Id).Select(x=>new SponsorshipAllocationInput{PlanLineId=x.Id}).ToList()});
     }
     [HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Contract(SponsorshipContractInput m)
     {

@@ -14,7 +14,8 @@
 <details class="match-metadata" open="@(Model.Id==0||Model.Sport!="Football")"><summary>Ndeshja dhe rezultati</summary>
 <div class="match-fields">
 <label>Kundërshtari<input asp-for="Opponent" class="form-control" maxlength="150" required/></label>
-<label>Gara<select asp-for="Kind" class="form-select"><option value="Official">Për pikë</option><option value="Cup">Për kupë</option><option value="Friendly">Miqësore</option></select></label>
+<input asp-for="Kind" type="hidden"/>
+<label>Liga<select asp-for="LeagueId" class="form-select"><option value="">Miqësore · pa ligë</option>@foreach(var league in Model.Leagues){<option value="@league.Id" data-start="@league.StartsOn.ToString("yyyy-MM-dd")" data-end="@league.EndsOn.ToString("yyyy-MM-dd")">@league.Name · @league.StartsOn.Year/@league.EndsOn.Year</option>}</select></label>
 <label>Data<input asp-for="Date" type="date" class="form-control" required/></label><label>Ora<input asp-for="Kickoff" type="time" class="form-control"/></label>
 <input asp-for="Competition" type="hidden"/><label>Vendi<input asp-for="Venue" class="form-control" maxlength="150"/></label>
 <label>Fusha<select asp-for="Home" class="form-select"><option value="true">Vendas</option><option value="false">Mysafir</option></select></label>
@@ -60,3 +61,4 @@
 </form></div>
 @section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-teamId="@Model.TeamId" asp-route-year="@Model.Date.Year">← Ndeshjet</a>}
 @section Scripts { @if(Model.Id!=0){<script src="~/js/matches.js" asp-append-version="true"></script><script src="~/js/football.js" asp-append-version="true"></script><script src="~/js/pitch.js" asp-append-version="true"></script>} }
+<script src="~/js/match-league.js" asp-append-version="true"></script>

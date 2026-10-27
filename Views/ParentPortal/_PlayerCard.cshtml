@@ -1,0 +1,28 @@
+@model ParentPortalModel
+@using System.Globalization
+@{var club=await Club.Get();var token=Context.Request.RouteValues["token"]?.ToString();var ratings=Model.Progress.Where(c=>c.Rating&&c.Points.Count>0).Take(6).ToList();var attendance=Model.Attendance.Count==0?(int?)null:(int)Math.Round(100m*Model.Attendance.Count(a=>a.Present)/Model.Attendance.Count);}
+<section class="player-passport" aria-label="Kartela e lojtarit">
+<header class="passport-heading"><div><span>@club.Name</span><h2>Kartela e Lojtarit</h2><p>DISIPLINË · PUNË · ZHVILLIM</p></div><img src="@Club.LogoUrl" alt="Logoja e @club.Name" width="76" height="88"/></header>
+<div class="passport-main"><div class="passport-portrait">
+@if(Model.HasPhoto){<img class="player-portrait" src="@Url.Action("Photo",new{token,studentId=Model.StudentId})" alt="@Model.Name" width="480" height="600" fetchpriority="high"/>}
+else{<div class="portrait-placeholder"><svg viewBox="0 0 200 240" aria-hidden="true"><circle cx="100" cy="65" r="34"/><path d="M62 112 26 137l20 41 17-9v59h74v-59l17 9 20-41-36-25-23 17H85Z"/><path class="jersey-detail" d="M85 129 100 149l15-20M100 149v79"/></svg><span>@Model.Name</span></div>}
+<details class="portrait-upload"><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="12" r="4"/></svg>@(Model.HasPhoto?"Ndrysho foton":"Shto foton")</summary>
+<form asp-action="UploadPhoto" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post" enctype="multipart/form-data" class="player-photo-form" data-parent-consent="true"><label>Fotoja<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required/></label><button type="submit">Ruaj</button>@if(Model.HasPhoto){<button type="button" data-remove-photo>Hiq foton</button>}<p class="photo-status" role="status"></p></form></details>
+</div>
+<dl class="passport-facts">
+<div class="passport-name"><dt>Emri</dt><dd>@Model.Name</dd></div>
+<div><dt>Mosha</dt><dd>@Model.Age <small>vjeç</small></dd></div>
+<div><dt>Pozita</dt><dd>@(string.IsNullOrWhiteSpace(Model.Position)||Model.Position=="Pa caktuar"?"Pa caktuar":Model.Position)</dd></div>
+<div><dt>Ekipi</dt><dd>@(Model.TeamName??"Pa caktuar")</dd></div>
+<div><dt>Këmba e preferuar</dt><dd>@(Model.Foot??"Pa plotësuar")</dd></div>
+<div><dt>Datëlindja</dt><dd>@Model.BirthDate.ToString("dd.MM.yyyy")</dd></div>
+<div><dt>Trajneri</dt><dd>@(string.IsNullOrWhiteSpace(Model.CoachName)?"Pa caktuar":Model.CoachName)@if(!string.IsNullOrWhiteSpace(Model.AssistantCoachName)){<small>@Model.AssistantCoachName · Ndihmëstrajner</small>}</dd></div>
+</dl></div>
+<div class="passport-ratings"><div class="passport-section-title"><h3>Vlerësimet</h3><span>NGA 100</span></div>
+@if(ratings.Count==0){<p class="passport-empty">Ende pa vlerësime të regjistruara.</p>}
+else{<div class="passport-rings">@foreach(var rating in ratings){var point=rating.Points.Last();var score=(int)Math.Round(point.Value);<div class="passport-rating"><div class="rating-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-track" cx="50" cy="50" r="42"/><circle class="ring-value" cx="50" cy="50" r="42" pathLength="100" stroke-dasharray="@score 100"/></svg><strong>@score</strong></div><span>@rating.Title</span><time>@point.Date.ToString("dd.MM.yyyy")</time></div>}</div>}
+</div>
+<footer class="passport-bottom"><div class="passport-attendance"><span>Prezenca · @Model.Month.ToString("MM.yyyy")</span><strong>@(attendance.HasValue?attendance+"%":"—")</strong>@if(attendance.HasValue){<progress value="@attendance" max="100" aria-label="Prezenca">@attendance%</progress>}else{<small>Pa regjistrime</small>}</div>
+<a class="passport-payment" data-portal-target="finance" asp-action="Index" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-continueVisit="true" asp-route-finance="true"><span>Gjendja e pagesave</span><strong class="@(Model.StudentDebt>0?"payment-due":"payment-clear")">@(Model.StudentDebt>0?Model.StudentDebt.ToString("N2")+" për t’u paguar":"✓ Pa pagesa të mbetura")</strong></a></footer>
+<div class="passport-motto">DISIPLINË <span>·</span> RESPEKT <span>·</span> ZHVILLIM <span>·</span> SKUADËR</div>
+</section>

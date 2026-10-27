@@ -18,6 +18,7 @@ public class FamilyService(ApplicationDbContext db)
         var result=new Dictionary<int,string>();
         var standardId=await new TariffService(db).StandardPlanIdAsync();
         foreach(var id in ids.Where(id=>!existing.Contains(id))){
+            if(await db.Students.AnyAsync(s=>s.Id==id&&s.ContractPending)||await db.PlayerContracts.AnyAsync(c=>c.StudentId==id&&c.Status!="Draft"&&(c.EndedOn??c.EndsOn)>=month)){result[id]="Lojtar me kontratë";continue;}
             var assignments=states.Concat(current).Where(x=>x.StudentId==id).ToList();
             if(assignments.Any(x=>x.FamilyId.HasValue&&x.FamilyId!=familyId))result[id]="Është në një familje tjetër";
             else if(future.Any(x=>x.StudentId==id))result[id]="Ka ndryshim pakete të planifikuar";

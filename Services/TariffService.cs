@@ -69,6 +69,9 @@ public class TariffService(ApplicationDbContext db)
     }
     public async Task<ResolvedFee> ResolveAsync(Student student,DateOnly month)
     {
+        if(student.ContractPending)return new(0,"Në pritje të kontratës",true,"Regjistruar me kontratë",null);
+        var contract=await new PlayerContractService(db).Covering(student.Id,month).AsNoTracking().Select(c=>new{c.Number,c.StartsOn,c.EndsOn}).FirstOrDefaultAsync();
+        if(contract!=null)return new(0,"Me kontratë",true,"Kontrata "+contract.Number,$"{contract.StartsOn:dd.MM.yyyy} – {contract.EndsOn:dd.MM.yyyy}");
         var assignment=await db.StudentFeeAssignments.AsNoTracking().Include(a=>a.FeePlan).Where(a=>a.StudentId==student.Id && a.EffectiveMonth<=month).OrderByDescending(a=>a.EffectiveMonth).ThenByDescending(a=>a.Id).FirstOrDefaultAsync();
         if(assignment==null) return new(student.MonthlyFee,"Tarifë ekzistuese",false,null,null);
         var price=await db.FeePlanPrices.AsNoTracking().Where(p=>p.FeePlanId==assignment.FeePlanId && p.EffectiveMonth<=month).OrderByDescending(p=>p.EffectiveMonth).ThenByDescending(p=>p.Id).FirstAsync();

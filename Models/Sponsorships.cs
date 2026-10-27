@@ -51,6 +51,12 @@ public class SponsorshipAllocation
 }
 public class SponsorshipBeneficiary
 {
+    [MaxLength(30)] public string? StaffCategory { get; set; }
+    public DateOnly? StaffBirthDate { get; set; }
+    public int? StaffTeamId { get; set; }
+    public TrainingTeam? StaffTeam { get; set; }
+    public int? StudentId { get; set; }
+    public Student? Student { get; set; }
     public int Id { get; set; }
     [MaxLength(150)] public string Name { get; set; } = "";
     // A stable personnel code or business identifier, not a freely repeated display name.
@@ -132,8 +138,8 @@ public class SponsorshipContractInput
     [Required,StringLength(150)] public string Sponsor { get; set; } = "";
     [Required,StringLength(60)] public string SponsorNumber { get; set; } = "";
     [Required,StringLength(100)] public string Reference { get; set; } = "";
-    public DateOnly From { get; set; } = BillingClock.Today;
-    public DateOnly To { get; set; } = new(BillingClock.Today.Year,12,31);
+    [Required(ErrorMessage="Zgjidhni datën e fillimit.")] public DateOnly? From { get; set; }
+    [Required(ErrorMessage="Zgjidhni datën e përfundimit.")] public DateOnly? To { get; set; }
     [Range(typeof(decimal),"0.01","999999999.99")] public decimal Amount { get; set; }
     [MinLength(1),MaxLength(100)] public List<SponsorshipAllocationInput> Allocations { get; set; } = [];
     [ValidateNever] public SponsorshipPlan? Plan { get; set; }
@@ -190,6 +196,7 @@ public class SponsorshipInvoiceInput : SponsorshipSpendInput
 public record SponsorshipBudgetSuggestion(int AllocationId,int ContractId,string Sponsor,string Reference,string Category,DateOnly Expires,decimal Available,decimal Proposed,bool CanCover);
 public class SponsorshipInvoiceList
 {
+    public List<PlayerContract> PlayerContracts { get; set; } = [];
     public int Year { get; set; }
     public string? Search { get; set; }
     public List<int> Years { get; set; } = [];

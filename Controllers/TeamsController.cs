@@ -16,14 +16,31 @@ public class TeamsController(ApplicationDbContext db,TeamService teams):Controll
     public async Task<IActionResult> Index(string? search,bool includeInactive=false)
     {
         ViewData["Search"]=search;ViewData["IncludeInactive"]=includeInactive;
+        ViewData["Leagues"]=await db.LeagueTeams.AsNoTracking().Include(t=>t.League).Where(t=>t.League.IsActive&&t.League.StartsOn<=BillingClock.Today&&t.League.EndsOn>=BillingClock.Today).ToListAsync();
         var rows=await teams.OptionsAsync(includeInactive:includeInactive);
         if(!string.IsNullOrWhiteSpace(search))rows=rows.Where(t=>t.Team.Name.Contains(search.Trim(),StringComparison.OrdinalIgnoreCase)).ToList();
         return View(rows);
     }
     public async Task<IActionResult> Details(int id)
     {
+        ViewData["Leagues"]=await db.Leagues.AsNoTracking().Where(l=>l.Teams.Any(t=>t.TrainingTeamId==id)).OrderByDescending(l=>l.StartsOn).ToListAsync();
         var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).Include(t=>t.Students).SingleOrDefaultAsync(t=>t.Id==id);if(team==null)return NotFound();
         return View(new TeamDetailsModel{Team=team,History=await db.TeamChanges.AsNoTracking().Include(c=>c.Actor).Where(c=>c.TrainingTeamId==id).OrderByDescending(c=>c.Id).ToListAsync(),MembershipHistory=await db.StudentTeamChanges.AsNoTracking().Include(c=>c.Student).Include(c=>c.Actor).Where(c=>c.FromTeamId==id||c.ToTeamId==id).OrderByDescending(c=>c.Id).ToListAsync()});
+    }
+    [HttpGet, Authorize(Roles=Roles.Admin), ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+    public async Task<IActionResult> Minutes(int id,int? year,string? kind,int? leagueId)
+    {
+        var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.Students).SingleOrDefaultAsync(t=>t.Id==id);
+        if(team==null)return NotFound();
+        var leagues=await db.Leagues.AsNoTracking().Where(l=>l.Teams.Any(t=>t.TrainingTeamId==id)).OrderByDescending(l=>l.StartsOn).ThenBy(l=>l.Name).ToListAsync();
+        if(leagueId.HasValue&&!leagues.Any(l=>l.Id==leagueId))return NotFound();
+        var selectedYear=year??BillingClock.Today.Year;
+        if(!ModelState.IsValid || selectedYear<1900 || selectedYear>2200 || (kind!=null && kind!="" && kind is not ("Official" or "Cup" or "Friendly")))return BadRequest();
+        var start=new DateOnly(selectedYear,1,1);
+        var matches=await db.MatchGames.AsNoTracking().Include(m=>m.Players)
+            .Where(m=>m.TrainingTeamId==id && m.Status=="Completed" && m.Date>=start && m.Date<start.AddYears(1) && (!leagueId.HasValue||m.LeagueId==leagueId) && (kind==null || kind=="" || m.Kind==kind))
+            .OrderBy(m=>m.Date).ThenBy(m=>m.Kickoff).ToListAsync();
+        return View(new MatchList{Teams=[team],TeamId=id,Year=selectedYear,Kind=kind,LeagueId=leagueId,Leagues=leagues,Matches=matches});
     }
     private async Task FieldChoices(TeamEditModel model)
     {

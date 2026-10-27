@@ -1,0 +1,8 @@
+@model PlayerContract
+@using _2Korriku.Services
+@{ViewData["Title"]="Kontrata · "+Model.PersonName;var today=BillingClock.Today;var days=Model.EffectiveEnd.DayNumber-today.DayNumber;}
+<link rel="stylesheet" href="~/css/contracts.css" asp-append-version="true"/>
+<div class="contracts-page contract-simple-detail"><div class="page-heading"><div><h1>@Model.PersonName</h1><p>@Model.CategoryName · @(Model.Status=="Draft"?"Draft":Model.EffectiveEnd<today?"E skaduar":days<=30?"Afër skadimit":"Aktive")</p></div>@if(Model.Status=="Draft"){<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Ndrysho</a>}</div>
+<div class="contract-summary-grid"><div><span>Paga bruto</span><strong>@Model.GrossSalary.ToString("N2")</strong></div><div><span>Fillimi</span><strong>@Model.StartsOn.ToString("dd.MM.yyyy")</strong></div><div><span>Skadimi</span><strong>@Model.EffectiveEnd.ToString("dd.MM.yyyy")</strong>@if(days>=0&&days<=30){<small>@days ditë të mbetura</small>}</div></div>
+<a class="btn btn-primary mt-4" asp-controller="Sponsorships" asp-action="Salaries">Shiko te Sponsorizimet</a></div>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Kontratat</a>}

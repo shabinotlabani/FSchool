@@ -1,0 +1,795 @@
+SOURCE INVENTORY - 22.10.2026
+Application files read-only for presentation
+
+Controllers\AttendanceController.cs
+Controllers\BankPaymentsController.cs
+Controllers\CareReferralsController.cs
+Controllers\CareStaffController.cs
+Controllers\ClubSettingsController.cs
+Controllers\CoachesController.cs
+Controllers\CoachMenusController.cs
+Controllers\DataResetController.cs
+Controllers\ExpensesController.cs
+Controllers\FamiliesController.cs
+Controllers\FieldsController.cs
+Controllers\HomeController.cs
+Controllers\NutritionMenusController.cs
+Controllers\ParentLinksController.cs
+Controllers\ParentNotificationsController.cs
+Controllers\ParentPortalController.cs
+Controllers\PaymentsController.cs
+Controllers\PersonalTrainingController.cs
+Controllers\PlayerCareController.cs
+Controllers\PlayerDevelopmentController.cs
+Controllers\PresentationController.cs
+Controllers\ProductsController.cs
+Controllers\ReportsController.cs
+Controllers\SalesController.cs
+Controllers\SizeGroupsController.cs
+Controllers\SponsorshipsController.cs
+Controllers\StudentsController.cs
+Controllers\TariffsController.cs
+Controllers\TeamsController.cs
+Controllers\TreasuryController.cs
+Controllers\UsersController.cs
+Data\ApplicationDbContext.cs
+Data\DbInitializer.cs
+Data\Migrations\20260929120730_InitialCreate.cs
+Data\Migrations\20260929120730_InitialCreate.Designer.cs
+Data\Migrations\20260929142002_PaymentRequestId.cs
+Data\Migrations\20260929142002_PaymentRequestId.Designer.cs
+Data\Migrations\20260930082946_StockEntryDocuments.cs
+Data\Migrations\20260930082946_StockEntryDocuments.Designer.cs
+Data\Migrations\20260930095707_PlayerStockIssues.cs
+Data\Migrations\20260930095707_PlayerStockIssues.Designer.cs
+Data\Migrations\20260930144331_ManagedMonthlyTariffs.cs
+Data\Migrations\20260930144331_ManagedMonthlyTariffs.Designer.cs
+Data\Migrations\20260930203856_TrainingTeamsAndSchedules.cs
+Data\Migrations\20260930203856_TrainingTeamsAndSchedules.Designer.cs
+Data\Migrations\20260930214244_ProductSizesAndVariantStock.cs
+Data\Migrations\20260930214244_ProductSizesAndVariantStock.Designer.cs
+Data\Migrations\20261001082034_ManagedFamilyPackages.cs
+Data\Migrations\20261001082034_ManagedFamilyPackages.Designer.cs
+Data\Migrations\20261001133942_FamilyBatchRegistrationAndStudentEditing.cs
+Data\Migrations\20261001133942_FamilyBatchRegistrationAndStudentEditing.Designer.cs
+Data\Migrations\20261001144308_SeasonalPayments.cs
+Data\Migrations\20261001144308_SeasonalPayments.Designer.cs
+Data\Migrations\20261001204359_IssuePriceSnapshots.cs
+Data\Migrations\20261001204359_IssuePriceSnapshots.Designer.cs
+Data\Migrations\20261001210139_FirstMonthProration.cs
+Data\Migrations\20261001210139_FirstMonthProration.Designer.cs
+Data\Migrations\20261002082957_PersonalTrainingBilling.cs
+Data\Migrations\20261002082957_PersonalTrainingBilling.Designer.cs
+Data\Migrations\20261002104139_ExpensesAndCashReports.cs
+Data\Migrations\20261002104139_ExpensesAndCashReports.Designer.cs
+Data\Migrations\20261002124511_WeeklyFirstMonthPricing.cs
+Data\Migrations\20261002124511_WeeklyFirstMonthPricing.Designer.cs
+Data\Migrations\20261002125210_WeeklyPricingNewRegistrationsOnly.cs
+Data\Migrations\20261002125210_WeeklyPricingNewRegistrationsOnly.Designer.cs
+Data\Migrations\20261002131750_CoachPortal.cs
+Data\Migrations\20261002131750_CoachPortal.Designer.cs
+Data\Migrations\20261005092939_FamilyPayments.cs
+Data\Migrations\20261005092939_FamilyPayments.Designer.cs
+Data\Migrations\20261005100159_ManagedCustomTariffs.cs
+Data\Migrations\20261005100159_ManagedCustomTariffs.Designer.cs
+Data\Migrations\20261006083226_FootballFieldsAndPrivateBookings.cs
+Data\Migrations\20261006083226_FootballFieldsAndPrivateBookings.Designer.cs
+Data\Migrations\20261006110242_WeeklyFieldBookings.cs
+Data\Migrations\20261006110242_WeeklyFieldBookings.Designer.cs
+Data\Migrations\20261007143036_TreasuryOpeningAndOwnerWithdrawals.cs
+Data\Migrations\20261007143036_TreasuryOpeningAndOwnerWithdrawals.Designer.cs
+Data\Migrations\20261009112500_TeamHeadAndAssistantCoaches.cs
+Data\Migrations\20261009112500_TeamHeadAndAssistantCoaches.Designer.cs
+Data\Migrations\20261009113923_TeamPlayerAttendance.cs
+Data\Migrations\20261009113923_TeamPlayerAttendance.Designer.cs
+Data\Migrations\20261010222625_PersonalTrainingCoach.cs
+Data\Migrations\20261010222625_PersonalTrainingCoach.Designer.cs
+Data\Migrations\20261011151207_PendingBankVerification.cs
+Data\Migrations\20261011151207_PendingBankVerification.Designer.cs
+Data\Migrations\20261011163420_AllBankVerification.cs
+Data\Migrations\20261011163420_AllBankVerification.Designer.cs
+Data\Migrations\20261011163530_BankVerifierPermission.cs
+Data\Migrations\20261011163530_BankVerifierPermission.Designer.cs
+Data\Migrations\20261011164611_PreferredMonthlyPaymentMethod.cs
+Data\Migrations\20261011164611_PreferredMonthlyPaymentMethod.Designer.cs
+Data\Migrations\20261011205008_AutomaticMonthlyBankRequests.cs
+Data\Migrations\20261011205008_AutomaticMonthlyBankRequests.Designer.cs
+Data\Migrations\20261011210130_BankConfirmedAmount.cs
+Data\Migrations\20261011210130_BankConfirmedAmount.Designer.cs
+Data\Migrations\20261012144022_PresentationDemoImport.cs
+Data\Migrations\20261012144022_PresentationDemoImport.Designer.cs
+Data\Migrations\20261013141316_FieldSeriesPayments.cs
+Data\Migrations\20261013141316_FieldSeriesPayments.Designer.cs
+Data\Migrations\20261013213205_StudentParentLink.cs
+Data\Migrations\20261013213205_StudentParentLink.Designer.cs
+Data\Migrations\20261017154049_SponsorshipBudgets.cs
+Data\Migrations\20261017154049_SponsorshipBudgets.Designer.cs
+Data\Migrations\20261017185545_SponsorshipSalaryRole.cs
+Data\Migrations\20261017185545_SponsorshipSalaryRole.Designer.cs
+Data\Migrations\20261019085150_BankPaymentDistribution.cs
+Data\Migrations\20261019085150_BankPaymentDistribution.Designer.cs
+Data\Migrations\20261019143132_SponsorshipCertificate.cs
+Data\Migrations\20261019143132_SponsorshipCertificate.Designer.cs
+Data\Migrations\20261019143246_SponsorshipInvoiceDate.cs
+Data\Migrations\20261019143246_SponsorshipInvoiceDate.Designer.cs
+Data\Migrations\20261019180622_ParentPushNotifications.cs
+Data\Migrations\20261019180622_ParentPushNotifications.Designer.cs
+Data\Migrations\20261019181558_FamilyParentPortal.cs
+Data\Migrations\20261019181558_FamilyParentPortal.Designer.cs
+Data\Migrations\20261020123235_ParentAutomaticNotifications.cs
+Data\Migrations\20261020123235_ParentAutomaticNotifications.Designer.cs
+Data\Migrations\20261020134928_ClubBrandingSettings.cs
+Data\Migrations\20261020134928_ClubBrandingSettings.Designer.cs
+Data\Migrations\20261020222000_PlayerPerformanceDevelopment.cs
+Data\Migrations\20261020222000_PlayerPerformanceDevelopment.Designer.cs
+Data\Migrations\20261020223258_PlayerDevelopmentRecords.cs
+Data\Migrations\20261020223258_PlayerDevelopmentRecords.Designer.cs
+Data\Migrations\20261021111021_PlayerCareStaff.cs
+Data\Migrations\20261021111021_PlayerCareStaff.Designer.cs
+Data\Migrations\20261021140044_NutritionMenusAndReferrals.cs
+Data\Migrations\20261021140044_NutritionMenusAndReferrals.Designer.cs
+Data\Migrations\20261021143345_AutomaticNutritionDrafts.cs
+Data\Migrations\20261021143345_AutomaticNutritionDrafts.Designer.cs
+Data\Migrations\20261021144515_CoachMenuApproval.cs
+Data\Migrations\20261021144515_CoachMenuApproval.Designer.cs
+Data\Migrations\ApplicationDbContextModelSnapshot.cs
+Data\PresentationDemo.cs
+Models\AccountProgress.cs
+Models\ApplicationUser.cs
+Models\Attendance.cs
+Models\BankPaymentAllocation.cs
+Models\BillingViewModels.cs
+Models\ClubSettings.cs
+Models\CoachActivityReport.cs
+Models\CoachTeam.cs
+Models\CoachTeamCard.cs
+Models\CoachTeamTransferModel.cs
+Models\DemoImport.cs
+Models\DevelopmentChart.cs
+Models\DevelopmentRecord.cs
+Models\Expenses.cs
+Models\FamilyPayment.cs
+Models\FeePlans.cs
+Models\FirstMonthFee.cs
+Models\FootballFields.cs
+Models\InventoryViewModels.cs
+Models\IssueModels.cs
+Models\ManagedTariffs.cs
+Models\MonthlyFeePeriod.cs
+Models\NutritionMenu.cs
+Models\OtherDebt.cs
+Models\ParentPortalModel.cs
+Models\ParentPush.cs
+Models\Payment.cs
+Models\PaymentDocumentModel.cs
+Models\PendingBankPayment.cs
+Models\PersonalTraining.cs
+Models\PlayerAttendanceMonth.cs
+Models\PlayerCare.cs
+Models\PlayerDevelopment.cs
+Models\PlayerFamily.cs
+Models\Product.cs
+Models\ProductVariant.cs
+Models\ReasonReport.cs
+Models\Sale.cs
+Models\SaleDetail.cs
+Models\SeasonalPaymentModel.cs
+Models\SponsorshipCoverageReport.cs
+Models\Sponsorships.cs
+Models\StockEntry.cs
+Models\StockEntryDetail.cs
+Models\StockMovement.cs
+Models\StockReportModels.cs
+Models\Student.cs
+Models\StudentMonthlyExemption.cs
+Models\StudentRegistrationModel.cs
+Models\StudentTransaction.cs
+Models\StudentWorkflows.cs
+Models\TrainingTeams.cs
+Models\Treasury.cs
+Models\UserManagementModels.cs
+Services\AttendanceService.cs
+Services\BankVerificationService.Additional.cs
+Services\BankVerificationService.Automatic.cs
+Services\BankVerificationService.cs
+Services\BankVerificationService.Distribution.cs
+Services\BillingClock.cs
+Services\BillingService.cs
+Services\BillingService.Family.cs
+Services\BillingService.FirstMonth.cs
+Services\BillingService.Seasonal.cs
+Services\ClubBranding.cs
+Services\CoachActivityService.cs
+Services\CoachMenuService.cs
+Services\CoachSchedule.cs
+Services\DashboardService.cs
+Services\DataResetService.cs
+Services\ExpenseService.cs
+Services\FamilyService.cs
+Services\FieldService.cs
+Services\FieldService.SeriesPayments.cs
+Services\FieldTime.cs
+Services\FinancialService.cs
+Services\FirstMonthPricing.cs
+Services\GeminiMenuService.cs
+Services\InventoryService.cs
+Services\IssueService.cs
+Services\MenuNotificationService.cs
+Services\MonthlyAttendanceService.cs
+Services\MonthlyBillingWorker.cs
+Services\MonthlyProration.cs
+Services\NutritionDraftWorker.cs
+Services\NutritionMenuService.cs
+Services\OtherDebtService.cs
+Services\ParentAccessService.cs
+Services\ParentAutomationService.cs
+Services\ParentPortalPolicy.cs
+Services\ParentPortalService.cs
+Services\ParentProgressService.cs
+Services\ParentPushService.cs
+Services\ParentPushWorker.cs
+Services\PersonalTrainingService.cs
+Services\PlayerCareService.cs
+Services\PlayerDevelopmentService.cs
+Services\ReasonReportService.cs
+Services\SponsorshipService.cs
+Services\StockReportService.cs
+Services\StudentWorkflowService.cs
+Services\TariffService.cs
+Services\TeamService.cs
+Services\TreasuryService.cs
+Services\UserAdministrationService.cs
+Services\WhatsAppContact.cs
+Views\_ViewImports.cshtml
+Views\_ViewStart.cshtml
+Views\Attendance\ChangeGroup.cshtml
+Views\Attendance\Index.cshtml
+Views\BankPayments\Index.cshtml
+Views\BankPayments\Receipt.cshtml
+Views\CareReferrals\Create.cshtml
+Views\CareReferrals\Index.cshtml
+Views\CareStaff\Assign.cshtml
+Views\CareStaff\Index.cshtml
+Views\ClubSettings\Index.cshtml
+Views\Coaches\Index.cshtml
+Views\Coaches\Personal.cshtml
+Views\Coaches\Portal.cshtml
+Views\Coaches\RoleChoice.cshtml
+Views\Coaches\Team.cshtml
+Views\CoachMenus\Index.cshtml
+Views\DataReset\Index.cshtml
+Views\Expenses\Cancel.cshtml
+Views\Expenses\Categories.cshtml
+Views\Expenses\Category.cshtml
+Views\Expenses\Create.cshtml
+Views\Expenses\Details.cshtml
+Views\Expenses\Index.cshtml
+Views\Expenses\Print.cshtml
+Views\Families\_TariffChoice.cshtml
+Views\Families\Details.cshtml
+Views\Families\Edit.cshtml
+Views\Families\Index.cshtml
+Views\Fields\Booking.cshtml
+Views\Fields\Cancel.cshtml
+Views\Fields\CancelPayment.cshtml
+Views\Fields\Delete.cshtml
+Views\Fields\Details.cshtml
+Views\Fields\Edit.cshtml
+Views\Fields\Index.cshtml
+Views\Fields\Manage.cshtml
+Views\Fields\Pay.cshtml
+Views\Fields\Receipt.cshtml
+Views\Home\Index.cshtml
+Views\NutritionMenus\Edit.cshtml
+Views\ParentLinks\Index.cshtml
+Views\ParentNotifications\Index.cshtml
+Views\ParentPortal\_CareIcon.cshtml
+Views\ParentPortal\_CareSections.cshtml
+Views\ParentPortal\_WeeklyMenu.cshtml
+Views\ParentPortal\Index.cshtml
+Views\ParentPortal\Parking.cshtml
+Views\Payments\_AccountPaymentActions.cshtml
+Views\Payments\_AttendanceSummary.cshtml
+Views\Payments\_BillingNotice.cshtml
+Views\Payments\_FamilyRows.cshtml
+Views\Payments\_OtherDebts.cshtml
+Views\Payments\_PaymentCopy.cshtml
+Views\Payments\_UnifiedRows.cshtml
+Views\Payments\Account.cshtml
+Views\Payments\CancelFamilyPayment.cshtml
+Views\Payments\Document.cshtml
+Views\Payments\Exempt.cshtml
+Views\Payments\Family.cshtml
+Views\Payments\FamilyReceipt.cshtml
+Views\Payments\Index.cshtml
+Views\Payments\PrintAccount.cshtml
+Views\Payments\Progress.cshtml
+Views\Payments\Register.cshtml
+Views\Payments\Reverse.cshtml
+Views\Payments\Seasonal.cshtml
+Views\PersonalTraining\_Charges.cshtml
+Views\PersonalTraining\Action.cshtml
+Views\PersonalTraining\Create.cshtml
+Views\PersonalTraining\Details.cshtml
+Views\PersonalTraining\Index.cshtml
+Views\PersonalTraining\Pay.cshtml
+Views\PersonalTraining\Tariff.cshtml
+Views\PersonalTraining\Tariffs.cshtml
+Views\PlayerCare\Index.cshtml
+Views\PlayerCare\Player.cshtml
+Views\PlayerCare\Visit.cshtml
+Views\PlayerDevelopment\_CareProgress.cshtml
+Views\PlayerDevelopment\_Chart.cshtml
+Views\PlayerDevelopment\_Records.cshtml
+Views\PlayerDevelopment\Edit.cshtml
+Views\PlayerDevelopment\Index.cshtml
+Views\PlayerDevelopment\Overview.cshtml
+Views\PlayerDevelopment\Player.cshtml
+Views\PlayerDevelopment\Progress.cshtml
+Views\PlayerDevelopment\Record.cshtml
+Views\Presentation\Index.cshtml
+Views\Products\_StockSizes.cshtml
+Views\Products\_StockTable.cshtml
+Views\Products\Card.cshtml
+Views\Products\Create.cshtml
+Views\Products\Edit.cshtml
+Views\Products\Entries.cshtml
+Views\Products\Entry.cshtml
+Views\Products\Index.cshtml
+Views\Products\PrintCard.cshtml
+Views\Products\PrintEntry.cshtml
+Views\Products\PrintStock.cshtml
+Views\Products\Receive.cshtml
+Views\Products\Sizes.cshtml
+Views\Products\Stock.cshtml
+Views\Reports\_CashSummary.cshtml
+Views\Reports\CoachActivity.cshtml
+Views\Reports\Index.cshtml
+Views\Reports\Operations.cshtml
+Views\Reports\Print.cshtml
+Views\Reports\PrintDebts.cshtml
+Views\Reports\Reasons.cshtml
+Views\Sales\_IssuePayment.cshtml
+Views\Sales\Create.cshtml
+Views\Sales\Details.cshtml
+Views\Sales\Index.cshtml
+Views\Sales\Pay.cshtml
+Views\Sales\Print.cshtml
+Views\Shared\_DocumentBack.cshtml
+Views\Shared\_FinancialConfirmation.cshtml
+Views\Shared\_Icons.cshtml
+Views\Shared\_Layout.cshtml
+Views\Shared\_LoginPartial.cshtml
+Views\Shared\_PendingBankNotice.cshtml
+Views\Shared\_PrintLayout.cshtml
+Views\Shared\_PwaHead.cshtml
+Views\Shared\_PwaInstall.cshtml
+Views\Shared\_WeeklyMenu.cshtml
+Views\Shared\_WhatsAppContact.cshtml
+Views\Shared\Error.cshtml
+Views\SizeGroups\Edit.cshtml
+Views\SizeGroups\Index.cshtml
+Views\Sponsorships\_BudgetOptions.cshtml
+Views\Sponsorships\_Intro.cshtml
+Views\Sponsorships\_RemainingBudgets.cshtml
+Views\Sponsorships\Beneficiaries.cshtml
+Views\Sponsorships\Cancel.cshtml
+Views\Sponsorships\Contract.cshtml
+Views\Sponsorships\Coverage.cshtml
+Views\Sponsorships\Details.cshtml
+Views\Sponsorships\Index.cshtml
+Views\Sponsorships\Invoice.cshtml
+Views\Sponsorships\InvoiceDetails.cshtml
+Views\Sponsorships\Invoices.cshtml
+Views\Sponsorships\Plan.cshtml
+Views\Sponsorships\Receive.cshtml
+Views\Sponsorships\Salaries.cshtml
+Views\Sponsorships\Spend.cshtml
+Views\Sponsorships\SponsorReport.cshtml
+Views\Students\_FamilyTariffChoice.cshtml
+Views\Students\Create.cshtml
+Views\Students\CreateFamily.cshtml
+Views\Students\Edit.cshtml
+Views\Students\FamilyPickerCreated.cshtml
+Views\Students\Index.cshtml
+Views\Tariffs\_Management.cshtml
+Views\Tariffs\Assign.cshtml
+Views\Tariffs\Create.cshtml
+Views\Tariffs\Index.cshtml
+Views\Tariffs\Price.cshtml
+Views\Tariffs\Rename.cshtml
+Views\Teams\_Coaches.cshtml
+Views\Teams\Assign.cshtml
+Views\Teams\Details.cshtml
+Views\Teams\Edit.cshtml
+Views\Teams\Index.cshtml
+Views\Treasury\Cancel.cshtml
+Views\Treasury\Create.cshtml
+Views\Treasury\Details.cshtml
+Views\Treasury\Index.cshtml
+Views\Treasury\Print.cshtml
+Views\Users\Edit.cshtml
+Views\Users\Index.cshtml
+wwwroot\css\attendance.css
+wwwroot\css\billing-attendance.css
+wwwroot\css\brand.css
+wwwroot\css\cash-report.css
+wwwroot\css\coach-activity.css
+wwwroot\css\coach-light.css
+wwwroot\css\family-editor.css
+wwwroot\css\fields.css
+wwwroot\css\first-month-help.css
+wwwroot\css\inventory.css
+wwwroot\css\issue-form.css
+wwwroot\css\login.css
+wwwroot\css\operations.css
+wwwroot\css\parent-portal.css
+wwwroot\css\parent-refresh.css
+wwwroot\css\payment-register.css
+wwwroot\css\personal-training-grid.css
+wwwroot\css\platform.css
+wwwroot\css\player-account.css
+wwwroot\css\player-development.css
+wwwroot\css\player-print.css
+wwwroot\css\print-documents.css
+wwwroot\css\product-shop.css
+wwwroot\css\pwa.css
+wwwroot\css\reason-report.css
+wwwroot\css\seasonal-payment.css
+wwwroot\css\sidebar.css
+wwwroot\css\site.css
+wwwroot\css\sponsor-official-report.css
+wwwroot\css\sponsorships.css
+wwwroot\css\stock-sizes.css
+wwwroot\css\teams.css
+wwwroot\js\attendance.js
+wwwroot\js\bank-pending-hint.js
+wwwroot\js\coach-menu.js
+wwwroot\js\development-navigation.js
+wwwroot\js\expense-form.js
+wwwroot\js\family-editor.js
+wwwroot\js\family-player-created.js
+wwwroot\js\family-registration.js
+wwwroot\js\field-booking.js
+wwwroot\js\financial-confirmation.js
+wwwroot\js\first-month-registration.js
+wwwroot\js\inventory-lines.js
+wwwroot\js\issue-lines.js
+wwwroot\js\issue-player-search.js
+wwwroot\js\parent-link.js
+wwwroot\js\parent-notifications-admin.js
+wwwroot\js\parent-portal-visit.js
+wwwroot\js\parent-push.js
+wwwroot\js\personal-training.js
+wwwroot\js\player-development.js
+wwwroot\js\player-progress.js
+wwwroot\js\pwa.js
+wwwroot\js\registration-seasonal.js
+wwwroot\js\sponsorship-invoice.js
+wwwroot\js\sponsorships.js
+wwwroot\js\student-edit.js
+wwwroot\js\tariff-form.js
+wwwroot\js\team-editor.js
+wwwroot\js\team-suggestions.js
+wwwroot\js\user-form.js
+
+CONTROLLER ACTIONS / AUTHORIZATION
+
+Controllers\AttendanceController.cs
+[Authorize(Roles=Roles.Admin+","+Roles.Coach)]
+public async Task<IActionResult> ChangeGroup(int studentId,int sourceTeamId,string coachRole="head")
+public async Task<IActionResult> ChangeGroup(CoachTeamTransferModel model)
+public async Task<IActionResult> Index(int teamId,string coachRole="head",DateOnly? date=null)
+public async Task<IActionResult> Save(AttendanceModel model)
+
+Controllers\BankPaymentsController.cs
+[Authorize(Roles=Roles.Write)]
+public async Task<IActionResult> Index()
+public async Task<IActionResult> Receipt(int id)
+public async Task<IActionResult> Review(BankReviewModel model,bool approve)
+
+Controllers\CareReferralsController.cs
+[Authorize(Roles=Roles.Coach+","+Roles.Doctor+","+Roles.Nutritionist)]
+[Authorize(Roles=Roles.Coach)]
+public async Task<IActionResult> Create(int studentId)
+[Authorize(Roles=Roles.Coach),HttpPost,ValidateAntiForgeryToken]
+public async Task<IActionResult> Create(ReferralInput input)
+[Authorize(Roles=Roles.Doctor+","+Roles.Nutritionist)]
+public async Task<IActionResult> Index()
+[Authorize(Roles=Roles.Doctor+","+Roles.Nutritionist),HttpPost,ValidateAntiForgeryToken]
+public async Task<IActionResult> Close(int id)
+
+Controllers\CareStaffController.cs
+[Authorize(Roles=Roles.Admin)]
+public async Task<IActionResult> Index(){
+public async Task<IActionResult> Assign(string id)
+public async Task<IActionResult> Assign(string id,List<int> studentIds)
+
+Controllers\ClubSettingsController.cs
+[Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
+public async Task<IActionResult> Index() => View(await branding.Get());
+public async Task<IActionResult> Index(
+public async Task<IActionResult> Logo()
+public async Task<IActionResult> Manifest()
+
+Controllers\CoachesController.cs
+[Authorize(Roles=Roles.Read+","+Roles.Coach)]
+public async Task<IActionResult> Index(string? search,string? coachRole)
+[Authorize(Roles=Roles.Coach)]
+public async Task<IActionResult> Personal()
+public async Task<IActionResult> Team(int id,string? search)
+
+Controllers\CoachMenusController.cs
+[Authorize(Roles=Roles.Coach)]
+public async Task<IActionResult> Index(int studentId)
+public async Task<IActionResult> Status(int studentId)
+public async Task<IActionResult> Propose(int studentId,string? instructions)
+public async Task<IActionResult> Approve(int id,int studentId,bool reviewed)
+
+Controllers\DataResetController.cs
+[Authorize(Roles = Roles.Admin)]
+public async Task<IActionResult> Index() => await OwnerAsync() == null ? Forbid() : View();
+public async Task<IActionResult> Index(string? confirmation, string? password)
+
+Controllers\ExpensesController.cs
+[Authorize(Roles=Roles.Read)]
+public async Task<IActionResult> Index(MoneyDateFilter filter,string? search,int? categoryId,bool includeCancelled=false)
+[Authorize(Roles=Roles.Admin)]
+public async Task<IActionResult> Categories()=>View(await db.ExpenseCategories.AsNoTracking().OrderBy(x=>x.Name).ToListAsync());
+public async Task<IActionResult> Category(int id=0,int? parentId=null){
+public async Task<IActionResult> Category(ExpenseCategoryModel m){
+public async Task<IActionResult> Create(){var m=new ExpenseCreateModel();await Choices(m);return View(m);}
+public async Task<IActionResult> Create(ExpenseCreateModel m){
+public async Task<IActionResult> Details(int id){var e=await Find(id);return e==null?NotFound():View(e);}
+public async Task<IActionResult> Print(int id){var e=await Find(id);return e==null?NotFound():View(e);}
+public async Task<IActionResult> Cancel(int id){var e=await Find(id);return e==null?NotFound():View(new ExpenseCancelModel{Id=id,Expense=e});}
+public async Task<IActionResult> Cancel(ExpenseCancelModel m){
+
+Controllers\FamiliesController.cs
+[Authorize(Roles=Roles.Read)]
+public async Task<IActionResult> Index(string? search)
+public async Task<IActionResult> Prices(string month,int planId=2)
+public async Task<IActionResult> Details(int id,string? month)
+[Authorize(Roles=Roles.Admin)]
+public async Task<IActionResult> Edit(int? id,string? month)
+public async Task<IActionResult> Save(FamilyEditModel model)
+
+Controllers\FieldsController.cs
+[Authorize(Roles = Roles.FieldRead)]
+public async Task<IActionResult> Index(DateOnly? from, int? fieldId, bool includeCancelled = false)
+[Authorize(Roles = Roles.Read)]
+public async Task<IActionResult> Manage() => View(await db.FootballFields.AsNoTracking().OrderBy(f => f.Name).ToListAsync());
+public async Task<IActionResult> Edit(int id = 0)
+public async Task<IActionResult> Edit(FieldEditModel model)
+public async Task<IActionResult> Delete(int id)
+public async Task<IActionResult> DeleteConfirmed(int id, Guid revision)
+public async Task<IActionResult> Booking(int id = 0, int? fieldId = null, DateOnly? date = null)
+public async Task<IActionResult> Booking(FieldBookingEditModel model)
+public async Task<IActionResult> Details(int id)
+public async Task<IActionResult> Pay(int id, bool wholeSeries = false)
+public async Task<IActionResult> Pay(FieldPaymentModel model)
+public async Task<IActionResult> Receipt(int id)
+public async Task<IActionResult> CancelPayment(int id)
+public async Task<IActionResult> CancelPayment(FieldPaymentCancelModel model)
+public async Task<IActionResult> Cancel(int id)
+public async Task<IActionResult> Cancel(FieldBookingCancelModel model)
+
+Controllers\HomeController.cs
+[Authorize]
+public async Task<IActionResult> Index()
+public IActionResult Error()
+
+Controllers\NutritionMenusController.cs
+[Authorize(Roles=Roles.Nutritionist)]
+public async Task<IActionResult> Edit(int studentId=0,int? referralId=null)
+public async Task<IActionResult> Edit(MenuInput input)
+public async Task<IActionResult> Generate(MenuInput input,CancellationToken ct)
+public async Task<IActionResult> Reset(int studentId,Guid revision)
+
+Controllers\ParentLinksController.cs
+[Authorize(Roles = Roles.Write)]
+public async Task<IActionResult> Index(int id)
+public async Task<IActionResult> Qr(int id, bool download = false)
+public async Task<IActionResult> Save(int id, bool revoke = false)
+
+Controllers\ParentNotificationsController.cs
+[Authorize(Roles=Roles.Admin)]
+[HttpGet]public async Task<IActionResult> Index()=>View(await Load());
+[HttpPost,ValidateAntiForgeryToken]public async Task<IActionResult> Automation([Bind(Prefix="Automation")]ParentAutomationInput input)
+[HttpPost,ValidateAntiForgeryToken]public async Task<IActionResult> Configure(string subject)
+[HttpPost,ValidateAntiForgeryToken]public async Task<IActionResult> Send([Bind(Prefix="Input")]ParentNotificationInput input)
+
+Controllers\ParentPortalController.cs
+public async Task<IActionResult> Notifications(string token,string actionName,_2Korriku.Models.ParentPushInput input)
+public async Task<IActionResult> Acknowledge(string token, string? month, bool finance = false, int? studentId = null)
+public async Task<IActionResult> GenerateParking(string token, int? studentId = null)
+public async Task<IActionResult> Parking(string token, string date, int? studentId = null)
+public async Task<IActionResult> ParkingQr(string token, string date, int? studentId = null)
+public async Task<IActionResult> Manifest(string token)
+public async Task<IActionResult> Index(string token, string? month, bool finance = false, bool continueVisit = false, int? studentId = null)
+
+Controllers\PaymentsController.cs
+[Authorize(Roles = Roles.Read)]
+public async Task<IActionResult> Progress(int id)
+public async Task<IActionResult> Index(int? year, int? month, string? search, bool unpaidOnly = false)
+[Authorize(Roles = Roles.Admin)]
+public async Task<IActionResult> Generate()
+public async Task<IActionResult> Account(int id)
+public async Task<IActionResult> PrintAccount(int id)
+public async Task<IActionResult> Invoice(int id)
+public async Task<IActionResult> Receipt(int id, string? returnUrl = null)
+public async Task<IActionResult> Seasonal(int studentId, string? startMonth, int months = 6)
+public async Task<IActionResult> Seasonal(SeasonalPaymentModel model, string? returnUrl = null)
+public async Task<IActionResult> Debt(int id, string? returnUrl = null)
+public async Task<IActionResult> Register(int? studentId, string? returnUrl = null)
+public async Task<IActionResult> Register(RegisterPaymentModel model, string? returnUrl = null)
+public async Task<IActionResult> Exempt(int id)
+public async Task<IActionResult> Exempt(ExemptInvoiceModel model)
+public async Task<IActionResult> ReverseExemption(int id)
+public async Task<IActionResult> ReverseExemption(ReverseBillingModel model)
+public async Task<IActionResult> CancelPayment(int id)
+public async Task<IActionResult> CancelPayment(ReverseBillingModel model)
+public async Task<IActionResult> Family(int id)
+public async Task<IActionResult> Family(FamilyPaymentModel model, string? returnUrl = null)
+public async Task<IActionResult> FamilyReceipt(int id, string? returnUrl = null)
+public async Task<IActionResult> CancelFamilyPayment(int id)
+public async Task<IActionResult> CancelFamilyPayment(ReverseBillingModel model)
+
+Controllers\PersonalTrainingController.cs
+[Authorize(Roles=Roles.Read)]
+public async Task<IActionResult> Index(string? month,string? search,bool unpaidOnly=false,int? studentId=null)
+[Authorize(Roles=Roles.Admin)]
+public async Task<IActionResult> Tariffs()=>View(await db.PersonalTariffs.AsNoTracking().OrderBy(x=>x.Name).ToListAsync());
+public async Task<IActionResult> Tariff(int id=0){
+public async Task<IActionResult> Tariff(PersonalTariffModel m){
+public async Task<IActionResult> Create(int studentId=0){var m=new PersonalTrainingCreateModel{StudentId=studentId};await Choices(m);return View(m);}
+public async Task<IActionResult> Create(PersonalTrainingCreateModel m){
+public async Task<IActionResult> Details(int id){
+public async Task<IActionResult> Pay(int id){
+public async Task<IActionResult> Pay(PersonalPaymentModel m){
+public async Task<IActionResult> Print(int id){
+public async Task<IActionResult> Action(int id,string operation){
+public async Task<IActionResult> Action(PersonalActionModel m,string operation){
+
+Controllers\PlayerCareController.cs
+[Authorize(Roles=Roles.Doctor+","+Roles.Nutritionist)]
+public async Task<IActionResult> Index()
+public async Task<IActionResult> Player(int id)
+public async Task<IActionResult> Visit(int studentId)
+public async Task<IActionResult> Visit(CareInput input)
+
+Controllers\PlayerDevelopmentController.cs
+[Authorize(Roles=Roles.Coach)]
+public async Task<IActionResult> Position(int studentId,string playerRole,string? primaryPosition,string? secondaryPosition)
+public async Task<IActionResult> Index()
+public async Task<IActionResult> Player(int id,string section="Overview",int? year=null)
+public async Task<IActionResult> Record(int studentId,string kind="Profile",int id=0)
+public async Task<IActionResult> Record(DevelopmentRecordInput input)
+public async Task<IActionResult> Edit(int studentId,int id=0)
+public async Task<IActionResult> Edit(EvaluationInput input)
+
+Controllers\PresentationController.cs
+[Authorize(Roles=Roles.Admin)]
+public async Task<IActionResult> Index()=>View(await db.DemoImports.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==PresentationDemo.ImportId));
+public async Task<IActionResult> Import()
+
+Controllers\ProductsController.cs
+[Authorize(Roles = Roles.Read)]
+public async Task<IActionResult> Index(string? search, string? category, bool inactive = false)
+public async Task<IActionResult> Stock(StockFilter filter)
+public async Task<IActionResult> Card(int id, StockFilter filter)
+public async Task<IActionResult> PrintCard(int id, StockFilter filter)
+public async Task<IActionResult> PrintStock(StockFilter filter)
+public async Task<IActionResult> Create() => View(new CreateProductModel { SizeGroups = await ActiveGroups() });
+public async Task<IActionResult> Create(CreateProductModel model)
+public async Task<IActionResult> Receive(int? productId)
+public async Task<IActionResult> Receive(CreateStockEntryModel model)
+public async Task<IActionResult> Entries(string? search, DateOnly? from, DateOnly? to, int? productId)
+public async Task<IActionResult> Entry(int id)
+public async Task<IActionResult> PrintEntry(int id)
+public async Task<IActionResult> Edit(int id)
+public async Task<IActionResult> Edit(EditProductModel model)
+public async Task<IActionResult> Sizes(int id)
+public async Task<IActionResult> Sizes(ProductSizesModel model)
+
+Controllers\ReportsController.cs
+[Authorize(Roles = _2Korriku.Models.Roles.Read)]
+[Authorize(Roles = _2Korriku.Models.Roles.Admin)]
+public async Task<IActionResult> CoachActivity(DateOnly? from, DateOnly? to)
+public async Task<IActionResult> Index(_2Korriku.Models.MoneyDateFilter filter)
+public async Task<IActionResult> Print(_2Korriku.Models.MoneyDateFilter filter)
+public async Task<IActionResult> Reasons(_2Korriku.Models.MoneyDateFilter filter,string? category,string? actionType,string? search)
+public async Task<IActionResult> Operations(string? search, string stock = "low")
+public async Task<IActionResult> PrintDebts(string? search)
+
+Controllers\SalesController.cs
+[Authorize(Roles = Roles.Read)]
+public async Task<IActionResult> Index(string? search, int? studentId, bool debtOnly = false)
+public async Task<IActionResult> Create(int? studentId, int? productId)
+public async Task<IActionResult> Create(CreateIssueModel model)
+public async Task<IActionResult> Details(int id) { var sale = await Load(id); return sale == null ? NotFound() : View(sale); }
+public async Task<IActionResult> Print(int id) { var sale = await Load(id); return sale == null ? NotFound() : View(sale); }
+public async Task<IActionResult> Pay(int id)
+public async Task<IActionResult> Pay(IssuePaymentModel model)
+
+Controllers\SizeGroupsController.cs
+[Authorize(Roles = Roles.Admin)]
+public async Task<IActionResult> Index() => View(await db.SizeGroups.AsNoTracking().OrderBy(g => g.Id).ToListAsync());
+public async Task<IActionResult> Edit(int? id)
+public async Task<IActionResult> Save(SizeGroup input)
+
+Controllers\SponsorshipsController.cs
+[Authorize(Roles=Roles.SuperAdmin)]
+public async Task<IActionResult> SponsorReport(int? id)
+public async Task<IActionResult> Salaries(int? year)
+public async Task<IActionResult> Coverage(int? year)
+public async Task<IActionResult> Invoices(int? year,string? search)
+[HttpGet] public async Task<IActionResult> Invoice(int? beneficiaryId)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Invoice(SponsorshipInvoiceInput m,string? intent)
+[HttpGet] public async Task<IActionResult> BudgetSuggestions(int planLineId,DateOnly date,decimal amount)
+public async Task<IActionResult> InvoiceDetails(int id)
+public async Task<IActionResult> Index(int? year)
+[HttpGet] public async Task<IActionResult> Plan(int id=0)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Plan(SponsorshipPlanInput m)
+[HttpGet] public async Task<IActionResult> Contract(int planId,int id=0)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Contract(SponsorshipContractInput m)
+public async Task<IActionResult> Details(int id)
+[HttpGet] public async Task<IActionResult> Receive(int id)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Receive(SponsorshipReceiptInput m)
+[HttpGet] public async Task<IActionResult> Spend(int id,int? beneficiaryId)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Spend(SponsorshipSpendInput m)
+[HttpGet] public async Task<IActionResult> Beneficiaries(int? contractId,bool invoice=false)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Beneficiaries(SponsorshipBeneficiaryInput m,int? contractId,bool invoice=false)
+[HttpGet] public async Task<IActionResult> Cancel(int id,string kind)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Cancel(SponsorshipCancelInput m)
+
+Controllers\StudentsController.cs
+[Authorize(Roles = Roles.Read)]
+public async Task<IActionResult> Index(string? search)
+public async Task<IActionResult> Create(bool familyPicker=false)
+public async Task<IActionResult> Create(StudentRegistrationModel model,bool familyPicker=false)
+public async Task<IActionResult> CreateFamily()
+public async Task<IActionResult> CreateFamily(FamilyRegistrationModel model)
+public async Task<IActionResult> Edit(int id)
+public async Task<IActionResult> Edit(StudentEditModel model)
+
+Controllers\TariffsController.cs
+[Authorize(Roles=Roles.Admin)]
+public async Task<IActionResult> Rename(int id)
+public async Task<IActionResult> Rename(RenameTariffModel model)
+[HttpGet] public IActionResult Create(bool family = false) => View(new CreateTariffModel { IsFamily = family });
+public async Task<IActionResult> Create(CreateTariffModel model)
+public async Task<IActionResult> SetActive(int id, bool active)
+public async Task<IActionResult> Index()=>View(new FeePlanIndexModel{Plans=await tariffs.OptionsAsync(includeInactive:true),History=await db.FeePlanPrices.AsNoTracking().Include(p=>p.FeePlan).Include(p=>p.CreatedByUser).OrderByDescending(p=>p.EffectiveMonth).ThenByDescending(p=>p.Id).ToListAsync()});
+[HttpGet] public async Task<IActionResult> Price(int id)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Price(FeePriceModel model)
+[HttpGet] public async Task<IActionResult> Assign(int id)
+[HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> Assign(AssignFeeModel model)
+
+Controllers\TeamsController.cs
+[Authorize(Roles=Roles.Read)]
+public async Task<IActionResult> Index(string? search,bool includeInactive=false)
+public async Task<IActionResult> Details(int id)
+[HttpGet,Authorize(Roles=Roles.Admin)]public async Task<IActionResult> Create(){var model=new TeamEditModel();await FieldChoices(model);return View("Edit",model);}
+[HttpGet,Authorize(Roles=Roles.Admin)]public async Task<IActionResult> Edit(int id)
+[HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Admin)]public async Task<IActionResult> Save(TeamEditModel model)
+[HttpGet,Authorize(Roles=Roles.Write),ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]public async Task<IActionResult> Suggestions(DateOnly? dateOfBirth,int? excludingStudentId)
+[HttpGet,Authorize(Roles=Roles.Write)]public async Task<IActionResult> Assign(int id)
+[HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Write)]public async Task<IActionResult> Assign(ChangeStudentTeamModel model)
+
+Controllers\TreasuryController.cs
+[Authorize(Roles = Roles.Read)]
+public async Task<IActionResult> Index(MoneyDateFilter filter)
+public async Task<IActionResult> Create(string kind = TreasuryEntry.Opening, string method = "Cash")
+public async Task<IActionResult> Create(TreasuryCreateModel model)
+public async Task<IActionResult> Details(int id) { var entry = await Find(id); return entry == null ? NotFound() : View(entry); }
+public async Task<IActionResult> Print(int id) { var entry = await Find(id); return entry == null ? NotFound() : View(entry); }
+public async Task<IActionResult> Cancel(int id) { var entry = await Find(id); return entry == null ? NotFound() : View(new TreasuryCancelModel { Id = id, Entry = entry }); }
+public async Task<IActionResult> Cancel(TreasuryCancelModel model)
+
+Controllers\UsersController.cs
+[Authorize(Roles = Roles.Admin)]
+public async Task<IActionResult> Index(string? search, string? role)
+[HttpGet] public async Task<IActionResult> Create(string? role) => View("Edit", new UserEditModel { Role = role is Roles.Coach or Roles.FieldOperator or Roles.Doctor or Roles.Nutritionist ? role : Roles.Operator, Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync() });
+public async Task<IActionResult> Edit(string id)
+public async Task<IActionResult> Save(UserEditModel model)

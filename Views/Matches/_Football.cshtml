@@ -2,7 +2,8 @@
 <section class="football-recording">
 <details id="recorded-events"><summary>Ngjarjet e regjistruara</summary>
 @if(Model.DisciplineAlerts.Count>0){<div class="alert alert-warning" role="alert">@foreach(var a in Model.DisciplineAlerts){<div><strong>@a.Name</strong> · @a.Message</div>}</div>}
-<div><a class="btn btn-link" asp-action="Discipline" asp-route-teamId="@Model.TeamId" asp-route-kind="@Model.Kind" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Rregullat e kartonëve</a></div>
+@if(Model.LeagueId.HasValue){<div><a class="btn btn-link" asp-action="LeagueRules" asp-route-id="@Model.LeagueId" asp-route-teamId="@Model.TeamId">Rregullat e ligës</a></div>}
+else{<div><a class="btn btn-link" asp-action="Discipline" asp-route-teamId="@Model.TeamId" asp-route-kind="@Model.Kind" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Rregullat e kartonëve</a></div>}
 @if(!Model.HasDisciplineRule){<p class="match-hint">Pragu i pezullimit ende pa konfirmuar për këtë garë.</p>}
 <div class="table-responsive match-grid"><table class="table football-events"><thead><tr><th>Ngjarja</th><th>Lojtari</th><th>Asistuesi</th><th>Min</th><th>Vendimi disiplinor</th><th></th></tr></thead><tbody id="football-events">
 @for(var i=0;i<Model.Events.Count;i++){

@@ -1,9 +1,10 @@
-﻿import {pathToFileURL} from 'node:url';
+import {pathToFileURL} from 'node:url';
 import {mkdir} from 'node:fs/promises';
 const {chromium}=await import(pathToFileURL(process.env.CLUB_TEST_PLAYWRIGHT).href);
 const browser=await chromium.launch({channel:'msedge',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1280,height:850}});
+ await page.emulateMedia({reducedMotion:'reduce'});
  const url=process.env.CLUB_TEST_URL;
  await page.goto(url+'/Identity/Account/Login');
  await mkdir('tests/MultiClub.Checks/artifacts',{recursive:true});
@@ -11,10 +12,34 @@ try {
  await page.setViewportSize({width:390,height:844});
  await page.screenshot({path:'tests/MultiClub.Checks/artifacts/login-mobile.png',fullPage:true});
  if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Login overflows phone viewport');
+ for(const language of ['sq','en','hr','tr']){
+  await page.goto(url+'/Identity/Account/Login?language='+language+'&returnUrl=%2FCoaches%2FPlayers');
+  for(const width of [320,390,768]){await page.setViewportSize({width,height:844});if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error('Login overflow '+language+' '+width);}
+  await page.locator('.login-language-combo summary').click();
+  const links=await page.locator('.login-language-options a').evaluateAll(nodes=>nodes.map(n=>n.href));
+  if(links.length!==4||links.some(link=>!new URL(link).searchParams.get('returnUrl')?.includes('/Coaches/Players')))throw new Error('Language switch loses ReturnUrl');
+  await page.keyboard.press('Escape');
+ }
+ await page.goto(url+'/Identity/Account/Login?language=sq');
+ await page.locator('.submit-button').click();
+ if(await page.locator('#Input_Email').getAttribute('aria-invalid')!=='true'||await page.locator('.submit-button').isDisabled())throw new Error('Empty form validation failed');
+ await page.locator('#Input_Password').fill('visibility-check');
+ await page.locator('.password-toggle').click();
+ if(await page.locator('#Input_Password').getAttribute('type')!=='text')throw new Error('Show password failed');
+ await page.locator('.password-toggle').click();
+ if(await page.locator('#Input_Password').getAttribute('type')!=='password')throw new Error('Hide password failed');
+ await page.locator('#Input_Email').fill('not-an-email');
+ await page.locator('.submit-button').click();
+ if(await page.locator('#Input_Email').getAttribute('aria-invalid')!=='true')throw new Error('Email validation failed');
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'tests/MultiClub.Checks/artifacts/login-validation-mobile.png',fullPage:true});
  await page.setViewportSize({width:1280,height:850});
  await page.locator('#Input_Email').fill('labinot.shabani@gmail.com');
  await page.locator('#Input_Password').fill(process.env.CLUB_TEST_PASSWORD);
+ await page.locator('#Input_RememberMe').check();
+ await page.evaluate(()=>document.getElementById('login-form').addEventListener('submit',()=>sessionStorage.setItem('login-loading-test',String(document.querySelector('.submit-button').disabled&&document.getElementById('login-form').getAttribute('aria-busy')==='true'))));
  await Promise.all([page.waitForURL('**/Clubs'),page.locator('button[type=submit]').click()]);
+ if(await page.evaluate(()=>sessionStorage.getItem('login-loading-test'))!=='true')throw new Error('Login loading state missing'); console.log('PASS: login languages, ReturnUrl links, validation, password visibility, loading and authentication');
  await mkdir('tests/MultiClub.Checks/artifacts',{recursive:true});
  await page.screenshot({path:'tests/MultiClub.Checks/artifacts/clubs-desktop.png',fullPage:true});
  await page.setViewportSize({width:390,height:844});
@@ -33,7 +58,35 @@ try {
  await page.locator('.chat-message').first().waitFor();
  await page.screenshot({path:'tests/MultiClub.Checks/artifacts/chat-parent-mobile.png',fullPage:true});
  if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Chat overflows phone viewport');
- const coachPage=await browser.newPage({viewport:{width:1280,height:850}});
+ await page.goto(url+'/p/'+process.env.CHAT_TEST_TOKEN+'?studentId='+process.env.CHAT_TEST_STUDENT+'&continueVisit=true');
+ await page.locator('.player-passport').waitFor();
+ for(const width of [320,390,768,1280]){await page.setViewportSize({width,height:950});if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)){await page.screenshot({path:'tests/MultiClub.Checks/artifacts/parent-overflow.png',fullPage:true});console.log(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).map(e=>({tag:e.tagName,class:e.className,width:e.getBoundingClientRect().width})).slice(0,12)));throw new Error('Parent passport overflow '+width);}}
+ await page.screenshot({path:'tests/MultiClub.Checks/artifacts/parent-passport-desktop.png',fullPage:true});
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'tests/MultiClub.Checks/artifacts/parent-passport-mobile.png',fullPage:true});
+ if(await page.locator('.portrait-placeholder').count()!==1)throw new Error('Missing photo must show player icon');
+ const noConsent=await page.locator('.player-photo-form').evaluate(async form=>{const data=new FormData(form);data.delete('photo');const r=await fetch(form.action,{method:'POST',body:data});return {status:r.status,text:await r.text()};});if(noConsent.status!==400||!noConsent.text.includes('Pranoni'))throw new Error('Server must require photo consent');
+ for(const id of ['attendance','finance','menu']){
+  const before=page.url();let requests=0;const count=()=>requests++;page.on('request',count);
+  await page.locator('[aria-controls="panel-'+id+'"]').click();await page.locator('#panel-'+id).waitFor();
+  for(const width of [320,390,768]){await page.setViewportSize({width,height:844});if(await page.locator('#panel-'+id).evaluate(e=>e.scrollWidth>e.clientWidth+1))throw new Error('Panel overflow '+id+' '+width);}
+  await page.setViewportSize({width:390,height:844});await page.screenshot({path:'tests/MultiClub.Checks/artifacts/parent-panel-'+id+'.png'});
+  await page.locator('#panel-'+id+' .panel-close').click();await page.waitForURL(before);page.off('request',count);if(requests)throw new Error('Panel opening must not request server data');
+ }
+ await page.locator('.portrait-upload summary').click();
+ const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=800;c.height=1000;const x=c.getContext('2d');x.fillStyle='#3b719c';x.fillRect(0,0,800,1000);x.fillStyle='#e7c68d';x.beginPath();x.arc(400,330,140,0,Math.PI*2);x.fill();return c.toDataURL('image/png').split(',')[1];});
+ await page.locator('.player-photo-form input[type=file]').setInputFiles({name:'portrait.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
+ await page.locator('.player-photo-form button[type=submit]').click();await page.locator('.photo-consent').waitFor();
+ await page.screenshot({path:'tests/MultiClub.Checks/artifacts/parent-photo-consent.png'});
+ await page.getByRole('button',{name:'Anulo',exact:true}).click();if(await page.locator('.portrait-placeholder').count()!==1)throw new Error('Cancelled photo changed image');
+ await page.locator('.player-photo-form button[type=submit]').click();await page.locator('.photo-consent').waitFor();
+ await Promise.all([page.waitForResponse(r=>r.url().includes('/photo/')&&r.request().method()==='POST').then(async r=>{if(!r.ok())throw new Error('Photo upload failed '+await r.text());}),page.getByRole('button',{name:'Pranoj dhe ngarkoj',exact:true}).click()]);
+ await page.locator('.player-portrait').waitFor();
+ if(!await page.locator('.player-portrait').evaluate(img=>img.complete&&img.naturalWidth>0))await page.locator('.player-portrait').evaluate(img=>new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;}));
+ const photo=await page.request.get(new URL(await page.locator('.player-portrait').getAttribute('src'),url).href);if(!photo.ok()||(await photo.body()).length>204800)throw new Error('Photo not optimized');
+ await page.screenshot({path:'tests/MultiClub.Checks/artifacts/parent-passport-photo.png',fullPage:true});
+ const foreign=await page.request.get(url+'/p/'+process.env.CHAT_TEST_TOKEN+'/photo/2147483647');if(foreign.status()!==404)throw new Error('Photo exposed another player');
+ await page.locator('.portrait-upload summary').click();await page.locator('[data-remove-photo]').click();await page.locator('.portrait-placeholder').waitFor();
+ console.log('PASS: parent card fits phone/tablet, uploads optimized photo, protects ownership and restores fallback'); const coachPage=await browser.newPage({viewport:{width:1280,height:850}});
  await coachPage.goto(url+'/Identity/Account/Login');
  await coachPage.locator('#Input_Email').fill('chat-http@example.test');
  await coachPage.locator('#Input_Password').fill(process.env.CLUB_TEST_PASSWORD);
@@ -235,6 +288,15 @@ try {
   if(await adminPage.locator('#admin-player-dialog [data-stat="'+key+'"]').textContent()!==value)throw new Error('Incorrect player stat '+key);
  }
  await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/admin-player-card-mobile.png'});
+ const leagueOption=await adminPage.locator('#player-league option').filter({hasText:'Youth Cup'}).getAttribute('value');
+ await adminPage.locator('#player-league').selectOption(leagueOption);
+ await adminPage.locator('.admin-player-filter button').click();
+ await adminPage.waitForFunction(()=>document.querySelector('[data-stat="minutes"]')?.textContent==='0');
+ if(await adminPage.locator('[data-stat="goals"]').textContent()!=='0'||await adminPage.locator('[data-stat="yellow"]').textContent()!=='0')throw new Error('League popup filter did not update all stats');
+ await adminPage.locator('#player-league').selectOption('');
+ await adminPage.locator('.admin-player-filter button').click();
+ await adminPage.waitForFunction(()=>document.querySelector('[data-stat="minutes"]')?.textContent==='60');
+ console.log('PASS: player league filter updates statistics without leaving popup');
  await adminPage.locator('.admin-player-progress').click();
  await adminPage.locator('.progress-page').waitFor();
  await adminPage.locator('.app-back-button').click();
@@ -248,4 +310,27 @@ try {
  await adminPage.locator('.match-grid').evaluate(el=>el.scrollLeft=el.scrollWidth);
  await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/admin-match-rating-mobile.png',fullPage:true});
  console.log('PASS: admin match dashboard and read-only report fit mobile and tablet');
+ await adminPage.goto(url+'/Teams');
+ await adminPage.locator('.team-workspace a[href="/Leagues"]').click();
+ await adminPage.getByRole('link',{name:'Ndrysho',exact:true}).first().click();
+ for(const width of [320,390,768,1440]){await adminPage.setViewportSize({width,height:900});if(await adminPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error('League editor overflows '+width);}
+ await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/leagues-desktop.png',fullPage:true});
+ await adminPage.setViewportSize({width:390,height:844});
+ await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/leagues-mobile.png',fullPage:true});
+ console.log('PASS: league editor fits phone, tablet and desktop');
+ await adminPage.goto(url+'/PlayerContracts');if(new URL(adminPage.url()).pathname==='/PlayerContracts')throw new Error('Administrator can open Super Admin contracts');
+ const superPage=await browser.newPage({viewport:{width:390,height:844}});await superPage.goto(url+'/Identity/Account/Login');await superPage.locator('#Input_Email').fill('labinot.shabani@gmail.com');await superPage.locator('#Input_Password').fill(process.env.CLUB_TEST_PASSWORD);await superPage.locator('button[type=submit]').click();await superPage.waitForURL(u=>u.pathname==='/Clubs');await superPage.locator('form[action="/Clubs/Select"]').filter({has:superPage.locator('input[value="3"]')}).locator('button').click();
+ await superPage.goto(url+'/PlayerContracts');await superPage.getByRole('link',{name:'Hap',exact:true}).first().click();
+ for(const width of [320,390,768]){await superPage.setViewportSize({width,height:844});if(await superPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error('Contract details overflow '+width);}
+ await superPage.setViewportSize({width:390,height:844});await superPage.screenshot({path:'tests/MultiClub.Checks/artifacts/contract-details-mobile.png',fullPage:true});
+ await adminPage.goto(url+'/Students/Create');
+ if(await adminPage.locator('#HasContract').count()||await adminPage.getByText('Lojtar me kontratë',{exact:false}).count())throw new Error('Academy registration still links players to contracts');
+ await adminPage.screenshot({path:'tests/MultiClub.Checks/artifacts/contract-registration-mobile.png'});
+ if(await adminPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)){console.log(await adminPage.evaluate(()=>[...document.querySelectorAll('body *')].map(e=>({tag:e.tagName,id:e.id,width:e.getBoundingClientRect().width,right:e.getBoundingClientRect().right})).filter(e=>e.right>innerWidth+1).slice(-15)));throw new Error('Contract registration overflows mobile');}
+ console.log('PASS: contract details work and academy registration stays separate');
+ await superPage.goto(url+'/PlayerContracts/Create');
+ if(await superPage.locator('#PersonKey').count()!==1||await superPage.locator('#GrossSalary').count()!==1||await superPage.locator('#StartsOn').count()!==1||await superPage.locator('#EndsOn').count()!==1)throw new Error('Simplified contract fields missing');
+ for(const width of [320,390,768]){await superPage.setViewportSize({width,height:844});if(await superPage.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1))throw new Error('Simple contract overflow '+width);}
+ await superPage.setViewportSize({width:390,height:844});await superPage.screenshot({path:'tests/MultiClub.Checks/artifacts/simple-contract-mobile.png',fullPage:true});await superPage.close();
+ console.log('PASS: Super Admin contract form stays simple on phone and tablet');
 } finally {await browser.close();}

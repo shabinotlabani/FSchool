@@ -1,0 +1,9 @@
+@model Student
+@{ViewData["Title"]="Fotoja e lojtarit";}
+<div class="mx-auto" style="max-width:460px"><h1 class="h4">@Model.FullName</h1>
+@if(ViewData["HasPhoto"] is true){<img src="@Url.Action("Image",new{id=Model.Id})" alt="@Model.FullName" width="240" height="300" style="object-fit:cover;border-radius:16px"/>}
+<form asp-action="Save" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="player-photo-form mt-3">
+<label class="form-label">Fotoja e lojtarit<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" class="form-control" required/></label>
+<button type="submit" class="btn btn-primary">Ruaj foton</button><button type="button" class="btn btn-outline-secondary" data-remove-photo>Hiq foton</button><p role="status" class="photo-status"></p></form></div>
+@section Scripts {<script src="~/js/player-photo.js" asp-append-version="true"></script>}
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="@(User.IsInRole(Roles.Coach)?"PlayerDevelopment":"Students")" asp-action="@(User.IsInRole(Roles.Coach)?"Player":"Edit")" asp-route-id="@Model.Id">← Mbrapa</a>}

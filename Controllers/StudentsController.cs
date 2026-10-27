@@ -66,7 +66,8 @@ public class StudentsController : Controller
     public async Task<IActionResult> Create(bool familyPicker=false)
     {
         ViewData["FamilyPicker"]=familyPicker;
-        var model=new StudentRegistrationModel{FeePlanId=await new TariffService(_context).StandardPlanIdAsync()};await RegistrationChoices(model);return View(model);
+        var model=new StudentRegistrationModel{FeePlanId=await new TariffService(_context).StandardPlanIdAsync()};
+        await RegistrationChoices(model);return View(model);
     }
     private async Task RegistrationChoices(StudentRegistrationModel model)
     {
@@ -95,7 +96,7 @@ public class StudentsController : Controller
             DateOfBirth = model.DateOfBirth!.Value,
             ParentName = Clean(model.ParentName), ParentEmail = Clean(model.ParentEmail),
             ParentPhone = Clean(model.ParentPhone),
-            Notes = Clean(model.Notes), IsActive = true,
+            Notes = Clean(model.Notes), IsActive = true, ContractPending = false,
             FirstMonthUsesWeeks = true, RegistrationDate = now, CreatedAt = now, UpdatedAt = now
         };
         try

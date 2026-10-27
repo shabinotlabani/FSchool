@@ -47,7 +47,7 @@ public class SponsorshipService(ApplicationDbContext db)
         Money(amount);
         await using var snapshot=db.Database.CurrentTransaction==null?await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead):null;
         var line=await db.SponsorshipPlanLines.AsNoTracking().Include(x=>x.Plan).SingleOrDefaultAsync(x=>x.Id==planLineId);
-        if(line==null || line.Plan.Year!=date.Year)throw new ValidationException("Zgjidhni kategorinë për vitin e faturës.");
+        if(line==null)throw new ValidationException("Zgjidhni kategorinë e faturës.");
         var allocations=await db.SponsorshipAllocations.AsNoTracking().Include(x=>x.Contract)
             .Where(x=>x.PlanLineId==planLineId&&x.Contract.From<=date&&x.Contract.To>=date).ToListAsync();
         var ids=allocations.Select(x=>x.ContractId).ToArray();
@@ -113,7 +113,8 @@ public class SponsorshipService(ApplicationDbContext db)
     public Task<int> CreateContract(SponsorshipContractInput m,string actor) => Write(actor,async()=>{
         Validate(m);Money(m.Amount);
         var plan=await db.SponsorshipPlans.Include(x=>x.Lines).SingleOrDefaultAsync(x=>x.Id==m.PlanId) ?? throw new ValidationException("Zgjidhni planin vjetor.");
-        if(m.From>m.To || m.From.Year!=plan.Year || m.To.Year!=plan.Year) throw new ValidationException("Periudha e kontratës duhet të jetë brenda vitit të planit.");
+        if(!m.From.HasValue||!m.To.HasValue||m.From.Value.Year<2020||m.To.Value.Year>2200||m.From.Value>m.To.Value) throw new ValidationException("Zgjidhni saktë datën e fillimit dhe datën e përfundimit të kontratës.");
+        var from=m.From.Value;var to=m.To.Value;
         foreach(var a in m.Allocations) { Validate(a); Money(a.Amount); }
         if(m.Allocations.Select(x=>x.PlanLineId).Distinct().Count()!=m.Allocations.Count || m.Allocations.Any(x=>!plan.Lines.Any(l=>l.Id==x.PlanLineId))) throw new ValidationException("Zgjidhni kategori të ndryshme nga ky plan.");
         var allocations=m.Allocations.Where(x=>x.Amount>0).ToList();
@@ -134,7 +135,7 @@ public class SponsorshipService(ApplicationDbContext db)
             var spending=await db.SponsorshipSpending.AsNoTracking().Where(x=>x.Allocation.ContractId==c.Id).ToListAsync();
             if((receipts.Count>0||spending.Count>0)&&c.SponsorNumber!=sponsor)throw new ValidationException("Sponsori i një kontrate me veprime financiare nuk ndryshohet.");
             if(receipts.Where(x=>x.CancelledAt==null).Sum(x=>x.Amount)>m.Amount)throw new ValidationException("Kontrata nuk mund të ulet nën shumën e pranuar.");
-            if(receipts.Any(x=>x.Date<m.From||x.Date>m.To)||spending.Any(x=>x.Date<m.From||x.Date>m.To||x.SalaryMonth.HasValue&&(x.SalaryMonth.Value>m.To||x.SalaryMonth.Value.AddMonths(1).AddDays(-1)<m.From)))throw new ValidationException("Periudha e re përjashton veprime të regjistruara.");
+            if(receipts.Any(x=>x.Date<from||x.Date>to)||spending.Any(x=>x.Date<from||x.Date>to||x.SalaryMonth.HasValue&&(x.SalaryMonth.Value>to||x.SalaryMonth.Value.AddMonths(1).AddDays(-1)<from)))throw new ValidationException("Periudha e re përjashton veprime të regjistruara.");
             before=new{c.Sponsor,c.SponsorNumber,c.Reference,c.CertificateNumber,c.CertificateDate,c.From,c.To,c.Amount,Allocations=c.Allocations.Select(x=>new{x.PlanLineId,x.Amount}).ToArray()};
             foreach(var a in c.Allocations.ToList()) {
                 var input=allocations.SingleOrDefault(x=>x.PlanLineId==a.PlanLineId);
@@ -144,7 +145,7 @@ public class SponsorshipService(ApplicationDbContext db)
             }
         }
         foreach(var a in allocations.Where(x=>!c.Allocations.Any(v=>v.PlanLineId==x.PlanLineId)))c.Allocations.Add(new(){PlanLineId=a.PlanLineId,Amount=a.Amount});
-        c.CertificateNumber=string.IsNullOrWhiteSpace(m.CertificateNumber)?null:m.CertificateNumber.Trim();c.CertificateDate=m.CertificateDate;c.Sponsor=m.Sponsor.Trim();c.SponsorNumber=sponsor;c.Reference=reference;c.From=m.From;c.To=m.To;c.Amount=m.Amount;c.Revision=Guid.NewGuid();
+        c.CertificateNumber=string.IsNullOrWhiteSpace(m.CertificateNumber)?null:m.CertificateNumber.Trim();c.CertificateDate=m.CertificateDate;c.Sponsor=m.Sponsor.Trim();c.SponsorNumber=sponsor;c.Reference=reference;c.From=from;c.To=to;c.Amount=m.Amount;c.Revision=Guid.NewGuid();
         if(m.Id==0)db.SponsorshipContracts.Add(c);await db.SaveChangesAsync();Audit(actor,"Contract",c.Id,m.Id==0?"Regjistrim kontrate":m.Reason!.Trim(),before,new{m.PlanId,m.Sponsor,m.SponsorNumber,m.Reference,m.CertificateNumber,m.CertificateDate,m.From,m.To,m.Amount,m.Allocations});return c.Id;
     });
     public Task<int> CreateBeneficiary(SponsorshipBeneficiaryInput m,string actor) => Write(actor,async()=>{
@@ -182,7 +183,16 @@ public class SponsorshipService(ApplicationDbContext db)
             if(m.SalaryRole is not ("Player" or "Staff"))throw new ValidationException("Zgjidhni Lojtar ose Staf për pagën.");
             if(!beneficiary.IsPerson || !DateOnly.TryParseExact(m.SalaryMonth+"-01","yyyy-MM-dd",CultureInfo.InvariantCulture,DateTimeStyles.None,out var parsed)) throw new ValidationException("Për pagë zgjidhni personin dhe muajin e pagës.");
             month=parsed;
-            if(parsed.Year!=a.Contract.From.Year || parsed>a.Contract.To || parsed.AddMonths(1).AddDays(-1)<a.Contract.From || parsed>m.Date) throw new ValidationException("Muaji i pagës duhet të jetë brenda periudhës së kontratës dhe jo pas pagesës.");
+            if(beneficiary.StaffCategory!=null){
+                var expectedRole=beneficiary.StaffCategory=="ContractPlayer"?"Player":"Staff";
+                if(m.SalaryRole!=expectedRole)throw new ValidationException(expectedRole=="Player"?"Përfituesi është lojtar me kontratë.":"Përfituesi është anëtar i stafit.");
+                if(!await db.PlayerContracts.AnyAsync(c=>c.BeneficiaryId==beneficiary.Id&&c.StudentId==null&&c.Status!="Draft"&&c.StartsOn<parsed.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=parsed))throw new ValidationException("Personi nuk ka kontratë aktive për këtë muaj page.");
+            }
+            if(beneficiary.StudentId.HasValue){
+                if(m.SalaryRole!="Player")throw new ValidationException("Përfituesi është lojtar me kontratë.");
+                if(!await new PlayerContractService(db).Covering(beneficiary.StudentId.Value,parsed).AnyAsync())throw new ValidationException("Lojtari nuk ka kontratë aktive për këtë muaj page.");
+            }
+            if(parsed>a.Contract.To || parsed.AddMonths(1).AddDays(-1)<a.Contract.From || parsed>m.Date) throw new ValidationException("Muaji i pagës duhet të jetë brenda periudhës së kontratës dhe jo pas pagesës.");
             var duplicate=await db.SponsorshipSpending.AsNoTracking().Include(x=>x.Allocation.Contract).FirstOrDefaultAsync(x=>x.BeneficiaryId==m.BeneficiaryId&&x.SalaryMonth==month&&x.CancelledAt==null);
             if(duplicate!=null) throw new ValidationException($"Paga e {parsed:MM.yyyy} për {beneficiary.Name} është regjistruar nga {duplicate.Allocation.Contract.Sponsor}. Nuk lejohet pagesë e dytë.");
         } else if(!string.IsNullOrWhiteSpace(m.SalaryMonth)) throw new ValidationException("Për pagat përdorni një kategori të shënuar si pagë në planin vjetor.");

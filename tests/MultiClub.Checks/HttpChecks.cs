@@ -28,7 +28,7 @@ static class HttpChecks
         builder.Services.AddRazorPages();
         builder.Services.AddSingleton<IAntiforgeryAdditionalDataProvider, ClubAntiforgeryData>();
         builder.Services.AddScoped<ClubBranding>(); builder.Services.AddScoped<UserAdministrationService>();
-        builder.Services.AddScoped<DashboardService>(); builder.Services.AddScoped<FinancialService>();
+        builder.Services.AddScoped<DashboardService>(); builder.Services.AddScoped<FinancialService>(); builder.Services.AddScoped<TeamService>();
         builder.Services.AddScoped<BillingService>(); builder.Services.AddScoped<TariffService>();
         await using var app = builder.Build();
         app.Use(async (context,next)=>{try{await next();}catch(Exception e){Console.WriteLine("HTTP render failure: "+e);throw;}});
@@ -130,9 +130,12 @@ static class HttpChecks
                 var student=new Student{FirstName="Luan",LastName="Krasniqi",ParentName="Prindi i Luanit",DateOfBirth=new(2015,1,1),TrainingTeam=team,ParentLinkToken=parentToken};
                 db.Students.Add(student);
                 db.Students.Add(new Student{FirstName="Ardit",LastName="Hoxha",DateOfBirth=new(2015,1,1),TrainingTeam=team});
-                await db.SaveChangesAsync();chatStudent=student.Id;
+                await db.SaveChangesAsync();chatStudent=student.Id;db.PlayerEvaluations.Add(new(){StudentId=student.Id,CoachId=chatCoach,Sport="Basketball",Date=BillingClock.Today,Technique=4,Fitness=3});await db.SaveChangesAsync();
             }
             using var parentClient=Client();using var coachClient=Client();
+            var portal=await parentClient.GetStringAsync($"/p/{parentToken}?continueVisit=true");Check(portal.Contains("player-passport")&&portal.Contains("rating-ring")&&portal.Contains(">80</strong>"),"Parent card renders real ratings on a 100-point scale");
+            Check((await parentClient.PostAsync($"/p/{parentToken}/photo/{chatStudent}",new MultipartFormDataContent())).StatusCode==HttpStatusCode.BadRequest,"Parent photo upload requires antiforgery");
+            Check((await parentClient.GetAsync($"/p/{parentToken}/photo/2147483647")).StatusCode==HttpStatusCode.NotFound,"Parent photo access rejects another player");
             var thread=$"/p/{parentToken}/chat?studentId={chatStudent}";
             var parentPage=await parentClient.GetAsync(thread);
             Check(parentPage.StatusCode==HttpStatusCode.OK,"Parent chat page renders with private link");
@@ -166,6 +169,13 @@ static class HttpChecks
             Check(adminDashboard.Contains("Monday fixture")&&adminDashboard.Contains("Sunday fixture")&&!adminDashboard.Contains("Outside previous week")&&!adminDashboard.Contains("Outside next week"),"Weekly dashboard includes Monday and Sunday and excludes adjacent weeks");
             var reportUrl="/Home/MatchReport/"+MatchHidden("Id");
             var adminMatch=await staffClient.GetStringAsync(reportUrl);
+            var teamMinutesUrl="/Teams/Minutes?id="+matchTeam;
+            var teamMinutes=await staffClient.GetStringAsync(teamMinutesUrl);
+            Check(teamMinutes.Contains("Luan")&&teamMinutes.Contains("Visitors U12")&&teamMinutes.Contains("<strong>40</strong>")&&!teamMinutes.Contains("Monday fixture"),"Admin team minutes includes completed games and excludes drafts");
+            Check(!(await staffClient.GetStringAsync(teamMinutesUrl+"&kind=Official")).Contains("Visitors U12"),"Team minutes filters competition");
+            Check((await ownerClient.GetAsync(teamMinutesUrl)).StatusCode==HttpStatusCode.NotFound,"Team minutes respects selected club");
+            Check((await coachClient.GetAsync(teamMinutesUrl)).StatusCode!=HttpStatusCode.OK,"Team minutes requires administrator");
+            Check((await staffClient.GetAsync(teamMinutesUrl+"&year=9999")).StatusCode==HttpStatusCode.BadRequest,"Team minutes rejects invalid years");
             var playerCardUrl="/Home/MatchPlayer?matchId="+MatchHidden("Id")+"&studentId="+chatStudent;
             Check((await staffClient.GetStringAsync(playerCardUrl)).Contains("data-stat=\"minutes\">40"),"Admin player card aggregates completed minutes");
             using(var scope=app.Services.CreateScope()){
@@ -213,6 +223,53 @@ static class HttpChecks
             Check((await coachClient.GetAsync("/DevelopmentSettings")).StatusCode!=HttpStatusCode.OK,"Coach cannot manage club metric definitions");
             var customSave=await Post(staffClient,"/DevelopmentSettings/Edit","/DevelopmentSettings/Edit?section=Measurements",new(){["Sport"]="Basketball",["Section"]="Measurements",["Label"]="Standing reach (cm)",["Type"]="Number",["Min"]="50",["Max"]="350",["Step"]="0.1",["Enabled"]="true",["SortOrder"]="5"});
             Check(customSave.StatusCode==HttpStatusCode.Redirect,"Admin adds custom measurement through actual form");
+            var leagueSave=await Post(staffClient,"/Leagues/Edit","/Leagues/Edit",new(){["Name"]="Youth Cup",["Kind"]="Cup",["StartsOn"]=BillingClock.Today.AddDays(-30).ToString("yyyy-MM-dd"),["EndsOn"]=BillingClock.Today.AddDays(90).ToString("yyyy-MM-dd"),["TeamIds"]=matchTeam,["IsActive"]="true",["RulesConfirmed"]="true",["YellowThreshold"]="3",["YellowBan"]="1",["RedBan"]="2",["SecondYellowBan"]="1"});
+            Check(leagueSave.StatusCode==HttpStatusCode.Redirect,"Admin creates league with teams and confirmed rules");
+            int leagueId;
+            using(var scope=app.Services.CreateScope()){
+                var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();db.Club.ClubId=3;
+                var league=await db.Leagues.SingleAsync(l=>l.Name=="Youth Cup");leagueId=league.Id;
+                Check(league.Kind=="Official","League category is assigned internally instead of trusting cup/points input");
+            }
+            Check((await staffClient.GetStringAsync("/Leagues")).Contains("Youth Cup"),"League management renders saved league");
+            Check((await staffClient.GetStringAsync("/Teams")).Contains("Youth Cup"),"Team grid shows assigned league");
+            var teamDetails=await staffClient.GetStringAsync("/Teams/Details/"+matchTeam);
+            Check(teamDetails.Contains("Youth Cup")&&!teamDetails.Contains("Prezenca e lojtar"),"Team details show leagues without admin attendance button");
+            var leagueMatchForm=await coachClient.GetStringAsync("/Matches/Edit?teamId="+matchTeam);
+            Check(leagueMatchForm.Contains("Youth Cup")&&!leagueMatchForm.Contains(">Për pikë</option>")&&!leagueMatchForm.Contains(">Për kupë</option>"),"Match form asks for the registered league without cup/points choices");
+            Check((await coachClient.GetStringAsync($"/Matches/LeagueRules?id={leagueId}&teamId={matchTeam}")).Contains("Youth Cup"),"Assigned coach reads league rules");
+            Check((await coachClient.GetAsync("/Leagues/Edit/"+leagueId)).StatusCode!=HttpStatusCode.OK,"Coach cannot change league rules");
+            Check((await ownerClient.GetAsync("/Leagues/Edit/"+leagueId)).StatusCode==HttpStatusCode.NotFound,"League management is isolated by club");
+            Check(!(await staffClient.GetStringAsync(teamMinutesUrl+"&leagueId="+leagueId)).Contains("Visitors U12"),"Admin league minutes excludes unrelated matches");
+            Check((await staffClient.GetStringAsync(playerCardUrl+"&leagueId="+leagueId)).Contains("data-stat=\"minutes\">0"),"Player popup filters by league");
+            Check((await staffClient.GetStringAsync(playerCardUrl)).Contains("data-stat=\"minutes\">40"),"Player popup all leagues restores totals");
+            Check((await coachClient.GetStringAsync("/Matches/Matrix?teamId="+matchTeam+"&leagueId="+leagueId)).Contains("Youth Cup"),"Coach matrix offers league filter");
+            Check((await staffClient.GetAsync(teamMinutesUrl+"&leagueId=2147483647")).StatusCode==HttpStatusCode.NotFound,"Admin report rejects inaccessible league");
+            var registrationForm=await staffClient.GetStringAsync("/Students/Create");
+            Check(!registrationForm.Contains("HasContract")&&!registrationForm.Contains("Lojtar me kontratë"),"Academy registration is separate from employment contracts");
+            int contractPerson;
+            using(var scope=app.Services.CreateScope()){
+                var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();db.Club.ClubId=3;
+                var person=new SponsorshipBeneficiary{Name="Paid Player",Identifier="CONTRACT-PLAYER-HTTP",IsPerson=true,StaffCategory="ContractPlayer",StaffBirthDate=new(2000,1,1)};db.SponsorshipBeneficiaries.Add(person);await db.SaveChangesAsync();contractPerson=person.Id;
+            }
+            Check((await staffClient.GetAsync("/PlayerContracts")).StatusCode!=HttpStatusCode.OK,"Contracts are restricted to Super Admin");
+            await Post(ownerClient,"/Clubs/Select","/Clubs",new(){["id"]="3"});
+            var contractPage=await ownerClient.GetStringAsync("/PlayerContracts/Create?staffId="+contractPerson);
+            Check(contractPage.Contains("Paga bruto")&&contractPage.Contains("Skadon më")&&!contractPage.Contains("Lojtarët")&&!contractPage.Contains("PDF"),"Super Admin sees standalone contract people only");
+            var activated=await Post(ownerClient,"/PlayerContracts/Save","/PlayerContracts/Create?staffId="+contractPerson,new(){["Simple"]="true",["PersonKey"]="S:"+contractPerson,["RequestId"]=Guid.NewGuid().ToString(),["StartsOn"]=BillingClock.Today.ToString("yyyy-MM-dd"),["EndsOn"]=BillingClock.Today.AddDays(20).ToString("yyyy-MM-dd"),["GrossSalary"]="1000"});
+            Check(activated.StatusCode==HttpStatusCode.Redirect,"Super Admin records a contract with gross salary and expiry only");
+            int playerContractId;
+            using(var scope=app.Services.CreateScope()){
+                var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();db.Club.ClubId=3;var c=await db.PlayerContracts.Include(c=>c.Beneficiary).SingleAsync(c=>c.BeneficiaryId==contractPerson);playerContractId=c.Id;
+                Check(c.Status=="Active"&&c.StudentId==null&&c.SalaryRole=="Player"&&c.GrossSalary==1000,"Contracted player remains standalone and is classified for sponsorship payroll");
+            }
+            Check((await ownerClient.GetStringAsync("/Home")).Contains("Paid Player"),"Super Admin dashboard alerts on contract expiry");
+            var simpleDetails=await ownerClient.GetStringAsync("/PlayerContracts/Details/"+playerContractId);
+            Check(simpleDetails.Contains("1,000.00")&&simpleDetails.Contains("Shiko te Sponsorizimet")&&!simpleDetails.Contains("Regjistrimi në ATK"),"Contract details stay compact and link to sponsorships");
+            Check((await staffClient.GetAsync("/PlayerContracts/Details/"+playerContractId)).StatusCode!=HttpStatusCode.OK,"Administrator cannot open contract details");
+            Check((await coachClient.GetAsync("/PlayerContracts/Document/"+playerContractId)).StatusCode!=HttpStatusCode.OK,"Coach cannot access employment documents");
+            Check((await ownerClient.GetStringAsync("/Sponsorships/Salaries")).Contains("Paid Player"),"Sponsorship salary grid includes contracted players before first payment");
+            await Post(ownerClient,"/Clubs/Select","/Clubs",new(){["id"]="1"});
             if (preview)
             {
                 int footballId;

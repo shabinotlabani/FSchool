@@ -1,0 +1,10 @@
+@model PlayerContractInput
+@{ViewData["Title"]=Model.Id==0?"Kontratë e re":"Ndrysho kontratën";}
+<link rel="stylesheet" href="~/css/contracts.css" asp-append-version="true"/>
+<div class="contracts-page contract-simple"><div class="page-heading"><div><h1>@ViewData["Title"]</h1><p>Personi, paga bruto dhe afati</p></div></div>
+<form asp-action="Save" method="post" data-financial-confirm><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><input asp-for="RequestId" type="hidden"/><input asp-for="Simple" type="hidden" value="true"/>
+<div class="contract-simple-fields"><label>Personi<select asp-for="PersonKey" class="form-select" required disabled="@(Model.Id!=0)"><option value="">Zgjidh personin</option>@foreach(var p in Model.Beneficiaries){<option value="S:@p.Id">@p.Name</option>}</select></label>@if(Model.Id!=0){<input asp-for="PersonKey" type="hidden"/>}
+<label>Paga bruto<input asp-for="GrossSalary" type="number" min="0.01" max="99999999.99" step="0.01" class="form-control" inputmode="decimal" required/></label><label>Fillon më<input asp-for="StartsOn" type="date" class="form-control" required/></label><label>Skadon më<input asp-for="EndsOn" type="date" class="form-control" required/></label></div>
+<button class="btn btn-primary mt-4" type="submit">Ruaj kontratën</button></form></div>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Kontratat</a>}

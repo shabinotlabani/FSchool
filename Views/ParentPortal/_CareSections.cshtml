@@ -1,17 +1,17 @@
 @model ParentPortalModel
 @using Microsoft.AspNetCore.Mvc.ViewFeatures
 <div class="parent-care-sections">
-<details name="parent-care" class="care-progress"><summary><i class="care-icon"><partial name="_CareIcon" model='@("progress")'/></i><span>Ecuria</span><small>Matjet dhe aftësitë</small></summary><div class="parent-care-content">
+<details name="parent-care" id="progress" class="care-progress"><summary><i class="care-icon"><partial name="_CareIcon" model='@("progress")'/></i><span>Ecuria</span><small>Matjet dhe aftësitë</small></summary><div class="parent-care-content">
 @if(Model.Progress.Count==0){<p class="empty">Ende pa vlerësime të regjistruara.</p>}
-@foreach(var chart in Model.Progress){<partial name="~/Views/PlayerDevelopment/_Chart.cshtml" model="chart" view-data='@(new ViewDataDictionary(ViewData){["StarRatings"]=true})'/>}
+@foreach(var chart in Model.Progress){<partial name="~/Views/PlayerDevelopment/_Chart.cshtml" model="chart" view-data='@(new ViewDataDictionary(ViewData){["StarRatings"]=false})'/>}
 </div></details>
-<details name="parent-care" id="menu" class="care-menu"><summary><i class="care-icon"><partial name="_CareIcon" model='@("menu")'/></i><span>Menuja javore</span><small>@(Model.WeeklyMenu?.Individual==true?"Individuale":"E përbashkët")</small></summary><div class="parent-care-content">
+<details name="parent-care" id="menu" class="care-menu"><summary><i class="care-icon"><partial name="_CareIcon" model='@("menu")'/></i><span>Plani ushqimor</span><small>@(Model.WeeklyMenu?.Individual==true?"Individual":"I përbashkët")</small></summary><div class="parent-care-content">
 @if(Model.WeeklyMenu is {} menu){<partial name="~/Views/ParentPortal/_WeeklyMenu.cshtml" model="menu"/>}
 @foreach(var notice in Model.CareInstructions.Where(x=>x.Kind==Roles.Nutritionist)){<p class="care-date">@notice.Date.ToString("dd.MM.yyyy")</p><p class="care-instructions">@notice.Instructions</p>}
 </div></details>
-<details name="parent-care" class="care-doctor"><summary><i class="care-icon"><partial name="_CareIcon" model='@("doctor")'/></i><span>Mjeku</span><small>Udhëzimet</small></summary><div class="parent-care-content">
+<details name="parent-care" id="doctor" class="care-doctor"><summary><i class="care-icon"><partial name="_CareIcon" model='@("doctor")'/></i><span>Mjeku</span><small>Udhëzimet</small></summary><div class="parent-care-content">
 @if(!Model.CareInstructions.Any(x=>x.Kind==Roles.Doctor)){<p class="empty">Ende pa udhëzime të publikuara.</p>}
 @foreach(var notice in Model.CareInstructions.Where(x=>x.Kind==Roles.Doctor)){<p class="care-date">@notice.Date.ToString("dd.MM.yyyy")</p><p class="care-instructions">@notice.Instructions</p>}
 </div></details>
-<details name="parent-care" class="care-psychologist"><summary><i class="care-icon"><partial name="_CareIcon" model='@("psychologist")'/></i><span>Psikologu</span><small>Së shpejti</small></summary><div class="parent-care-content"><p class="empty">Ky shërbim do të shtohet më vonë.</p></div></details>
+<details name="parent-care" id="psychologist" class="care-psychologist"><summary><i class="care-icon"><partial name="_CareIcon" model='@("psychologist")'/></i><span>Psikologu</span><small>Së shpejti</small></summary><div class="parent-care-content"><p class="empty">Ky shërbim do të shtohet më vonë.</p></div></details>
 </div>

@@ -1,4 +1,4 @@
-﻿using _2Korriku.Data;
+using _2Korriku.Data;
 using _2Korriku.Services;
 using _2Korriku.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +23,7 @@ public class HomeController : Controller
     {
         if(User.IsInRole(_2Korriku.Models.Roles.Admin)||User.IsInRole(_2Korriku.Models.Roles.SuperAdmin)){
             var today=BillingClock.Today;
+            if(User.IsInRole(Roles.SuperAdmin))ViewData["ExpiringContracts"]=await _context.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Where(c=>c.Status!="Draft"&&(c.EndedOn??c.EndsOn)>=today&&(c.EndedOn??c.EndsOn)<=today.AddDays(30)).OrderBy(c=>c.EndedOn??c.EndsOn).ToListAsync();
             var weekStart=today.AddDays(-(((int)today.DayOfWeek+6)%7));
             var weekEnd=weekStart.AddDays(7);
             var teams=await _context.TrainingTeams.AsNoTracking().Include(t=>t.Coach).OrderBy(t=>t.Name).ToListAsync();
@@ -70,11 +71,16 @@ public class HomeController : Controller
 
     [Authorize(Roles=Roles.Admin+","+Roles.SuperAdmin)]
     [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
-    public async Task<IActionResult> MatchPlayer(int matchId,int studentId)
+    public async Task<IActionResult> MatchPlayer(int matchId,int studentId,int? leagueId)
     {
         var current=await _context.MatchPlayers.AsNoTracking().Include(p=>p.MatchGame).ThenInclude(g=>g.TrainingTeam).SingleOrDefaultAsync(p=>p.MatchGameId==matchId&&p.StudentId==studentId);
         if(current==null)return NotFound();
         var history=await _context.MatchPlayers.AsNoTracking().Include(p=>p.MatchGame).Where(p=>p.StudentId==studentId&&(p.MatchGame.Status=="Completed"||(p.MatchGameId==matchId&&p.MatchGame.Status!="Cancelled"))).ToListAsync();
+        var ids=history.Where(p=>p.MatchGame.LeagueId.HasValue).Select(p=>p.MatchGame.LeagueId!.Value).ToList();
+        var leagues=await _context.Leagues.AsNoTracking().Where(l=>ids.Contains(l.Id)||l.Teams.Any(t=>t.TrainingTeamId==current.MatchGame.TrainingTeamId)).OrderByDescending(l=>l.StartsOn).ThenBy(l=>l.Name).ToListAsync();
+        if(leagueId.HasValue&&!leagues.Any(l=>l.Id==leagueId))return NotFound();
+        ViewData["Leagues"]=leagues;ViewData["LeagueId"]=leagueId;
+        if(leagueId.HasValue)history=history.Where(p=>p.MatchGame.LeagueId==leagueId).ToList();
         return PartialView("_MatchPlayer",new AdminMatchPlayer(current,history));
     }
 

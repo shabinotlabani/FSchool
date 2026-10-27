@@ -1,0 +1,8 @@
+﻿@model League
+@{ViewData["Title"]="Rregullat e ligës";}
+<link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
+<div class="team-workspace"><div class="page-heading"><div><h1>@Model.Name</h1><p>@Model.StartsOn.ToString("dd.MM.yyyy") – @Model.EndsOn.ToString("dd.MM.yyyy")</p></div></div>
+@if(Model.RulesConfirmed){<div class="table-responsive"><table class="table"><thead><tr><th>Kartoni</th><th>Pezullimi</th></tr></thead><tbody><tr><td>@Model.YellowThreshold të verdhë</td><td>@Model.YellowBan ndeshje</td></tr><tr><td>I kuq direkt</td><td>@Model.RedBan ndeshje</td></tr><tr><td>Dy të verdhë</td><td>@Model.SecondYellowBan ndeshje</td></tr></tbody></table></div><p class="text-secondary small">Të verdhët e përjashtimit @(Model.CountDismissalYellows?"numërohen":"nuk numërohen") në pragun e pezullimit.</p>}
+else{<p class="text-secondary">Rregullat ende nuk janë konfirmuar nga administratori.</p>}
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index" asp-route-teamId="@ViewData["TeamId"]">← Ndeshjet</a>}

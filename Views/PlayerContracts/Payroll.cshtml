@@ -1,0 +1,12 @@
+@model List<PlayerContract>
+@using _2Korriku.Services
+@{ViewData["Title"]="Pagat kontraktuale";var month=(DateOnly)ViewData["Month"]!;}
+<link rel="stylesheet" href="~/css/contracts.css" asp-append-version="true"/>
+<div class="contracts-page"><div class="page-heading"><h1>Pagat kontraktuale</h1><a asp-action="Payroll" asp-route-month="@month.ToString("yyyy-MM")" asp-route-csv="true" class="btn btn-outline-secondary">Eksporto CSV</a></div>
+<form method="get" class="d-flex gap-2 my-3"><input name="month" type="month" min="2024-08" value="@month.ToString("yyyy-MM")" class="form-control" style="max-width:220px"/><button class="btn btn-outline-primary">Shfaq</button></form>
+<p class="text-secondary small">Plan sipas kontratave · muajt e pjesshëm sipas ditëve kalendarike. Nuk është deklarim EDI; deklarohen pagesat reale të periudhës.</p>
+<div class="table-responsive"><table class="table"><thead><tr><th>Personi</th><th>Bruto</th><th>Kontributi i punonjësit</th><th>Tatimi</th><th>Neto</th><th>Kontributi i klubit</th><th>Kostoja</th></tr></thead><tbody>
+@foreach(var g in Model.GroupBy(c=>c.PersonKey)){var c=g.First();var p=PlayerContractService.MonthPayroll(g,month);<tr><td><a asp-action="Details" asp-route-id="@c.Id">@c.PersonName</a><small class="d-block text-secondary">@c.CategoryName</small></td><td>@p.Gross.ToString("N2")</td><td>@p.EmployeePension.ToString("N2")</td><td>@p.Tax.ToString("N2")</td><td>@p.Net.ToString("N2")</td><td>@p.EmployerPension.ToString("N2")</td><td>@p.Cost.ToString("N2")</td></tr>}
+@if(Model.Count==0){<tr><td colspan="7">Pa kontrata për këtë muaj.</td></tr>}
+</tbody></table></div></div>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Kontratat</a>}

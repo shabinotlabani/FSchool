@@ -1,0 +1,35 @@
+﻿@model MatchList
+@using _2Korriku.Services
+@{
+    var team=Model.Teams.Single();
+    ViewData["Title"]="Minutazhi · "+team.Name;
+    var players=team.Students.Where(s=>s.IsActive).Select(s=>(Id:s.Id,Name:s.FullName))
+        .Concat(Model.Matches.SelectMany(m=>m.Players).Select(p=>(Id:p.StudentId,Name:p.Name)))
+        .DistinctBy(p=>p.Id).OrderBy(p=>p.Name).ToList();
+    var football=Model.Matches.Any(m=>m.Sport=="Football");
+}
+<link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
+<div class="team-workspace">
+<div class="page-heading"><div><p class="eyebrow">@team.Name</p><h1>Minutazhi i lojtarëve</h1><p class="text-secondary">@Model.Matches.Count ndeshje të përfunduara · @Model.Year</p></div></div>
+<form method="get" class="team-report-filters">
+    <input type="hidden" name="id" value="@team.Id"/>
+    <label>Viti<input class="form-control" type="number" name="year" min="1900" max="2200" value="@Model.Year"/></label>
+    <label>Liga<select name="leagueId" class="form-select"><option value="">Të gjitha ligat</option>@foreach(var league in Model.Leagues){<option value="@league.Id" selected="@(Model.LeagueId==league.Id)">@league.Name · @league.StartsOn.Year/@league.EndsOn.Year</option>}</select></label><button class="btn btn-primary">Shfaq</button>
+</form>
+<div class="team-report-scroll" tabindex="0" role="region" aria-label="Minutazhi sipas lojtarit dhe ndeshjes">
+<table class="table team-minutes"><thead><tr><th>Lojtari</th><th>Minuta</th><th>Mes. / ndeshje</th><th>Ndeshje</th><th>Titullar</th><th>Nga stoli</th>@if(football){<th>Gola</th><th>Asista</th><th>Të verdhë</th><th>Të kuq</th>}
+@foreach(var match in Model.Matches){<th><a asp-controller="Home" asp-action="MatchReport" asp-route-id="@match.Id">@match.Date.ToString("dd.MM")<small>@match.Opponent</small><small>@(match.Competition??"Miqësore")</small></a></th>}</tr></thead>
+<tbody>@foreach(var player in players){
+    var entries=Model.Matches.SelectMany(m=>m.Players).Where(p=>p.StudentId==player.Id).ToList();
+    var minutes=entries.Sum(p=>p.Minutes);var games=entries.Count(p=>p.Minutes>0);
+    var events=Model.Matches.SelectMany(m=>m.Events).ToList();
+    <tr><th>@player.Name</th><td><strong>@minutes</strong></td><td>@(games==0?"—":((decimal)minutes/games).ToString("0.#"))</td><td>@games</td><td>@entries.Count(p=>p.Role=="Starter")</td><td>@entries.Count(p=>p.Role=="Substitute")</td>
+    @if(football){<td>@events.Count(e=>e.PlayerId==player.Id && (e.Kind is "Goal" or "PenaltyGoal"))</td><td>@events.Count(e=>e.AssistId==player.Id && e.Kind=="Goal")</td><td>@events.Count(e=>e.PlayerId==player.Id && (e.Kind is "Yellow" or "SecondYellow"))</td><td>@events.Count(e=>e.PlayerId==player.Id && FootballLabels.Dismissal(e))</td>}
+    @foreach(var match in Model.Matches){var entry=match.Players.SingleOrDefault(p=>p.StudentId==player.Id);<td>@if(entry!=null){<a asp-controller="Home" asp-action="MatchReport" asp-route-id="@match.Id" title="@MatchLabels.Role(entry.Role)">@(entry.Role=="Unused"?"R":entry.Minutes.ToString())</a>}else{<span class="text-secondary">—</span>}</td>}
+    </tr>
+}</tbody></table>
+@if(players.Count==0){<p class="p-4 text-secondary">Nuk ka lojtarë në këtë ekip.</p>}
+</div>
+<p class="team-report-key">Minuta për çdo ndeshje · R: rezervë pa hyrë · —: pa pjesëmarrje</p>
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Details" asp-route-id="@team.Id">← Ekipi</a>}

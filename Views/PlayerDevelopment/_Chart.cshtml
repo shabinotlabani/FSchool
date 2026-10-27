@@ -5,8 +5,8 @@
     var stars=Model.Rating&&ViewData["StarRatings"] is true;
     string Value(decimal n){var count=Math.Clamp((int)Math.Round(n),0,5);return stars?new string('★',count)+new string('☆',5-count):Number(n)+" "+Model.Unit;}
     var points=Model.Points;
-    var minimum=Model.Rating?1:points.Count==0?0:Math.Max(0,points.Min(x=>x.Value)-Math.Max(1,(points.Max(x=>x.Value)-points.Min(x=>x.Value))*0.15m));
-    var maximum=Model.Rating?5:points.Count==0?1:points.Max(x=>x.Value)+Math.Max(1,(points.Max(x=>x.Value)-points.Min(x=>x.Value))*0.15m);
+    var minimum=Model.Rating?(Model.Unit=="/100"?0:1):points.Count==0?0:Math.Max(0,points.Min(x=>x.Value)-Math.Max(1,(points.Max(x=>x.Value)-points.Min(x=>x.Value))*0.15m));
+    var maximum=Model.Rating?(Model.Unit=="/100"?100:5):points.Count==0?1:points.Max(x=>x.Value)+Math.Max(1,(points.Max(x=>x.Value)-points.Min(x=>x.Value))*0.15m);
     decimal X(DevelopmentPoint p)=>points.Count<2?222:48+348m*(p.Date.DayNumber-points[0].Date.DayNumber)/Math.Max(1,points[^1].Date.DayNumber-points[0].Date.DayNumber);
     decimal Y(DevelopmentPoint p)=>146-118m*(p.Value-minimum)/(maximum-minimum);
     var line=string.Join(" ",points.Select(p=>Number(X(p))+","+Number(Y(p))));

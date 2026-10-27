@@ -50,9 +50,11 @@ try {
     await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contract category totals must match contract");
     badContract=Contract("over-plan");badContract.Amount=20000;badContract.Allocations=[new(){PlanLineId=lines[0].Id,Amount=20000}];
     await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contract allocations cannot exceed annual declaration");
-    badContract=Contract("bad-dates");badContract.To=new(year+1,1,1);
-    await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contracts stay within annual plan");
-    var a=await Run(s=>s.CreateContract(Contract("Sponsor A"),"super"));var b=await Run(s=>s.CreateContract(Contract("Sponsor B"),"super"));
+    badContract=Contract("bad-dates");badContract.From=new(year+1,1,2);badContract.To=new(year+1,1,1);
+    await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contract end cannot precede start");
+    var contractA=Contract("Sponsor A");contractA.To=new(year+1,3,31);
+    var a=await Run(s=>s.CreateContract(contractA,"super"));var b=await Run(s=>s.CreateContract(Contract("Sponsor B"),"super"));
+    Check((await Db(db=>db.SponsorshipContracts.SingleAsync(x=>x.Id==a))).To.Year==year+1,"Sponsor contract keeps its exact cross-year date range");
     var allocations=await Db(db=>db.SponsorshipAllocations.ToListAsync());
     int Allocation(int c,int line)=>allocations.Single(x=>x.ContractId==c&&x.PlanLineId==lines[line].Id).Id;
     var person=await Run(s=>s.CreateBeneficiary(new(){Name="Labinot Shabani",Identifier="STAFF-1"},"super"));

@@ -112,6 +112,37 @@ static class MatchChecks
             var report=await service.Report("match-coach",teamId,BillingClock.Today.Year,"Official",first);
             Check(report.Totals.Single().Goals==2,"Goal totals aggregate completed match events");
         }
+        int leagueId;
+        var leagueStart=BillingClock.Today.AddDays(-10);
+        await using(var db=Db()){
+            await new LeagueService(db).Save(new(){Name="U17 League",StartsOn=leagueStart,EndsOn=BillingClock.Today.AddDays(10),TeamIds=[teamId],RulesConfirmed=true,YellowThreshold=2,YellowBan=1,RedBan=2,SecondYellowBan=1},"match-coach");
+            leagueId=await db.Leagues.Where(l=>l.Name=="U17 League").Select(l=>l.Id).SingleAsync();
+            var service=new MatchService(db);
+            foreach(var day in new[]{leagueStart,leagueStart.AddDays(1)}){var g=Game();g.Date=day;g.LeagueId=leagueId;g.Events=[new(){Kind="Yellow",PlayerId=first,Minute=10}];var id=await service.Save("match-coach",g);Check((await db.MatchGames.SingleAsync(m=>m.Id==id)).LeagueId==leagueId,"Match uses the selected registered league");}
+            Check((await new FootballService(db).Alerts(teamId,"Official",leagueStart.AddDays(2),null,0,leagueId)).Any(a=>a.StudentId==first&&a.Remaining==1),"League rules count only that league's cautions");
+            var leagueReport=await service.Report("match-coach",teamId,BillingClock.Today.Year,null,first,leagueId);
+            Check(leagueReport.Matches.Count==2&&leagueReport.Totals.Single().OfficialMinutes==90&&leagueReport.Totals.Single().YellowCards==2&&leagueReport.Totals.Single().Goals==0,"Player league filter limits minutes, goals and cards together");
+            Check((await service.Report("match-coach",teamId,BillingClock.Today.Year,null,first)).Totals.Single().OfficialMinutes>90,"All leagues restores complete player totals");
+            await Reject(()=>service.Report("match-other",null,BillingClock.Today.Year,null,null,leagueId),"League report cannot bypass assigned teams");
+            Check((await db.MatchGames.SingleAsync(m=>m.Id==gameId)).LeagueId==null,"Existing matches retain legacy competition history");
+            var wrong=Game();wrong.Kind="Cup";wrong.LeagueId=leagueId;
+            var derivedId=await service.Save("match-coach",wrong);
+            Check((await db.MatchGames.SingleAsync(m=>m.Id==derivedId)).Kind=="Official","Match derives the internal category from the selected league");
+            var outside=Game();outside.Date=leagueStart.AddDays(-1);outside.LeagueId=leagueId;
+            await Reject(()=>service.Save("match-coach",outside),"Match rejects league outside its season");
+            await new LeagueService(db).Save(new(){Name="Overlap",Kind="Cup",StartsOn=leagueStart,EndsOn=BillingClock.Today,TeamIds=[teamId]},"match-coach");
+            Check(await db.Leagues.AnyAsync(l=>l.Name=="Overlap"&&l.Kind=="Official"),"League registration does not ask for or trust a cup/points category");
+            await new LeagueService(db).Save(new(){Name="Next season",StartsOn=BillingClock.Today.AddDays(11),EndsOn=BillingClock.Today.AddDays(100),TeamIds=[teamId],RulesConfirmed=true,YellowThreshold=2,YellowBan=1,RedBan=1,SecondYellowBan=1},"match-coach");
+            var nextLeagueId=await db.Leagues.Where(l=>l.Name=="Next season").Select(l=>l.Id).SingleAsync();
+            Check(!(await new FootballService(db).Alerts(teamId,"Official",BillingClock.Today.AddDays(12),null,0,nextLeagueId)).Any(),"New league season does not inherit earlier suspension");
+            var previous=await db.Leagues.SingleAsync(l=>l.Id==leagueId);
+            await Reject(()=>new LeagueService(db).Save(new(){Id=leagueId,Revision=previous.Revision,Name=previous.Name,StartsOn=previous.StartsOn,EndsOn=previous.EndsOn,TeamIds=[]},"match-coach"),"League cannot remove a team with registered matches");
+            await Reject(()=>new LeagueService(db).Save(new(){Name="Incomplete",RulesConfirmed=true},"match-coach"),"Confirmed league rules require all thresholds");
+        }
+        await using(var db=Db(2)){
+            Check(!await db.Leagues.AnyAsync(l=>l.Id==leagueId),"League data hidden from other clubs");
+            await Reject(()=>new LeagueService(db).Save(new(){Name="Foreign",TeamIds=[teamId]},"match-coach"),"League cannot enroll another club's team");
+        }
         await using(var db=Db()){stale=await new MatchService(db).Load("match-coach",gameId,0);}
         await using(var db=Db()){var service=new MatchService(db);var current=await service.Load("match-coach",gameId,0);current.Opponent="Updated visitors";await service.Save("match-coach",current);}
         await using(var db=Db()){await Reject(()=>new MatchService(db).Save("match-coach",stale),"Stale match edit cannot overwrite another coach's work");}
@@ -124,5 +155,21 @@ static class MatchChecks
             var team=await db.TrainingTeams.SingleAsync(t=>t.Id==teamId);team.CoachId="match-other";await db.SaveChangesAsync();
             await Reject(()=>new MatchService(db).Load("match-coach",gameId,0),"Former coach loses access to match records");
         }
-    }
+        await using(var db=Db()){
+            var role=await db.Roles.SingleAsync(r=>r.Name==Roles.Coach);
+            foreach(var actor in new[]{"match-coach","match-other"})db.UserRoles.Add(new(){UserId=actor,RoleId=role.Id});
+            var date=new DateOnly(2001,1,10);var game=new MatchGame{TrainingTeamId=teamId,UpdatedById="match-coach",Date=date,Opponent="Activity fixture"};
+            var snapshot=new MatchInput{Status="Draft",Players=[new(){StudentId=first,Role="Starter"}]};
+            void History(string actor,int days){db.MatchChanges.Add(new(){MatchGame=game,ActorId=actor,CreatedAt=BillingClock.UtcDate(date.AddDays(days)),Snapshot=System.Text.Json.JsonSerializer.Serialize(snapshot)});}
+            History("match-coach",0);snapshot.Status="Live";History("match-coach",1);
+            snapshot.Status="Completed";snapshot.ScoreFor=1;snapshot.ScoreAgainst=0;History("match-other",2);History("match-coach",3);
+            await db.SaveChangesAsync();
+            var report=await new CoachActivityService(db).Load(date,date.AddDays(3));
+            var a=report.Rows.Single(r=>r.Name=="match-coach@example.test");var b=report.Rows.Single(r=>r.Name=="match-other@example.test");
+            Check(a.Lineups==1&&a.Matches==0&&a.Points==1&&b.Lineups==0&&b.Matches==1&&b.Points==1,"Activity attributes lineup and completion to their first actual actors");
+            Check(a.Days==1&&a.Last==BillingClock.UtcDate(date.AddDays(1)),"Match activity contributes to active days and last registration");
+            Check((await new CoachActivityService(db).Load(date.AddDays(3),date.AddDays(3))).Rows.All(r=>r.Points==0),"Later match corrections do not earn points in a new reporting period");
+            Check((await new CoachActivityService(db).Load(date,date)).Rows.All(r=>r.Points==0),"Unconfirmed draft lineup earns no activity points");
+        }
+        await using(var db=Db(2)){Check((await new CoachActivityService(db).Load(new(2001,1,10),new(2001,1,13))).Rows.All(r=>r.Lineups==0&&r.Matches==0),"Match activity remains isolated by club");}    }
 }

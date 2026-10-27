@@ -25,6 +25,14 @@ public class ParentPortalService(ApplicationDbContext db)
         // The gate is enforced before loading any private data, including parking.
         if (result.NeedsAcknowledgement) return result;
         result.StudentId=student.Id;result.FamilyName=access.Family?.Name;
+        result.BirthDate=student.DateOfBirth;
+        result.Age=today.Year-student.DateOfBirth.Year-(today<student.DateOfBirth.AddYears(today.Year-student.DateOfBirth.Year)?1:0);
+        result.HasPhoto=await db.Set<StudentPhoto>().AnyAsync(p=>p.StudentId==student.Id);
+        var sport=await new SportDevelopmentService(db).Sport();
+        var profiles=await db.DevelopmentRecords.AsNoTracking().Where(r=>r.StudentId==student.Id&&r.Sport==sport&&r.Kind=="Profile"&&r.Date<=today).OrderByDescending(r=>r.Date).ThenByDescending(r=>r.Id).ToListAsync();
+        string? Profile(string key)=>profiles.FirstOrDefault(p=>p.Values.ContainsKey(key))?.Values.GetValueOrDefault(key);
+        result.Position=Profile("PlayerRole")=="Portier"?"Portier":Profile("PrimaryPosition")??Profile("Position");
+        result.Foot=Profile("Foot");
         var chatCoaches=(await new CoachChatService(db).Recipients(student.Id)).Select(x=>x.Id).ToList();
         result.UnreadMessages=await db.CoachMessages.CountAsync(x=>x.StudentId==student.Id&&chatCoaches.Contains(x.CoachId)&&!x.FromParent&&x.ReadAt==null);
         result.Progress=await new ParentProgressService(db).Load(student.Id,today);
@@ -59,7 +67,12 @@ public class ParentPortalService(ApplicationDbContext db)
             if (result.TodaySessions.Count > 0) result.ParkingTicketId = ParentPortalPolicy.TicketId(student.Id, today);
         }
         var end = month.AddMonths(1);
-        if (finance)
+            var records = await db.AttendancePlayers.AsNoTracking()
+                .Where(a => a.StudentId == student.Id && a.TeamAttendance!.Date >= month && a.TeamAttendance.Date < end && a.TeamAttendance.Date <= today)
+                .Select(a => new { a.TeamAttendance!.Date, a.Present }).ToListAsync();
+            result.Attendance = records.GroupBy(a => a.Date).OrderByDescending(g => g.Key)
+                .Select(g => new ParentAttendance(g.Key, g.Any(a => a.Present))).ToList();
+
         {
             var fromUtc = BillingClock.UtcDate(month); var toUtc = BillingClock.UtcDate(end);
             result.Movements = await db.StudentTransactions.AsNoTracking()
@@ -67,16 +80,10 @@ public class ParentPortalService(ApplicationDbContext db)
                 .OrderByDescending(t => t.TransactionDate).ThenByDescending(t => t.Id)
                 .Select(t => new ParentMovement(t.TransactionDate, t.Debit, t.Credit)).ToListAsync();
         }
-        else
         {
             if (student.IsActive && student.TrainingTeamId.HasValue)
                 result.Schedule = await db.TrainingSessions.AsNoTracking().Where(s => s.TrainingTeamId == student.TrainingTeamId && s.TrainingTeam!.IsActive)
                     .OrderBy(s => s.Day).ThenBy(s => s.StartsAt).Select(s => new ParentSchedule(s.Day, s.StartsAt, s.EndsAt)).ToListAsync();
-            var records = await db.AttendancePlayers.AsNoTracking()
-                .Where(a => a.StudentId == student.Id && a.TeamAttendance!.Date >= month && a.TeamAttendance.Date < end && a.TeamAttendance.Date <= today)
-                .Select(a => new { a.TeamAttendance!.Date, a.Present }).ToListAsync();
-            result.Attendance = records.GroupBy(a => a.Date).OrderByDescending(g => g.Key)
-                .Select(g => new ParentAttendance(g.Key, g.Any(a => a.Present))).ToList();
         }
         return result;
     }

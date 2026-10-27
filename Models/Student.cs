@@ -8,6 +8,7 @@ public class Student
     [StringLength(64)] public string? ParentLinkToken { get; set; }
     [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
+    public bool ContractPending { get; set; }
     public bool FirstMonthUsesWeeks { get; set; }
     public Guid Revision { get; set; } = Guid.NewGuid();
 

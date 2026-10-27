@@ -178,6 +178,7 @@ try
     await using (var db = Db(1)) await Reject(() => DataResetService.ResetAsync(db), "Non-owner cannot reset operational data");
     await using (var db = Db(1)) { db.Club.IsOwner = true; await DataResetService.ResetAsync(db); }
     await using (var db = Db(2)) Check(await db.Students.AnyAsync(x => x.Id == secondStudent), "Reset preserves other club's players");
+    await ContractChecks.Run(options);
     await HttpChecks.Run(root, connection.ConnectionString, args.Contains("--ui"));
     await ChatChecks.Run(options);
     await SportChecks.Run(options);

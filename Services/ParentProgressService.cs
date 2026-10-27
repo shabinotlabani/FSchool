@@ -17,6 +17,6 @@ public class ParentProgressService(ApplicationDbContext db)
             .Select(x=>new{x.Date,x.Technique,x.Fitness}).ToListAsync();
         var latest= evaluations.GroupBy(x=>x.Date).Select(g=>g.Last()).ToList();
         if(latest.Count>0){charts.Add(new("Teknika","/5",latest.Select(x=>new DevelopmentPoint(x.Date,x.Technique)).ToList(),true));charts.Add(new("Përgatitja fizike","/5",latest.Select(x=>new DevelopmentPoint(x.Date,x.Fitness)).ToList(),true));}
-        return charts;
+        return charts.Select(c=>c.Rating?c with {Unit="/100",Points=c.Points.Select(p=>p with {Value=Math.Clamp(p.Value*20,0,100)}).ToList()}:c).ToList();
     }
 }

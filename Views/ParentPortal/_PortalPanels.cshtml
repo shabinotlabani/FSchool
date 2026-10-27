@@ -1,0 +1,20 @@
+@model ParentPortalModel
+@using _2Korriku.Services
+@{var token=Context.Request.RouteValues["token"]?.ToString();}
+<div class="portal-actions" data-start-panel="@(Model.Finance?"finance":"")">
+<details id="attendance" class="portal-section"><summary><i class="care-icon"><partial name="_CareIcon" model='@("progress")'/></i><span>Prezenca</span><small>Stërvitjet dhe orari</small></summary><div class="parent-care-content">
+<section class="parking-section"><div class="section-title"><h2>Stërvitja sot</h2><time>@Model.Today.ToString("dd.MM.yyyy")</time></div>@foreach(var session in Model.TodaySessions){<p class="parking-time">@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</p>}@if(Model.TodaySessions.Count==0){<p class="empty">Sot nuk ka stërvitje të planifikuar.</p>}</section>
+<section class="weekly-schedule"><h2>Orari javor</h2>@foreach(var session in Model.Schedule){<div class="row"><span>@TeamService.DayName(session.Day)</span><strong>@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</strong></div>}@if(Model.Schedule.Count==0){<p class="empty">Pa orar.</p>}</section>
+@await Html.PartialAsync("_PanelMonth",Model,new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData){["Panel"]="attendance"})
+@if(Model.Attendance.Count>0){var present=Model.Attendance.Count(a=>a.Present);var percent=(int)new MonthlyAttendanceSummary(present,Model.Attendance.Count).Percent;<div class="row attendance-summary"><strong>@percent% <small>pjesëmarrje</small></strong><span>@present nga @Model.Attendance.Count stërvitje</span></div><progress value="@percent" max="100" aria-label="Prezenca">@percent%</progress>@foreach(var entry in Model.Attendance){<div class="row"><time>@entry.Date.ToString("dd.MM.yyyy")</time><span class="status @(entry.Present?"present":"absent")">@(entry.Present?"Prezent":"Mungon")</span></div>}}
+else{<p class="empty">Pa prezencë të regjistruar.</p>}
+</div></details>
+<details id="finance" class="portal-section"><summary><i class="care-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18M15 14h3"/></svg></i><span>Kartela financiare</span><small>Pagesat dhe gjendja</small></summary><div class="parent-care-content">
+<div class="balance">@(Model.FamilyName==null?"Për t’u paguar":"Për t’u paguar · Familja")<strong>@Model.Debt.ToString("N2")</strong>@if(Model.Advance>0){<span>Parapagim <strong>@Model.Advance.ToString("N2")</strong></span>}</div>
+@await Html.PartialAsync("_PanelMonth",Model,new Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary(ViewData){["Panel"]="finance"})
+@if(Model.FamilyName!=null){<h2>Veprimet · @Model.Name</h2>}
+<div class="statement"><div class="entry headings"><span>Data</span><span>Detyrim</span><span>Pagesë / kredit</span></div>@foreach(var entry in Model.Movements){<div class="entry"><time>@BillingClock.LocalDate(entry.Date).ToString("dd.MM")</time><strong>@(entry.Debit>0?entry.Debit.ToString("N2"):"—")</strong><strong>@(entry.Credit>0?entry.Credit.ToString("N2"):"—")</strong></div>}@if(Model.Movements.Count==0){<p class="empty">Pa veprime.</p>}</div>
+</div></details>
+<partial name="_CareSections" model="Model"/>
+<a class="portal-action-link" asp-controller="ParentChat" asp-action="Thread" asp-route-token="@token" asp-route-studentId="@Model.StudentId"><i class="care-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4h16v12H9l-5 4Z"/><path d="M8 8h8M8 12h5"/></svg></i><span>Kontakto trajnerin</span><small>@(Model.UnreadMessages>0?Model.UnreadMessages+" mesazhe të reja":"Mesazhet")</small></a>
+</div>

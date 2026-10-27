@@ -49,6 +49,7 @@ public class CoachesController(ApplicationDbContext db, UserManager<ApplicationU
   if(User.IsInRole(Roles.Coach) && !await db.CoachTeams.AnyAsync(x=>x.UserId==User.FindFirstValue(ClaimTypes.NameIdentifier)&&x.TrainingTeamId==id)) return NotFound();
   var team=await db.TrainingTeams.AsNoTracking().Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).Include(t=>t.Students.Where(s=>s.IsActive)).SingleOrDefaultAsync(t=>t.Id==id);
   if(team==null)return NotFound();
+  ViewData["Leagues"]=await db.Leagues.AsNoTracking().Where(l=>l.Teams.Any(t=>t.TrainingTeamId==id)).ToListAsync();
   ViewData["Search"]=search;
   if(!string.IsNullOrWhiteSpace(search))team.Students=team.Students.Where(s=>s.FullName.Contains(search.Trim(),StringComparison.OrdinalIgnoreCase)).ToList();
   return View(team);

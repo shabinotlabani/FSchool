@@ -21,6 +21,7 @@
     if (User.IsInRole(Roles.FieldOperator)) navigation = new[] { (Controller: "Fields", Label: "Rezervimet private", Icon: "calendar", Group: "") };
     if (User.IsInRole(Roles.SuperAdmin)) navigation = navigation.Append((Controller: "Sponsorships", Label: "Sponsorizimet", Icon: "wallet", Group: "Financat")).ToArray();
     var accountName = User.Identity?.Name?.Split('@')[0] ?? "Llogaria";
+    if(User.IsInRole(Roles.SuperAdmin))navigation=navigation.Append((Controller:"PlayerContracts",Label:"Kontratat",Icon:"players",Group:"Shkolla")).ToArray();
     if(User.IsInRole(Roles.Admin))navigation=navigation.Append((Controller:"CareStaff",Label:"Stafi shëndetësor",Icon:"players",Group:"Shkolla")).ToArray();
     if(User.IsInRole(Roles.Doctor)||User.IsInRole(Roles.Nutritionist))navigation=new[]{(Controller:"PlayerCare",Label:"Lojtarët dhe kontrollet",Icon:"players",Group:"")};
 }

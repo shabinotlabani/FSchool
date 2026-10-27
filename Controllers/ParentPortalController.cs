@@ -17,6 +17,24 @@ namespace _2Korriku.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class ParentPortalController(ApplicationDbContext db) : Controller
 {
+    [HttpGet("p/{token}/photo/{studentId:int}")]
+    public async Task<IActionResult> Photo(string token,int studentId)
+    {
+        var model=await Load(token,TariffService.CurrentMonth,studentId:studentId);
+        if(model==null)return NotFound();if(model.NeedsAcknowledgement)return StatusCode(403);
+        var photo=await db.Set<_2Korriku.Models.StudentPhoto>().AsNoTracking().Where(p=>p.StudentId==studentId).Select(p=>p.Data).SingleOrDefaultAsync();
+        Response.Headers["X-Content-Type-Options"]="nosniff";
+        return photo==null?NotFound():File(photo,"image/webp");
+    }
+    [HttpPost("p/{token}/photo/{studentId:int}"),ValidateAntiForgeryToken,RequestSizeLimit(262144)]
+    public async Task<IActionResult> UploadPhoto(string token,int studentId,IFormFile? photo,bool remove=false,bool photoConsent=false)
+    {
+        var model=await Load(token,TariffService.CurrentMonth,studentId:studentId);
+        if(model==null)return NotFound();if(model.NeedsAcknowledgement)return StatusCode(403);
+        if(!remove&&!photoConsent)return BadRequest(new{message="Pranoni përgjegjësinë për foton para ngarkimit."});
+        try{await new StudentPhotoService(db).Save(studentId,photo,remove);return Json(new{success=true});}
+        catch(System.ComponentModel.DataAnnotations.ValidationException ex){return BadRequest(new{message=ex.Message});}
+    }
     public override void OnActionExecuting(ActionExecutingContext context)
     {
         Response.Headers["Referrer-Policy"] = "no-referrer";

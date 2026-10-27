@@ -27,9 +27,12 @@ public class MatchService(ApplicationDbContext db)
             .Where(m=>ids.Contains(m.TrainingTeamId)&&(!teamId.HasValue||m.TrainingTeamId==teamId)&&m.Date.Year==year&&(kind==null||m.Kind==kind))
             .OrderByDescending(m=>m.Date).ThenByDescending(m=>m.Kickoff).ToListAsync();
         var result=new MatchList{Teams=teams,TeamId=teamId,Year=year,Kind=kind,Matches=games};
-        foreach(var t in teams.Where(t=>!teamId.HasValue||t.Id==teamId))foreach(var k in kind==null?new[]{"Official","Cup","Friendly"}:new[]{kind}){
-            var next=games.Where(g=>g.TrainingTeamId==t.Id&&g.Kind==k&&g.Status=="Draft"&&g.Date>=BillingClock.Today).OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).FirstOrDefault();
-            foreach(var a in await new FootballService(db).Alerts(t.Id,k,next?.Date??BillingClock.Today,next?.Kickoff,next?.Id??0))result.DisciplineAlerts.Add((t.Id,t.Name,k,a));
+        foreach(var t in teams.Where(t=>!teamId.HasValue||t.Id==teamId)){
+            var leagues=await db.Leagues.AsNoTracking().Where(l=>l.IsActive&&l.Teams.Any(x=>x.TrainingTeamId==t.Id)).ToListAsync();
+            foreach(var league in leagues){
+                var next=games.Where(g=>g.TrainingTeamId==t.Id&&g.LeagueId==league.Id&&g.Status=="Draft"&&g.Date>=BillingClock.Today).OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).FirstOrDefault();
+                foreach(var a in await new FootballService(db).Alerts(t.Id,league.Kind,next?.Date??BillingClock.Today,next?.Kickoff,next?.Id??0,league.Id))result.DisciplineAlerts.Add((t.Id,t.Name,league.Name,a));
+            }
         }
         return result;
     }
@@ -42,8 +45,12 @@ public class MatchService(ApplicationDbContext db)
         var input=game==null?new MatchInput{TeamId=teamId,Sport=sport,Duration=sport=="Basketball"?40:sport=="Handball"?60:90,PlayersOnCourt=sport switch{"Basketball"=>5,"Volleyball"=>6,"Handball"=>7,"Tennis"=>1,_=>11}}:
             new MatchInput{Id=game.Id,RequestId=game.RequestId,Revision=game.Revision,TeamId=teamId,Sport=sport,Opponent=game.Opponent,Competition=game.Competition,Venue=game.Venue,Date=game.Date,Kickoff=game.Kickoff,Kind=game.Kind,Status=game.Status,Home=game.Home,Duration=game.Duration,PlayersOnCourt=game.PlayersOnCourt,ScoreFor=game.ScoreFor,ScoreAgainst=game.ScoreAgainst,Formation=game.Formation};
         input.TeamName=team.Name;
+        input.LeagueId=game?.LeagueId;
+        input.Leagues=await db.Leagues.AsNoTracking().Where(l=>(l.IsActive&&l.Teams.Any(t=>t.TrainingTeamId==teamId))||l.Id==input.LeagueId).OrderByDescending(l=>l.StartsOn).ThenBy(l=>l.Name).ToListAsync();
+        if(game==null)input.LeagueId=await new LeagueService(db).Eligible(teamId,input.Date).OrderByDescending(l=>l.StartsOn).ThenBy(l=>l.Name).Select(l=>(int?)l.Id).FirstOrDefaultAsync();
+        if(game==null)input.Kind=input.LeagueId.HasValue?input.Leagues.Single(l=>l.Id==input.LeagueId).Kind:"Friendly";
         input.Events=game?.Events??[];
-        if(sport=="Football"){input.DisciplineAlerts=await new FootballService(db).Alerts(teamId,input.Kind,input.Date,input.Kickoff,input.Id);input.HasDisciplineRule=await db.DisciplineRules.AnyAsync(r=>r.TrainingTeamId==teamId&&r.Kind==input.Kind&&r.StartsOn<=input.Date&&r.EndsOn>=input.Date);}
+        if(sport=="Football"){input.DisciplineAlerts=await new FootballService(db).Alerts(teamId,input.Kind,input.Date,input.Kickoff,input.Id,input.LeagueId);input.HasDisciplineRule=await new FootballService(db).Rule(teamId,input.Kind,input.Date,input.LeagueId)!=null;}
         var stored=game?.Players.ToDictionary(p=>p.StudentId)??[];
         var students=await db.Students.AsNoTracking().Where(s=>(s.TrainingTeamId==teamId&&s.IsActive)||stored.Keys.Contains(s.Id)).OrderBy(s=>s.FirstName).ThenBy(s=>s.LastName).ToListAsync();
         var care=await new PlayerCareService(db).TrainingNotices(students.Select(s=>s.Id).ToList(),input.Date);
@@ -90,7 +97,6 @@ public class MatchService(ApplicationDbContext db)
     public async Task<int> Save(string actor,MatchInput input)
     {
         if(input.Events==null)throw new ValidationException("Kontrolloni ngjarjet.");
-        var minutes=ValidateMinutes(input);
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2022)");
@@ -100,6 +106,15 @@ public class MatchService(ApplicationDbContext db)
         var game=input.Id==0?new MatchGame{TrainingTeamId=input.TeamId,RequestId=input.RequestId,Sport=await new SportDevelopmentService(db).Sport()}:
             await db.MatchGames.Include(m=>m.Players).SingleOrDefaultAsync(m=>m.Id==input.Id&&m.TrainingTeamId==input.TeamId)??throw new UnauthorizedAccessException();
         if(input.Id!=0&&game.Revision!=input.Revision)throw new ValidationException("Ndeshja është ndryshuar nga një trajner tjetër. Rihapeni para ruajtjes.");
+        if(input.Id!=0&&game.Status!="Draft"&&game.LeagueId!=input.LeagueId)throw new ValidationException("Liga nuk ndryshohet pas konfirmimit.");
+        League? league=null;
+        if(input.LeagueId.HasValue){
+            league=await db.Leagues.SingleOrDefaultAsync(l=>l.Id==input.LeagueId&&l.Teams.Any(t=>t.TrainingTeamId==input.TeamId));
+            if(league==null||input.Date<league.StartsOn||input.Date>league.EndsOn||(!league.IsActive&&game.LeagueId!=league.Id))throw new ValidationException("Zgjidhni një ligë aktive të ekipit për datën e ndeshjes.");
+        }
+        input.Kind=league?.Kind??(input.Id!=0&&game.LeagueId==null?game.Kind:input.Kind);
+        var minutes=ValidateMinutes(input);
+        game.LeagueId=input.LeagueId;
         if(game.Sport=="Football"&&input.Id!=0){
             if(game.Status=="Draft"&&input.Status=="Completed")throw new ValidationException("Konfirmoni formacionin para përfundimit të ndeshjes.");
             if(game.Status=="Draft"&&input.Status=="Live"){
@@ -121,7 +136,7 @@ public class MatchService(ApplicationDbContext db)
             if(!students.TryGetValue(p.StudentId,out var s)||(!old.ContainsKey(p.StudentId)&&(s.TrainingTeamId!=input.TeamId||!s.IsActive)))throw new UnauthorizedAccessException();
         var notices=await new PlayerCareService(db).TrainingNotices(ids,input.Date);
         if(input.Status!="Cancelled"&&notices.Any(n=>n.Status=="Unavailable"&&input.Players.Any(p=>p.StudentId==n.StudentId&&(p.Role is "Starter" or "Substitute"))))throw new ValidationException("Një lojtar ka ndalim mjekësor në datën e ndeshjes. Nuk mund të shënohet në lojë.");
-        game.Opponent=input.Opponent.Trim();game.Competition=input.Competition?.Trim();game.Venue=input.Venue?.Trim();game.Kind=input.Kind;game.Status=input.Status;game.Date=input.Date;game.Kickoff=input.Kickoff;game.Home=input.Home;
+        game.Opponent=input.Opponent.Trim();game.Competition=league?.Name??input.Competition?.Trim();game.Venue=input.Venue?.Trim();game.Kind=input.Kind;game.Status=input.Status;game.Date=input.Date;game.Kickoff=input.Kickoff;game.Home=input.Home;
         game.Formation=input.Formation;game.Duration=input.Duration;game.PlayersOnCourt=input.PlayersOnCourt;game.ScoreFor=input.ScoreFor;game.ScoreAgainst=input.ScoreAgainst;game.UpdatedById=actor;game.UpdatedAt=DateTime.UtcNow;game.Revision=Guid.NewGuid();
         foreach(var removed in game.Players.Where(p=>!input.Players.Any(i=>i.StudentId==p.StudentId&&i.Role!="NotSelected")).ToList()){db.MatchPlayers.Remove(removed);game.Players.Remove(removed);}
         foreach(var p in input.Players.Where(p=>p.Role!="NotSelected")){
@@ -134,14 +149,17 @@ public class MatchService(ApplicationDbContext db)
         db.MatchChanges.Add(new(){MatchGame=game,ActorId=actor,CreatedAt=DateTime.UtcNow,Snapshot=JsonSerializer.Serialize(input)});
         await db.SaveChangesAsync();await tx.CommitAsync();return game.Id;
     }
-    public async Task<MatchReport> Report(string actor,int? teamId,int year,string? kind,int? studentId)
+    public async Task<MatchReport> Report(string actor,int? teamId,int year,string? kind,int? studentId,int? leagueId=null)
     {
         var list=await List(actor,teamId,year,kind);
+        var teamIds=list.Teams.Where(t=>!teamId.HasValue||t.Id==teamId).Select(t=>t.Id).ToList();
+        var leagues=await db.Leagues.AsNoTracking().Where(l=>l.Teams.Any(t=>teamIds.Contains(t.TrainingTeamId))).OrderByDescending(l=>l.StartsOn).ThenBy(l=>l.Name).ToListAsync();
+        if(leagueId.HasValue&&!leagues.Any(l=>l.Id==leagueId))throw new UnauthorizedAccessException();
         if(studentId.HasValue&&!list.Matches.Any(m=>m.Players.Any(p=>p.StudentId==studentId))&&!await new CoachChatService(db).Assigned(actor).AnyAsync(s=>s.Id==studentId))throw new UnauthorizedAccessException();
-        var games=list.Matches.Where(g=>g.Status=="Completed"&&(!studentId.HasValue||g.Players.Any(p=>p.StudentId==studentId))).ToList();
+        var games=list.Matches.Where(g=>g.Status=="Completed"&&(!leagueId.HasValue||g.LeagueId==leagueId)&&(!studentId.HasValue||g.Players.Any(p=>p.StudentId==studentId))).ToList();
         var totals=games.SelectMany(g=>g.Players.Where(p=>!studentId.HasValue||p.StudentId==studentId).Select(p=>new{Game=g,Player=p})).GroupBy(x=>x.Player.StudentId)
             .Select(g=>new MatchPlayerTotal(g.Key,g.First().Player.Name,g.Count(x=>x.Player.Minutes>0),g.Count(x=>x.Player.Role=="Starter"),g.Count(x=>x.Player.Role=="Substitute"),g.Count(x=>x.Player.Role=="Unused"),g.Where(x=>x.Game.Kind=="Official").Sum(x=>x.Player.Minutes),g.Where(x=>x.Game.Kind=="Friendly").Sum(x=>x.Player.Minutes)) { Goals=g.Sum(x=>x.Game.Events.Count(e=>e.PlayerId==g.Key&&(e.Kind is "Goal" or "PenaltyGoal"))), Assists=g.Sum(x=>x.Game.Events.Count(e=>e.AssistId==g.Key&&e.Kind=="Goal")), YellowCards=g.Sum(x=>x.Game.Events.Count(e=>e.PlayerId==g.Key&&(e.Kind is "Yellow" or "SecondYellow"))), RedCards=g.Sum(x=>x.Game.Events.Count(e=>e.PlayerId==g.Key&&FootballLabels.Dismissal(e))), CupMinutes=g.Where(x=>x.Game.Kind=="Cup").Sum(x=>x.Player.Minutes) })
             .OrderByDescending(x=>x.OfficialMinutes+x.CupMinutes+x.FriendlyMinutes).ThenBy(x=>x.Name).ToList();
-        return new(){Teams=list.Teams,TeamId=teamId,Year=year,Kind=kind,Matches=games,StudentId=studentId,Totals=totals};
+        return new(){Teams=list.Teams,TeamId=teamId,Year=year,Kind=kind,LeagueId=leagueId,Leagues=leagues,Matches=games,StudentId=studentId,Totals=totals};
     }
 }

@@ -14,17 +14,24 @@ public class MatchesController(ApplicationDbContext db) : Controller
 {
     private string Actor=>User.FindFirstValue(ClaimTypes.NameIdentifier)!;
     private MatchService Service=>new(db);
-    public async Task<IActionResult> Matrix(int? teamId,int? year,string? kind)
+    public async Task<IActionResult> Matrix(int? teamId,int? year,string? kind,int? leagueId)
     {
         try{
             teamId??=await Service.Teams(Actor).OrderBy(t=>t.Name).Select(t=>(int?)t.Id).FirstOrDefaultAsync();
             if(teamId==null)return RedirectToAction(nameof(Index));
-            var report=await Service.Report(Actor,teamId,year??BillingClock.Today.Year,string.IsNullOrEmpty(kind)?null:kind,null);
+            var report=await Service.Report(Actor,teamId,year??BillingClock.Today.Year,string.IsNullOrEmpty(kind)?null:kind,null,leagueId);
             var students=await db.Students.AsNoTracking().Where(s=>s.TrainingTeamId==teamId&&s.IsActive).ToListAsync();
             var rows=report.Totals.ToDictionary(p=>p.StudentId);
             foreach(var s in students)rows.TryAdd(s.Id,new(s.Id,s.FullName,0,0,0,0,0,0));
             return View(new MatchMatrix{Report=report,Players=rows.Values.OrderBy(p=>p.Name).ToList()});
         }catch(UnauthorizedAccessException){return NotFound();}catch(ValidationException){return BadRequest();}
+    }
+    public async Task<IActionResult> LeagueRules(int id,int teamId)
+    {
+        if(!await Service.Teams(Actor).AnyAsync(t=>t.Id==teamId))return NotFound();
+        var league=await db.Leagues.AsNoTracking().SingleOrDefaultAsync(l=>l.Id==id&&l.Teams.Any(t=>t.TrainingTeamId==teamId));
+        if(league==null)return NotFound();
+        ViewData["TeamId"]=teamId;return View(league);
     }
     public async Task<IActionResult> Discipline(int teamId,string kind="Official",DateOnly? date=null)
     {
@@ -91,7 +98,7 @@ public class MatchesController(ApplicationDbContext db) : Controller
         try{
             var fresh=await Service.Load(Actor,input.Id,input.TeamId);
             input.Status=fresh.Status;ModelState.Remove(nameof(input.Status));
-            input.DisciplineAlerts=fresh.DisciplineAlerts;input.HasDisciplineRule=fresh.HasDisciplineRule;input.TeamName=fresh.TeamName;input.Sport=fresh.Sport;
+            input.Leagues=fresh.Leagues;input.DisciplineAlerts=fresh.DisciplineAlerts;input.HasDisciplineRule=fresh.HasDisciplineRule;input.TeamName=fresh.TeamName;input.Sport=fresh.Sport;
             if(input.Players==null)return BadRequest();
             foreach(var p in input.Players){var known=fresh.Players.SingleOrDefault(x=>x.StudentId==p.StudentId);if(known==null)return NotFound();p.Name=known.Name;p.Care=known.Care;}
             return View(input);
@@ -103,9 +110,9 @@ public class MatchesController(ApplicationDbContext db) : Controller
         var game=await db.MatchGames.AsNoTracking().Include(g=>g.TrainingTeam).Include(g=>g.Players).SingleOrDefaultAsync(g=>g.Id==id&&teams.Contains(g.TrainingTeamId));
         return game==null?NotFound():View(game);
     }
-    public async Task<IActionResult> Report(int? teamId,int? year,string? kind,int? studentId)
+    public async Task<IActionResult> Report(int? teamId,int? year,string? kind,int? studentId,int? leagueId)
     {
-        try{return View(await Service.Report(Actor,teamId,year??BillingClock.Today.Year,string.IsNullOrEmpty(kind)?null:kind,studentId));}
+        try{return View(await Service.Report(Actor,teamId,year??BillingClock.Today.Year,string.IsNullOrEmpty(kind)?null:kind,studentId,leagueId));}
         catch(UnauthorizedAccessException){return NotFound();}
         catch(ValidationException){return BadRequest();}
     }
