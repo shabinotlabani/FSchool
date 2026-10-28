@@ -116,9 +116,12 @@ public class MatchList
     public string? Kind { get; set; }
     public List<MatchGame> Matches { get; set; } = [];
     public List<PlayerMonthlyCount> ActivePlayersByMonth { get; set; } = [];
+    public MonthlyPaymentRate? CurrentMonthPayments { get; set; }
+    public List<MonthlyPaymentRate> MonthlyPayments { get; set; } = [];
     public List<(int TeamId,string TeamName,string Competition,DisciplineAlert Alert)> DisciplineAlerts { get; set; } = [];
 }
 public record PlayerMonthlyCount(int Month, string Label, int Count);
+public record MonthlyPaymentRate(int Eligible, int Paid, int Partial, decimal Percent, string MonthLabel);
 public record MatchPlayerTotal(int StudentId, string Name, int Games, int Starts, int Substitutions, int Unused, int OfficialMinutes, int FriendlyMinutes)
 {
     public int CupMinutes { get; init; }

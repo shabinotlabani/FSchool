@@ -17,6 +17,7 @@
     .financial-report table tr { display: block; margin: 12px 0; border: 1px solid #dbe2ea; border-radius: 10px; overflow: hidden; }
     .financial-report table tr > :is(td, th) { display: block; width: auto; padding: 10px 12px; text-align: right; white-space: normal; overflow-wrap: anywhere; font-size: 14px; border-bottom: 1px solid #eef1f5; }
     .financial-report table tr > :first-child { text-align: left; font-weight: 650; background: #f0f3f9; color: #344a72; }
+    .financial-report .cash-report-table tr > :first-child { width: 100% !important; max-width: none; }
     .financial-report table tr > :not(:first-child)::before { content: attr(data-label); float: left; max-width: 48%; margin-right: 12px; text-align: left; color: #64748b; font-size: 12px; font-weight: 500; }
     .financial-report table tr > :is(td, th)::after { content: ''; display: block; clear: both; }
     .financial-report table tr > :last-child { border-bottom: 0; font-weight: 700; }
@@ -28,6 +29,7 @@
     .financial-report .cash-movements tr > td:first-child::before { content: attr(data-label); font-size: 12px; font-weight: 500; }
     .financial-report .cash-movements small { overflow-wrap: anywhere; }
     .financial-report .cash-expand { width: 100%; min-height: 34px; gap: 10px; }
+    .financial-report .cash-expand strong { min-width: 0; word-break: normal; overflow-wrap: normal; white-space: normal; }
     .financial-report .cash-expand > span { flex: 0 0 28px; width: 28px; height: 28px; font-size: 16px; }
     .financial-report .cash-expand.is-sub { padding-left: 0; }
     .financial-report .cash-expense-detail td:first-child,

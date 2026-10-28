@@ -46,7 +46,14 @@ public class HomeController : Controller
                     &&!contracts.Any(c=>c.StudentId==student.Id&&c.StartsOn<monthEnd&&(c.EndedOn??c.EndsOn)>=monthStart));
                 monthly.Add(new(month,monthNames[month-1],count));
             }
-            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year,ActivePlayersByMonth=monthly});
+            var allInvoices=await new BillingService(_context).GetInvoicesAsync();var paymentMonths=new List<MonthlyPaymentRate>();
+            for(var month=1;month<=today.Month;month++){
+                var monthStart=new DateOnly(today.Year,month,1);var monthEnd=monthStart.AddMonths(1);
+                var invoices=allInvoices.Where(i=>i.Period.Year==today.Year&&i.Period.Month==month&&i.Amount-i.Exempted>0.005m&&!i.Period.IsFeeWaived&&!contracts.Any(c=>c.StudentId==i.Student.Id&&c.StartsOn<monthEnd&&(c.EndedOn??c.EndsOn)>=monthStart)).ToList();
+                var paid=invoices.Count(i=>i.Due<=0.005m);var partial=invoices.Count(i=>i.Paid>0&&i.Due>0.005m);var rate=invoices.Count==0?0:Math.Round(paid*100m/invoices.Count,1,MidpointRounding.AwayFromZero);
+                paymentMonths.Add(new(invoices.Count,paid,partial,rate,monthNames[month-1]));
+            }
+            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year,ActivePlayersByMonth=monthly,CurrentMonthPayments=paymentMonths.LastOrDefault(),MonthlyPayments=paymentMonths});
         }
         if(User.IsInRole(_2Korriku.Models.Roles.Doctor)||User.IsInRole(_2Korriku.Models.Roles.Nutritionist))return RedirectToAction("Index","PlayerCare");
         if (User.IsInRole(_2Korriku.Models.Roles.FieldOperator)) return RedirectToAction("Index", "Fields");
