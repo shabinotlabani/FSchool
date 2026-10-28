@@ -63,6 +63,16 @@ public class StudentsController : Controller
     }
 
     [HttpGet, Authorize(Roles = Roles.Write)]
+    public async Task<IActionResult> PrintRegistration(int id)
+    {
+        var student = await _context.Students.AsNoTracking()
+            .Include(x => x.TrainingTeam)
+            .SingleOrDefaultAsync(x => x.Id == id);
+        if (student == null) return NotFound();
+        return View(student);
+    }
+
+    [HttpGet, Authorize(Roles = Roles.Write)]
     public async Task<IActionResult> Create(bool familyPicker=false)
     {
         ViewData["FamilyPicker"]=familyPicker;
@@ -148,6 +158,7 @@ public class StudentsController : Controller
             return RedirectToAction("Index","Payments");
         }
         TempData["Success"] = $"Lojtari {student.FullName} u regjistrua dhe fatura e muajit u krijua automatikisht.";
+        TempData["RegistrationFormId"] = student.Id;
         return RedirectToAction(nameof(Index));
     }
 

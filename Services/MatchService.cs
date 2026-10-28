@@ -8,8 +8,8 @@ namespace _2Korriku.Services;
 
 public class MatchService(ApplicationDbContext db)
 {
-    public IQueryable<TrainingTeam> Teams(string actor) => db.TrainingTeams.Where(t=>t.IsActive&&(t.CoachId==actor||t.AssistantCoachId==actor));
-    private async Task<TrainingTeam> Team(int id,string actor) => await Teams(actor).AsNoTracking().SingleOrDefaultAsync(t=>t.Id==id) ?? throw new UnauthorizedAccessException();
+    public IQueryable<TrainingTeam> Teams(string actor,bool manageAll=false) => db.TrainingTeams.Where(t=>t.IsActive&&(manageAll||t.CoachId==actor||t.AssistantCoachId==actor));
+    private async Task<TrainingTeam> Team(int id,string actor,bool manageAll=false) => await Teams(actor,manageAll).AsNoTracking().SingleOrDefaultAsync(t=>t.Id==id) ?? throw new UnauthorizedAccessException();
     public async Task<PlayerMatchMinutes> PlayerMinutes(string actor,int studentId,int? year=null)
     {
         await new PlayerDevelopmentService(db).Player(studentId,actor);
@@ -36,11 +36,11 @@ public class MatchService(ApplicationDbContext db)
         }
         return result;
     }
-    public async Task<MatchInput> Load(string actor,int id,int teamId)
+    public async Task<MatchInput> Load(string actor,int id,int teamId,bool manageAll=false)
     {
         MatchGame? game=null;
         if(id!=0){game=await db.MatchGames.AsNoTracking().Include(m=>m.Players).SingleOrDefaultAsync(m=>m.Id==id)??throw new UnauthorizedAccessException();teamId=game.TrainingTeamId;}
-        var team=await Team(teamId,actor);
+        var team=await Team(teamId,actor,manageAll);
         var sport=game?.Sport??await new SportDevelopmentService(db).Sport();
         var input=game==null?new MatchInput{TeamId=teamId,Sport=sport,Duration=sport=="Basketball"?40:sport=="Handball"?60:90,PlayersOnCourt=sport switch{"Basketball"=>5,"Volleyball"=>6,"Handball"=>7,"Tennis"=>1,_=>11}}:
             new MatchInput{Id=game.Id,RequestId=game.RequestId,Revision=game.Revision,TeamId=teamId,Sport=sport,Opponent=game.Opponent,Competition=game.Competition,Venue=game.Venue,Date=game.Date,Kickoff=game.Kickoff,Kind=game.Kind,Status=game.Status,Home=game.Home,Duration=game.Duration,PlayersOnCourt=game.PlayersOnCourt,ScoreFor=game.ScoreFor,ScoreAgainst=game.ScoreAgainst,Formation=game.Formation};
@@ -94,19 +94,19 @@ public class MatchService(ApplicationDbContext db)
         foreach(var point in events.OrderBy(e=>e.Minute).ThenBy(e=>e.Change)){count+=point.Change;if(count>input.PlayersOnCourt)throw new ValidationException("Në një interval ka më shumë lojtarë në fushë se numri i lejuar. Kontrolloni zëvendësimet.");}
         return minutes;
     }
-    public async Task<int> Save(string actor,MatchInput input)
+    public async Task<int> Save(string actor,MatchInput input,bool manageAll=false)
     {
         if(input.Events==null)throw new ValidationException("Kontrolloni ngjarjet.");
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2022)");
-        await Team(input.TeamId,actor);
+        await Team(input.TeamId,actor,manageAll);
         if(input.RequestId==Guid.Empty)throw new ValidationException("Rihapni formularin.");
-        if(input.Id==0){var duplicate=await db.MatchGames.AsNoTracking().SingleOrDefaultAsync(m=>m.RequestId==input.RequestId);if(duplicate!=null){await Team(duplicate.TrainingTeamId,actor);return duplicate.Id;}}
+        if(input.Id==0){var duplicate=await db.MatchGames.AsNoTracking().SingleOrDefaultAsync(m=>m.RequestId==input.RequestId);if(duplicate!=null){await Team(duplicate.TrainingTeamId,actor,manageAll);return duplicate.Id;}}
         var game=input.Id==0?new MatchGame{TrainingTeamId=input.TeamId,RequestId=input.RequestId,Sport=await new SportDevelopmentService(db).Sport()}:
             await db.MatchGames.Include(m=>m.Players).SingleOrDefaultAsync(m=>m.Id==input.Id&&m.TrainingTeamId==input.TeamId)??throw new UnauthorizedAccessException();
         if(input.Id!=0&&game.Revision!=input.Revision)throw new ValidationException("Ndeshja është ndryshuar nga një trajner tjetër. Rihapeni para ruajtjes.");
-        if(input.Id!=0&&game.Status!="Draft"&&game.LeagueId!=input.LeagueId)throw new ValidationException("Liga nuk ndryshohet pas konfirmimit.");
+        if(!manageAll&&input.Id!=0&&game.Status!="Draft"&&game.LeagueId!=input.LeagueId)throw new ValidationException("Liga nuk ndryshohet pas konfirmimit.");
         League? league=null;
         if(input.LeagueId.HasValue){
             league=await db.Leagues.SingleOrDefaultAsync(l=>l.Id==input.LeagueId&&l.Teams.Any(t=>t.TrainingTeamId==input.TeamId));
@@ -115,7 +115,7 @@ public class MatchService(ApplicationDbContext db)
         input.Kind=league?.Kind??(input.Id!=0&&game.LeagueId==null?game.Kind:input.Kind);
         var minutes=ValidateMinutes(input);
         game.LeagueId=input.LeagueId;
-        if(game.Sport=="Football"&&input.Id!=0){
+        if(!manageAll&&game.Sport=="Football"&&input.Id!=0){
             if(game.Status=="Draft"&&input.Status=="Completed")throw new ValidationException("Konfirmoni formacionin para përfundimit të ndeshjes.");
             if(game.Status=="Draft"&&input.Status=="Live"){
                 if(!input.Players.Any(p=>p.Role=="Starter")||input.Players.Any(p=>p.Role=="Substitute")||input.Events.Count>0||input.Players.Where(p=>p.Role=="Starter").Any(p=>p.Intervals.Count!=1||p.Intervals[0].From!=0||p.Intervals[0].To!=input.Duration))throw new ValidationException("Zgjidhni titullarët për formacionin bazë, pa ngjarje ose ndërrime.");

@@ -8,6 +8,9 @@
         const choices=categories.filter(c=>String(c.parentId)===parent.value);
         for(const c of choices)child.add(new Option(c.name,String(c.id)));
         child.value=choices.some(c=>String(c.id)===previous)?previous:'';
+        const linked=parent.selectedOptions[0]?.dataset.match==='true';
+        const box=document.querySelector('#match-expense'),match=document.querySelector('#MatchGameId');
+        if(box&&match){box.hidden=!linked;match.required=linked;if(!linked)match.value='';}
     }
     parent.addEventListener('change',()=>update(false));
     update(true);

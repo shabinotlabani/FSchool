@@ -18,9 +18,9 @@ public class ExpensesController(ApplicationDbContext db):Controller
     {
         var m=new ExpenseIndexModel{Filter=filter,Search=search,CategoryId=categoryId,IncludeCancelled=includeCancelled,Categories=await db.ExpenseCategories.AsNoTracking().Where(x=>x.ParentId==null).OrderBy(x=>x.Name).ToListAsync()};
         if(ModelState.IsValid){
-            var query=db.Expenses.AsNoTracking().Where(x=>x.Date>=filter.From&&x.Date<=filter.To&&(!categoryId.HasValue||x.CategoryId==categoryId)&&(includeCancelled||x.CancelledAt==null));
+            var query=db.Expenses.AsNoTracking().Include(x=>x.MatchGame).ThenInclude(x=>x!.TrainingTeam).Where(x=>x.Date>=filter.From&&x.Date<=filter.To&&(!categoryId.HasValue||x.CategoryId==categoryId)&&(includeCancelled||x.CancelledAt==null));
             if(!string.IsNullOrWhiteSpace(search))foreach(var term in search.Split(' ',StringSplitOptions.RemoveEmptyEntries)){
-                var value=term.ToLower();query=query.Where(x=>x.Description.ToLower().Contains(value)||(x.Recipient!=null&&x.Recipient.ToLower().Contains(value))||x.CategoryName.ToLower().Contains(value)||(x.SubcategoryName!=null&&x.SubcategoryName.ToLower().Contains(value))||(x.DocumentNumber!=null&&x.DocumentNumber.ToLower().Contains(value)));
+                var value=term.ToLower();query=query.Where(x=>x.Description.ToLower().Contains(value)||(x.Recipient!=null&&x.Recipient.ToLower().Contains(value))||x.CategoryName.ToLower().Contains(value)||(x.SubcategoryName!=null&&x.SubcategoryName.ToLower().Contains(value))||(x.DocumentNumber!=null&&x.DocumentNumber.ToLower().Contains(value))||(x.MatchGame!=null&&(x.MatchGame.Opponent.ToLower().Contains(value)||x.MatchGame.TrainingTeam.Name.ToLower().Contains(value))));
             }
             m.Expenses=await query.OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).ToListAsync();
         }
@@ -35,7 +35,7 @@ public class ExpensesController(ApplicationDbContext db):Controller
     [HttpGet,Authorize(Roles=Roles.Admin)]
     public async Task<IActionResult> Category(int id=0,int? parentId=null){
         var m=new ExpenseCategoryModel{ParentId=parentId};
-        if(id!=0){var c=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==id);if(c==null)return NotFound();m=new(){Id=c.Id,Revision=c.Revision,Name=c.Name,ParentId=c.ParentId,IsActive=c.IsActive};}
+        if(id!=0){var c=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==id);if(c==null)return NotFound();m=new(){Id=c.Id,Revision=c.Revision,Name=c.Name,ParentId=c.ParentId,IsActive=c.IsActive,ContextType=c.ContextType};}
         await CategoryChoices(m);return View(m);
     }
     [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Admin)]
@@ -45,6 +45,7 @@ public class ExpensesController(ApplicationDbContext db):Controller
     }
     private async Task Choices(ExpenseCreateModel m){
         m.Categories=await db.ExpenseCategories.AsNoTracking().Where(x=>x.IsActive&&(x.ParentId==null||x.Parent!.IsActive)).OrderBy(x=>x.Name).ToListAsync();
+        m.OfficialMatches=await db.MatchGames.AsNoTracking().Include(x=>x.TrainingTeam).Include(x=>x.League).Where(x=>x.Kind!="Friendly"&&x.Status!="Cancelled").OrderByDescending(x=>x.Date).ThenBy(x=>x.TrainingTeam.Name).ToListAsync();
         m.Available=await Service.AvailableAsync();
     }
     [HttpGet,Authorize(Roles=Roles.Write)]
@@ -54,7 +55,7 @@ public class ExpensesController(ApplicationDbContext db):Controller
         if(ModelState.IsValid)try{if(m.Method=="Bank"){await new BankVerificationService(db).QueueExpense(m,Actor);return RedirectToAction("Index","BankPayments");} var id=await Service.CreateAsync(m,Actor);TempData["Success"]="Shpenzimi u regjistrua dhe u zbrit nga mjetet e mbledhura.";return RedirectToAction(nameof(Details),new{id});}catch(Exception ex)when(ex is InvalidOperationException or ValidationException){ModelState.AddModelError("",ex.Message);}
         await Choices(m);return View(m);
     }
-    private Task<Expense?> Find(int id)=>db.Expenses.AsNoTracking().Include(x=>x.CreatedBy).Include(x=>x.CancelledBy).SingleOrDefaultAsync(x=>x.Id==id);
+    private Task<Expense?> Find(int id)=>db.Expenses.AsNoTracking().Include(x=>x.CreatedBy).Include(x=>x.CancelledBy).Include(x=>x.MatchGame).ThenInclude(x=>x!.TrainingTeam).SingleOrDefaultAsync(x=>x.Id==id);
     public async Task<IActionResult> Details(int id){var e=await Find(id);return e==null?NotFound():View(e);}
     public async Task<IActionResult> Print(int id){var e=await Find(id);return e==null?NotFound():View(e);}
     [HttpGet,Authorize(Roles=Roles.Admin)]

@@ -93,6 +93,8 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        builder.Ignore<FootballEvent>();
+        builder.Ignore<MatchInterval>();
         builder.Entity<ParentPushSettings>().Property(x=>x.TrainingReminders).HasDefaultValue(true);
         builder.Entity<ParentPushSettings>().Property(x=>x.ScheduleNotifications).HasDefaultValue(true);
         builder.Entity<ParentPushSettings>().Property(x=>x.PaymentReminders).HasDefaultValue(true);
@@ -183,6 +185,8 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Expense>().HasIndex(x=>x.Date);
         builder.Entity<Expense>().HasOne(x=>x.Category).WithMany().HasForeignKey(x=>x.CategoryId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<Expense>().HasOne(x=>x.Subcategory).WithMany().HasForeignKey(x=>x.SubcategoryId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Expense>().HasOne(x=>x.MatchGame).WithMany().HasForeignKey(x=>x.MatchGameId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Expense>().HasIndex(x=>x.MatchGameId);
         builder.Entity<Expense>().HasOne(x=>x.CreatedBy).WithMany().HasForeignKey(x=>x.CreatedById).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<Expense>().HasOne(x=>x.CancelledBy).WithMany().HasForeignKey(x=>x.CancelledById).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<ExpenseCategoryChange>().HasOne(x=>x.ExpenseCategory).WithMany().HasForeignKey(x=>x.ExpenseCategoryId).OnDelete(DeleteBehavior.Restrict);
@@ -318,6 +322,7 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<PlayerEvaluation>().Property(x=>x.Sport).HasDefaultValue("Football");
         builder.Entity<DevelopmentMetric>().HasIndex(x=>new{x.Sport,x.Section,x.Key}).IsUnique();
         builder.Entity<MatchGame>().HasIndex(x=>x.RequestId).IsUnique();
+        builder.Entity<MatchGame>().Ignore(x=>x.Events);
         builder.Entity<MatchGame>().Property(x=>x.EventData).HasDefaultValue("[]");
         builder.Entity<DisciplineRule>().HasIndex(x=>new{x.TrainingTeamId,x.Kind,x.StartsOn}).IsUnique();
         builder.Entity<DisciplineRule>().HasOne(x=>x.TrainingTeam).WithMany().HasForeignKey(x=>x.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);

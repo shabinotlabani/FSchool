@@ -13,6 +13,7 @@ public class ExpenseCategory
     public int? ParentId { get; set; }
     public ExpenseCategory? Parent { get; set; }
     public bool IsActive { get; set; } = true;
+    [StringLength(20)] public string? ContextType { get; set; }
 }
 public class ExpenseCategoryChange
 {
@@ -35,6 +36,8 @@ public class Expense
     public ExpenseCategory? Category { get; set; }
     public int? SubcategoryId { get; set; }
     public ExpenseCategory? Subcategory { get; set; }
+    public int? MatchGameId { get; set; }
+    public MatchGame? MatchGame { get; set; }
     [StringLength(100)] public string CategoryName { get; set; } = "";
     [StringLength(100)] public string? SubcategoryName { get; set; }
     public DateOnly Date { get; set; }
@@ -61,6 +64,8 @@ public class ExpenseCategoryModel : IValidatableObject
     [Required,StringLength(100)] public string Name { get; set; } = "";
     public int? ParentId { get; set; }
     public bool IsActive { get; set; } = true;
+    [RegularExpression("Match|",ErrorMessage="Zgjidhni një lidhje të vlefshme.")] public string? ContextType { get; set; }
+    public bool RequiresMatch { get=>ContextType=="Match"; set=>ContextType=value?"Match":null; }
     [StringLength(200)] public string? Reason { get; set; }
     [ValidateNever] public List<ExpenseCategory> Parents { get; set; } = [];
     [ValidateNever] public List<ExpenseCategoryChange> History { get; set; } = [];
@@ -73,6 +78,7 @@ public class ExpenseCreateModel : IValidatableObject
     public Guid RequestId { get; set; } = Guid.NewGuid();
     [Range(1,int.MaxValue,ErrorMessage="Zgjidhni kategorinë.")] public int CategoryId { get; set; }
     public int? SubcategoryId { get; set; }
+    public int? MatchGameId { get; set; }
     [Required] public DateOnly? Date { get; set; } = BillingClock.Today;
     [Range(typeof(decimal),"0.01","999999999.99")] public decimal Amount { get; set; }
     [Required,StringLength(200)] public string Description { get; set; } = "";
@@ -81,6 +87,7 @@ public class ExpenseCreateModel : IValidatableObject
     [Required,RegularExpression("Cash|Bank|Other")] public string Method { get; set; } = "Cash";
     [StringLength(500)] public string? Notes { get; set; }
     [ValidateNever] public List<ExpenseCategory> Categories { get; set; } = [];
+    [ValidateNever] public List<MatchGame> OfficialMatches { get; set; } = [];
     [ValidateNever] public decimal Available { get; set; }
     public IEnumerable<ValidationResult> Validate(ValidationContext context){
         if(RequestId==Guid.Empty)yield return new("Rihapni formularin.");

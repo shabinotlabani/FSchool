@@ -8,6 +8,7 @@
         (Controller: "Coaches", Label: "Trajnerët", Icon: "players", Group: "Shkolla"),
         (Controller: "Fields", Label: "Fushat dhe terminet", Icon: "calendar", Group: "Shkolla"),
         (Controller: "PersonalTraining", Label: "Trajnimet personale", Icon: "calendar", Group: "Shkolla"),
+        (Controller: "AdminMatches", Label: "Ndeshjet zyrtare", Icon: "calendar", Group: "Shkolla"),
         (Controller: "Payments", Label: "Pagesat", Icon: "wallet", Group: "Financat"),
         (Controller: "BankPayments", Label: "Verifikimi i bankës", Icon: "wallet", Group: "Financat"),
         (Controller: "Expenses", Label: "Shpenzimet", Icon: "wallet", Group: "Financat"),
@@ -17,6 +18,7 @@
         (Controller: "Sales", Label: "Daljet", Icon: "bag", Group: "Stoku")
     };
     if(!User.IsInRole(Roles.Admin)&&!User.IsInRole(Roles.Operator)) navigation=navigation.Where(x=>x.Controller!="BankPayments").ToArray();
+    if(!User.IsInRole(Roles.Admin))navigation=navigation.Where(x=>x.Controller!="AdminMatches").ToArray();
     if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Prezenca dhe ekipet", Icon: "calendar", Group: "") };
     if (User.IsInRole(Roles.FieldOperator)) navigation = new[] { (Controller: "Fields", Label: "Rezervimet private", Icon: "calendar", Group: "") };
     if (User.IsInRole(Roles.SuperAdmin)) navigation = navigation.Append((Controller: "Sponsorships", Label: "Sponsorizimet", Icon: "wallet", Group: "Financat")).ToArray();

@@ -18,7 +18,7 @@ public partial class BankVerificationService
     public Task<int> QueuePersonal(PersonalPaymentModel m,string actor)=>QueueAdditional(new PersonalPaymentModel{ChargeId=m.ChargeId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueueField(FieldPaymentModel m,string actor)=>QueueAdditional(new FieldPaymentModel{WholeSeries=m.WholeSeries,ExpectedState=m.ExpectedState,BookingId=m.BookingId,Revision=m.Revision,RequestId=m.RequestId,Amount=m.Amount,Method="Bank"},actor);
     public Task<int> QueueFamily(FamilyPaymentModel m,string actor)=>QueueAdditional(new FamilyPaymentModel{FamilyId=m.FamilyId,ExpectedState=m.ExpectedState,StudentId=m.StudentId,RequestId=m.RequestId,Amount=m.Amount,PaymentDate=m.PaymentDate,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
-    public Task<int> QueueExpense(ExpenseCreateModel m,string actor)=>QueueAdditional(new ExpenseCreateModel{RequestId=m.RequestId,CategoryId=m.CategoryId,SubcategoryId=m.SubcategoryId,Date=m.Date,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method="Bank",Notes=m.Notes?.Trim()},actor);
+    public Task<int> QueueExpense(ExpenseCreateModel m,string actor)=>QueueAdditional(new ExpenseCreateModel{RequestId=m.RequestId,CategoryId=m.CategoryId,SubcategoryId=m.SubcategoryId,MatchGameId=m.MatchGameId,Date=m.Date,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueueTreasury(TreasuryCreateModel m,string actor)=>QueueAdditional(new TreasuryCreateModel{RequestId=m.RequestId,Kind=m.Kind,Date=m.Date,Amount=m.Amount,Owner=m.Owner?.Trim(),Notes=m.Notes?.Trim(),Method="Bank"},actor);
 
     private async Task<int> QueueAdditional<T>(T model,string actor) where T:class
@@ -73,7 +73,10 @@ public partial class BankVerificationService
                 BillingService.AllocateFamilyPayment(account.Members.Select(x=>(x.Student.Id,x.MonthlyDue)),amount);
                 description=account.Family.Name;break;
             case ExpenseCreateModel m:
-                if(!await db.ExpenseCategories.AnyAsync(x=>x.Id==m.CategoryId&&x.IsActive&&x.ParentId==null))throw new InvalidOperationException("Zgjidhni kategori aktive.");
+                var expenseCategory=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.CategoryId&&x.IsActive&&x.ParentId==null)??throw new InvalidOperationException("Zgjidhni kategori aktive.");
+                if(expenseCategory.ContextType=="Match"&&!m.MatchGameId.HasValue)throw new InvalidOperationException("Zgjidhni ndeshjen zyrtare për këtë shpenzim.");
+                if(expenseCategory.ContextType!="Match"&&m.MatchGameId.HasValue)throw new InvalidOperationException("Kjo kategori nuk lidhet me ndeshje.");
+                if(m.MatchGameId.HasValue&&!await db.MatchGames.AnyAsync(x=>x.Id==m.MatchGameId&&x.Kind!="Friendly"&&x.Status!="Cancelled"))throw new InvalidOperationException("Zgjidhni një ndeshje zyrtare të vlefshme.");
                 description=m.Description;break;
             case TreasuryCreateModel m:description=m.Owner??"Gjendja fillestare e bankës";break;
             default:throw new InvalidOperationException("Lloji i pagesës nuk njihet.");

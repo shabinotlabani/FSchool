@@ -1034,6 +1034,9 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int?>("MatchGameId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1072,12 +1075,16 @@ namespace _2Korriku.Data.Migrations
 
                     b.HasIndex("Date");
 
+                    b.HasIndex("MatchGameId");
+
                     b.HasIndex("RequestId")
                         .IsUnique();
 
                     b.HasIndex("SubcategoryId");
 
                     b.HasIndex("ClubId", "CategoryId");
+
+                    b.HasIndex("ClubId", "MatchGameId");
 
                     b.HasIndex("ClubId", "SubcategoryId");
 
@@ -1097,6 +1104,10 @@ namespace _2Korriku.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(1);
+
+                    b.Property<string>("ContextType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -5367,6 +5378,11 @@ namespace _2Korriku.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("_2Korriku.Models.MatchGame", "MatchGame")
+                        .WithMany()
+                        .HasForeignKey("MatchGameId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("_2Korriku.Models.ExpenseCategory", "Subcategory")
                         .WithMany()
                         .HasForeignKey("SubcategoryId")
@@ -5379,6 +5395,12 @@ namespace _2Korriku.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("_2Korriku.Models.MatchGame", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "MatchGameId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("_2Korriku.Models.ExpenseCategory", null)
                         .WithMany()
                         .HasForeignKey("ClubId", "SubcategoryId")
@@ -5390,6 +5412,8 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("MatchGame");
 
                     b.Navigation("Subcategory");
                 });

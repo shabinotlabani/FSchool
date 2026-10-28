@@ -27,4 +27,17 @@
     .financial-report .cash-movements tr > td::before { float: none; display: block; max-width: none; margin: 0 0 4px; }
     .financial-report .cash-movements tr > td:first-child::before { content: attr(data-label); font-size: 12px; font-weight: 500; }
     .financial-report .cash-movements small { overflow-wrap: anywhere; }
+    .financial-report .cash-expand { width: 100%; min-height: 34px; gap: 10px; }
+    .financial-report .cash-expand > span { flex: 0 0 28px; width: 28px; height: 28px; font-size: 16px; }
+    .financial-report .cash-expand.is-sub { padding-left: 0; }
+    .financial-report .cash-expense-detail td:first-child,
+    .financial-report .cash-income-detail td:first-child { padding-left: 12px !important; }
+    .financial-report .cash-expense-detail,
+    .financial-report .cash-income-detail { margin-left: 12px; }
+    .financial-report .cash-expense-detail small,
+    .financial-report .cash-income-detail small { font-size: 12px; line-height: 1.4; }
+    .financial-report .cash-balances tr > :not(:first-child),
+    .financial-report .cash-breakdown tr > :not(:first-child) { min-height: 40px; }
 }
+
+.cash-expand{display:inline-flex;align-items:center;gap:8px;padding:0;border:0;background:transparent;color:inherit;text-align:left}.cash-expand>span{display:grid;place-items:center;width:20px;height:20px;border:1px solid #b9c7d2;border-radius:6px;background:#fff;color:#31566f;font-size:.85rem;line-height:1}.cash-expand.is-sub{padding-left:12px;font-weight:600}.cash-expense-detail,.cash-income-detail{background:#fbfcfd;font-size:.72rem}.cash-expense-detail td:first-child,.cash-income-detail td:first-child{padding-left:44px!important}.cash-expense-detail small,.cash-income-detail small{display:block;margin-top:2px;color:#788a97;font-size:.64rem;font-weight:400}.cash-expense-detail a,.cash-income-detail a{font-weight:650}.cash-income-group{background:#f4f6fa}.cash-report-table tr[hidden]{display:none}@media print{.cash-expand>span{display:none}.cash-report-table tr[hidden]{display:table-row}}

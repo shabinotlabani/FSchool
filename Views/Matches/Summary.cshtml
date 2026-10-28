@@ -14,5 +14,5 @@
 @foreach(var item in Model.Events.Select(e=>(Minute:e.Minute,Text:FootballLabels.Events.GetValueOrDefault(e.Kind,e.Kind)+" · "+(e.PlayerId.HasValue?Name(e.PlayerId):"Kundërshtari")+(e.AssistId.HasValue?" · Asist: "+Name(e.AssistId):""))).Concat(Model.Players.SelectMany(p=>p.Stints.SelectMany(s=>new[]{(Minute:s.From??0,Text:"Hyrje · "+p.Name),(Minute:s.To??Model.Duration,Text:"Dalje · "+p.Name)})).Where(e=>e.Minute>0&&e.Minute<Model.Duration)).OrderBy(e=>e.Minute)){<li><strong>@item.Minute′</strong><span>@item.Text</span></li>}
 @if(Model.Events.Count==0&&!Model.Players.Any(p=>p.Role=="Substitute")){<li>Pa ngjarje të regjistruara.</li>}
 </ol>}
-@if(!readOnly){<a class="btn btn-outline-primary mt-3" asp-action="Matrix" asp-route-teamId="@Model.TrainingTeamId" asp-route-year="@Model.Date.Year">Matrica e ekipit</a>}</div>
-@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="@(readOnly?"Home":"Matches")" asp-action="Index" asp-route-teamId="@Model.TrainingTeamId" asp-route-year="@Model.Date.Year">← Ndeshjet</a>}
+@if(!readOnly&&ViewData["AdminMatch"] is not true){<a class="btn btn-outline-primary mt-3" asp-action="Matrix" asp-route-teamId="@Model.TrainingTeamId" asp-route-year="@Model.Date.Year">Matrica e ekipit</a>}</div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="@(ViewData["AdminMatch"] is true?"AdminMatches":readOnly?"Home":"Matches")" asp-action="Index" asp-route-teamId="@Model.TrainingTeamId" asp-route-year="@Model.Date.Year">← Ndeshjet</a>}

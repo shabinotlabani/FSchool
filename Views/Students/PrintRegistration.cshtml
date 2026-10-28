@@ -1,0 +1,41 @@
+@model Student
+@using _2Korriku.Services
+@{ var club = await Club.Get(); Layout = "_PrintLayout"; ViewData["Title"] = "Formulari i regjistrimit · " + Model.FullName; }
+<link rel="stylesheet" href="~/css/student-registration-print.css" asp-append-version="true" />
+<div class="print-toolbar"><a asp-action="Index" class="app-back-button">← Lojtarët</a><button type="button" onclick="window.print()">Printo A4 · dy kopje</button></div>
+<p class="print-help">A4, shkalla 100%. Fleta përmban një kopje për prindin dhe një për klubin.</p>
+<main class="duplex-sheet registration-sheet">
+@foreach(var copy in new[]{"KOPJA PËR PRINDIN / KUJDESTARIN","KOPJA PËR KLUBIN"}){
+<section class="payment-copy registration-copy">
+    <header class="document-header">
+        <div class="document-brand"><img src="@Club.LogoUrl" alt="Logo e @club.DisplayName"/><div><strong>@club.DisplayName</strong><span>@club.LegalName</span><small>@string.Join(" · ",new[]{club.Address,club.City,club.Phone}.Where(x=>!string.IsNullOrWhiteSpace(x)))</small></div></div>
+        <div class="document-heading"><span class="copy-label">@copy</span><h1>Formular regjistrimi</h1><strong>Nr. @Model.Id · @BillingClock.LocalDate(Model.RegistrationDate).ToString("dd.MM.yyyy")</strong></div>
+    </header>
+    <div class="document-rule"></div>
+    <div class="registration-data">
+        <div><label>Emri dhe mbiemri i lojtarit</label><strong>@Model.FullName</strong></div>
+        <div><label>Datëlindja</label><strong>@Model.DateOfBirth.ToString("dd.MM.yyyy")</strong></div>
+        <div><label>Ekipi</label><strong>@(Model.TrainingTeam?.Name ?? "—")</strong></div>
+        <div><label>Data e regjistrimit</label><strong>@BillingClock.LocalDate(Model.RegistrationDate).ToString("dd.MM.yyyy")</strong></div>
+        <div><label>Prindi / kujdestari</label><strong>@(Model.ParentName ?? "—")</strong></div>
+        <div><label>Numri kontaktues</label><strong>@(Model.ParentPhone ?? "—")</strong></div>
+    </div>
+    <div class="registration-declaration">
+        <h2>Deklaratë e prindit / kujdestarit</h2>
+        <p>Unë, si prind ose kujdestar i lojtarit të lartshënuar:</p>
+        <ol>
+            <li>jap pëlqimin që lojtari të marrë pjesë në stërvitje, ndeshje dhe aktivitete të organizuara nga @club.DisplayName;</li>
+            <li>deklaroj se të dhënat e dhëna janë të sakta dhe se do ta njoftoj klubin për çdo gjendje shëndetësore, lëndim, alergji ose kufizim që mund të ndikojë në pjesëmarrjen e lojtarit;</li>
+            <li>pranoj që klubi, kur është e nevojshme për sigurinë e lojtarit, të kërkojë ndihmë mjekësore dhe të më kontaktojë në numrin e deklaruar;</li>
+            <li>konfirmoj se jam njohur me rregullat, oraret dhe detyrimet e klubit dhe marr përsipër ta njoftoj klubin kur lojtari nuk mund të marrë pjesë.</li>
+        </ol>
+    </div>
+    <div class="registration-signatures">
+        <div><span>Prindi / kujdestari</span><strong>@(Model.ParentName ?? " ")</strong><i></i><small>Nënshkrimi</small></div>
+        <div><span>Për klubin</span><strong>@club.DisplayName</strong><i></i><small>Nënshkrimi / vula</small></div>
+    </div>
+    <footer class="document-footer"><span>@club.DisplayName · Formular regjistrimi</span><span>@copy</span></footer>
+</section>
+@if(copy.StartsWith("KOPJA PËR PRINDIN")){<div class="cut-line"><span>PRITET NË MES</span></div>}
+}
+</main>

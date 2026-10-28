@@ -25,13 +25,14 @@ public class ExpenseService(ApplicationDbContext db)
         if(m.ParentId.HasValue){
             var parent=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.ParentId);
             if(parent==null||parent.ParentId.HasValue||m.ParentId==m.Id||(!parent.IsActive&&m.IsActive))throw new InvalidOperationException("Zgjidhni kategori kryesore aktive. Lejohen vetëm kategori dhe nënkategori.");
+            m.ContextType=parent.ContextType;
         }
         var name=m.Name.Trim();
         if(await db.ExpenseCategories.AnyAsync(x=>x.Id!=m.Id&&x.ParentId==m.ParentId&&x.Name.ToLower()==name.ToLower()))throw new InvalidOperationException("Ky emër ekziston në këtë kategori.");
-        var before=JsonSerializer.Serialize(new{category.Name,category.IsActive,category.ParentId});
-        category.Name=name;category.ParentId=m.ParentId;category.IsActive=m.IsActive;category.Revision=Guid.NewGuid();
+        var before=JsonSerializer.Serialize(new{category.Name,category.IsActive,category.ParentId,category.ContextType});
+        category.Name=name;category.ParentId=m.ParentId;category.IsActive=m.IsActive;category.ContextType=string.IsNullOrWhiteSpace(m.ContextType)?null:m.ContextType;category.Revision=Guid.NewGuid();
         if(m.Id==0)db.ExpenseCategories.Add(category);
-        db.ExpenseCategoryChanges.Add(new(){ExpenseCategory=category,Reason=m.Reason?.Trim()??"Krijim kategorie",Before=before,After=JsonSerializer.Serialize(new{category.Name,category.IsActive,category.ParentId}),ActorId=actor});
+        db.ExpenseCategoryChanges.Add(new(){ExpenseCategory=category,Reason=m.Reason?.Trim()??"Krijim kategorie",Before=before,After=JsonSerializer.Serialize(new{category.Name,category.IsActive,category.ParentId,category.ContextType}),ActorId=actor});
         await db.SaveChangesAsync();return category.Id;
     });
     private static string NormalizeMethod(string? method) => method?.Trim().ToUpperInvariant() switch { "CASH" => "Cash", "BANK" => "Bank", _ => "Other" };
@@ -96,15 +97,18 @@ public class ExpenseService(ApplicationDbContext db)
     }
     public Task<int> CreateAsync(ExpenseCreateModel m,string actor)=>Write(async()=>{
         Validator.ValidateObject(m,new(m),true);
-        var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{m.CategoryId,m.SubcategoryId,m.Date,m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),Document=m.DocumentNumber?.Trim(),m.Method,Notes=m.Notes?.Trim()}))));
+        var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{m.CategoryId,m.SubcategoryId,m.MatchGameId,m.Date,m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),Document=m.DocumentNumber?.Trim(),m.Method,Notes=m.Notes?.Trim()}))));
         var existing=await db.Expenses.AsNoTracking().SingleOrDefaultAsync(x=>x.RequestId==m.RequestId);
         if(existing!=null){if(existing.PayloadHash!=hash||existing.CreatedById!=actor)throw new InvalidOperationException("Ky formular është përdorur. Hapni një shpenzim të ri.");return existing.Id;}
         var category=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.CategoryId&&x.ParentId==null&&x.IsActive)??throw new InvalidOperationException("Zgjidhni kategori kryesore aktive.");
         ExpenseCategory? sub=null;
         if(m.SubcategoryId.HasValue)sub=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.SubcategoryId&&x.ParentId==category.Id&&x.IsActive)??throw new InvalidOperationException("Nënkategoria nuk i përket kategorisë ose është joaktive.");
+        if(category.ContextType=="Match"&&!m.MatchGameId.HasValue)throw new InvalidOperationException("Zgjidhni ndeshjen zyrtare për këtë shpenzim.");
+        if(category.ContextType!="Match"&&m.MatchGameId.HasValue)throw new InvalidOperationException("Kjo kategori nuk lidhet me ndeshje.");
+        if(m.MatchGameId.HasValue&&!await db.MatchGames.AnyAsync(x=>x.Id==m.MatchGameId&&x.Kind!="Friendly"&&x.Status!="Cancelled"))throw new InvalidOperationException("Zgjidhni një ndeshje zyrtare të vlefshme.");
         var available=await AvailableFromAsync(m.Date!.Value);
         if(m.Amount>available)throw new InvalidOperationException($"Mjete të pamjaftueshme. Për këtë datë mund të regjistroni deri në {Math.Max(0,available):N2}. Kontrolli përfshin edhe shpenzimet e regjistruara në ditët pasuese.");
-        var e=new Expense{RequestId=m.RequestId,PayloadHash=hash,CategoryId=category.Id,SubcategoryId=sub?.Id,CategoryName=category.Name,SubcategoryName=sub?.Name,Date=m.Date.Value,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method=m.Method,Notes=m.Notes?.Trim(),CreatedById=actor};
+        var e=new Expense{RequestId=m.RequestId,PayloadHash=hash,CategoryId=category.Id,SubcategoryId=sub?.Id,MatchGameId=m.MatchGameId,CategoryName=category.Name,SubcategoryName=sub?.Name,Date=m.Date.Value,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method=m.Method,Notes=m.Notes?.Trim(),CreatedById=actor};
         db.Expenses.Add(e);await db.SaveChangesAsync();return e.Id;
     });
     public Task<int> CancelAsync(ExpenseCancelModel m,string actor)=>Write(async()=>{
