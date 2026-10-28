@@ -1,6 +1,17 @@
+@{ var pwaClub = await Club.Get(); var isParentPwa = ViewData["PwaManifest"] is string; }
 <div class="pwa-install" hidden>
+    <span class="pwa-install-mark" aria-hidden="true"><img src="@(pwaClub.Logo is { Length: > 0 } ? Club.LogoUrl : Url.Content("~" + Club.PwaIcon(180)))" alt="" width="36" height="36"/></span>
     <button type="button" class="pwa-install-button" hidden>Instalo aplikacionin</button>
-    <p class="pwa-ios-help" hidden>Për instalim në iPhone/iPad: hapeni në Safari, prekni <strong>Share</strong>, pastaj <strong>Add to Home Screen</strong>.</p>
+    <button type="button" class="pwa-ios-guide-button" hidden><span aria-hidden="true">⌁</span> Si instalohet në iPhone</button>
     <button type="button" class="pwa-dismiss" aria-label="Mbyll njoftimin e instalimit">×</button>
 </div>
+<dialog class="pwa-ios-guide" aria-labelledby="pwa-guide-title">
+    <div class="pwa-guide-head"><div><span>IPHONE / IPAD</span><h2 id="pwa-guide-title">Instalo dhe aktivizo njoftimet</h2></div><button type="button" class="pwa-guide-close" aria-label="Mbyll">×</button></div>
+    <ol class="pwa-guide-steps">
+        <li><div class="pwa-guide-picture"><svg viewBox="0 0 190 112" role="img" aria-label="Butoni Share në Safari"><rect x="18" y="8" width="154" height="96" rx="13" class="phone-bg"/><rect x="29" y="18" width="132" height="60" rx="7" class="phone-page"/><rect x="29" y="85" width="132" height="11" rx="5" class="phone-bar"/><path d="M95 91V75m-8 7 8-8 8 8M88 88v5h14v-5" class="phone-accent"/><circle cx="95" cy="91" r="15" class="phone-focus"/></svg></div><div><b>1</b><strong>Prek Share në Safari</strong><small>Ikona katrore me shigjetën lart.</small></div></li>
+        <li><div class="pwa-guide-picture"><svg viewBox="0 0 190 112" role="img" aria-label="Add to Home Screen"><rect x="18" y="8" width="154" height="96" rx="13" class="phone-bg"/><rect x="29" y="18" width="132" height="20" rx="6" class="phone-page"/><rect x="29" y="45" width="132" height="42" rx="8" class="phone-card"/><rect x="38" y="53" width="26" height="26" rx="7" class="phone-icon"/><path d="M51 58v16m-8-8h16" class="phone-plus"/><path d="M74 59h66M74 70h42" class="phone-line"/></svg></div><div><b>2</b><strong>Zgjidh Add to Home Screen</strong><small>Pastaj prek <em>Add</em> lart djathtas.</small></div></li>
+        @if(isParentPwa){<li><div class="pwa-guide-picture"><svg viewBox="0 0 190 112" role="img" aria-label="Allow Notifications"><rect x="18" y="8" width="154" height="96" rx="13" class="phone-bg"/><rect x="34" y="24" width="122" height="64" rx="13" class="phone-alert"/><circle cx="55" cy="45" r="11" class="phone-icon"/><path d="M55 38c-4 0-6 3-6 7v4l-2 3h16l-2-3v-4c0-4-2-7-6-7m-2 18h4" class="phone-bell"/><path d="M75 40h59M75 50h45" class="phone-line"/><rect x="45" y="66" width="45" height="13" rx="6" class="phone-later"/><rect x="99" y="66" width="45" height="13" rx="6" class="phone-allow"/></svg></div><div><b>3</b><strong>Hape nga ikona dhe lejo njoftimet</strong><small>Te portali prek <em>Aktivizo njoftimet</em>, pastaj <em>Allow</em>.</small></div></li>}
+    </ol>
+    <button type="button" class="pwa-guide-done">E kuptova</button>
+</dialog>
 <script src="~/js/pwa.js" asp-append-version="true" data-service-worker="@Url.Content("~/sw.js")" defer></script>

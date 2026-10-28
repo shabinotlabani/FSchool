@@ -13,9 +13,6 @@
     <title>@Model.T("Title") · UPNEXT</title>
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
     <link rel="icon" href="~/images/upnext/favicon.ico" asp-append-version="true" />
-    <link rel="manifest" href="~/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="~/images/upnext/app_icon_180.png" />
-    <link rel="stylesheet" href="~/css/pwa.css" asp-append-version="true" />
 </head>
 <body>
     <svg class="login-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -125,11 +122,5 @@
             document.getElementById('login-status').textContent = '';
         });
     </script>
-    <div class="pwa-install" hidden>
-        <button type="button" class="pwa-install-button" hidden>@Model.T("Install")</button>
-        <p class="pwa-ios-help" hidden>@Model.T("InstallHelp")</p>
-        <button type="button" class="pwa-dismiss" aria-label="@Model.T("Dismiss")">×</button>
-    </div>
-    <script src="~/js/pwa.js" asp-append-version="true" data-service-worker="@Url.Content("~/sw.js")" defer></script>
 </body>
 </html>

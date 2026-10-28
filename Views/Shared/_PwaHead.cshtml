@@ -1,7 +1,7 @@
-@{ var club = await Club.Get(); var parentPortal = ViewData["PwaManifest"] is string; }
+@{ var club = await Club.Get(); }
 <link rel="manifest" href="@(ViewData["PwaManifest"] as string ?? Url.Action("Manifest", "ClubSettings"))" />
-<link rel="apple-touch-icon" sizes="180x180" href="@(parentPortal ? (club.Logo == null ? Url.Content("~" + Club.PwaIcon(180)) : Club.LogoUrl) : Url.Content("~/images/upnext/app_icon_180.png"))" />
+<link rel="apple-touch-icon" sizes="180x180" href="@(club.Logo is { Length: > 0 } ? Club.LogoUrl : Url.Content("~" + Club.PwaIcon(180)))" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="@_2Korriku.Services.ClubBranding.PlatformName" />
+<meta name="apple-mobile-web-app-title" content="@club.DisplayName" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <link rel="stylesheet" href="~/css/pwa.css" asp-append-version="true" />

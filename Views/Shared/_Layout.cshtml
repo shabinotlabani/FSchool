@@ -39,7 +39,7 @@
     <link href="~/css/brand.css" rel="stylesheet" asp-append-version="true" />
     <link href="~/css/sidebar.css" rel="stylesheet" asp-append-version="true" />
     <link rel="icon" href="~/images/upnext/favicon.ico" asp-append-version="true" />
-    <partial name="_PwaHead" />
+    @if(User.Identity?.IsAuthenticated == true){<partial name="_PwaHead" />}
 </head>
 <body class="platform-ui">
     <partial name="_Icons" />
@@ -125,6 +125,6 @@
     <partial name="_FinancialConfirmation" />
     <script src="~/js/financial-confirmation.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
-    <partial name="_PwaInstall" />
+    @if(User.Identity?.IsAuthenticated == true){<partial name="_PwaInstall" />}
 </body>
 </html>

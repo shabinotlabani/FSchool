@@ -8,7 +8,13 @@
     let registration, subscription, publicKey, enabled = false;
     const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-    if (ios && !standalone) { status.textContent = 'Për njoftime në iPhone: shtoni portalin në ekranin kryesor (Add to Home Screen) dhe hapeni nga ikona.'; return; }
+    if (ios && !standalone) {
+        button.disabled = false;
+        label.textContent = 'Instalo dhe aktivizo njoftimet';
+        status.textContent = 'Në iPhone, portali instalohet fillimisht në ekranin kryesor.';
+        button.addEventListener('click', () => window.dispatchEvent(new Event('pwa:show-ios-guide')));
+        return;
+    }
     if (!window.isSecureContext || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
         status.textContent = 'Ky shfletues nuk mbështet njoftimet. Provoni nga një shfletues i përditësuar.'; return;
     }

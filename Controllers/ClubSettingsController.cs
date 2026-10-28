@@ -56,10 +56,19 @@ public class ClubSettingsController(ApplicationDbContext db, ClubBranding brandi
     }
 
     [AllowAnonymous, HttpGet("/manifest.webmanifest")]
-    public IActionResult Manifest()
+    public async Task<IActionResult> Manifest()
     {
-        return Json(new { name="UPNEXT SPORTS MANAGEMENT SOFTWARE", short_name=ClubBranding.PlatformName,
+        Response.Headers.CacheControl="no-cache";
+        var club=await branding.Get();
+        var icons = club.Logo is { Length: > 0 }
+            ? new[] { new { src=branding.LogoUrl, sizes="any", type=club.LogoType ?? "image/png", purpose="any" } }
+            : new[] {
+                new {src=branding.PwaIcon(192),sizes="192x192",type="image/png",purpose="any"},
+                new {src=branding.PwaIcon(512),sizes="512x512",type="image/png",purpose="any"},
+                new {src=branding.PwaIcon(512),sizes="512x512",type="image/png",purpose="maskable"}
+            };
+        return Json(new { name=club.DisplayName + " · " + ClubBranding.PlatformName, short_name=club.DisplayName,
             id="/", start_url="/", scope="/", display="standalone", background_color="#f6f7f9", theme_color="#0a2341",
-            icons=new[]{new {src="/images/upnext/app_icon_192.png",sizes="192x192",type="image/png"},new {src="/images/upnext/app_icon_512.png",sizes="512x512",type="image/png"}} });
+            icons });
     }
 }
