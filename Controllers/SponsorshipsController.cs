@@ -72,7 +72,7 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
     {
         var m=new SponsorshipInvoiceInput{BeneficiaryId=beneficiaryId??0};
         if(beneficiaryId.HasValue&&TariffService.TryMonth(salaryMonth,out var month)){
-            var contracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Beneficiary).Where(c=>c.BeneficiaryId==beneficiaryId&&c.Status!="Draft"&&c.StartsOn<month.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=month).ToListAsync();
+            var contracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Beneficiary).Include(c=>c.Annexes).Where(c=>c.BeneficiaryId==beneficiaryId&&c.Status!="Draft"&&c.StartsOn<month.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=month).ToListAsync();
             if(contracts.Count>0){m.SalaryMonth=salaryMonth;m.SalaryRole=contracts[0].SalaryRole;m.Amount=PlayerContractService.MonthPayroll(contracts,month).Net;m.Description="Paga neto "+salaryMonth;m.DocumentReference="PAGA-"+beneficiaryId+"-"+salaryMonth;m.PlanLineId=await db.SponsorshipPlanLines.Where(l=>l.IsSalary&&l.Plan.Year==month.Year).Select(l=>l.Id).FirstOrDefaultAsync();}
         }
         await InvoiceChoices(m);return View(m);

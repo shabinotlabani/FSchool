@@ -9,7 +9,10 @@ public class PlayerContractService(ApplicationDbContext db)
  public static decimal MonthGross(PlayerContract c,DateOnly month)
  {
   var end=month.AddMonths(1).AddDays(-1);var from=c.StartsOn>month?c.StartsOn:month;var to=c.EffectiveEnd<end?c.EffectiveEnd:end;
-  return from>to?0:Math.Round(c.GrossSalary*(to.DayNumber-from.DayNumber+1)/DateTime.DaysInMonth(month.Year,month.Month),2,MidpointRounding.AwayFromZero);
+  if(from>to)return 0;
+  decimal gross=0;var day=from;
+  while(day<=to){var salary=c.SalaryOn(day);var next=c.Annexes.Where(a=>a.Status=="Active"&&a.EffectiveOn>day&&a.EffectiveOn<=to).OrderBy(a=>a.EffectiveOn).Select(a=>(DateOnly?)a.EffectiveOn).FirstOrDefault();var segmentEnd=next?.AddDays(-1)??to;gross+=salary*(segmentEnd.DayNumber-day.DayNumber+1)/DateTime.DaysInMonth(month.Year,month.Month);day=segmentEnd.AddDays(1);}
+  return Math.Round(gross,2,MidpointRounding.AwayFromZero);
  }
  public static ContractPayroll Payroll(decimal gross,ContractTerms terms)
  {
@@ -26,6 +29,12 @@ public class PlayerContractService(ApplicationDbContext db)
   return new(gross,employee,tax,gross-employee-tax,employer);
  }
  public IQueryable<PlayerContract> Covering(int studentId,DateOnly month)=>db.PlayerContracts.Where(c=>c.StudentId==studentId&&c.Status!="Draft"&&c.StartsOn<month.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=month);
+ public static async Task<string> NextNumber(ApplicationDbContext db,int year)
+ {
+  var prefix=$"K-{year}-";var numbers=await db.PlayerContracts.AsNoTracking().Where(c=>c.Number.StartsWith(prefix)).Select(c=>c.Number).ToListAsync();var max=0;
+  foreach(var number in numbers)if(int.TryParse(number[prefix.Length..],out var sequence)&&sequence>max)max=sequence;
+  return $"{prefix}{max+1:0000}";
+ }
  public async Task<int> Save(PlayerContractInput input,string actor,bool activate)
  {
   Validator.ValidateObject(input,new(input),true);if(!input.Simple)Validator.ValidateObject(input.Terms,new(input.Terms),true);
@@ -44,8 +53,9 @@ public class PlayerContractService(ApplicationDbContext db)
   var name=student?.FullName??staffPerson!.Name;
   if(input.Simple){
    var club=await new ClubBranding(db).Get();var identifier=staffPerson?.Identifier??"PLAYER-"+student!.Id;
-   input.Number=string.IsNullOrWhiteSpace(input.Number)?"K-"+input.StartsOn.Year+"-"+input.RequestId.ToString("N")[..8].ToUpperInvariant():input.Number;
-   input.Terms=new(){EmployerName=string.IsNullOrWhiteSpace(club.LegalName)?club.Name:club.LegalName,EmployerNumber=club.RegistrationNumber??"-",EmployerAddress=club.Address??"-",Representative="-",PersonalNumber=identifier,Address="-",Qualification="-",Nationality="Kosovë",Position=staffPerson?.StaffCategory=="ContractPlayer"?"Lojtar":"Staf",Duties="-",Workplace=club.Address??club.Name,WeeklyHours=40,Schedule="-",Leave="-",Termination="-",BankAccount="-",EmployerType="Primary",EmployeePensionPercent=5,EmployerPensionPercent=5};
+   input.Number=string.IsNullOrWhiteSpace(input.Number)?await NextNumber(db,input.StartsOn.Year):input.Number;
+   input.Terms.EmployerName=string.IsNullOrWhiteSpace(club.LegalName)?club.Name:club.LegalName;input.Terms.EmployerNumber=club.RegistrationNumber??"-";input.Terms.EmployerAddress=club.Address??club.City??"-";input.Terms.PersonalNumber=identifier;
+   input.Terms.Representative=Value(input.Terms.Representative);input.Terms.RepresentativePersonalNumber=string.IsNullOrWhiteSpace(input.Terms.RepresentativePersonalNumber)?null:input.Terms.RepresentativePersonalNumber.Trim();input.Terms.Address=Value(input.Terms.Address);input.Terms.Qualification=Value(input.Terms.Qualification);input.Terms.Nationality=Value(input.Terms.Nationality,"Kosovë");input.Terms.Position=Value(input.Terms.Position,staffPerson?.StaffCategory=="ContractPlayer"?"Lojtar":"Staf");input.Terms.Duties=Value(input.Terms.Duties,"Detyrat sipas pozitës dhe akteve të brendshme të klubit.");input.Terms.Workplace=Value(input.Terms.Workplace,club.Address??club.Name);input.Terms.Schedule=Value(input.Terms.Schedule,"Sipas orarit të miratuar nga klubi");input.Terms.Leave=Value(input.Terms.Leave,"Sipas Ligjit të Punës dhe akteve të brendshme");input.Terms.Termination=Value(input.Terms.Termination,"Sipas Ligjit të Punës dhe kushteve të kësaj kontrate");input.Terms.BankAccount=Value(input.Terms.BankAccount);input.Terms.WeeklyHours=input.Terms.WeeklyHours is <1 or >60?40:input.Terms.WeeklyHours;input.Terms.EmployerType="Primary";input.Terms.EmployeePensionPercent=input.Terms.EmployeePensionPercent<0?5:input.Terms.EmployeePensionPercent;input.Terms.EmployerPensionPercent=input.Terms.EmployerPensionPercent<0?5:input.Terms.EmployerPensionPercent;
   }
   if(input.Id==0){var duplicate=await db.PlayerContracts.AsNoTracking().SingleOrDefaultAsync(c=>c.RequestId==input.RequestId);if(duplicate!=null){if(duplicate.StudentId!=input.StudentId||staff&&duplicate.BeneficiaryId!=input.BeneficiaryId)throw new ValidationException("Rihapni formularin.");return duplicate.Id;}}
   var row=input.Id==0?new PlayerContract{StudentId=input.StudentId,BeneficiaryId=staff?input.BeneficiaryId:null,RequestId=input.RequestId}:await db.PlayerContracts.SingleOrDefaultAsync(c=>c.Id==input.Id&&c.StudentId==input.StudentId&&(!staff||c.BeneficiaryId==input.BeneficiaryId))??throw new UnauthorizedAccessException();
@@ -89,6 +99,7 @@ public class PlayerContractService(ApplicationDbContext db)
   await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();
   if(tx!=null)await tx.CommitAsync();return row.Id;
  }
+ static string Value(string? value,string fallback="-")=>string.IsNullOrWhiteSpace(value)?fallback:value.Trim();
  private async Task WaiveExisting(PlayerContract row,string actor)
  {
   var periods=await db.MonthlyFeePeriods.Where(p=>p.StudentId==row.StudentId).ToListAsync();

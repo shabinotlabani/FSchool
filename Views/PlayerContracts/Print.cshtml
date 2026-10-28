@@ -1,0 +1,24 @@
+@model PlayerContract
+@using _2Korriku.Services
+@{var club=await Club.Get();var t=Model.Terms;Layout="_PrintLayout";ViewData["Title"]="Kontrata e punës · "+Model.PersonName;}
+<link rel="stylesheet" href="~/css/employment-contract-print.css" asp-append-version="true"/>
+<div class="print-toolbar"><a asp-action="Details" asp-route-id="@Model.Id" class="app-back-button">← Kontrata</a><button type="button" onclick="window.print()">Printo A4 / Ruaj PDF</button></div>
+<main class="employment-document">
+<header class="employment-header"><img src="@Club.LogoUrl" alt="Logo e @club.DisplayName"/><div><strong>@club.DisplayName</strong><span>@club.LegalName</span><small>@string.Join(" · ",new[]{club.Address,club.City,club.Phone,club.Email}.Where(x=>!string.IsNullOrWhiteSpace(x)))</small></div></header>
+@if(Model.Status=="Draft"){<div class="draft-mark">DRAFT</div>}
+<p>Në bazë të nenit 10 dhe nenit 11 të Ligjit Nr. 03/L-212 të Punës të Republikës së Kosovës dhe akteve të brendshme të punëdhënësit, palët lidhin këtë:</p>
+<h1>Kontratë pune për kohë të caktuar</h1>
+<p class="contract-number">Nr. @Model.Number</p>
+<section><h2>Punëdhënësi</h2><dl class="contract-data"><dt>Emri ligjor</dt><dd>@t.EmployerName</dd><dt>Numri i regjistrimit</dt><dd>@t.EmployerNumber</dd><dt>Adresa</dt><dd>@t.EmployerAddress</dd><dt>Përfaqësuesi</dt><dd>@t.Representative</dd></dl></section>
+<section><h2>I punësuari</h2><dl class="contract-data"><dt>Emri dhe mbiemri</dt><dd>@Model.PersonName</dd><dt>Numri personal</dt><dd>@t.PersonalNumber</dd><dt>Vendbanimi</dt><dd>@t.Address</dd><dt>Profesioni / kualifikimi</dt><dd>@t.Qualification</dd><dt>Llogaria bankare</dt><dd>@t.BankAccount</dd></dl></section>
+<section><h2>Vlefshmëria e kontratës</h2><p>Kontrata lidhet për kohë të caktuar nga <strong>@Model.StartsOn.ToString("dd.MM.yyyy")</strong> deri më <strong>@Model.EndsOn.ToString("dd.MM.yyyy")</strong>. Marrëdhënia e punës fillon në datën e fillimit të përcaktuar në këtë kontratë.</p></section>
+<section><h2>Orari dhe vendi i punës</h2><dl class="contract-data"><dt>Pozita</dt><dd>@t.Position</dd><dt>Vendi i punës</dt><dd>@t.Workplace</dd><dt>Orë në javë</dt><dd>@t.WeeklyHours</dd><dt>Orari</dt><dd>@t.Schedule</dd></dl><p><strong>Detyrat:</strong> @t.Duties</p></section>
+<section><h2>Kompensimi i pagës</h2><p>Paga mujore bruto është <strong>@Model.GrossSalary.ToString("N2")</strong>. Pagesa kryhet sipas legjislacionit në fuqi dhe evidencës së punëdhënësit.</p><ul><li>20% shtesë për orë kujdestarie;</li><li>30% shtesë për punë gjatë natës;</li><li>30% shtesë për punë jashtë orarit;</li><li>50% shtesë për punë gjatë festave dhe fundjavës.</li></ul><p>Ndryshimi i pagës bëhet me aneks të shkruar, i cili bëhet pjesë e kësaj kontrate.</p></section>
+<section><h2>Pushimi vjetor dhe mjekësor</h2><p>@t.Leave</p><p>Pushimi mjekësor dhe kompensimi gjatë tij zbatohen sipas Ligjit të Punës dhe akteve të tjera në fuqi.</p></section>
+<section><h2>Ndërprerja e kontratës</h2><p>@t.Termination</p><p>Kontrata mund të përfundojë me marrëveshje të palëve, sipas fuqisë së ligjit ose në mënyrë të njëanshme me njoftim dhe arsyetim sipas afateve ligjore.</p></section>
+<section><h2>Zgjidhja e kontesteve</h2><p>Palët pajtohen që çdo mosmarrëveshje ta zgjidhin fillimisht me mirëkuptim. Kur marrëveshja nuk arrihet, kompetente është gjykata sipas legjislacionit në fuqi në Republikën e Kosovës.</p></section>
+<section><h2>Ligji i aplikueshëm</h2><p>Për interpretimin dhe zbatimin e kësaj kontrate vlejnë Ligji i Punës Nr. 03/L-212, aktet nënligjore dhe legjislacioni tjetër i zbatueshëm në Republikën e Kosovës.</p>@if(!string.IsNullOrWhiteSpace(t.OtherTerms)){<p><strong>Kushtet e tjera:</strong> @t.OtherTerms</p>}</section>
+<p>Kjo kontratë nënshkruhet në katër kopje autentike, nga dy kopje për secilën palë.</p>
+<div class="employment-signatures"><div><span>Punëdhënësi</span><strong>@t.Representative</strong><i></i><small>Nënshkrimi dhe vula</small></div><div><span>I punësuari</span><strong>@Model.PersonName</strong><i></i><small>Nënshkrimi</small></div></div>
+<footer><span>Data e nënshkrimit: ____ / ____ / ______</span><span>Vendi: @(club.City??"________________")</span></footer>
+</main>

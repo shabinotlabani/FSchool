@@ -3113,6 +3113,71 @@ namespace _2Korriku.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.PlayerContractAnnex", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("EffectiveOn")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("NewGrossSalary")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<int>("PlayerContractId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("PreviousGrossSalary")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorId");
+
+                    b.HasIndex("PlayerContractId");
+
+                    b.HasIndex("ClubId", "PlayerContractId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("PlayerContractAnnexes");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.PlayerContractAudit", b =>
                 {
                     b.Property<int>("Id")
@@ -6364,6 +6429,38 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.PlayerContractAnnex", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "Actor")
+                        .WithMany()
+                        .HasForeignKey("ActorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.PlayerContract", "PlayerContract")
+                        .WithMany("Annexes")
+                        .HasForeignKey("PlayerContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.PlayerContract", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "PlayerContractId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Actor");
+
+                    b.Navigation("PlayerContract");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.PlayerContractAudit", b =>
                 {
                     b.HasOne("_2Korriku.Models.ClubTenant", null)
@@ -7275,6 +7372,11 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Charges");
 
                     b.Navigation("Sessions");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.PlayerContract", b =>
+                {
+                    b.Navigation("Annexes");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.Product", b =>

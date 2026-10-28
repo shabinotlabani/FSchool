@@ -5,6 +5,15 @@
 <form asp-action="Save" method="post" data-financial-confirm><div asp-validation-summary="All" class="text-danger" role="alert"></div>
 <input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/><input asp-for="RequestId" type="hidden"/><input asp-for="Simple" type="hidden" value="true"/>
 <div class="contract-simple-fields"><label>Personi<select asp-for="PersonKey" class="form-select" required disabled="@(Model.Id!=0)"><option value="">Zgjidh personin</option>@foreach(var p in Model.Beneficiaries){<option value="S:@p.Id">@p.Name</option>}</select></label>@if(Model.Id!=0){<input asp-for="PersonKey" type="hidden"/>}
+<label>Numri i kontratës<input asp-for="Number" class="form-control" maxlength="80" placeholder="Automatik nëse lihet bosh"/><small class="text-secondary">Bosh: K-VITI-0001 · ose shkruajeni manualisht</small></label>
 <label>Paga bruto<input asp-for="GrossSalary" type="number" min="0.01" max="99999999.99" step="0.01" class="form-control" inputmode="decimal" required/></label><label>Fillon më<input asp-for="StartsOn" type="date" class="form-control" required/></label><label>Skadon më<input asp-for="EndsOn" type="date" class="form-control" required/></label></div>
-<button class="btn btn-primary mt-4" type="submit">Ruaj kontratën</button></form></div>
+<details class="contract-section"><summary>Të dhënat e dokumentit</summary><div class="contract-fields">
+<label>Përfaqësuesi i klubit<input asp-for="Terms.Representative" class="form-control"/></label><label>Numri personal i përfaqësuesit<input asp-for="Terms.RepresentativePersonalNumber" class="form-control"/></label><label>Pozita<input asp-for="Terms.Position" class="form-control"/></label>
+<label>Adresa e personit<input asp-for="Terms.Address" class="form-control"/></label><label>Profesioni / kualifikimi<input asp-for="Terms.Qualification" class="form-control"/></label>
+<label>Llogaria bankare<input asp-for="Terms.BankAccount" class="form-control"/></label><label>Vendi i punës<input asp-for="Terms.Workplace" class="form-control"/></label>
+<label>Orë në javë<input asp-for="Terms.WeeklyHours" type="number" min="1" max="60" class="form-control"/></label><label>Orari<input asp-for="Terms.Schedule" class="form-control"/></label>
+<label>Detyrat<textarea asp-for="Terms.Duties" class="form-control" rows="3"></textarea></label><label>Pushimi<textarea asp-for="Terms.Leave" class="form-control" rows="3"></textarea></label>
+<label>Përfundimi i marrëdhënies<textarea asp-for="Terms.Termination" class="form-control" rows="3"></textarea></label><label>Kushte të tjera<textarea asp-for="Terms.OtherTerms" class="form-control" rows="3"></textarea></label>
+</div></details>
+<div class="d-flex flex-wrap gap-2 mt-4"><button class="btn btn-outline-secondary" type="submit" name="command" value="Draft">Ruaj draftin</button><button class="btn btn-primary" type="submit" name="command" value="Activate">Aktivizo kontratën</button></div></form></div>
 @section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Kontratat</a>}

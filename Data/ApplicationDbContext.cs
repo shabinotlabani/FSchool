@@ -11,6 +11,7 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<League> Leagues => Set<League>();
     public DbSet<PlayerContract> PlayerContracts => Set<PlayerContract>();
     public DbSet<PlayerContractAudit> PlayerContractAudits => Set<PlayerContractAudit>();
+    public DbSet<PlayerContractAnnex> PlayerContractAnnexes => Set<PlayerContractAnnex>();
     public DbSet<LeagueTeam> LeagueTeams => Set<LeagueTeam>();
     public DbSet<MatchPlayer> MatchPlayers => Set<MatchPlayer>();
     public DbSet<MatchChange> MatchChanges => Set<MatchChange>();
@@ -352,6 +353,9 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<PlayerContract>().HasOne(c=>c.Beneficiary).WithMany().HasForeignKey(c=>c.BeneficiaryId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<PlayerContract>().HasOne(c=>c.Actor).WithMany().HasForeignKey(c=>c.ActorId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<PlayerContractAudit>().HasOne(c=>c.PlayerContract).WithMany().HasForeignKey(c=>c.PlayerContractId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContractAnnex>().HasIndex(c=>new{c.PlayerContractId,c.Number}).IsUnique();
+        builder.Entity<PlayerContractAnnex>().HasOne(c=>c.PlayerContract).WithMany(c=>c.Annexes).HasForeignKey(c=>c.PlayerContractId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<PlayerContractAnnex>().HasOne(c=>c.Actor).WithMany().HasForeignKey(c=>c.ActorId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<SponsorshipBeneficiary>().HasOne(c=>c.Student).WithMany().HasForeignKey(c=>c.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<SponsorshipBeneficiary>().HasIndex(c=>c.StudentId).IsUnique().HasFilter("\"StudentId\" IS NOT NULL");
         ConfigureClubs(builder);

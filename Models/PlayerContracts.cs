@@ -24,6 +24,7 @@ public class PlayerContract
  public DateTime UpdatedAt { get; set; }
  public string ActorId { get; set; } = "";
  public ApplicationUser Actor { get; set; } = null!;
+ public List<PlayerContractAnnex> Annexes { get; set; } = [];
  [MaxLength(500)] public string? EndReason { get; set; }
  [NotMapped] public ContractTerms Terms => System.Text.Json.JsonSerializer.Deserialize<ContractTerms>(TermsData)??new();
  [NotMapped] public DateOnly EffectiveEnd => EndedOn??EndsOn;
@@ -31,6 +32,33 @@ public class PlayerContract
  [NotMapped] public string PersonKey => StudentId.HasValue ? "P"+StudentId : "S"+BeneficiaryId;
  [NotMapped] public string SalaryRole => StudentId.HasValue || Beneficiary?.StaffCategory=="ContractPlayer" ? "Player" : "Staff";
  [NotMapped] public string CategoryName => Beneficiary?.StaffCategory switch {"ContractPlayer"=>"Lojtar me kontratë","Management"=>"Stafi drejtues","Technical"=>"Stafi teknik","Medical"=>"Stafi mjekësor","Performance"=>"Performanca dhe nutricioni","Administration"=>"Administrata","Operations"=>"Logjistika dhe operacionet",_=>StudentId.HasValue?"Lojtar me kontratë":"Tjetër"};
+ public decimal SalaryOn(DateOnly date)=>Annexes.Where(a=>a.Status=="Active"&&a.EffectiveOn<=date).OrderBy(a=>a.EffectiveOn).ThenBy(a=>a.Id).Select(a=>(decimal?)a.NewGrossSalary).LastOrDefault()??GrossSalary;
+}
+public class PlayerContractAnnex
+{
+ public int Id { get; set; }
+ public int PlayerContractId { get; set; }
+ public PlayerContract PlayerContract { get; set; } = null!;
+ [Required,MaxLength(80)] public string Number { get; set; } = "";
+ public DateOnly EffectiveOn { get; set; }
+ [Column(TypeName="numeric(18,2)")] public decimal PreviousGrossSalary { get; set; }
+ [Column(TypeName="numeric(18,2)")] public decimal NewGrossSalary { get; set; }
+ [Required,MaxLength(500)] public string Reason { get; set; } = "";
+ [Required,MaxLength(20)] public string Status { get; set; } = "Draft";
+ public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+ [Required,MaxLength(450)] public string ActorId { get; set; } = "";
+ public ApplicationUser Actor { get; set; } = null!;
+ [ConcurrencyCheck] public Guid Revision { get; set; } = Guid.NewGuid();
+}
+public class PlayerContractAnnexInput
+{
+ public int Id { get; set; }
+ public int PlayerContractId { get; set; }
+ public Guid Revision { get; set; }
+ [StringLength(80)] public string? Number { get; set; }
+ [Required] public DateOnly? EffectiveOn { get; set; }
+ [Range(typeof(decimal),"0.01","99999999.99")] public decimal NewGrossSalary { get; set; }
+ [Required,StringLength(500)] public string Reason { get; set; } = "";
 }
 public class ContractTerms
 {
@@ -38,6 +66,7 @@ public class ContractTerms
  [Required,StringLength(60)] public string EmployerNumber { get; set; } = "";
  [Required,StringLength(250)] public string EmployerAddress { get; set; } = "";
  [Required,StringLength(150)] public string Representative { get; set; } = "";
+ [StringLength(60)] public string? RepresentativePersonalNumber { get; set; }
  [Required,StringLength(60)] public string PersonalNumber { get; set; } = "";
  [Required,StringLength(250)] public string Address { get; set; } = "";
  [Required,StringLength(150)] public string Qualification { get; set; } = "";
