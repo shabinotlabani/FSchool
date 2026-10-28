@@ -14,7 +14,7 @@ public class ClubSettingsController(ApplicationDbContext db, ClubBranding brandi
 
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(2300000)]
     public async Task<IActionResult> Index(
-        [Bind("Name,DisplayName,LegalName,RegistrationNumber,Address,City,FoundedYear,Phone,Email")] ClubSettings input,
+        [Bind("Name,DisplayName,LegalName,RegistrationNumber,Address,City,FoundedYear,Phone,Email,ResponsiblePerson,ResponsiblePersonNumber")] ClubSettings input,
         IFormFile? logo, bool removeLogo = false)
     {
         byte[]? bytes = null; string? type = null;
@@ -36,6 +36,7 @@ public class ClubSettingsController(ApplicationDbContext db, ClubBranding brandi
         settings.Name=input.Name.Trim(); settings.DisplayName=input.DisplayName.Trim(); settings.LegalName=input.LegalName.Trim();
         settings.RegistrationNumber=input.RegistrationNumber?.Trim(); settings.Address=input.Address?.Trim();
         settings.City=input.City?.Trim(); settings.FoundedYear=input.FoundedYear; settings.Phone=input.Phone?.Trim(); settings.Email=input.Email?.Trim();
+        settings.ResponsiblePerson=input.ResponsiblePerson?.Trim(); settings.ResponsiblePersonNumber=input.ResponsiblePersonNumber?.Trim();
         if (removeLogo) { settings.Logo=null; settings.LogoType=null; }
         if (bytes != null) { settings.Logo=bytes; settings.LogoType=type; }
         await db.SaveChangesAsync(); await tx.CommitAsync();

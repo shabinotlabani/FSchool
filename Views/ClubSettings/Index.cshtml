@@ -15,6 +15,9 @@
         <div class="col-md-2"><label asp-for="FoundedYear" class="form-label">Viti i themelimit</label><input asp-for="FoundedYear" class="form-control" /></div>
         <div class="col-md-6"><label asp-for="Phone" class="form-label">Telefoni</label><input asp-for="Phone" class="form-control" /></div>
         <div class="col-md-6"><label asp-for="Email" class="form-label">Email</label><input asp-for="Email" class="form-control" /></div>
+        <div class="col-12 border-top pt-3"><h2 class="h5 mb-3">Personi përgjegjës</h2></div>
+        <div class="col-md-7"><label asp-for="ResponsiblePerson" class="form-label">Emri dhe mbiemri</label><input asp-for="ResponsiblePerson" class="form-control" maxlength="150" /></div>
+        <div class="col-md-5"><label asp-for="ResponsiblePersonNumber" class="form-label">Numri personal</label><input asp-for="ResponsiblePersonNumber" class="form-control" maxlength="60" /></div>
         <div class="col-12 border-top pt-3 d-flex align-items-center gap-3 flex-wrap">
             <img src="@Club.LogoUrl" alt="Logoja e klubit" style="width:72px;height:80px;object-fit:contain" />
             <div><label for="logo" class="form-label">Logoja · PNG / JPG, deri në 2 MB</label><input id="logo" name="logo" type="file" accept="image/png,image/jpeg" class="form-control" /></div>

@@ -1,6 +1,6 @@
 @model PlayerContract
 @using _2Korriku.Services
-@{var club=await Club.Get();var t=Model.Terms;Layout="_PrintLayout";ViewData["Title"]="Kontrata e punës · "+Model.PersonName;}
+@{var club=await Club.Get();var t=Model.Terms;var representative=string.IsNullOrWhiteSpace(t.Representative)||t.Representative=="-"?club.ResponsiblePerson??"—":t.Representative;Layout="_PrintLayout";ViewData["Title"]="Kontrata e punës · "+Model.PersonName;}
 <link rel="stylesheet" href="~/css/employment-contract-print.css" asp-append-version="true"/>
 <div class="print-toolbar"><a asp-action="Details" asp-route-id="@Model.Id" class="app-back-button">← Kontrata</a><button type="button" onclick="window.print()">Printo A4 / Ruaj PDF</button></div>
 <main class="employment-document">
@@ -9,7 +9,7 @@
 <p>Në bazë të nenit 10 dhe nenit 11 të Ligjit Nr. 03/L-212 të Punës të Republikës së Kosovës dhe akteve të brendshme të punëdhënësit, palët lidhin këtë:</p>
 <h1>Kontratë pune për kohë të caktuar</h1>
 <p class="contract-number">Nr. @Model.Number</p>
-<section><h2>Punëdhënësi</h2><dl class="contract-data"><dt>Emri ligjor</dt><dd>@t.EmployerName</dd><dt>Numri i regjistrimit</dt><dd>@t.EmployerNumber</dd><dt>Adresa</dt><dd>@t.EmployerAddress</dd><dt>Përfaqësuesi</dt><dd>@t.Representative</dd></dl></section>
+<section><h2>Punëdhënësi</h2><dl class="contract-data"><dt>Emri ligjor</dt><dd>@t.EmployerName</dd><dt>Numri i regjistrimit</dt><dd>@t.EmployerNumber</dd><dt>Adresa</dt><dd>@t.EmployerAddress</dd><dt>Përfaqësuesi</dt><dd>@representative</dd></dl></section>
 <section><h2>I punësuari</h2><dl class="contract-data"><dt>Emri dhe mbiemri</dt><dd>@Model.PersonName</dd><dt>Numri personal</dt><dd>@t.PersonalNumber</dd><dt>Vendbanimi</dt><dd>@t.Address</dd><dt>Profesioni / kualifikimi</dt><dd>@t.Qualification</dd><dt>Llogaria bankare</dt><dd>@t.BankAccount</dd></dl></section>
 <section><h2>Vlefshmëria e kontratës</h2><p>Kontrata lidhet për kohë të caktuar nga <strong>@Model.StartsOn.ToString("dd.MM.yyyy")</strong> deri më <strong>@Model.EndsOn.ToString("dd.MM.yyyy")</strong>. Marrëdhënia e punës fillon në datën e fillimit të përcaktuar në këtë kontratë.</p></section>
 <section><h2>Orari dhe vendi i punës</h2><dl class="contract-data"><dt>Pozita</dt><dd>@t.Position</dd><dt>Vendi i punës</dt><dd>@t.Workplace</dd><dt>Orë në javë</dt><dd>@t.WeeklyHours</dd><dt>Orari</dt><dd>@t.Schedule</dd></dl><p><strong>Detyrat:</strong> @t.Duties</p></section>
@@ -19,6 +19,6 @@
 <section><h2>Zgjidhja e kontesteve</h2><p>Palët pajtohen që çdo mosmarrëveshje ta zgjidhin fillimisht me mirëkuptim. Kur marrëveshja nuk arrihet, kompetente është gjykata sipas legjislacionit në fuqi në Republikën e Kosovës.</p></section>
 <section><h2>Ligji i aplikueshëm</h2><p>Për interpretimin dhe zbatimin e kësaj kontrate vlejnë Ligji i Punës Nr. 03/L-212, aktet nënligjore dhe legjislacioni tjetër i zbatueshëm në Republikën e Kosovës.</p>@if(!string.IsNullOrWhiteSpace(t.OtherTerms)){<p><strong>Kushtet e tjera:</strong> @t.OtherTerms</p>}</section>
 <p>Kjo kontratë nënshkruhet në katër kopje autentike, nga dy kopje për secilën palë.</p>
-<div class="employment-signatures"><div><span>Punëdhënësi</span><strong>@t.Representative</strong><i></i><small>Nënshkrimi dhe vula</small></div><div><span>I punësuari</span><strong>@Model.PersonName</strong><i></i><small>Nënshkrimi</small></div></div>
+<div class="employment-signatures"><div><span>Punëdhënësi</span><strong>@representative</strong><i></i><small>Nënshkrimi dhe vula</small></div><div><span>I punësuari</span><strong>@Model.PersonName</strong><i></i><small>Nënshkrimi</small></div></div>
 <footer><span>Data e nënshkrimit: ____ / ____ / ______</span><span>Vendi: @(club.City??"________________")</span></footer>
 </main>

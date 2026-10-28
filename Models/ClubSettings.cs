@@ -14,6 +14,8 @@ public class ClubSettings
     [Range(1800, 2200)] public int? FoundedYear { get; set; } = 1957;
     [MaxLength(50)] public string? Phone { get; set; }
     [EmailAddress, MaxLength(150)] public string? Email { get; set; }
+    [MaxLength(150)] public string? ResponsiblePerson { get; set; }
+    [MaxLength(60)] public string? ResponsiblePersonNumber { get; set; }
     public byte[]? Logo { get; set; }
     [MaxLength(30)] public string? LogoType { get; set; }
     public string LocationLine => string.Join(" · ", new[] { City, FoundedYear?.ToString() }.Where(x => !string.IsNullOrWhiteSpace(x)));

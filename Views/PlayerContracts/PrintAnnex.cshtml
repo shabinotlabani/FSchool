@@ -1,5 +1,5 @@
 @model PlayerContractAnnex
-@{var club=await Club.Get();var c=Model.PlayerContract;var t=c.Terms;Layout="_PrintLayout";ViewData["Title"]="Aneksi · "+Model.Number;var location=club.City??"Prishtinë";}
+@{var club=await Club.Get();var c=Model.PlayerContract;var t=c.Terms;var representative=string.IsNullOrWhiteSpace(t.Representative)||t.Representative=="-"?club.ResponsiblePerson??"—":t.Representative;var representativeNumber=string.IsNullOrWhiteSpace(t.RepresentativePersonalNumber)?club.ResponsiblePersonNumber:t.RepresentativePersonalNumber;Layout="_PrintLayout";ViewData["Title"]="Aneksi · "+Model.Number;var location=club.City??"Prishtinë";}
 <link rel="stylesheet" href="~/css/employment-contract-print.css" asp-append-version="true"/>
 <div class="print-toolbar"><a asp-action="Details" asp-route-id="@c.Id" class="app-back-button">← Kontrata</a><button type="button" onclick="window.print()">Printo A4 / Ruaj PDF</button></div>
 <main class="employment-document annex-document annex-reference">
@@ -9,12 +9,12 @@
 <h1>Aneks i kontratës së punës</h1>
 <p class="contract-number">Nr. @Model.Number</p>
 <p>Në @location, më <strong>@Model.EffectiveOn.ToString("dd.MM.yyyy")</strong>, ndërmjet:</p>
-<p><strong>@t.EmployerName</strong>, me seli në @location, me adresë @t.EmployerAddress dhe numër regjistrimi @t.EmployerNumber, të cilin e përfaqëson <strong>@t.Representative</strong>@if(!string.IsNullOrWhiteSpace(t.RepresentativePersonalNumber)){<text>, me numër personal @t.RepresentativePersonalNumber</text>}, në tekstin e mëtejmë <strong>Punëdhënësi</strong>,</p>
+<p><strong>@t.EmployerName</strong>, me seli në @location, me adresë @t.EmployerAddress dhe numër regjistrimi @t.EmployerNumber, të cilin e përfaqëson <strong>@representative</strong>@if(!string.IsNullOrWhiteSpace(representativeNumber)){<text>, me numër personal @representativeNumber</text>}, në tekstin e mëtejmë <strong>Punëdhënësi</strong>,</p>
 <p class="annex-and">dhe</p>
 <p><strong>@c.PersonName</strong>, nga @location, me adresë @t.Address dhe numër personal @t.PersonalNumber, në tekstin e mëtejmë <strong>I punësuari</strong>.</p>
 <p>Palët kontraktuese pajtohen që kontratës së punës nr. <strong>@c.Number</strong>, të lidhur më <strong>@c.StartsOn.ToString("dd.MM.yyyy")</strong>, t’i ndryshohet kompensimi i pagës sipas këtij aneksi.</p>
 <section class="annex-change"><h2>Ndryshimi i pagës</h2><p>Të punësuarit i ndryshohet paga mujore nga bruto <strong>@Model.PreviousGrossSalary.ToString("N2")</strong> në bruto <strong>@Model.NewGrossSalary.ToString("N2")</strong>, duke filluar nga data <strong>@Model.EffectiveOn.ToString("dd.MM.yyyy")</strong> deri në përfundimin e afatit të kontratës më <strong>@c.EffectiveEnd.ToString("dd.MM.yyyy")</strong>.</p><p><strong>Arsyeja e ndryshimit:</strong> @Model.Reason</p></section>
 <p>Të gjitha dispozitat e tjera të kontratës së punës mbeten të pandryshuara dhe vazhdojnë të jenë në fuqi deri në përfundimin e afatit të saj më <strong>@c.EffectiveEnd.ToString("dd.MM.yyyy")</strong>.</p>
-<div class="employment-signatures"><div><span>Punëdhënësi</span><strong>@t.Representative</strong><i></i><small>Nënshkrimi dhe vula</small></div><div><span>I punësuari</span><strong>@c.PersonName</strong><i></i><small>Nënshkrimi</small></div></div>
+<div class="employment-signatures"><div><span>Punëdhënësi</span><strong>@representative</strong><i></i><small>Nënshkrimi dhe vula</small></div><div><span>I punësuari</span><strong>@c.PersonName</strong><i></i><small>Nënshkrimi</small></div></div>
 <footer><span>Data: @Model.EffectiveOn.ToString("dd.MM.yyyy")</span><span>Vendi: @location, Kosovë</span></footer>
 </main>

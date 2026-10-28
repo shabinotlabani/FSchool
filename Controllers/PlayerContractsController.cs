@@ -33,7 +33,7 @@ public class PlayerContractsController(ApplicationDbContext db):Controller
  }
  public async Task<IActionResult> Create(int? staffId)
  {
-  var club=await new ClubBranding(db).Get();var m=new PlayerContractInput{Simple=true,PersonType="Staff",BeneficiaryId=staffId,PersonKey=staffId.HasValue?"S:"+staffId:null,Terms=new(){EmployerName=club.LegalName,EmployerNumber=club.RegistrationNumber??"",EmployerAddress=club.Address??club.City??"",Position="Staf",Workplace=club.Address??club.Name,WeeklyHours=40,Schedule="Sipas orarit të miratuar nga klubi",Leave="Sipas Ligjit të Punës",Termination="Sipas Ligjit të Punës",Duties="Detyrat sipas pozitës dhe akteve të brendshme të klubit."}};
+  var club=await new ClubBranding(db).Get();var m=new PlayerContractInput{Simple=true,PersonType="Staff",BeneficiaryId=staffId,PersonKey=staffId.HasValue?"S:"+staffId:null,Terms=new(){EmployerName=club.LegalName,EmployerNumber=club.RegistrationNumber??"",EmployerAddress=club.Address??club.City??"",Representative=club.ResponsiblePerson??"",RepresentativePersonalNumber=club.ResponsiblePersonNumber,Position="Staf",Workplace=club.Address??club.Name,WeeklyHours=40,Schedule="Sipas orarit të miratuar nga klubi",Leave="Sipas Ligjit të Punës",Termination="Sipas Ligjit të Punës",Duties="Detyrat sipas pozitës dhe akteve të brendshme të klubit."}};
   if(staffId.HasValue){var person=await db.SponsorshipBeneficiaries.AsNoTracking().SingleOrDefaultAsync(b=>b.Id==staffId&&b.StaffCategory!=null&&b.StudentId==null);if(person==null)return NotFound();m.Terms.PersonalNumber=person.Identifier;m.Terms.Position=person.StaffCategory=="ContractPlayer"?"Lojtar":m.Terms.Position;}await Choices(m);return View("Edit",m);
  }
  public async Task<IActionResult> Edit(int id)
