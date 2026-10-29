@@ -46,6 +46,8 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TreasuryEntry> TreasuryEntries => Set<TreasuryEntry>();
     public DbSet<FootballField> FootballFields => Set<FootballField>();
     public DbSet<FieldPayment> FieldPayments => Set<FieldPayment>();
+    public DbSet<FieldCashHandover> FieldCashHandovers => Set<FieldCashHandover>();
+    public DbSet<FieldCashHandoverItem> FieldCashHandoverItems => Set<FieldCashHandoverItem>();
     public DbSet<FieldBooking> FieldBookings => Set<FieldBooking>();
     public DbSet<FieldBookingChange> FieldBookingChanges => Set<FieldBookingChange>();
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, _2Korriku.Services.ClubContext? club = null)
@@ -153,6 +155,15 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<FieldPayment>().HasIndex(p => p.BatchId);
         builder.Entity<FieldPayment>().HasOne(p => p.FieldBooking).WithMany(b => b.Payments).HasForeignKey(p => p.FieldBookingId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<FieldPayment>().HasOne(p => p.Actor).WithMany().HasForeignKey(p => p.ActorId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<FieldCashHandover>().Property(x => x.Amount).HasPrecision(18,2);
+        builder.Entity<FieldCashHandover>().HasIndex(x => new { x.OperatorId, x.Status });
+        builder.Entity<FieldCashHandover>().HasOne(x => x.Operator).WithMany().HasForeignKey(x => x.OperatorId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<FieldCashHandover>().HasOne(x => x.ConfirmedBy).WithMany().HasForeignKey(x => x.ConfirmedById).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<FieldCashHandover>().HasOne(x => x.RejectedBy).WithMany().HasForeignKey(x => x.RejectedById).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<FieldCashHandoverItem>().Property(x => x.Amount).HasPrecision(18,2);
+        builder.Entity<FieldCashHandoverItem>().HasIndex(x => x.FieldPaymentId).IsUnique();
+        builder.Entity<FieldCashHandoverItem>().HasOne(x => x.Handover).WithMany(x => x.Items).HasForeignKey(x => x.HandoverId).OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<FieldCashHandoverItem>().HasOne(x => x.FieldPayment).WithMany().HasForeignKey(x => x.FieldPaymentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<FootballField>().Property(f => f.Revision).IsConcurrencyToken();
         builder.Entity<FootballField>().HasData(
             new FootballField { Id = 1, Name = "Fusha 1", Revision = new Guid("a6111111-1111-4111-8111-111111111111") },

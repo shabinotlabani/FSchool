@@ -21,7 +21,14 @@ public class CoachesController(ApplicationDbContext db, UserManager<ApplicationU
    var id=User.FindFirstValue(ClaimTypes.NameIdentifier)!;
    var assigned=new _2Korriku.Services.CoachChatService(db).Assigned(id).Select(x=>x.Id);
    ViewData["UnreadMessages"]=await db.CoachMessages.CountAsync(x=>x.CoachId==id&&assigned.Contains(x.StudentId)&&x.FromParent&&x.ReadAt==null);
-   if(coachRole==null)return View("RoleChoice");
+   if(coachRole==null)
+   {
+    var isHead=await db.TrainingTeams.AnyAsync(t=>t.IsActive&&t.CoachId==id);
+    var isAssistant=await db.TrainingTeams.AnyAsync(t=>t.IsActive&&t.AssistantCoachId==id);
+    if(isHead&&!isAssistant)coachRole="head";
+    else if(isAssistant&&!isHead)coachRole="assistant";
+    else return View("RoleChoice");
+   }
    if(coachRole is not ("head" or "assistant"))return BadRequest();
    ViewData["CoachRole"]=coachRole;
    var teams=await db.TrainingTeams.AsNoTracking().Where(t=>t.IsActive && (coachRole=="head"?t.CoachId:t.AssistantCoachId)==id)

@@ -45,3 +45,5 @@
 .attendance-row .player-profile-toolbar:empty{display:none}
 .attendance-options input:disabled+label{opacity:.65}
 .attendance-options input:disabled:checked+label{opacity:1}
+.attendance-save-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.attendance-save-top button{min-height:38px;padding:7px 11px;border:1px solid #b9d8c7;border-radius:9px;background:#edf8f1;color:#236b47;font-size:.75rem;font-weight:700;white-space:nowrap}
+@media(max-width:640px){.attendance-page:has(#attendance-form){padding-bottom:118px}.attendance-page .attendance-save{position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:calc(66px + env(safe-area-inset-bottom));z-index:40;margin:0;padding:10px 12px;background:#fffffff5;backdrop-filter:blur(14px)}.attendance-save-actions{margin-top:6px}.attendance-save-actions button{min-height:42px}.attendance-save small{position:absolute;right:12px;top:-20px;padding:3px 8px;border-radius:7px;background:#fff4dc;font-size:.65rem}.attendance-save-top button{min-height:36px}.attendance-row:last-of-type{margin-bottom:12px}}

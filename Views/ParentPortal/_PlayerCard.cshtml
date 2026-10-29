@@ -7,7 +7,13 @@
 @if(Model.HasPhoto){<img class="player-portrait" src="@Url.Action("Photo",new{token,studentId=Model.StudentId})" alt="@Model.Name" width="480" height="600" fetchpriority="high"/>}
 else{<div class="portrait-placeholder"><svg viewBox="0 0 200 240" aria-hidden="true"><circle cx="100" cy="65" r="34"/><path d="M62 112 26 137l20 41 17-9v59h74v-59l17 9 20-41-36-25-23 17H85Z"/><path class="jersey-detail" d="M85 129 100 149l15-20M100 149v79"/></svg><span>@Model.Name</span></div>}
 <details class="portrait-upload"><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="12" r="4"/></svg>@(Model.HasPhoto?"Ndrysho foton":"Shto foton")</summary>
-<form asp-action="UploadPhoto" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post" enctype="multipart/form-data" class="player-photo-form" data-parent-consent="true"><label>Fotoja<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required/></label><button type="submit">Ruaj</button>@if(Model.HasPhoto){<button type="button" data-remove-photo>Hiq foton</button>}<p class="photo-status" role="status"></p></form></details>
+<form asp-action="UploadPhoto" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post" enctype="multipart/form-data" class="player-photo-form" data-parent-consent="true">
+    <label class="photo-picker"><span>Zgjidh foton e @Model.Name</span><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required/></label>
+    <div class="photo-preview" hidden><img alt="Parapamja e fotos"/><span>Parapamja</span></div>
+    <div class="photo-form-actions"><button type="submit" disabled>Ruaj foton</button>@if(Model.HasPhoto){<button type="button" class="photo-remove" data-remove-photo>Hiq foton</button>}</div>
+    <p class="photo-hint">JPG, PNG ose WebP. Fotoja zvogëlohet automatikisht.</p>
+    <p class="photo-status" role="status" aria-live="polite"></p>
+</form></details>
 </div>
 <dl class="passport-facts">
 <div class="passport-name"><dt>Emri</dt><dd>@Model.Name</dd></div>

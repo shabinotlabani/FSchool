@@ -20,7 +20,8 @@
     if(!User.IsInRole(Roles.Admin)&&!User.IsInRole(Roles.Operator)) navigation=navigation.Where(x=>x.Controller!="BankPayments").ToArray();
     if(!User.IsInRole(Roles.Admin))navigation=navigation.Where(x=>x.Controller!="AdminMatches").ToArray();
     if (User.IsInRole(Roles.Coach)) navigation = new[] { (Controller: "Coaches", Label: "Prezenca dhe ekipet", Icon: "calendar", Group: "") };
-    if (User.IsInRole(Roles.FieldOperator)) navigation = new[] { (Controller: "Fields", Label: "Rezervimet private", Icon: "calendar", Group: "") };
+    if (User.IsInRole(Roles.FieldOperator)) navigation = new[] { (Controller: "Fields", Label: "Rezervimet private", Icon: "calendar", Group: ""), (Controller: "FieldCash", Label: "Dorëzimi i cash-it", Icon: "wallet", Group: "") };
+    else if (User.IsInRole(Roles.Admin)) navigation = navigation.Append((Controller: "FieldCash", Label: "Barazimi i cash-it", Icon: "wallet", Group: "Financat")).ToArray();
     if (User.IsInRole(Roles.SuperAdmin)) navigation = navigation.Append((Controller: "Sponsorships", Label: "Sponsorizimet", Icon: "wallet", Group: "Financat")).ToArray();
     var accountName = User.Identity?.Name?.Split('@')[0] ?? "Llogaria";
     if(User.IsInRole(Roles.SuperAdmin))navigation=navigation.Append((Controller:"PlayerContracts",Label:"Kontratat",Icon:"players",Group:"Shkolla")).ToArray();
@@ -105,6 +106,7 @@
         </main>
         <footer class="app-footer"><span>© @DateTime.Today.Year @club.Name</span><span>Programuar nga <a class="developer-credit" href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels</a></span></footer>
     </div>
+    <partial name="_AdminMobileNav" />
     <link href="~/css/platform.css" rel="stylesheet" asp-append-version="true" />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -120,6 +122,10 @@
                 document.querySelector('.app-sidebar').classList.remove('menu-open');
                 menu.focus();
             }
+        });
+        document.querySelector('.admin-mobile-menu')?.addEventListener('click', () => {
+            if (menu.getAttribute('aria-expanded') !== 'true') menu.click();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     </script>
     <partial name="_FinancialConfirmation" />

@@ -3,9 +3,10 @@
 @using _2Korriku.Services
 @{ ViewData["Title"] = "Fushat dhe terminet"; var writer = User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator) || User.IsInRole(Roles.FieldOperator); }
 <link rel="stylesheet" href="~/css/fields.css" asp-append-version="true" />
-<div class="page-heading"><div><p class="eyebrow">@club.DisplayName / FUSHAT</p><h1>Fushat dhe terminet</h1><p>@(User.IsInRole(Roles.FieldOperator) ? "Rezervimet private dhe oraret e zëna." : "Stërvitjet e ekipeve dhe rezervimet private në një kalendar.")</p></div><div class="d-flex gap-2 flex-wrap">@if(!User.IsInRole(Roles.FieldOperator)){<a asp-action="Manage" class="btn btn-outline-primary">Menaxho fushat</a>}@if(writer){<a asp-action="Booking" asp-route-fieldId="@Model.FieldId" class="btn btn-primary">+ Termin privat</a>}</div></div>
+<div class="field-page @(User.IsInRole(Roles.FieldOperator) ? "field-operator-page" : "")">
+<div class="page-heading"><div><p class="eyebrow">@club.DisplayName / FUSHAT</p><h1>@(User.IsInRole(Roles.FieldOperator) ? "Terminet private" : "Fushat dhe terminet")</h1>@if(!User.IsInRole(Roles.FieldOperator)){<p>Stërvitjet e ekipeve dhe rezervimet private në një kalendar.</p>}</div><div class="d-flex gap-2 flex-wrap">@if(!User.IsInRole(Roles.FieldOperator)){<a asp-action="Manage" class="btn btn-outline-primary">Menaxho fushat</a>}@if(writer){<a asp-action="Booking" asp-route-fieldId="@Model.FieldId" class="btn btn-primary field-new-booking">+ Termin</a>}</div></div>
 @if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
-<form method="get" class="panel p-3 mb-4 d-flex gap-3 flex-wrap align-items-end">
+<form method="get" class="panel p-3 mb-4 d-flex gap-3 flex-wrap align-items-end field-schedule-filter">
     <div><label for="from" class="form-label">Java nga data</label><input id="from" name="from" type="date" value="@Model.From.ToString("yyyy-MM-dd")" min="2000-01-01" max="2099-12-31" class="form-control" required /></div>
     <div><label for="fieldId" class="form-label">Fusha</label><select id="fieldId" name="fieldId" class="form-select"><option value="">Të gjitha fushat</option>@foreach(var field in Model.Fields){<option value="@field.Id" selected="@(Model.FieldId == field.Id)">@field.Name @(field.IsActive ? "" : "(Joaktive)")</option>}</select></div>
     <label class="d-flex gap-2 align-items-center mb-2"><input type="checkbox" name="includeCancelled" value="true" checked="@Model.IncludeCancelled" /> Përfshi të anuluarat</label>
@@ -23,10 +24,14 @@
         <div class="field-day-items">
         @foreach(var item in items)
         {
-            <article class="field-event @(item.TeamId.HasValue ? "team" : "private") @(item.IsCancelled ? "cancelled" : "")">
-                <time>@item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</time><span class="field-event-location">@item.FieldName</span>
-                @if(item.TeamId.HasValue){@if(User.IsInRole(Roles.FieldOperator)){<span>Orar i zënë</span>}else{<a asp-controller="Teams" asp-action="Details" asp-route-id="@item.TeamId">@item.Name</a><small>Stërvitje ekipi</small>}}
-                else{<a asp-action="Details" asp-route-id="@item.BookingId">@item.Name</a><small>@(item.IsCancelled ? "I anuluar" : "Termin privat")</small>@if(!item.IsCancelled){<small>@(item.Due > 0 ? "Mbetur: " + item.Due.Value.ToString("N2") + "" : "I paguar / pa detyrim")</small>}}
+            <article class="field-event @(item.TeamId.HasValue ? "team" : "private") @(User.IsInRole(Roles.FieldOperator)&&item.TeamId.HasValue ? "occupied" : "") @(item.IsCancelled ? "cancelled" : "")">
+                @if(item.TeamId.HasValue && User.IsInRole(Roles.FieldOperator)){
+                    <div class="field-occupied-line"><time>@item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</time><span>I zënë</span></div>
+                }else{
+                    <div class="field-event-top"><time>@item.StartsAt.ToString("HH:mm")–@item.EndsAt.ToString("HH:mm")</time><span>@item.FieldName</span></div>
+                    @if(item.TeamId.HasValue){<a asp-controller="Teams" asp-action="Details" asp-route-id="@item.TeamId">@item.Name</a><small>Stërvitje ekipi</small>}
+                    else{<a class="field-customer-name" asp-action="Details" asp-route-id="@item.BookingId">@item.Name</a>@if(!string.IsNullOrWhiteSpace(item.Phone)){<a class="field-event-phone" href="tel:@item.Phone">@item.Phone</a>}<span class="field-payment-state @(item.Due>0?"due":"paid")">@(item.IsCancelled?"I anuluar":item.Due>0?"Mbetur " + item.Due.Value.ToString("N2"):"I paguar")</span>}
+                }
                 @if(writer && item.CanCancel){<a asp-action="Cancel" asp-route-id="@item.BookingId" class="text-danger mt-2">Anulo terminin</a>}
             </article>
         }
@@ -36,3 +41,4 @@
     </section>
 }
 </div></div>
+</div>

@@ -1,0 +1,14 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+@if (User.IsInRole(Roles.Admin))
+{
+    <link rel="stylesheet" href="~/css/admin-mobile-nav.css" asp-append-version="true" />
+    <nav class="admin-mobile-nav" aria-label="Navigimi i administratorit">
+        <a class="@(controller == "Home" ? "active" : null)" asp-controller="Home" asp-action="Index"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20h-6v-6h-4v6H4Z"/></svg><span>Përmbledhja</span></a>
+        <a class="@(controller == "Students" ? "active" : null)" asp-controller="Students" asp-action="Index"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V20M16 6.5a3 3 0 0 1 0 6M16.5 14a4 4 0 0 1 4 4v2"/></svg><span>Lojtarët</span></a>
+        <a class="@(controller == "Teams" ? "active" : null)" asp-controller="Teams" asp-action="Index"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="m12 7 3 2.2-1.1 3.5h-3.8L9 9.2ZM7.2 13.5l2.9-.8M16.8 13.5l-2.9-.8M10 16l.1-3.3M14 16l-.1-3.3"/></svg><span>Ekipet</span></a>
+        <a class="@(controller == "AdminMatches" ? "active" : null)" asp-controller="AdminMatches" asp-action="Index"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg><span>Ndeshjet</span></a>
+        <button type="button" class="admin-mobile-menu" aria-label="Hap menunë e plotë"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg><span>Menuja</span></button>
+    </nav>
+}

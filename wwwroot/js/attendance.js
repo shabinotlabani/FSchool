@@ -25,6 +25,7 @@
     const rows = [...form.querySelectorAll('[data-player]')];
     const count = document.getElementById('attendance-count');
     const next = document.getElementById('next-unmarked');
+    const markAll = document.getElementById('mark-all-present');
     let dirty = false;
     const draftKey = 'attendance-draft-' + location.pathname + location.search;
     const rosterToken = form.querySelector('[name=RosterToken]')?.value;
@@ -60,6 +61,13 @@
         next.hidden = missing().length === 0;
     }
     form.addEventListener('change', () => { dirty = true; document.getElementById('attendance-dirty').hidden = false; update(); });
+    markAll?.addEventListener('click', () => {
+        rows.forEach(row => { const input = row.querySelector('input[value=true]:not(:disabled)'); if (input) input.checked = true; });
+        dirty = true;
+        document.getElementById('attendance-dirty').hidden = false;
+        update();
+        missing()[0]?.scrollIntoView({behavior:'smooth', block:'center'});
+    });
     next?.addEventListener('click', () => {
         const row = missing()[0];
         if (row) { row.scrollIntoView({behavior:'smooth', block:'center'}); row.querySelector('input[type=radio]').focus({preventScroll:true}); }

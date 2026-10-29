@@ -6,8 +6,11 @@
 <div class="attendance-page coach-team-page coach-light">
 <div class="page-heading"><div><p class="eyebrow">@(role=="head"?"TRAJNER":"NDIHMËSTRAJNER") · @Model.Count ekipe</p><h1>Ekipet e mia</h1></div><a class="coach-inbox-link" asp-controller="CoachInbox" asp-action="Index">Mesazhet <span>@ViewData["UnreadMessages"]</span></a></div>
 @if(Model.Count==0){<div class="panel p-4">Nuk keni ekipe aktive të caktuara në këtë rol.</div>}
+<div class="coach-quick-links">
 <a class="coach-roster-link" asp-action="Players"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg><strong>Lojtarët e mi</strong><span aria-hidden="true">→</span></a>
 <a class="coach-roster-link" asp-controller="Matches" asp-action="Index"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg><strong>Ndeshjet dhe minutazhi</strong><span aria-hidden="true">→</span></a>
+<a class="coach-roster-link coach-personal-link" asp-action="Personal"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg><strong>Trajnime personale</strong><span aria-hidden="true">→</span></a>
+</div>
 @foreach(var card in Model){var team=card.Team;
 <section class="panel coach-team-card @(card.InProgress?"is-current":"")">
 <div class="coach-team-top"><h2>@team.Name</h2><span class="coach-team-age">@team.MinAge–@team.MaxAge vjeç</span></div>
@@ -21,4 +24,5 @@
 </div>
 </section>}
 </div>
+<partial name="_MobileNav" />
 @section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}

@@ -1,13 +1,15 @@
 @model MatchList
 @{ViewData["Title"]="Ndeshjet";}
 <link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
+@if(User.IsInRole(Roles.Coach)){<link rel="stylesheet" href="~/css/coach-light.css" asp-append-version="true"/>}
 <div class="matches-page">
 <div class="page-heading"><div><h1>Ndeshjet</h1><p>Ligat dhe ndeshjet miqësore</p></div><a class="btn btn-outline-secondary" asp-action="Matrix" asp-route-teamId="@Model.TeamId" asp-route-year="@Model.Year">Minutazhi</a></div>
 @if(Model.DisciplineAlerts.Count>0){<div class="alert alert-warning" role="alert"><strong>Ndeshja e radhës</strong>@foreach(var row in Model.DisciplineAlerts){<div>@row.TeamName · @row.Competition · <strong>@row.Alert.Name</strong> — @row.Alert.Message</div>}</div>}
 <form method="get" class="match-filters"><label>Ekipi<select name="teamId" class="form-select"><option value="">Të gjitha ekipet</option>@foreach(var t in Model.Teams){<option value="@t.Id" selected="@(Model.TeamId==t.Id)">@t.Name</option>}</select></label><label>Viti<input name="year" value="@Model.Year" type="number" min="1900" max="2200" class="form-control"/></label><button class="btn btn-outline-secondary">Shfaq</button></form>
 <div class="match-create-links">@foreach(var t in Model.Teams.Where(t=>!Model.TeamId.HasValue||t.Id==Model.TeamId)){<a class="btn btn-primary" asp-action="Edit" asp-route-teamId="@t.Id">+ Ndeshje · @t.Name</a>}</div>
 <div class="table-responsive match-grid"><table class="table align-middle"><thead><tr><th>Data</th><th>Ndeshja</th><th>Liga</th><th>Rezultati</th><th>Statusi</th><th></th></tr></thead><tbody>
-@foreach(var m in Model.Matches){<tr><td>@m.Date.ToString("dd.MM.yyyy")<small>@m.Kickoff?.ToString("HH:mm")</small></td><td><strong>@m.TrainingTeam.Name · @m.Opponent</strong><small>@(m.Home?"Vendas":"Mysafir")</small></td><td>@(m.Competition??"Miqësore")</td><td>@(m.ScoreFor.HasValue?$"{m.ScoreFor} : {m.ScoreAgainst}":"—")</td><td><span class="match-status @m.Status.ToLowerInvariant()">@MatchLabels.Status(m.Status)</span></td><td class="match-action-cell"><a asp-action="@(m.Status=="Completed"?"Summary":"Edit")" asp-route-id="@m.Id" class="match-open">Hap →</a></td></tr>}
+@foreach(var m in Model.Matches){<tr><td class="match-list-date">@m.Date.ToString("dd.MM.yyyy")<small>@m.Kickoff?.ToString("HH:mm")</small></td><td class="match-list-game"><strong>@m.TrainingTeam.Name · @m.Opponent</strong><small>@(m.Home?"Vendas":"Mysafir") · @(m.Competition??"Miqësore")</small></td><td class="match-list-league">@(m.Competition??"Miqësore")</td><td class="match-list-score">@(m.ScoreFor.HasValue?$"{m.ScoreFor} : {m.ScoreAgainst}":"—")</td><td class="match-list-status"><span class="match-status @m.Status.ToLowerInvariant()">@MatchLabels.Status(m.Status)</span></td><td class="match-action-cell"><a asp-action="@(m.Status=="Completed"?"Summary":"Edit")" asp-route-id="@m.Id" class="match-open">Hap →</a></td></tr>}
 @if(Model.Matches.Count==0){<tr><td colspan="6">Ende pa ndeshje për këtë periudhë.</td></tr>}
 </tbody></table></div></div>
+<partial name="~/Views/Coaches/_MobileNav.cshtml" />
 @section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-controller="Coaches" asp-action="Index">← Paneli i trajnerit</a>}

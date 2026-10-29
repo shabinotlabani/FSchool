@@ -44,9 +44,10 @@
 <input asp-for="Players[i].Present" type="radio" value="false" id="absent-@i" disabled="@Model.IsLocked" required/><label for="absent-@i" class="absent-option">− Mungon</label>
 </div></div>}
 @if(Model.Players.Count==0){<div class="panel p-4">Ekipi nuk ka lojtarë aktivë.</div>}
-else if(!Model.IsLocked){<div class="attendance-save panel"><div id="attendance-count" role="status" aria-live="polite"></div><div class="attendance-save-actions"><button type="button" id="next-unmarked" class="btn btn-outline-secondary" hidden>I pashënuari tjetër</button><button type="submit" class="btn btn-primary">Ruaj prezencën</button></div><small id="attendance-dirty" hidden>Ndryshime të paruajtura</small></div>}
+else if(!Model.IsLocked){<div class="attendance-save panel"><div class="attendance-save-top"><div id="attendance-count" role="status" aria-live="polite"></div><button type="button" id="mark-all-present">Të gjithë prezent</button></div><div class="attendance-save-actions"><button type="button" id="next-unmarked" class="btn btn-outline-secondary" hidden>I pashënuari tjetër</button><button type="submit" class="btn btn-primary">Ruaj prezencën</button></div><small id="attendance-dirty" hidden>Ndryshime të paruajtura</small></div>}
 </form>
 
 </div>
 @section PageNavigation { @if(User.IsInRole(Roles.Coach)){<a class="btn btn-outline-secondary app-back-button" asp-controller="Coaches" asp-action="Index" asp-route-coachRole="@Model.CoachRole"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}else{<a class="btn btn-outline-secondary app-back-button" asp-controller="Teams" asp-action="Details" asp-route-id="@Model.TeamId"><span aria-hidden="true">←</span><span>Mbrapa</span></a>} }
 @section Scripts {<script src="~/js/attendance.js" asp-append-version="true"></script>}
+<partial name="~/Views/Coaches/_MobileNav.cshtml" />

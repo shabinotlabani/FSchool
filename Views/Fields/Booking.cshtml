@@ -1,28 +1,36 @@
 @model FieldBookingEditModel
 @{ViewData["Title"] = Model.Id == 0 ? "Termin privat i ri" : "Ndrysho terminin";}
-<div class="page-heading mt-3"><div><p class="eyebrow">REZERVIM PRIVAT</p><h1>@ViewData["Title"]</h1></div></div>
-<form asp-action="Booking" method="post" data-financial-confirm class="panel p-4">
+<link rel="stylesheet" href="~/css/fields.css" asp-append-version="true" />
+<div class="field-booking-page">
+<div class="field-booking-heading"><div><span>REZERVIM PRIVAT</span><h1>@(Model.Id == 0 ? "Termin i ri" : "Ndrysho terminin")</h1></div><strong>60 min</strong></div>
+<form asp-action="Booking" method="post" data-financial-confirm class="field-quick-form" id="field-booking-form" data-new="@(Model.Id == 0 ? "true" : "false")" data-availability-url="@Url.Action("AvailableBookingTimes", "Fields")">
 <input asp-for="Id" type="hidden" /><input asp-for="Revision" type="hidden" /><input asp-for="RequestId" type="hidden" />
-<div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
-<div class="row g-3">
-<div class="col-md-6"><label asp-for="CustomerName" class="form-label">Emri i klientit / grupit</label><input asp-for="CustomerName" class="form-control" maxlength="100" required /></div>
-<div class="col-md-6"><label asp-for="Phone" class="form-label">Telefoni (opsionale)</label><input asp-for="Phone" type="tel" class="form-control" maxlength="40" /></div>
-<div class="col-md-6"><label asp-for="FootballFieldId" class="form-label">Fusha</label><select asp-for="FootballFieldId" class="form-select" required><option value="">Zgjidhni fushën</option>@foreach(var field in Model.Fields){<option value="@field.Id">@field.Name @(field.IsActive ? "" : "(Joaktive)")</option>}</select></div>
-<div class="col-md-6"><label asp-for="Date" class="form-label">@(Model.Id == 0 ? "Nga data" : "Data")</label><input asp-for="Date" type="date" asp-format="{0:yyyy-MM-dd}" min="2000-01-01" max="2099-12-31" class="form-control" required /></div>
-@if(Model.Id == 0){
-<div class="col-12"><label class="form-label">Ditët e javës</label><div class="d-flex flex-wrap gap-2">
-@for(var day=1;day<=7;day++){<input type="checkbox" class="btn-check" name="Days" value="@day" id="booking-day-@day" checked="@Model.Days.Contains(day)"/><label class="btn btn-outline-primary rounded-pill" for="booking-day-@day">@_2Korriku.Services.TeamService.DayName(day)</label>}
-</div><span asp-validation-for="Days" class="text-danger"></span></div>
-<div class="col-md-6"><label asp-for="Weeks" class="form-label">Përsërite për sa javë?</label><input asp-for="Weeks" type="number" min="1" max="52" step="1" class="form-control" required /></div>
-}else{<p class="text-secondary">Ndryshohet vetëm ky termin.</p>}
-<div class="col-md-6"><label asp-for="StartsAt" class="form-label">Ora e fillimit · 1 orë</label><input asp-for="StartsAt" type="time" asp-format="{0:HH:mm}" step="60" class="form-control" required /><small id="booking-time-preview" class="text-secondary"></small></div>
-<div class="col-12"><p id="booking-repeat-preview" class="rounded bg-light p-2 mb-0 small" aria-live="polite"></p></div>
-<div class="col-md-6"><label asp-for="Price" class="form-label">Çmimi për një termin</label><input asp-for="Price" type="number" min="0" max="999999.99" step="0.01" class="form-control" required /><small class="text-secondary">Pas ruajtjes mund të arkëtoni të plotë ose pjesërisht.</small></div><div class="col-12"><label asp-for="Notes" class="form-label">Shënime (opsionale)</label><textarea asp-for="Notes" class="form-control" rows="3" maxlength="500"></textarea></div>
+<div asp-validation-summary="All" class="field-booking-errors" role="alert"></div>
+<div class="field-customer-row"><label class="field-quick-customer"><span>Klienti / grupi</span><input asp-for="CustomerName" maxlength="100" required autocomplete="name" placeholder="Shkruaj emrin" autofocus="@(Model.Id == 0)" /></label><label class="field-quick-phone"><span>Numri i kontaktit</span><input asp-for="Phone" type="tel" maxlength="40" autocomplete="tel" inputmode="tel" placeholder="04x xxx xxx" required /></label></div>
+<div class="field-quick-grid">
+<label><span>Fusha</span><select asp-for="FootballFieldId" required><option value="">Zgjidh fushën</option>@foreach(var field in Model.Fields){<option value="@field.Id">@field.Name @(field.IsActive ? "" : "(Joaktive)")</option>}</select></label>
+<label><span>@(Model.Id == 0 ? "Data e parë" : "Data")</span><input asp-for="Date" type="date" asp-format="{0:yyyy-MM-dd}" min="2000-01-01" max="2099-12-31" required /></label>
+<label class="field-time-field"><span>Ora e fillimit</span><input asp-for="StartsAt" type="time" asp-format="{0:HH:mm}" step="60" required /><small id="booking-time-preview"></small></label>
+<label><span>Çmimi</span><input asp-for="Price" type="number" min="0" max="999999.99" step="0.01" inputmode="decimal" required /></label>
 </div>
-<p class="text-secondary mt-3">Termini privat rezervon fushën për këtë datë dhe orar. Zgjidhni një orar pa stërvitje ekipesh ose rezervime të tjera private.</p>
-<div class="d-flex gap-2 mt-4"><button class="btn btn-primary">Ruaj terminin</button></div>
+<div class="field-time-caption"><span>Zgjidh orën</span><small><i></i> E zënë</small></div>
+<div class="field-time-groups">
+    <div class="field-time-group"><b>Paradite</b><div class="field-time-chips" aria-label="Orët paradite">@foreach(var hour in Enumerable.Range(6,6).Select(x => $"{x:00}:00")){<button type="button" data-booking-time="@hour">@hour</button>}</div></div>
+    <div class="field-time-group"><b>Pasdite</b><div class="field-time-chips" aria-label="Orët pasdite">@foreach(var hour in Enumerable.Range(12,12).Select(x => $"{x:00}:00")){<button type="button" data-booking-time="@hour">@hour</button>}</div></div>
+</div>
+@if(Model.Id == 0){
+<details class="field-quick-more" id="booking-repeat"><summary><span><b>Përsërite terminin</b><small>Ditë dhe javë të tjera</small></span><i aria-hidden="true">+</i></summary><div class="field-more-body">
+<div><span class="field-more-label">Ditët</span><div class="field-day-choices">@for(var day=1;day<=7;day++){<input type="checkbox" name="Days" value="@day" id="booking-day-@day" checked="@Model.Days.Contains(day)"/><label for="booking-day-@day">@_2Korriku.Services.TeamService.DayName(day).Substring(0,3)</label>}</div><span asp-validation-for="Days" class="field-inline-error"></span></div>
+<label><span>Numri i javëve</span><input asp-for="Weeks" type="number" min="1" max="52" step="1" required /></label>
+</div></details>
+}else{<input asp-for="Weeks" type="hidden" />}
+<details class="field-quick-more"><summary><span><b>Kontakt dhe shënime</b><small>Opsionale</small></span><i aria-hidden="true">+</i></summary><div class="field-more-body field-more-contact">
+<label><span>Shënime</span><textarea asp-for="Notes" rows="2" maxlength="500" placeholder="Vetëm nëse nevojitet"></textarea></label>
+</div></details>
+<p id="booking-repeat-preview" class="field-booking-preview" aria-live="polite"></p>
+<div class="field-save-bar"><a asp-action="Index" asp-route-from="@Model.Date.ToString("yyyy-MM-dd")" asp-route-fieldId="@(Model.FootballFieldId > 0 ? Model.FootballFieldId : (int?)null)">Anulo</a><button type="submit"><span>@(Model.Id == 0 ? "Rezervo terminin" : "Ruaj ndryshimet")</span><b aria-hidden="true">→</b></button></div>
 </form>
-
+</div>
 @section Scripts{<script src="~/js/field-booking.js" asp-append-version="true"></script>}
 @section PageNavigation {
     <a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-from="@Model.Date.ToString("yyyy-MM-dd")" asp-route-fieldId="@(Model.FootballFieldId > 0 ? Model.FootballFieldId : (int?)null)"><span aria-hidden="true">←</span><span>Mbrapa</span></a>

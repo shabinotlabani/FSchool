@@ -43,6 +43,8 @@ public partial class FieldService(ApplicationDbContext db)
         var payment = await db.FieldPayments.Include(p => p.FieldBooking).SingleOrDefaultAsync(p => p.Id == input.Id)
             ?? throw new InvalidOperationException("Pagesa nuk u gjet.");
         if (payment.CancelledAt.HasValue) return payment.FieldBookingId;
+        if (await db.FieldCashHandoverItems.AnyAsync(x => x.FieldPaymentId == payment.Id && x.Handover!.Status == "Pending"))
+            throw new InvalidOperationException("Pagesa është në një dorëzim cash në pritje. Administratori duhet ta kthejë dorëzimin para anulimit.");
         if (payment.Amount > await new ExpenseService(db).AvailableAsync())
             throw new InvalidOperationException("Pagesa nuk mund të anulohet: mjetet janë përdorur për shpenzime. Korrigjoni fillimisht shpenzimet përkatëse.");
         payment.CancelledAt = DateTime.UtcNow; payment.CancellationReason = input.Reason.Trim();
@@ -178,7 +180,7 @@ public partial class FieldService(ApplicationDbContext db)
         var bookings = await db.FieldBookings.AsNoTracking().Include(b => b.FootballField).Include(b => b.Payments)
             .Where(b => b.Date >= from && b.Date <= model.To && (includeCancelled || !b.IsCancelled) && (!fieldId.HasValue || b.FootballFieldId == fieldId)).ToListAsync();
         model.Items.AddRange(bookings.Select(b => new FieldScheduleItem { Date = b.Date, FieldId = b.FootballFieldId, FieldName = b.FootballField!.Name,
-            StartsAt = b.StartsAt, EndsAt = b.EndsAt, Name = b.CustomerName, BookingId = b.Id, IsCancelled = b.IsCancelled, Due = b.Due, CanCancel = !b.IsCancelled && b.Paid == 0 }));
+            StartsAt = b.StartsAt, EndsAt = b.EndsAt, Name = b.CustomerName, Phone = b.Phone, BookingId = b.Id, IsCancelled = b.IsCancelled, Due = b.Due, CanCancel = !b.IsCancelled && b.Paid == 0 }));
         model.Items = model.Items.OrderBy(i => i.Date).ThenBy(i => i.StartsAt).ThenBy(i => i.FieldName).ThenBy(i => i.Name).ToList();
         return model;
     }

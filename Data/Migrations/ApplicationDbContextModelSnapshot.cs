@@ -1669,6 +1669,104 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("FieldBookingChanges");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.FieldCashHandover", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ConfirmedById")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OperatorId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PaymentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfirmedById");
+
+                    b.HasIndex("RejectedById");
+
+                    b.HasIndex("OperatorId", "Status");
+
+                    b.ToTable("FieldCashHandovers");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.FieldCashHandoverItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("FieldPaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HandoverId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FieldPaymentId");
+
+                    b.HasIndex("HandoverId");
+
+                    b.HasIndex("ClubId", "FieldPaymentId")
+                        .IsUnique();
+
+                    b.HasIndex("ClubId", "HandoverId");
+
+                    b.ToTable("FieldCashHandoverItems");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.FieldPayment", b =>
                 {
                     b.Property<int>("Id")
@@ -5776,6 +5874,76 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("FieldBooking");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.FieldCashHandover", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "ConfirmedBy")
+                        .WithMany()
+                        .HasForeignKey("ConfirmedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "Operator")
+                        .WithMany()
+                        .HasForeignKey("OperatorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "RejectedBy")
+                        .WithMany()
+                        .HasForeignKey("RejectedById")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ConfirmedBy");
+
+                    b.Navigation("Operator");
+
+                    b.Navigation("RejectedBy");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.FieldCashHandoverItem", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.FieldPayment", "FieldPayment")
+                        .WithMany()
+                        .HasForeignKey("FieldPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.FieldCashHandover", "Handover")
+                        .WithMany("Items")
+                        .HasForeignKey("HandoverId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.FieldPayment", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "FieldPaymentId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.FieldCashHandover", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "HandoverId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FieldPayment");
+
+                    b.Navigation("Handover");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.FieldPayment", b =>
                 {
                     b.HasOne("_2Korriku.Models.ApplicationUser", "Actor")
@@ -7353,6 +7521,11 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Changes");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.FieldCashHandover", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.League", b =>

@@ -1,0 +1,115 @@
+@model FieldCashDashboard
+@using _2Korriku.Services
+@{
+    ViewData["Title"] = "Barazimi i cash-it";
+    var availablePayments = Model.AvailablePayments ?? [];
+    var handovers = Model.Handovers ?? [];
+    var operatorBalances = Model.OperatorBalances ?? [];
+}
+
+<link rel="stylesheet" href="~/css/field-cash.css" asp-append-version="true" />
+
+<div class="cash-page">
+    <div class="cash-heading">
+        <div><span>TERMINET PRIVATE</span><h1>@(Model.IsAdmin ? "Barazimi i cash-it" : "Cash-i im")</h1></div>
+        @if (!Model.IsAdmin) { <strong>@Model.Available.ToString("N2")</strong> }
+    </div>
+
+    @if (TempData["Success"] is string success) { <div class="cash-message success">@success</div> }
+    @if (TempData["Error"] is string error) { <div class="cash-message error">@error</div> }
+
+    @if (!Model.IsAdmin)
+    {
+        var pending = handovers.FirstOrDefault(x => x.Status == "Pending");
+        <section class="cash-balance @(pending != null ? "pending" : "")">
+            <div>
+                <small>@(pending == null ? "CASH PËR DORËZIM" : "NË PRITJE TË ADMINISTRATORIT")</small>
+                <strong>@(pending?.Amount.ToString("N2") ?? Model.Available.ToString("N2"))</strong>
+                <span>@(pending == null ? $"{availablePayments.Count} pagesa cash" : $"Dorëzimi #{pending.Id} · {pending.PaymentCount} pagesa")</span>
+            </div>
+            @if (pending == null && Model.Available > 0)
+            {
+                <form asp-action="Create" method="post" data-financial-confirm><button>Dërgo për konfirmim <b>→</b></button></form>
+            }
+            else if (pending != null) { <i>⌛</i> }
+        </section>
+
+        @if (availablePayments.Count > 0)
+        {
+            <details class="cash-details">
+                <summary>Pagesat që përfshihen <span>@availablePayments.Count</span></summary>
+                <div class="cash-payment-list">
+                    @foreach (var payment in availablePayments)
+                    {
+                        var customerName = payment.FieldBooking?.CustomerName ?? "Pa emër";
+                        var fieldName = payment.FieldBooking?.FootballField?.Name ?? "Pa fushë";
+                        <div>
+                            <span><b>@customerName</b><small>@BillingClock.LocalTime(payment.CreatedAt).ToString("dd.MM · HH:mm") · @fieldName</small></span>
+                            <strong>@payment.Amount.ToString("N2")</strong>
+                        </div>
+                    }
+                </div>
+            </details>
+        }
+    }
+    else
+    {
+        <section class="cash-operators">
+            <header><h2>Gjendja sipas operatorit</h2><span>@operatorBalances.Count operatorë</span></header>
+            <div class="cash-operator-grid">
+                @foreach (var row in operatorBalances)
+                {
+                    <article>
+                        <div><strong>@row.OperatorName</strong><small>Cash i padorëzuar</small></div>
+                        <b>@row.Available.ToString("N2")</b>
+                        @if (row.Pending > 0) { <span>Në konfirmim · @row.Pending.ToString("N2")</span> }
+                    </article>
+                }
+                @if (operatorBalances.Count == 0) { <p>Pa cash të hapur.</p> }
+            </div>
+        </section>
+    }
+
+    <section class="cash-history">
+        <header><h2>@(Model.IsAdmin ? "Dorëzimet" : "Historiku")</h2></header>
+        @foreach (var handover in handovers)
+        {
+            var statusClass = handover.Status.ToLowerInvariant();
+            var operatorName = handover.Operator == null ? "Përdorues" : FieldCashService.DisplayName(handover.Operator);
+            var items = handover.Items ?? [];
+            <article class="cash-handover @statusClass">
+                <div class="cash-handover-main">
+                    <span class="cash-state">@(handover.Status == "Pending" ? "Në pritje" : handover.Status == "Confirmed" ? "I konfirmuar" : "I kthyer")</span>
+                    <h3>@(Model.IsAdmin ? operatorName : $"Dorëzimi #{handover.Id}")</h3>
+                    <p>@BillingClock.LocalTime(handover.CreatedAt).ToString("dd.MM.yyyy · HH:mm") · @handover.PaymentCount pagesa</p>
+                    @if (handover.Status == "Rejected") { <small>@handover.RejectionReason</small> }
+                </div>
+                <strong class="cash-amount">@handover.Amount.ToString("N2")</strong>
+
+                @if (Model.IsAdmin && handover.Status == "Pending")
+                {
+                    <div class="cash-actions">
+                        <form asp-action="Confirm" asp-route-id="@handover.Id" method="post" data-financial-confirm><button class="confirm">Konfirmo pranimin</button></form>
+                        <details><summary>Ktheje</summary><form asp-action="Reject" asp-route-id="@handover.Id" method="post"><input name="reason" maxlength="300" required placeholder="Arsyeja" /><button>Ktheje për korrigjim</button></form></details>
+                    </div>
+                }
+
+                @if (Model.IsAdmin && items.Count > 0)
+                {
+                    <details class="cash-items">
+                        <summary>Shiko pagesat</summary>
+                        <div>
+                            @foreach (var item in items)
+                            {
+                                var itemCustomer = item.FieldPayment?.FieldBooking?.CustomerName ?? "Pa emër";
+                                var paymentNumber = item.FieldPayment?.Number ?? "—";
+                                <p><span>@itemCustomer <small>@paymentNumber</small></span><b>@item.Amount.ToString("N2")</b></p>
+                            }
+                        </div>
+                    </details>
+                }
+            </article>
+        }
+        @if (handovers.Count == 0) { <p class="cash-empty">Ende pa dorëzime.</p> }
+    </section>
+</div>

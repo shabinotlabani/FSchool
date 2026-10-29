@@ -74,7 +74,7 @@ public class FieldBookingEditModel : IValidatableObject
     public Guid Revision { get; set; }
     [Range(1, int.MaxValue, ErrorMessage = "Zgjidhni fushën.")] public int FootballFieldId { get; set; }
     [Required(ErrorMessage = "Shkruani emrin e klientit ose grupit."), StringLength(100)] public string CustomerName { get; set; } = "";
-    [StringLength(40)] public string? Phone { get; set; }
+    [Required(ErrorMessage = "Shkruani numrin e kontaktit."), StringLength(40)] public string? Phone { get; set; }
     public DateOnly Date { get; set; } = BillingClock.Today;
     [Required(ErrorMessage = "Vendosni orën e fillimit.")] public TimeOnly? StartsAt { get; set; }
     public TimeOnly? EndsAt { get; set; }
@@ -114,6 +114,7 @@ public class FieldScheduleItem
     public TimeOnly StartsAt { get; set; }
     public TimeOnly EndsAt { get; set; }
     public string Name { get; set; } = "";
+    public string? Phone { get; set; }
     public int? TeamId { get; set; }
     public int? BookingId { get; set; }
     public bool IsCancelled { get; set; }

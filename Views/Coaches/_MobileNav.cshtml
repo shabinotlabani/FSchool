@@ -1,0 +1,14 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<link rel="stylesheet" href="~/css/coach-mobile-nav.css" asp-append-version="true" />
+@if (User.IsInRole(Roles.Coach) && !User.IsInRole(Roles.Admin))
+{
+    <nav class="coach-mobile-nav" aria-label="Navigimi i trajnerit">
+        <a class="@((controller == "Coaches" && action == "Index") || controller == "Attendance" ? "active" : null)" asp-controller="Coaches" asp-action="Index"><svg width="21" height="21" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20h-6v-6h-4v6H4Z"/></svg><span>Paneli</span></a>
+        <a class="@(controller == "Coaches" && action == "Players" ? "active" : null)" asp-controller="Coaches" asp-action="Players"><svg width="21" height="21" aria-hidden="true" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V20M16 6.5a3 3 0 0 1 0 6M16.5 14a4 4 0 0 1 4 4v2"/></svg><span>Lojtarët</span></a>
+        <a class="@(controller == "Matches" ? "active" : null)" asp-controller="Matches" asp-action="Index"><svg width="21" height="21" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M13 14h3M8 17h3"/></svg><span>Ndeshjet</span></a>
+        <a class="@(controller == "CoachInbox" ? "active" : null)" asp-controller="CoachInbox" asp-action="Index"><svg width="21" height="21" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5h16v12H9l-5 4Z"/><path d="M8 9h8M8 13h5"/></svg><span>Mesazhet</span></a>
+    </nav>
+}

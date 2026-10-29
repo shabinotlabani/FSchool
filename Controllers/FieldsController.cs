@@ -87,6 +87,24 @@ public class FieldsController(ApplicationDbContext db) : Controller
         if (model.Id == 0 && model.Days.Count == 0) model.Days = [((int)model.Date.DayOfWeek + 6) % 7 + 1];
         await Choices(model); return View(model);
     }
+    [HttpGet, Authorize(Roles = Roles.FieldWrite)]
+    public async Task<IActionResult> AvailableBookingTimes(int fieldId, DateOnly date, int bookingId = 0)
+    {
+        if (fieldId <= 0 || date.Year is < 2000 or > 2099) return BadRequest();
+        if (!await db.FootballFields.AsNoTracking().AnyAsync(x => x.Id == fieldId && x.IsActive)) return NotFound();
+        var previousDate = date.AddDays(-1);
+        var bookings = await db.FieldBookings.AsNoTracking()
+            .Where(x => x.FootballFieldId == fieldId && x.Date >= previousDate && x.Date <= date && x.Id != bookingId && !x.IsCancelled)
+            .Select(x => new { x.Date, x.StartsAt, x.EndsAt }).ToListAsync();
+        var sessions = await db.TrainingSessions.AsNoTracking()
+            .Where(x => x.TrainingTeam!.IsActive && x.TrainingTeam.FootballFieldId == fieldId)
+            .Select(x => new { x.Day, x.StartsAt, x.EndsAt }).ToListAsync();
+        var occupied = Enumerable.Range(6, 18).Select(hour => new TimeOnly(hour, 0))
+            .Where(start => bookings.Any(x => FieldTime.Overlaps(date, start, start.AddHours(1), x.Date, x.StartsAt, x.EndsAt))
+                || sessions.Any(x => FieldTime.OverlapsWeekly(date, start, start.AddHours(1), x.Day, x.StartsAt, x.EndsAt)))
+            .Select(x => x.ToString("HH:mm")).ToList();
+        return Json(new { occupied });
+    }
     [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.FieldWrite)]
     public async Task<IActionResult> Booking(FieldBookingEditModel model)
     {
