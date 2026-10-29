@@ -83,7 +83,7 @@ public class PersonalTrainingService(ApplicationDbContext db)
     {
         if(await db.PersonalCharges.AnyAsync(x=>x.PersonalTrainingId==t.Id&&x.Period==period))return;
         var prorated=t.Mode=="Monthly"&&period.Year==t.StartsOn.Year&&period.Month==t.StartsOn.Month&&t.StartsOn.Day>1;
-        var c=new PersonalCharge{PersonalTraining=t,Period=period,Description=t.Name+" · "+period.ToString(t.Mode=="Monthly"?"MM.yyyy":"dd.MM.yyyy"),Amount=prorated?MonthlyProration.Calculate(t.Rate,t.StartsOn):t.Rate,Calculation=prorated?$"Tarifa {t.Rate:N2} × {DateTime.DaysInMonth(period.Year,period.Month)-t.StartsOn.Day+1}/{DateTime.DaysInMonth(period.Year,period.Month)} ditë":null};
+        var c=new PersonalCharge{PersonalTraining=t,Period=period,Description=t.Name+" · "+period.ToString(t.Mode=="Monthly"?"MM.yyyy":"dd/MM/yyyy"),Amount=prorated?MonthlyProration.Calculate(t.Rate,t.StartsOn):t.Rate,Calculation=prorated?$"Tarifa {t.Rate:N2} × {DateTime.DaysInMonth(period.Year,period.Month)-t.StartsOn.Day+1}/{DateTime.DaysInMonth(period.Year,period.Month)} ditë":null};
         db.PersonalCharges.Add(c);await db.SaveChangesAsync();Entry(c,"Fee",c.Amount,0,c.Description,actor);await db.SaveChangesAsync();
     }
     public Task<int> GenerateAsync(string? actor=null,DateOnly? asOf=null,CancellationToken ct=default)=>Write(async()=>{

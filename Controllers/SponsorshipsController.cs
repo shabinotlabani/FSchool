@@ -160,6 +160,12 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
         catch(Exception e)when(e is ValidationException or InvalidOperationException){ModelState.AddModelError("",e.Message);}
         m.Contract=await FindContract(m.ContractId);if(m.Contract==null)return NotFound();return View(m);
     }
+    [HttpPost,ValidateAntiForgeryToken] public async Task<IActionResult> CloseFunding(SponsorshipFundingCloseInput m)
+    {
+        if(ModelState.IsValid)try {var id=await Service.CloseFunding(m,Actor);TempData["Success"]=m.Outcome=="SponsorShortfall"?"Marrëveshja u përfundua me mjetet e pranuara.":"Sqarimi u ruajt; marrëveshja mbetet aktive.";return RedirectToAction(nameof(Details),new{id});}
+        catch(Exception e)when(e is ValidationException or InvalidOperationException){TempData["Error"]=e.Message;}
+        return RedirectToAction(nameof(Details),new{id=m.ContractId});
+    }
     private async Task SpendChoices(SponsorshipSpendInput m) {
         m.Contract=await FindContract(m.ContractId);m.Beneficiaries=await db.SponsorshipBeneficiaries.AsNoTracking().OrderBy(x=>x.Name).ToListAsync();
     }

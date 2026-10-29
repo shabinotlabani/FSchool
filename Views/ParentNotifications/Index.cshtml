@@ -23,7 +23,7 @@
 <div class="d-flex justify-content-end mt-3"><button class="btn btn-primary">Dërgo njoftimin</button></div></form>
 }
 <h2>Historiku</h2><div class="panel table-responsive"><table class="table"><thead><tr><th>Data</th><th>Për</th><th>Njoftimi</th><th>Pranuar nga shërbimi</th><th>Në pritje</th><th>Pa dërguar</th></tr></thead><tbody>
-@foreach(var row in Model.Messages){<tr><td>@TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(row.CreatedAt, DateTimeKind.Utc), _2Korriku.Services.BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</td><td>@row.Audience</td><td><strong>@row.Title</strong><small class="d-block">@row.Body</small></td><td>@row.Deliveries.Count(x=>x.SentAt!=null)</td><td>@row.Deliveries.Count(x=>x.SentAt==null&&!x.Failed)</td><td>@row.Deliveries.Count(x=>x.Failed)</td></tr>}
+@foreach(var row in Model.Messages){<tr><td>@TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(row.CreatedAt, DateTimeKind.Utc), _2Korriku.Services.BillingClock.Zone).ToString("dd/MM/yyyy HH:mm")</td><td>@row.Audience</td><td><strong>@row.Title</strong><small class="d-block">@row.Body</small></td><td>@row.Deliveries.Count(x=>x.SentAt!=null)</td><td>@row.Deliveries.Count(x=>x.SentAt==null&&!x.Failed)</td><td>@row.Deliveries.Count(x=>x.Failed)</td></tr>}
 @if(Model.Messages.Count==0){<tr><td colspan="6">Nuk ka njoftime të dërguara.</td></tr>}
 </tbody></table></div>
 @section Scripts{<script src="~/js/parent-notifications-admin.js" asp-append-version="true"></script>}

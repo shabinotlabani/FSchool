@@ -111,7 +111,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         var account = (await billing.GetAccountAsync(period.StudentId))!;
         var invoice = account.Invoices.Single(i => i.Period.Id == id);
         var preparedBy = StaffName(await db.Users.FindAsync(ActorId));
-        return View("Document", new PaymentDocumentModel { Number = invoice.Number, Date = BillingClock.LocalDate(period.GeneratedAt), Student = account.Student, Description = invoice.MonthLabel, Amount = invoice.Amount, Exempted = invoice.Exempted, Paid = invoice.Paid, Due = invoice.Due, PreparedBy = preparedBy, Notes = string.Join(" · ", new[] { period.ProrationDescription, period.FeePlanName, period.FeeReason, period.FeeNotes, "Gjendja më " + BillingClock.Today.ToString("dd.MM.yyyy") }.Where(s => !string.IsNullOrWhiteSpace(s))) });
+        return View("Document", new PaymentDocumentModel { Number = invoice.Number, Date = BillingClock.LocalDate(period.GeneratedAt), Student = account.Student, Description = invoice.MonthLabel, Amount = invoice.Amount, Exempted = invoice.Exempted, Paid = invoice.Paid, Due = invoice.Due, PreparedBy = preparedBy, Notes = string.Join(" · ", new[] { period.ProrationDescription, period.FeePlanName, period.FeeReason, period.FeeNotes, "Gjendja më " + BillingClock.Today.ToString("dd/MM/yyyy") }.Where(s => !string.IsNullOrWhiteSpace(s))) });
     }
 
     public async Task<IActionResult> Receipt(int id, string? returnUrl = null)

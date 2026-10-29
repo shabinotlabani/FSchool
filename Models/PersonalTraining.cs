@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using _2Korriku.Services;
 
@@ -43,7 +43,7 @@ public class PersonalTraining
     public List<PersonalTrainingSlot> Sessions { get; set; } = [];
     public List<PersonalCharge> Charges { get; set; } = [];
     [NotMapped] public string ModeLabel => Mode == "Monthly" ? "Paketë mujore" : "Për seancë";
-    [NotMapped] public string Schedule => string.Join("; ",Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{(Mode=="Monthly"?TeamService.DayName(s.Day):StartsOn.ToString("dd.MM.yyyy"))} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"));
+    [NotMapped] public string Schedule => string.Join("; ",Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt).Select(s=>$"{(Mode=="Monthly"?TeamService.DayName(s.Day):StartsOn.ToString("dd/MM/yyyy"))} {s.StartsAt:HH:mm}–{s.EndsAt:HH:mm}"));
 }
 
 public class PersonalTrainingSlot

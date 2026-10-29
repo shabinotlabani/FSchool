@@ -16,7 +16,7 @@
 @if(Model.HasOlder){<a class="chat-older" href="@Url.Action("Thread",controller,new{token=Model.Token,studentId=Model.Student.Id,coachId=Model.CoachId,before=Model.Messages.First().Id,returnUrl=ViewData["ReturnUrl"]})">Mesazhe më të hershme</a>}
 @if(Model.Before.HasValue){<a class="chat-older" href="@Url.Action("Thread",controller,route)">Kthehu te mesazhet e fundit</a>}
 <div class="chat-messages" role="log" aria-label="Biseda" aria-live="polite" tabindex="0">
-@foreach(var message in Model.Messages){var mine=message.FromParent==Model.Parent;<article class="chat-message @(mine?"mine":"")" data-id="@message.Id"><p>@message.Body</p><small>@BillingClock.LocalTime(message.CreatedAt).ToString("dd.MM.yyyy HH:mm")@(mine?(message.ReadAt.HasValue?" · Lexuar":" · Dërguar"):"")</small></article>}
+@foreach(var message in Model.Messages){var mine=message.FromParent==Model.Parent;<article class="chat-message @(mine?"mine":"")" data-id="@message.Id"><p>@message.Body</p><small>@BillingClock.LocalTime(message.CreatedAt).ToString("dd/MM/yyyy HH:mm")@(mine?(message.ReadAt.HasValue?" · Lexuar":" · Dërguar"):"")</small></article>}
 @if(Model.Messages.Count==0){<p class="chat-empty">Shkruani mesazhin tuaj.</p>}
 </div>
 <form class="chat-compose" method="post" action="@Url.Action("Send",controller,new{token=Model.Token})">

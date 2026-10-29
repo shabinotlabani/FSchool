@@ -1,11 +1,11 @@
-﻿@model List<League>
+@model List<League>
 @{ViewData["Title"]="Ligat";}
 <link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
 <div class="team-workspace">
 <div class="page-heading"><div><h1>Ligat</h1><p>Sezonet dhe ekipet pjesëmarrëse</p></div><a class="btn btn-primary" asp-action="Edit">+ Ligë e re</a></div>
 @if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
 <div class="panel table-responsive" tabindex="0" role="region" aria-label="Ligat"><table class="table"><thead><tr><th>Liga / sezoni</th><th>Ekipet</th><th>Të verdhë → pezullim</th><th>I kuq direkt</th><th>Dy të verdhë</th><th>Statusi</th><th></th></tr></thead><tbody>
-@foreach(var league in Model){<tr><td><strong>@league.Name</strong><small class="d-block text-secondary">@league.StartsOn.ToString("dd.MM.yyyy") – @league.EndsOn.ToString("dd.MM.yyyy")</small></td><td>@foreach(var team in league.Teams){<a class="d-block" asp-controller="Teams" asp-action="Details" asp-route-id="@team.TrainingTeamId">@team.TrainingTeam.Name</a>}</td><td>@(league.RulesConfirmed?$"{league.YellowThreshold} → {league.YellowBan} ndeshje":"Pa konfirmuar")</td><td>@(league.RulesConfirmed?$"{league.RedBan} ndeshje":"—")</td><td>@(league.RulesConfirmed?$"{league.SecondYellowBan} ndeshje":"—")</td><td>@(league.IsActive?"Aktive":"Arkivuar")</td><td><a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@league.Id">Ndrysho</a></td></tr>}
+@foreach(var league in Model){<tr><td><strong>@league.Name</strong><small class="d-block text-secondary">@league.StartsOn.ToString("dd/MM/yyyy") – @league.EndsOn.ToString("dd/MM/yyyy")</small></td><td>@foreach(var team in league.Teams){<a class="d-block" asp-controller="Teams" asp-action="Details" asp-route-id="@team.TrainingTeamId">@team.TrainingTeam.Name</a>}</td><td>@(league.RulesConfirmed?$"{league.YellowThreshold} → {league.YellowBan} ndeshje":"Pa konfirmuar")</td><td>@(league.RulesConfirmed?$"{league.RedBan} ndeshje":"—")</td><td>@(league.RulesConfirmed?$"{league.SecondYellowBan} ndeshje":"—")</td><td>@(league.IsActive?"Aktive":"Arkivuar")</td><td><a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@league.Id">Ndrysho</a></td></tr>}
 @if(Model.Count==0){<tr><td colspan="7" class="p-4 text-secondary">Shtoni ligën e parë dhe caktoni ekipet.</td></tr>}
 </tbody></table></div></div>
 @section PageNavigation {<a class="btn btn-outline-secondary" asp-controller="Teams" asp-action="Index">← Ekipet</a>}

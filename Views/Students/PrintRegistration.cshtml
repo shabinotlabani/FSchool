@@ -9,14 +9,14 @@
 <section class="payment-copy registration-copy">
     <header class="document-header">
         <div class="document-brand"><img src="@Club.LogoUrl" alt="Logo e @club.DisplayName"/><div><strong>@club.DisplayName</strong><span>@club.LegalName</span><small>@string.Join(" · ",new[]{club.Address,club.City,club.Phone}.Where(x=>!string.IsNullOrWhiteSpace(x)))</small></div></div>
-        <div class="document-heading"><span class="copy-label">@copy</span><h1>Formular regjistrimi</h1><strong>Nr. @Model.Id · @BillingClock.LocalDate(Model.RegistrationDate).ToString("dd.MM.yyyy")</strong></div>
+        <div class="document-heading"><span class="copy-label">@copy</span><h1>Formular regjistrimi</h1><strong>Nr. @Model.Id · @BillingClock.LocalDate(Model.RegistrationDate).ToString("dd/MM/yyyy")</strong></div>
     </header>
     <div class="document-rule"></div>
     <div class="registration-data">
         <div><label>Emri dhe mbiemri i lojtarit</label><strong>@Model.FullName</strong></div>
-        <div><label>Datëlindja</label><strong>@Model.DateOfBirth.ToString("dd.MM.yyyy")</strong></div>
+        <div><label>Datëlindja</label><strong>@Model.DateOfBirth.ToString("dd/MM/yyyy")</strong></div>
         <div><label>Ekipi</label><strong>@(Model.TrainingTeam?.Name ?? "—")</strong></div>
-        <div><label>Data e regjistrimit</label><strong>@BillingClock.LocalDate(Model.RegistrationDate).ToString("dd.MM.yyyy")</strong></div>
+        <div><label>Data e regjistrimit</label><strong>@BillingClock.LocalDate(Model.RegistrationDate).ToString("dd/MM/yyyy")</strong></div>
         <div><label>Prindi / kujdestari</label><strong>@(Model.ParentName ?? "—")</strong></div>
         <div><label>Numri kontaktues</label><strong>@(Model.ParentPhone ?? "—")</strong></div>
     </div>

@@ -12,7 +12,7 @@ var c=report.Contract;var number=0;
 <article class="official-report">
 <h2>RAPORT FINANCIAR I SHPENZIMEVE</h2>
 <div class="official-meta">
-<p><strong>Vërtetimi nr.</strong> @(c.CertificateNumber??"________________"); <strong>Data:</strong> @(c.CertificateDate?.ToString("dd.MM.yyyy")??"________________")</p>
+<p><strong>Vërtetimi nr.</strong> @(c.CertificateNumber??"________________"); <strong>Data:</strong> @(c.CertificateDate?.ToString("dd/MM/yyyy")??"________________")</p>
 <p><strong>Sponsorizuesi:</strong> @c.Sponsor, NUI @c.SponsorNumber</p>
 <p><strong>Shuma e sponsorizuar:</strong> @c.Amount.ToString("N2")</p>
 <p><strong>Përfituesi i Sponsorizimit:</strong> @club.LegalName@(string.IsNullOrWhiteSpace(club.RegistrationNumber) ? "" : ", " + club.RegistrationNumber)</p>
@@ -28,7 +28,7 @@ number++;
 @if(row.SalaryMonth.HasValue){<span class="official-detail">@(row.SalaryRole=="Player"?"Paga të lojtarëve":row.SalaryRole=="Staff"?"Paga të stafit":"Paga") · @row.SalaryMonth.Value.ToString("MM.yyyy")</span>}
 @if(!string.IsNullOrWhiteSpace(row.Description)&&row.Description!=row.Allocation.PlanLine.Category){<span class="official-detail">@row.Description</span>}
 @if(!string.IsNullOrWhiteSpace(row.BankReference)){<span class="official-detail">Transaksioni bankar: @row.BankReference</span>}</td>
-<td>@row.Beneficiary.Name</td><td><a asp-action="InvoiceDetails" asp-route-id="@row.Id">@row.DocumentReference</a></td><td class="official-center">@(row.InvoiceDate?.ToString("dd.MM.yyyy")??"")</td><td class="official-amount">@row.Amount.ToString("N2")</td></tr>
+<td>@row.Beneficiary.Name</td><td><a asp-action="InvoiceDetails" asp-route-id="@row.Id">@row.DocumentReference</a></td><td class="official-center">@(row.InvoiceDate?.ToString("dd/MM/yyyy")??"")</td><td class="official-amount">@row.Amount.ToString("N2")</td></tr>
 }
 @if(report.Spending.Count==0){<tr><td colspan="6">Nuk ka shpenzime të regjistruara.</td></tr>}
 <tr class="official-total"><td></td><th scope="row">TOTALI</th><td></td><td></td><td></td><td class="official-amount">@report.Used.ToString("N2")</td></tr>

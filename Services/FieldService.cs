@@ -28,7 +28,7 @@ public partial class FieldService(ApplicationDbContext db)
         if (booking.IsCancelled || booking.Revision != input.Revision) throw new InvalidOperationException("Termini ose pagesat kanë ndryshuar. Rihapni formularin.");
         if (input.Amount > booking.Due && !await BankVerificationService.IsConfirmedAmount(db,input.RequestId,"Field",input.Amount,actor)) throw new InvalidOperationException("Shuma tejkalon borxhin e mbetur të terminit.");
         var payment = new FieldPayment { FieldBookingId = booking.Id, RequestId = input.RequestId, Amount = input.Amount, Method = input.Method, ActorId = actor,
-            Description = $"{booking.CustomerName} · {booking.FootballField!.Name} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}–{booking.EndsAt:HH:mm}" };
+            Description = $"{booking.CustomerName} · {booking.FootballField!.Name} · {booking.Date:dd/MM/yyyy} · {booking.StartsAt:HH:mm}–{booking.EndsAt:HH:mm}" };
         db.FieldPayments.Add(payment); booking.Revision = Guid.NewGuid();
         booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Arkëtim: {input.Amount:N2} · {BillingService.MethodLabel(input.Method)}" });
         await db.SaveChangesAsync(); if (tx != null) await tx.CommitAsync(); return payment.Id;
@@ -124,7 +124,7 @@ public partial class FieldService(ApplicationDbContext db)
         var nearby = await db.FieldBookings.AsNoTracking().Where(b => b.Id != input.Id && !b.IsCancelled && b.FootballFieldId == field.Id && b.Date >= fromDate && b.Date <= toDate).ToListAsync();
         var conflicts = dates.Where(date => nearby.Any(b => FieldTime.Overlaps(date, start, end, b.Date, b.StartsAt, b.EndsAt))).ToList();
         if (conflicts.Count > 0)
-            throw new InvalidOperationException("Fusha është e rezervuar më " + string.Join(", ", conflicts.Select(date => date.ToString("dd.MM.yyyy"))) + ". Asnjë termin nuk u ruajt. Ndryshoni datën, orarin ose fushën.");
+            throw new InvalidOperationException("Fusha është e rezervuar më " + string.Join(", ", conflicts.Select(date => date.ToString("dd/MM/yyyy"))) + ". Asnjë termin nuk u ruajt. Ndryshoni datën, orarin ose fushën.");
         var sessions = await db.TrainingSessions.AsNoTracking().Where(s => s.TrainingTeam!.IsActive && s.TrainingTeam.FootballFieldId == field.Id).ToListAsync();
         if (dates.Any(date => sessions.Any(s => FieldTime.OverlapsWeekly(date, start, end, s.Day, s.StartsAt, s.EndsAt))))
             throw new InvalidOperationException("Në këtë orar fusha përdoret nga ekipet. Zgjidhni një orar ose fushë tjetër për terminin privat.");
@@ -141,11 +141,11 @@ public partial class FieldService(ApplicationDbContext db)
                 var next = new FieldBooking { RequestId = Guid.NewGuid(), SeriesId = booking.SeriesId, SeriesWeeks = input.Weeks,
                     FootballFieldId = field.Id, CustomerName = booking.CustomerName, Phone = booking.Phone,
                     Date = date, StartsAt = start, EndsAt = end, Price = input.Price, Notes = booking.Notes };
-                next.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Rezervim javor ({input.Weeks} javë): {field.Name} · {date:dd.MM.yyyy} · {start:HH:mm}–{end:HH:mm} · {next.CustomerName} · {next.Phone} · {next.Price:N2} · {next.Notes}" });
+                next.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"Rezervim javor ({input.Weeks} javë): {field.Name} · {date:dd/MM/yyyy} · {start:HH:mm}–{end:HH:mm} · {next.CustomerName} · {next.Phone} · {next.Price:N2} · {next.Notes}" });
                 db.FieldBookings.Add(next);
             }
         }
-        booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"{(input.Id == 0 ? "Rezervuar" : "Ndryshuar")}: {field.Name} · {booking.Date:dd.MM.yyyy} · {start:HH:mm}–{end:HH:mm} · {booking.CustomerName} · {booking.Phone} · {booking.Price:N2} · {booking.Notes}" });
+        booking.Changes.Add(new FieldBookingChange { ActorId = actor, Description = $"{(input.Id == 0 ? "Rezervuar" : "Ndryshuar")}: {field.Name} · {booking.Date:dd/MM/yyyy} · {start:HH:mm}–{end:HH:mm} · {booking.CustomerName} · {booking.Phone} · {booking.Price:N2} · {booking.Notes}" });
         await db.SaveChangesAsync(); await tx.CommitAsync(); return booking.Id;
     }
 

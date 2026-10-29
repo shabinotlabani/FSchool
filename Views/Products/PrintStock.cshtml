@@ -17,7 +17,7 @@
 <main class="stock-sheet stock-size-sheet">
     <header class="document-header">
         <div class="document-brand"><img src="@Club.LogoUrl" alt="@club.DisplayName" /><div><strong>@club.DisplayName</strong><span>MAGAZINA</span></div></div>
-        <div class="document-heading"><span class="copy-label">RAPORTI I STOKUT</span><h1>Stoku sipas madhësive</h1><strong>Gjendja më @f.To.ToString("dd.MM.yyyy")</strong></div>
+        <div class="document-heading"><span class="copy-label">RAPORTI I STOKUT</span><h1>Stoku sipas madhësive</h1><strong>Gjendja më @f.To.ToString("dd/MM/yyyy")</strong></div>
     </header>
     <div class="document-rule"></div>
     <p class="stock-print-filters">Kategoria: @(f.Category ?? "Të gjitha") · Kërkimi: @(f.Search ?? "—") · Rekuizitat: @(f.Status == "active" ? "Aktive" : f.Status == "inactive" ? "Joaktive" : "Të gjitha") · Stoku: @(f.Stock == "low" ? "I ulët" : f.Stock == "empty" ? "Pa stok / negativ" : "Të gjitha")</p>
@@ -66,5 +66,5 @@
     {
         <p>Nuk ka rekuizita për filtrat e zgjedhur.</p>
     }
-    <footer class="document-footer"><span>@club.DisplayName · Raporti i magazinës</span><span>Gjeneruar @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt, BillingClock.Zone).ToString("dd.MM.yyyy HH:mm")</span></footer>
+    <footer class="document-footer"><span>@club.DisplayName · Raporti i magazinës</span><span>Gjeneruar @TimeZoneInfo.ConvertTimeFromUtc(Model.GeneratedAt, BillingClock.Zone).ToString("dd/MM/yyyy HH:mm")</span></footer>
 </main>

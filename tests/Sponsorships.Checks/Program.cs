@@ -47,7 +47,10 @@ try {
     var lines=await Db(db=>db.SponsorshipPlanLines.OrderBy(x=>x.Id).ToListAsync());
     SponsorshipContractInput Contract(string label)=>new(){PlanId=plan,Sponsor=label,SponsorNumber=label,Reference="C-"+label,From=first,To=new(year,12,31),Amount=2000,Allocations=[new(){PlanLineId=lines[0].Id,Amount=1000},new(){PlanLineId=lines[1].Id,Amount=500},new(){PlanLineId=lines[2].Id,Amount=500}]};
     var badContract=Contract("invalid");badContract.Amount=999;
-    await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contract category totals must match contract");
+    await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contract category totals cannot exceed contract");
+    var partialContract=Contract("partial-allocation");partialContract.Amount=2500;
+    var partialContractId=await Run(s=>s.CreateContract(partialContract,"super"));
+    Check(await Db(db=>db.SponsorshipAllocations.Where(x=>x.ContractId==partialContractId).SumAsync(x=>x.Amount))==2000,"Contract may keep part of its value unallocated");
     badContract=Contract("over-plan");badContract.Amount=20000;badContract.Allocations=[new(){PlanLineId=lines[0].Id,Amount=20000}];
     await Reject(()=>Run(s=>s.CreateContract(badContract,"super")),"Contract allocations cannot exceed annual declaration");
     badContract=Contract("bad-dates");badContract.From=new(year+1,1,2);badContract.To=new(year+1,1,1);
@@ -71,6 +74,12 @@ try {
     receiptA.Amount=1400;await Reject(()=>Run(s=>s.Receive(receiptA,"super")),"Changed replay payload rejected");receiptA.Amount=1500;
     await Reject(()=>Run(s=>s.Receive(new(){ContractId=b,Date=first,Amount=100,BankReference=" bank-a "},"super")),"Duplicate bank receipt blocked across sponsors");
     await Run(s=>s.Receive(new(){ContractId=b,Date=first,Amount=1500,BankReference="BANK-B"},"super"));
+    await Run(s=>s.CloseFunding(new(){ContractId=b,Outcome="ContinuingExpenses",Note="Fatura të tjera"},"super"));
+    Check(!await Db(db=>db.SponsorshipContracts.Where(x=>x.Id==b).Select(x=>x.FundingClosedAt.HasValue).SingleAsync()),"Ongoing expenses explanation keeps sponsor funding active");
+    await Run(s=>s.Receive(new(){ContractId=partialContractId,Date=first,Amount=700,BankReference="BANK-PARTIAL"},"super"));
+    await Run(s=>s.CloseFunding(new(){ContractId=partialContractId,Outcome="SponsorShortfall",Note="Sponsori e përfundoi financimin"},"super"));
+    Check(await Db(db=>db.SponsorshipAllocations.Where(x=>x.ContractId==partialContractId).SumAsync(x=>x.Amount))==700,"Closing funding adjusts category coverage to actual received funds");
+    await Reject(()=>Run(s=>s.Receive(new(){ContractId=partialContractId,Date=today,Amount=100,BankReference="AFTER-CLOSE"},"super")),"Closed sponsor funding accepts no further receipts");
     await Reject(()=>Run(s=>s.Receive(new(){ContractId=a,Date=today,Amount=600,BankReference="OVER"},"super")),"Receipts cannot exceed contract value");
     var wrong=Spend(a,0,person);wrong.AllocationId=Allocation(b,0);await Reject(()=>Run(s=>s.Spend(wrong,"super")),"Cannot use another contract allocation");
     wrong=Spend(a,0,company);await Reject(()=>Run(s=>s.Spend(wrong,"super")),"Salary requires a person");

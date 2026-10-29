@@ -66,7 +66,7 @@ public partial class BankVerificationService
                     if(await db.PendingBankPayments.AnyAsync(p=>p.Kind=="Field"&&p.ReviewedAt==null&&p.TargetId.HasValue&&ids.Contains(p.TargetId.Value)))
                         throw new InvalidOperationException("Një termin ka pagesë bankare në pritje. Verifikojeni para pagesës së plotë.");
                 }else if(booking.IsCancelled||booking.Revision!=m.Revision||amount>booking.Due)throw new InvalidOperationException("Termini ose borxhi ka ndryshuar. Rihapni formularin.");
-                description=m.WholeSeries ? $"{booking.CustomerName} · Pagesë e plotë e rezervimit" : $"{booking.CustomerName} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}";break;
+                description=m.WholeSeries ? $"{booking.CustomerName} · Pagesë e plotë e rezervimit" : $"{booking.CustomerName} · {booking.Date:dd/MM/yyyy} · {booking.StartsAt:HH:mm}";break;
             case FamilyPaymentModel m:
                 var account=await new BillingService(db).GetFamilyAccountAsync(m.FamilyId)??throw new InvalidOperationException("Familja nuk u gjet.");
                 if(account.State!=m.ExpectedState)throw new InvalidOperationException("Borxhi i familjes ka ndryshuar. Rihapni formularin.");

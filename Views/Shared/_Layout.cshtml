@@ -99,7 +99,7 @@
                 <nav class="page-back-navigation" aria-label="Kthimi"><a asp-area="" asp-controller="@backController" asp-action="Index" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a></nav>
             }
             </div>
-            <span class="today-label"><svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>@DateTime.Today.ToString("dd.MM.yyyy")</span>
+            <span class="today-label"><svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>@DateTime.Today.ToString("dd/MM/yyyy")</span>
         </header>
         <main class="app-content" id="main-content" tabindex="-1">
             @RenderBody()

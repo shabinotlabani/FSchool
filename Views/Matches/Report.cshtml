@@ -1,4 +1,4 @@
-﻿@model MatchReport
+@model MatchReport
 @{ViewData["Title"]="Minutazhi i lojtarëve";}
 <link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
 <div class="matches-page match-report"><div class="page-heading"><div><h1>Minutazhi i lojtarëve</h1><p>Vetëm ndeshjet e përfunduara</p></div></div>
@@ -8,7 +8,7 @@
 @if(Model.Totals.Count==0){<tr><td colspan="9">Ende pa minuta të regjistruara për këtë periudhë.</td></tr>}
 </tbody></table></div>
 @if(Model.StudentId.HasValue){<h2 class="mt-4">Ndeshjet e lojtarit</h2><div class="table-responsive match-grid"><table class="table align-middle"><thead><tr><th>Data</th><th>Kundërshtari</th><th>Liga</th><th>Roli</th><th>Hyrja → dalja</th><th>Min</th></tr></thead><tbody>
-@foreach(var game in Model.Matches){var p=game.Players.Single(x=>x.StudentId==Model.StudentId);<tr><td>@game.Date.ToString("dd.MM.yyyy")</td><td><a asp-action="Edit" asp-route-id="@game.Id">@game.Opponent</a></td><td>@(game.Competition??"Miqësore")</td><td>@MatchLabels.Role(p.Role)</td><td>@string.Join(" · ",p.Stints.Select(x=>$"{x.From}–{x.To}"))</td><td>@p.Minutes</td></tr>}
+@foreach(var game in Model.Matches){var p=game.Players.Single(x=>x.StudentId==Model.StudentId);<tr><td>@game.Date.ToString("dd/MM/yyyy")</td><td><a asp-action="Edit" asp-route-id="@game.Id">@game.Opponent</a></td><td>@(game.Competition??"Miqësore")</td><td>@MatchLabels.Role(p.Role)</td><td>@string.Join(" · ",p.Stints.Select(x=>$"{x.From}–{x.To}"))</td><td>@p.Minutes</td></tr>}
 </tbody></table></div>}
 </div>
 @section PageNavigation { @if(Model.StudentId.HasValue){<a class="btn btn-outline-secondary app-back-button" asp-action="@(Model.TeamId.HasValue?"Matrix":"Report")" asp-route-teamId="@Model.TeamId" asp-route-leagueId="@Model.LeagueId" asp-route-year="@Model.Year">← Minutazhi</a>}else{<a class="btn btn-outline-secondary app-back-button" asp-action="Index" asp-route-year="@Model.Year">← Ndeshjet</a>} }

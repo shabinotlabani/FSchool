@@ -57,7 +57,7 @@ public partial class FieldService
             var payment = new FieldPayment { BatchId = input.RequestId, BatchState = input.ExpectedState,
                 RequestId = first == null ? input.RequestId : Guid.NewGuid(), FieldBookingId = booking.Id,
                 Amount = amount, Method = input.Method, ActorId = actor,
-                Description = $"{booking.CustomerName} · {booking.FootballField!.Name} · {booking.Date:dd.MM.yyyy} · {booking.StartsAt:HH:mm}–{booking.EndsAt:HH:mm}" };
+                Description = $"{booking.CustomerName} · {booking.FootballField!.Name} · {booking.Date:dd/MM/yyyy} · {booking.StartsAt:HH:mm}–{booking.EndsAt:HH:mm}" };
             first ??= payment;
             db.FieldPayments.Add(payment);
             booking.Revision = Guid.NewGuid();

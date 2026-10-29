@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="~/css/coach-light.css" asp-append-version="true"/>
 <div class="attendance-page"><div class="page-heading"><h1>Trajnime personale</h1></div>
 @if(Model.Count==0){<div class="panel p-4">Nuk keni trajnime personale të caktuara.</div>}
-@foreach(var training in Model){<section class="panel p-3 mb-3"><h2 class="h5">@training.Student?.FullName</h2><p class="mb-2 text-secondary">@training.Name · @training.ModeLabel</p><strong class="d-block">@training.Schedule</strong><p class="mb-0">@training.Location</p>@if(training.Mode=="Monthly"){<small class="text-secondary">Nga @training.StartsOn.ToString("dd.MM.yyyy") @if(training.EndsOn.HasValue){<span>deri @training.EndsOn.Value.ToString("dd.MM.yyyy")</span>}</small>}@if(!string.IsNullOrWhiteSpace(training.Notes)){<p class="small mt-2 mb-0">@training.Notes</p>}</section>}
+@foreach(var training in Model){<section class="panel p-3 mb-3"><h2 class="h5">@training.Student?.FullName</h2><p class="mb-2 text-secondary">@training.Name · @training.ModeLabel</p><strong class="d-block">@training.Schedule</strong><p class="mb-0">@training.Location</p>@if(training.Mode=="Monthly"){<small class="text-secondary">Nga @training.StartsOn.ToString("dd/MM/yyyy") @if(training.EndsOn.HasValue){<span>deri @training.EndsOn.Value.ToString("dd/MM/yyyy")</span>}</small>}@if(!string.IsNullOrWhiteSpace(training.Notes)){<p class="small mt-2 mb-0">@training.Notes</p>}</section>}
 </div>
 <partial name="_MobileNav" />
 @section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index"><span aria-hidden="true">←</span><span>Mbrapa</span></a>}

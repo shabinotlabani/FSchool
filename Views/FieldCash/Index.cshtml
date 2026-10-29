@@ -81,7 +81,7 @@
                 <div class="cash-handover-main">
                     <span class="cash-state">@(handover.Status == "Pending" ? "Në pritje" : handover.Status == "Confirmed" ? "I konfirmuar" : "I kthyer")</span>
                     <h3>@(Model.IsAdmin ? operatorName : $"Dorëzimi #{handover.Id}")</h3>
-                    <p>@BillingClock.LocalTime(handover.CreatedAt).ToString("dd.MM.yyyy · HH:mm") · @handover.PaymentCount pagesa</p>
+                    <p>@BillingClock.LocalTime(handover.CreatedAt).ToString("dd/MM/yyyy · HH:mm") · @handover.PaymentCount pagesa</p>
                     @if (handover.Status == "Rejected") { <small>@handover.RejectionReason</small> }
                 </div>
                 <strong class="cash-amount">@handover.Amount.ToString("N2")</strong>

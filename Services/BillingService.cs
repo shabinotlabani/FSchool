@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using _2Korriku.Data;
 using _2Korriku.Models;
 using Microsoft.EntityFrameworkCore;
@@ -89,7 +89,7 @@ public partial class BillingService(ApplicationDbContext db)
         var period = new MonthlyFeePeriod { FirstMonthWeeks = weekly ? FirstMonthPricing.Weeks(registration) : null, FirstMonthSuggested = weekly ? amount : null, FirstMonthFinal = weekly ? amount : null, FullMonthlyAmount = prorated ? fee.Amount : null, ProratedFrom = prorated ? registration : null, FeePlanName=fee.Name,IsFeeWaived=fee.IsWaiver,FeeReason=fee.Reason,FeeNotes=fee.Notes,StudentId = student.Id, Year = year, Month = month, Generated = true, GeneratedAt = DateTime.UtcNow, CreatedByUserId = actorId };
         db.MonthlyFeePeriods.Add(period);
         await db.SaveChangesAsync(ct);
-        db.StudentTransactions.Add(Entry(student.Id, year, month, "MonthlyFee", $"Fletëpagesë {month:00}/{year} · {fee.Name}" + (weekly ? $" · Nga {registration:dd.MM.yyyy}, {FirstMonthPricing.Weeks(registration)}/4 javë" : prorated ? $" · Nga {registration:dd.MM.yyyy}, {DateTime.DaysInMonth(year,month)-registration.Day+1}/{DateTime.DaysInMonth(year,month)} ditë" : ""), amount, 0, "MonthlyFee", period.Id, actorId));
+        db.StudentTransactions.Add(Entry(student.Id, year, month, "MonthlyFee", $"Fletëpagesë {month:00}/{year} · {fee.Name}" + (weekly ? $" · Nga {registration:dd/MM/yyyy}, {FirstMonthPricing.Weeks(registration)}/4 javë" : prorated ? $" · Nga {registration:dd/MM/yyyy}, {DateTime.DaysInMonth(year,month)-registration.Day+1}/{DateTime.DaysInMonth(year,month)} ditë" : ""), amount, 0, "MonthlyFee", period.Id, actorId));
         if (seasonal != null) AddSeasonalDiscount(seasonal, new DateOnly(year,month,1), actorId);
         // Preserve any pre-existing approved exemption as a separate credit, never erase the charge.
         var exemptions = await db.StudentMonthlyExemptions.Where(e => e.StudentId == student.Id && e.Year == year && e.Month == month).ToListAsync(ct);

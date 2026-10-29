@@ -35,7 +35,12 @@
         const total=document.querySelector('[data-allocation-total]');
         const difference=document.querySelector('[data-allocation-difference]');
         if(total)total.textContent=allocated.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
-        if(difference){const remaining=contract-allocated;difference.textContent=remaining===0?'Në rregull':remaining>0?`Mbeten për ndarje: ${remaining.toFixed(2)}`:`Tejkalim: ${Math.abs(remaining).toFixed(2)}`;difference.classList.toggle('text-danger',remaining!==0);}
+        if(difference){
+            const remaining=contract-allocated;
+            difference.classList.toggle('sp-allocation-open',remaining>0);
+            difference.classList.toggle('text-danger',remaining<0);
+            difference.textContent=remaining===0?'✓ E ndarë plotësisht':remaining>0?`⚠ Pa u ndarë: ${remaining.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`:`Tejkalim: ${Math.abs(remaining).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+        }
     }
     [contractTotal,...allocationInputs].filter(Boolean).forEach(input=>input.addEventListener('input',allocationTotals));allocationTotals();
     document.getElementById('print-sponsorship')?.addEventListener('click', () => window.print());

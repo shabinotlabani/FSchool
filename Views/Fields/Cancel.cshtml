@@ -1,7 +1,7 @@
 @model FieldBookingCancelModel
 @{ViewData["Title"] = "Anulo terminin privat"; var booking = Model.Booking!;}
 
-<div class="page-heading mt-3"><div><p class="eyebrow">ANULIM REZERVIMI</p><h1>Anulo terminin privat</h1><p>@booking.CustomerName · @booking.FootballField?.Name · @booking.Date.ToString("dd.MM.yyyy") · @booking.StartsAt.ToString("HH:mm")–@booking.EndsAt.ToString("HH:mm")</p></div></div>
+<div class="page-heading mt-3"><div><p class="eyebrow">ANULIM REZERVIMI</p><h1>Anulo terminin privat</h1><p>@booking.CustomerName · @booking.FootballField?.Name · @booking.Date.ToString("dd/MM/yyyy") · @booking.StartsAt.ToString("HH:mm")–@booking.EndsAt.ToString("HH:mm")</p></div></div>
 <section class="panel p-4">
 <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
 @if(booking.IsCancelled)

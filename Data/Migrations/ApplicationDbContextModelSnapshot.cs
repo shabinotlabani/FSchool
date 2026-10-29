@@ -3949,6 +3949,17 @@ namespace _2Korriku.Data.Migrations
                     b.Property<DateOnly>("From")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("FundingClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FundingClosedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<string>("FundingClosureReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<int>("PlanId")
                         .HasColumnType("integer");
 

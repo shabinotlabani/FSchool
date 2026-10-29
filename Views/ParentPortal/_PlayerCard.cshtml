@@ -21,12 +21,12 @@ else{<div class="portrait-placeholder"><svg viewBox="0 0 200 240" aria-hidden="t
 <div><dt>Pozita</dt><dd>@(string.IsNullOrWhiteSpace(Model.Position)||Model.Position=="Pa caktuar"?"Pa caktuar":Model.Position)</dd></div>
 <div><dt>Ekipi</dt><dd>@(Model.TeamName??"Pa caktuar")</dd></div>
 <div><dt>Këmba e preferuar</dt><dd>@(Model.Foot??"Pa plotësuar")</dd></div>
-<div><dt>Datëlindja</dt><dd>@Model.BirthDate.ToString("dd.MM.yyyy")</dd></div>
+<div><dt>Datëlindja</dt><dd>@Model.BirthDate.ToString("dd/MM/yyyy")</dd></div>
 <div><dt>Trajneri</dt><dd>@(string.IsNullOrWhiteSpace(Model.CoachName)?"Pa caktuar":Model.CoachName)</dd></div>
 </dl></div>
 <div class="passport-ratings"><div class="passport-section-title"><h3>Vlerësimet</h3><span>NGA 100</span></div>
 @if(ratings.Count==0){<p class="passport-empty">Ende pa vlerësime të regjistruara.</p>}
-else{<div class="passport-rings">@foreach(var rating in ratings){var point=rating.Points.Last();var score=(int)Math.Round(point.Value);<div class="passport-rating"><div class="rating-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-track" cx="50" cy="50" r="42"/><circle class="ring-value" cx="50" cy="50" r="42" pathLength="100" stroke-dasharray="@score 100"/></svg><strong>@score</strong></div><span>@rating.Title</span><time>@point.Date.ToString("dd.MM.yyyy")</time></div>}</div>}
+else{<div class="passport-rings">@foreach(var rating in ratings){var point=rating.Points.Last();var score=(int)Math.Round(point.Value);<div class="passport-rating"><div class="rating-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-track" cx="50" cy="50" r="42"/><circle class="ring-value" cx="50" cy="50" r="42" pathLength="100" stroke-dasharray="@score 100"/></svg><strong>@score</strong></div><span>@rating.Title</span><time>@point.Date.ToString("dd/MM/yyyy")</time></div>}</div>}
 </div>
 <footer class="passport-bottom"><div class="passport-attendance"><span>Prezenca · @Model.Month.ToString("MM.yyyy")</span><strong>@(attendance.HasValue?attendance+"%":"—")</strong>@if(attendance.HasValue){<progress value="@attendance" max="100" aria-label="Prezenca">@attendance%</progress>}else{<small>Pa regjistrime</small>}</div>
 <a class="passport-payment" data-portal-target="finance" asp-action="Index" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-continueVisit="true" asp-route-finance="true"><span>Gjendja e pagesave</span><strong class="@(Model.StudentDebt>0?"payment-due":"payment-clear")">@(Model.StudentDebt>0?Model.StudentDebt.ToString("N2")+" për t’u paguar":"✓ Pa pagesa të mbetura")</strong></a></footer>

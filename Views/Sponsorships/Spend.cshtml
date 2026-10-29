@@ -1,7 +1,7 @@
 @model SponsorshipSpendInput
 @{ViewData["Title"]="Pagesë nga sponsorizimi";}
 <partial name="_Intro"/>
-<div class="page-heading mt-3"><div><p class="eyebrow">@Model.Contract!.Sponsor · @Model.Contract.Reference</p><h1>Regjistro pagesën</h1><p>@Model.Contract.From.ToString("dd.MM.yyyy") – @Model.Contract.To.ToString("dd.MM.yyyy") · Pagesë përmes bankës</p></div></div>
+<div class="page-heading mt-3"><div><p class="eyebrow">@Model.Contract!.Sponsor · @Model.Contract.Reference</p><h1>Regjistro pagesën</h1><p>@Model.Contract.From.ToString("dd/MM/yyyy") – @Model.Contract.To.ToString("dd/MM/yyyy") · Pagesë përmes bankës</p></div></div>
 <form asp-action="Spend" method="post" class="panel p-4 sp-form" data-financial-confirm><input asp-for="RequestId" type="hidden"/><input asp-for="ContractId" type="hidden"/><div asp-validation-summary="All" class="text-danger" role="alert"></div>
 <div class="row g-3"><div class="col-12"><label asp-for="AllocationId">Kategoria e lejuar</label><select asp-for="AllocationId" class="form-select" required id="sponsor-allocation"><option value="">Zgjidhni kategorinë</option>@foreach(var a in Model.Contract.Allocations.OrderBy(x=>x.PlanLine.Category)){<option value="@a.Id" data-salary="@(a.PlanLine.IsSalary?"true":"false")">@a.PlanLine.Category · buxheti @a.Amount.ToString("N2")</option>}</select></div>
 <div class="col-12"><label asp-for="BeneficiaryId">Përfituesi</label><select asp-for="BeneficiaryId" class="form-select" required><option value="">Zgjidhni personin ose biznesin</option>@foreach(var b in Model.Beneficiaries){<option value="@b.Id">@b.Name · @b.Identifier</option>}</select><a asp-action="Beneficiaries" asp-route-contractId="@Model.ContractId" class="d-inline-block mt-2">+ Regjistro përfitues të ri</a></div>

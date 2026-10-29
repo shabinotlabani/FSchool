@@ -38,6 +38,9 @@ public class SponsorshipContract
     public DateOnly From { get; set; }
     public DateOnly To { get; set; }
     [Column(TypeName="numeric(18,2)")] public decimal Amount { get; set; }
+    public DateTime? FundingClosedAt { get; set; }
+    [MaxLength(300)] public string? FundingClosureReason { get; set; }
+    [MaxLength(450)] public string? FundingClosedBy { get; set; }
     public List<SponsorshipAllocation> Allocations { get; set; } = [];
 }
 public class SponsorshipAllocation
@@ -186,6 +189,12 @@ public class SponsorshipCancelInput
     public int Id { get; set; }
     [Required,RegularExpression("Receipt|Spend")] public string Kind { get; set; } = "Spend";
     [Required,StringLength(300)] public string Reason { get; set; } = "";
+}
+public class SponsorshipFundingCloseInput
+{
+    [Range(1,int.MaxValue)] public int ContractId { get; set; }
+    [Required,RegularExpression("^(ContinuingExpenses|SponsorShortfall)$")] public string Outcome { get; set; } = "";
+    [StringLength(180)] public string? Note { get; set; }
 }
 public class SponsorshipInvoiceInput : SponsorshipSpendInput
 {

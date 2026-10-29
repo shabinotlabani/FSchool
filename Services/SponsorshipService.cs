@@ -118,7 +118,7 @@ public class SponsorshipService(ApplicationDbContext db)
         foreach(var a in m.Allocations) { Validate(a); Money(a.Amount); }
         if(m.Allocations.Select(x=>x.PlanLineId).Distinct().Count()!=m.Allocations.Count || m.Allocations.Any(x=>!plan.Lines.Any(l=>l.Id==x.PlanLineId))) throw new ValidationException("Zgjidhni kategori të ndryshme nga ky plan.");
         var allocations=m.Allocations.Where(x=>x.Amount>0).ToList();
-        if(allocations.Sum(x=>x.Amount)!=m.Amount) throw new ValidationException("Shuma e kategorive duhet të jetë e barabartë me shumën e kontratës.");
+        if(allocations.Sum(x=>x.Amount)>m.Amount) throw new ValidationException("Shuma e ndarë në kategori nuk mund ta tejkalojë shumën e kontratës.");
         foreach(var a in allocations) {
             var reserved=await db.SponsorshipAllocations.Where(x=>x.PlanLineId==a.PlanLineId&&x.ContractId!=m.Id).SumAsync(x=>x.Amount);
             if(reserved+a.Amount>plan.Lines.Single(x=>x.Id==a.PlanLineId).Budget) throw new ValidationException("Kontratat së bashku tejkalojnë planin vjetor për kategorinë: "+plan.Lines.Single(x=>x.Id==a.PlanLineId).Category);
@@ -129,6 +129,7 @@ public class SponsorshipService(ApplicationDbContext db)
         object? before=null;
         if(m.Id!=0) {
             if(c.Revision!=m.Revision)throw new ValidationException("Kontrata ka ndryshuar. Rihapni formularin.");
+            if(c.FundingClosedAt.HasValue)throw new ValidationException("Financimi i përfunduar nuk mund të ndryshohet.");
             if(string.IsNullOrWhiteSpace(m.Reason))throw new ValidationException("Shkruani arsyen dhe referencën e ndryshimit të kontratës.");
             if(c.PlanId!=plan.Id)throw new ValidationException("Plani i kontratës nuk ndryshohet.");
             var receipts=await db.SponsorshipReceipts.AsNoTracking().Where(x=>x.ContractId==c.Id).ToListAsync();
@@ -161,12 +162,45 @@ public class SponsorshipService(ApplicationDbContext db)
         var hash=Hash(new{m.ContractId,m.Date,m.Amount,BankReference=Key(m.BankReference)});
         var existing=await db.SponsorshipReceipts.AsNoTracking().SingleOrDefaultAsync(x=>x.RequestId==m.RequestId);
         if(existing!=null) { if(existing.PayloadHash!=hash)throw new ValidationException("Ky formular është përdorur. Rihapeni.");return existing.ContractId; }
-        var c=await db.SponsorshipContracts.SingleOrDefaultAsync(x=>x.Id==m.ContractId)??throw new ValidationException("Kontrata nuk u gjet.");Date(m.Date,c);
+        var c=await db.SponsorshipContracts.Include(x=>x.Allocations).SingleOrDefaultAsync(x=>x.Id==m.ContractId)??throw new ValidationException("Kontrata nuk u gjet.");
+        if(c.FundingClosedAt.HasValue)throw new ValidationException("Financimi i kësaj marrëveshjeje është përfunduar.");
+        Date(m.Date,c);
         if(await db.SponsorshipReceipts.Where(x=>x.ContractId==c.Id&&x.CancelledAt==null).SumAsync(x=>x.Amount)+m.Amount>c.Amount) throw new ValidationException("Pranimi tejkalon shumën e kontratës.");
         var bank=Key(m.BankReference);
         if(await db.SponsorshipReceipts.AnyAsync(x=>x.BankReference==bank&&x.CancelledAt==null)) throw new ValidationException("Kjo referencë bankare është regjistruar.");
         var r=new SponsorshipReceipt{RequestId=m.RequestId,PayloadHash=hash,ContractId=c.Id,Date=m.Date,Amount=m.Amount,BankReference=bank};
         db.SponsorshipReceipts.Add(r);await db.SaveChangesAsync();Audit(actor,"Receipt",r.Id,"Pranim në bankë",null,new{r.ContractId,r.Date,r.Amount,r.BankReference});return c.Id;
+    });
+    public Task<int> CloseFunding(SponsorshipFundingCloseInput m,string actor) => Write(actor,async()=>{
+        Validate(m);
+        var c=await db.SponsorshipContracts.Include(x=>x.Allocations).SingleOrDefaultAsync(x=>x.Id==m.ContractId)??throw new ValidationException("Kontrata nuk u gjet.");
+        if(c.FundingClosedAt.HasValue)return c.Id;
+        var received=await db.SponsorshipReceipts.Where(x=>x.ContractId==c.Id&&x.CancelledAt==null).SumAsync(x=>x.Amount);
+        var reason=m.Outcome=="ContinuingExpenses"?"Ka shpenzime të tjera në vazhdim":"Sponsori nuk ka mundur t’i transferojë të gjitha mjetet";
+        if(!string.IsNullOrWhiteSpace(m.Note))reason+=" · "+m.Note.Trim();
+        if(m.Outcome=="ContinuingExpenses") {
+            var beforeNote=c.FundingClosureReason;c.FundingClosureReason=reason;c.Revision=Guid.NewGuid();
+            Audit(actor,"Contract",c.Id,"Sqarim i diferencës",new{FundingClosureReason=beforeNote},new{c.FundingClosureReason});
+            return c.Id;
+        }
+        if(received<=0)throw new ValidationException("Nuk mund të përfundohet financimi pa mjete të pranuara.");
+        var spending=await db.SponsorshipSpending.Where(x=>x.Allocation.ContractId==c.Id&&x.CancelledAt==null).GroupBy(x=>x.AllocationId).Select(x=>new{AllocationId=x.Key,Amount=x.Sum(v=>v.Amount)}).ToListAsync();
+        var spent=spending.Sum(x=>x.Amount);
+        if(spent>received)throw new ValidationException("Shpenzimet tejkalojnë mjetet e pranuara.");
+        var before=new{c.Amount,Received=received,c.FundingClosedAt,c.FundingClosureReason,Allocations=c.Allocations.Select(x=>new{x.PlanLineId,x.Amount}).ToArray()};
+        var distributable=received-spent;
+        var unusedTotal=c.Allocations.Sum(a=>Math.Max(0,a.Amount-(spending.SingleOrDefault(x=>x.AllocationId==a.Id)?.Amount??0)));
+        var ordered=c.Allocations.OrderBy(x=>x.Id).ToList();
+        var lastAdjustableId=ordered.LastOrDefault(a=>a.Amount>(spending.SingleOrDefault(x=>x.AllocationId==a.Id)?.Amount??0))?.Id;
+        foreach(var allocation in ordered) {
+            var used=spending.SingleOrDefault(x=>x.AllocationId==allocation.Id)?.Amount??0;
+            var unused=Math.Max(0,allocation.Amount-used);
+            var extra=allocation.Id==lastAdjustableId?distributable:unusedTotal==0?0:Math.Min(unused,decimal.Round((received-spent)*unused/unusedTotal,2,MidpointRounding.ToZero));
+            allocation.Amount=used+extra;distributable-=extra;
+        }
+        c.FundingClosedAt=DateTime.UtcNow;c.FundingClosedBy=actor;c.FundingClosureReason=reason;c.Revision=Guid.NewGuid();
+        Audit(actor,"Contract",c.Id,"Përfundim i financimit: "+c.FundingClosureReason,before,new{c.Amount,Received=received,c.FundingClosedAt,c.FundingClosureReason,Allocations=c.Allocations.Select(x=>new{x.PlanLineId,x.Amount}).ToArray()});
+        return c.Id;
     });
     public Task<int> Spend(SponsorshipSpendInput m,string actor) => Write(actor,async()=>{
         Validate(m);Money(m.Amount);if(m.RequestId==Guid.Empty)throw new ValidationException("Rihapni formularin.");
@@ -221,7 +255,7 @@ public class SponsorshipService(ApplicationDbContext db)
         decimal balance=0;
         foreach(var day in entries.GroupBy(x=>x.Date).OrderBy(x=>x.Key)) {
             balance+=day.Sum(x=>x.Amount);
-            if(balance<0)throw new ValidationException($"Mjetet e pranuara nga ky sponsor nuk mjaftojnë më {day.Key:dd.MM.yyyy}.");
+            if(balance<0)throw new ValidationException($"Mjetet e pranuara nga ky sponsor nuk mjaftojnë më {day.Key:dd/MM/yyyy}.");
         }
     }
     public Task<int> Cancel(SponsorshipCancelInput m,string actor) => Write(actor,async()=>{
@@ -232,9 +266,10 @@ public class SponsorshipService(ApplicationDbContext db)
             if(s.CancelledAt!=null)return contractId;
             s.CancelledAt=DateTime.UtcNow;s.CancellationReason=m.Reason.Trim();
         } else {
-            var r=await db.SponsorshipReceipts.SingleOrDefaultAsync(x=>x.Id==m.Id)??throw new ValidationException("Pranimi nuk u gjet.");
+            var r=await db.SponsorshipReceipts.Include(x=>x.Contract).SingleOrDefaultAsync(x=>x.Id==m.Id)??throw new ValidationException("Pranimi nuk u gjet.");
             await db.Entry(r).ReloadAsync();contractId=r.ContractId;
             if(r.CancelledAt!=null)return contractId;
+            if(r.Contract.FundingClosedAt.HasValue)throw new ValidationException("Pranimi nuk mund të anulohet pasi financimi është përfunduar.");
             r.CancelledAt=DateTime.UtcNow;r.CancellationReason=m.Reason.Trim();
         }
         await db.SaveChangesAsync();await CheckFunds(contractId);

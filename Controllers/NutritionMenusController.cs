@@ -23,7 +23,7 @@ public class NutritionMenusController(ApplicationDbContext db,GeminiMenuService 
         var today=BillingClock.Today;var age=today.Year-player.DateOfBirth.Year;if(player.DateOfBirth.AddYears(age)>today)age--;
         var measurements=await db.DevelopmentRecords.AsNoTracking().Where(x=>x.StudentId==id&&x.Kind=="Measurements"&&x.Date<=today).OrderByDescending(x=>x.Date).ThenByDescending(x=>x.Id).ToListAsync();
         var weight=measurements.FirstOrDefault(x=>x.Values.ContainsKey("Weight"));var height=measurements.FirstOrDefault(x=>x.Values.ContainsKey("Height"));
-        ViewData["Measurements"]=$"{age} vjeç · "+(weight==null?"Pesha mungon":$"{weight.Values["Weight"]} kg ({weight.Date:dd.MM.yyyy})")+" · "+(height==null?"Gjatësia mungon":$"{height.Values["Height"]} cm ({height.Date:dd.MM.yyyy})");
+        ViewData["Measurements"]=$"{age} vjeç · "+(weight==null?"Pesha mungon":$"{weight.Values["Weight"]} kg ({weight.Date:dd/MM/yyyy})")+" · "+(height==null?"Gjatësia mungon":$"{height.Values["Height"]} cm ({height.Date:dd/MM/yyyy})");
     }
     public async Task<IActionResult> Edit(int studentId=0,int? referralId=null)
     {

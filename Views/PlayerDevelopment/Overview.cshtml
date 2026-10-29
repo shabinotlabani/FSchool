@@ -19,7 +19,7 @@
 }
 <link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
 <section class="development-ui player-overview">
-<header class="profile-heading"><span class="profile-person" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg></span><div><h1>@Model.Player.FullName <partial name="_WhatsAppContact" model="@(new _2Korriku.Services.WhatsAppContact(Model.Player.ParentPhone,Model.Player.ParentName))"/></h1><p>@(latestDate.HasValue?"Përditësuar më "+latestDate.Value.ToString("dd.MM.yyyy"):"Ende pa vlerësime")</p></div><span class="profile-team">@Model.Player.TrainingTeam?.Name</span></header>
+<header class="profile-heading"><span class="profile-person" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="7" r="3"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg></span><div><h1>@Model.Player.FullName <partial name="_WhatsAppContact" model="@(new _2Korriku.Services.WhatsAppContact(Model.Player.ParentPhone,Model.Player.ParentName))"/></h1><p>@(latestDate.HasValue?"Përditësuar më "+latestDate.Value.ToString("dd/MM/yyyy"):"Ende pa vlerësime")</p></div><span class="profile-team">@Model.Player.TrainingTeam?.Name</span></header>
 @{var positionError=TempData["PositionError"] as string;}
 <details class="development-extra position-editor" open="@(Model.PlayerRole==null||positionError!=null)"><summary><span>@(Model.PlayerRole??"Cakto rolin")@if(!Model.IsGoalkeeper&&Model.Positions.Contains(Model.PrimaryPosition)){<small> · @Model.PrimaryPosition</small>}@if(!Model.IsGoalkeeper&&Model.Positions.Contains(Model.SecondaryPosition)){<small> / @Model.SecondaryPosition</small>}</span><small class="text-secondary">Ndrysho</small></summary>
 @if(positionError!=null){<p class="text-danger" role="alert">@positionError</p>}
@@ -31,7 +31,7 @@
 </details>
 <div class="profile-measurements">
 @foreach(var metric in Model.Sections.Where(s=>s.Key is "Measurements" or "Testing").SelectMany(s=>s.Fields.Where(f=>f.Min.HasValue).Select(f=>new{Label=f.Label,Entry=Latest(s.Key,f.Key),Unit=""})).Take(3)){
-<div><span>@metric.Label</span><strong>@(metric.Entry.Value==null?"—":metric.Entry.Value+" "+metric.Unit)</strong>@if(metric.Entry.Date.HasValue){<small>@metric.Entry.Date.Value.ToString("dd.MM.yyyy")</small>}</div>}
+<div><span>@metric.Label</span><strong>@(metric.Entry.Value==null?"—":metric.Entry.Value+" "+metric.Unit)</strong>@if(metric.Entry.Date.HasValue){<small>@metric.Entry.Date.Value.ToString("dd/MM/yyyy")</small>}</div>}
 </div>
 <div class="profile-skills"><h2>@(Model.IsGoalkeeper?"Aftësitë e portierit":"Aftësitë teknike")</h2>
 @foreach(var skill in skills){var rating=int.TryParse(skill.Entry.Value,out var n)?n:0;

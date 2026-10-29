@@ -12,7 +12,7 @@
     const days = [...document.querySelectorAll('input[name="Days"]')];
     const timeButtons = [...document.querySelectorAll('[data-booking-time]')];
     const chipRows = [...document.querySelectorAll('.field-time-chips')];
-    const format = value => value.toLocaleDateString('sq-AL');
+    const format = value => `${String(value.getDate()).padStart(2, '0')}/${String(value.getMonth() + 1).padStart(2, '0')}/${value.getFullYear()}`;
     let occupied = new Set();
     let availabilityRequest = 0;
 

@@ -11,7 +11,7 @@
     </form>
     <div class="coach-player-grid table-responsive">
         <table class="table align-middle">
-            <thead><tr><th>Lojtari</th><th>Ekipi</th><th>Prezenca <small>@Model.From.ToString("dd.MM")–@Model.To.ToString("dd.MM.yyyy")</small></th><th>Vlerësimi</th><th class="coach-actions-cell">Veprimet</th></tr></thead>
+            <thead><tr><th>Lojtari</th><th>Ekipi</th><th>Prezenca <small>@Model.From.ToString("dd.MM")–@Model.To.ToString("dd/MM/yyyy")</small></th><th>Vlerësimi</th><th class="coach-actions-cell">Veprimet</th></tr></thead>
             <tbody>
             @foreach (var player in Model.Players)
             {
@@ -23,7 +23,7 @@
                         else { <span class="text-secondary">Pa prezencë</span> }
                     </td>
                     <td class="coach-rating-cell">
-                        @if (player.Rating is decimal rating) { <div class="coach-rating" role="img" aria-label="@rating.ToString("0.0") nga 5 yje"><span class="coach-rating-stars" aria-hidden="true">★★★★★<span style="width:@((rating * 20).ToString(System.Globalization.CultureInfo.InvariantCulture))%">★★★★★</span></span><strong>@rating.ToString("0.0")</strong></div><small>@player.RatingDate?.ToString("dd.MM.yyyy")</small> }
+                        @if (player.Rating is decimal rating) { <div class="coach-rating" role="img" aria-label="@rating.ToString("0.0") nga 5 yje"><span class="coach-rating-stars" aria-hidden="true">★★★★★<span style="width:@((rating * 20).ToString(System.Globalization.CultureInfo.InvariantCulture))%">★★★★★</span></span><strong>@rating.ToString("0.0")</strong></div><small>@player.RatingDate?.ToString("dd/MM/yyyy")</small> }
                         else { <span class="text-secondary">Pa vlerësim</span> }
                     </td>
                     <td class="coach-actions-cell"><details class="coach-row-actions"><summary>Veprime <span aria-hidden="true">⌄</span></summary><div><a class="coach-player-open" asp-controller="PlayerDevelopment" asp-action="Player" asp-route-id="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Profili</a><a class="coach-player-open" asp-controller="CoachInbox" asp-action="Thread" asp-route-studentId="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Mesazh</a><a class="coach-player-open" asp-controller="CoachInbox" asp-action="Deactivate" asp-route-studentId="@player.Id" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Pasivizo</a></div></details></td>

@@ -2,7 +2,7 @@
 @{ViewData["Title"]="Zhvillimi i lojtarit";}
 <link rel="stylesheet" href="~/css/player-development.css" asp-append-version="true"/>
 <section class="development-ui">
-<div class="page-heading"><div><h1>@Model.Player.FullName</h1><span class="text-secondary">@Model.Player.TrainingTeam?.Name · @Model.Player.DateOfBirth.ToString("dd.MM.yyyy")</span></div>
+<div class="page-heading"><div><h1>@Model.Player.FullName</h1><span class="text-secondary">@Model.Player.TrainingTeam?.Name · @Model.Player.DateOfBirth.ToString("dd/MM/yyyy")</span></div>
 @if(Model.Section=="Assessment"){<a asp-action="Edit" asp-route-studentId="@Model.Player.Id" class="btn btn-primary">Vlerësim i ri</a>}
 else if(Model.Section!="Progress"){<a asp-action="Record" asp-route-studentId="@Model.Player.Id" asp-route-kind="@Model.Section" class="btn btn-primary">Regjistrim i ri</a>}</div>
 
@@ -21,8 +21,8 @@ else if(Model.Section!="Progress"){<a asp-action="Record" asp-route-studentId="@
 }else{
 <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Data</th><th>Trajneri</th><th>Teknika</th><th>Taktika</th><th>Fizike</th><th>Disiplina</th><th>Bashkëpunimi</th><th>Mesatarja / 5</th><th></th></tr></thead><tbody>
 @for(var i=0;i<Model.Evaluations.Count;i++){var e=Model.Evaluations[i];var previous=i+1<Model.Evaluations.Count?Model.Evaluations[i+1]:null;
-<tr><td>@e.Date.ToString("dd.MM.yyyy")</td><td>@e.Coach.FirstName @e.Coach.LastName</td><td>@e.Technique</td><td>@e.Tactics</td><td>@e.Fitness</td><td>@e.Discipline</td><td>@e.Teamwork</td><td><strong>@e.Average.ToString("0.0")</strong>@if(previous!=null){<small class="text-secondary ms-2">@((e.Average-previous.Average).ToString("+0.0;-0.0;0.0"))</small>}</td><td>@if(e.CoachId==Model.CoachId){<a asp-action="Edit" asp-route-id="@e.Id" asp-route-studentId="@e.StudentId">Ndrysho</a>}</td></tr>
-<tr><td colspan="9"><details><summary>Plani i zhvillimit · Rishikimi @(e.ReviewDate?.ToString("dd.MM.yyyy")??"—")</summary><dl class="row mt-3"><dt class="col-md-3">Pikat e forta</dt><dd class="col-md-9" style="white-space:pre-wrap">@(e.Strengths??"—")</dd><dt class="col-md-3">Për t’u përmirësuar</dt><dd class="col-md-9" style="white-space:pre-wrap">@(e.Improvements??"—")</dd><dt class="col-md-3">Objektivat</dt><dd class="col-md-9" style="white-space:pre-wrap">@e.Goals</dd></dl></details></td></tr>}
+<tr><td>@e.Date.ToString("dd/MM/yyyy")</td><td>@e.Coach.FirstName @e.Coach.LastName</td><td>@e.Technique</td><td>@e.Tactics</td><td>@e.Fitness</td><td>@e.Discipline</td><td>@e.Teamwork</td><td><strong>@e.Average.ToString("0.0")</strong>@if(previous!=null){<small class="text-secondary ms-2">@((e.Average-previous.Average).ToString("+0.0;-0.0;0.0"))</small>}</td><td>@if(e.CoachId==Model.CoachId){<a asp-action="Edit" asp-route-id="@e.Id" asp-route-studentId="@e.StudentId">Ndrysho</a>}</td></tr>
+<tr><td colspan="9"><details><summary>Plani i zhvillimit · Rishikimi @(e.ReviewDate?.ToString("dd/MM/yyyy")??"—")</summary><dl class="row mt-3"><dt class="col-md-3">Pikat e forta</dt><dd class="col-md-9" style="white-space:pre-wrap">@(e.Strengths??"—")</dd><dt class="col-md-3">Për t’u përmirësuar</dt><dd class="col-md-9" style="white-space:pre-wrap">@(e.Improvements??"—")</dd><dt class="col-md-3">Objektivat</dt><dd class="col-md-9" style="white-space:pre-wrap">@e.Goals</dd></dl></details></td></tr>}
 @if(Model.Evaluations.Count==0){<tr><td colspan="9">Ende pa vlerësime.</td></tr>}
 </tbody></table></div>
 }

@@ -65,6 +65,6 @@ internal static class ChatPayload
 {
     public static object Messages(ChatView model) => new { messages=model.Messages.Select(m=>new {
         id=m.Id,body=m.Body,mine=m.FromParent==model.Parent,
-        date=BillingClock.LocalTime(m.CreatedAt).ToString("dd.MM.yyyy HH:mm"),read=m.ReadAt!=null }),
+        date=BillingClock.LocalTime(m.CreatedAt).ToString("dd/MM/yyyy HH:mm"),read=m.ReadAt!=null }),
         older=model.HasOlder };
 }

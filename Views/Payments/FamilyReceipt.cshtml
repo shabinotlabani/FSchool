@@ -5,7 +5,7 @@
 <div class="print-toolbar"><partial name="_DocumentBack"/><button onclick="window.print()">Printo dëftesën</button></div>
 <main class="stock-sheet">
 <h1>@club.DisplayName</h1><h2>Dëftesë e pagesës familjare</h2>
-<p><strong>FAM-@Model.Id.ToString("000000")</strong> · @BillingClock.LocalDate(Model.PaymentDate).ToString("dd.MM.yyyy")</p>
+<p><strong>FAM-@Model.Id.ToString("000000")</strong> · @BillingClock.LocalDate(Model.PaymentDate).ToString("dd/MM/yyyy")</p>
 <h3>@Model.FamilyName</h3>
 @if(Model.CancelledAt.HasValue){<div class="cancelled-notice">ANULUAR · @Model.CancellationReason</div>}
 <table class="document-table"><thead><tr><th>Lojtari</th><th>Pagesa mujore</th></tr></thead><tbody>

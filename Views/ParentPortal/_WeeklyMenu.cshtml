@@ -1,7 +1,7 @@
 @model MenuInput
 @{var today=((int)_2Korriku.Services.BillingClock.Today.DayOfWeek+6)%7;}
 <div class="parent-menu">
-@if(Model.UpdatedAt.HasValue){<div class="menu-byline"><span>@(Model.ApprovedRole==Roles.Nutritionist?"Nga nutricisti":Model.ApprovedRole==Roles.Coach?"Aprovuar nga trajneri":"Menuja javore")</span><time>@_2Korriku.Services.BillingClock.LocalDate(Model.UpdatedAt.Value).ToString("dd.MM.yyyy")</time></div>}
+@if(Model.UpdatedAt.HasValue){<div class="menu-byline"><span>@(Model.ApprovedRole==Roles.Nutritionist?"Nga nutricisti":Model.ApprovedRole==Roles.Coach?"Aprovuar nga trajneri":"Menuja javore")</span><time>@_2Korriku.Services.BillingClock.LocalDate(Model.UpdatedAt.Value).ToString("dd/MM/yyyy")</time></div>}
 @for(var i=0;i<Model.Days.Count&&i<7;i++){var day=Model.Days[i];
 <details class="menu-day" name="weekly-menu-day" open="@(i==today)"><summary><span>@MenuInput.DayNames[i]</span>@if(i==today){<small>Sot</small>}<span class="day-toggle" aria-hidden="true">⌄</span></summary>
 <dl class="menu-meals"><div><dt>Mëngjesi</dt><dd>@day.Breakfast</dd></div><div><dt>Dreka</dt><dd>@day.Lunch</dd></div><div><dt>Mesvakti</dt><dd>@day.Snack</dd></div><div><dt>Darka</dt><dd>@day.Dinner</dd></div></dl></details>}

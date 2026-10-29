@@ -1,10 +1,10 @@
-﻿@model DevelopmentRecordGrid
+@model DevelopmentRecordGrid
 @{var records=Model.Records.Where(x=>x.Kind==Model.Section.Key).ToList();}
 @foreach(var group in records.GroupBy(x=>new{x.Sport,Schema=System.Text.Json.JsonSerializer.Serialize(x.Schema)})){
 var schema=group.First().Schema;
 <p class="small text-secondary">@_2Korriku.Services.SportDevelopmentService.Label(group.Key.Sport) · @schema.Label</p>
 <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Data</th><th>Regjistroi</th>@foreach(var f in schema.Fields){<th>@f.Label</th>}<th>Shënime</th><th></th></tr></thead><tbody>
-@foreach(var row in group){var values=row.Values;<tr><td class="text-nowrap">@row.Date.ToString("dd.MM.yyyy")</td><td>@row.Coach.FirstName @row.Coach.LastName</td>@foreach(var f in schema.Fields){<td style="white-space:pre-wrap">@(values.GetValueOrDefault(f.Key)??"—")</td>}<td style="white-space:pre-wrap">@row.Notes</td><td>@if(row.CoachId==Model.CoachId){<a asp-action="Record" asp-route-studentId="@row.StudentId" asp-route-id="@row.Id" asp-route-kind="@row.Kind">Ndrysho</a>}</td></tr>}
+@foreach(var row in group){var values=row.Values;<tr><td class="text-nowrap">@row.Date.ToString("dd/MM/yyyy")</td><td>@row.Coach.FirstName @row.Coach.LastName</td>@foreach(var f in schema.Fields){<td style="white-space:pre-wrap">@(values.GetValueOrDefault(f.Key)??"—")</td>}<td style="white-space:pre-wrap">@row.Notes</td><td>@if(row.CoachId==Model.CoachId){<a asp-action="Record" asp-route-studentId="@row.StudentId" asp-route-id="@row.Id" asp-route-kind="@row.Kind">Ndrysho</a>}</td></tr>}
 </tbody></table></div>
 }
 @if(records.Count==0){<p class="text-secondary">Ende pa regjistrime.</p>}

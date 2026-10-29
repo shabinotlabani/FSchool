@@ -2,7 +2,7 @@
 @{ViewData["Title"]="Raporti i ndeshjes";var readOnly=ViewData["ReadOnlyMatch"] is true;var football=Model.Sport=="Football";string Name(int? id)=>Model.Players.FirstOrDefault(p=>p.StudentId==id)?.Name??"—";}
 <link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/pitch-ui.css" asp-append-version="true"/>
-<div class="matches-page match-summary"><div class="page-heading"><div><h1>Raporti i ndeshjes</h1><p>@Model.Date.ToString("dd.MM.yyyy") · @(Model.Competition??"Miqësore") · @MatchLabels.Status(Model.Status)</p></div>@if(!readOnly){<a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id">Korrigjo të dhënat</a>}</div>
+<div class="matches-page match-summary"><div class="page-heading"><div><h1>Raporti i ndeshjes</h1><p>@Model.Date.ToString("dd/MM/yyyy") · @(Model.Competition??"Miqësore") · @MatchLabels.Status(Model.Status)</p></div>@if(!readOnly){<a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@Model.Id">Korrigjo të dhënat</a>}</div>
 <div class="match-result"><strong>@Model.TrainingTeam.Name</strong><b>@(Model.ScoreFor?.ToString()??"—") : @(Model.ScoreAgainst?.ToString()??"—")</b><strong>@Model.Opponent</strong></div>
 @if(!string.IsNullOrWhiteSpace(Model.Competition)){<p class="match-hint">@Model.Competition</p>}
 <p class="match-hint">@Model.Duration minuta · @(Model.Home?"Vendas":"Mysafir") · @Model.Formation</p>

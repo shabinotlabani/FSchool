@@ -18,18 +18,18 @@
 @if(points.Count==0){<p class="progress-empty">Ende pa regjistrime për @Model.Title.ToLower().</p>}
 else{
 <div class="progress-comparison">
-<div><span>Në fillim</span><strong aria-label="@(stars?Number(points[0].Value)+" nga 5 yje":null)">@Value(points[0].Value)</strong><small>@points[0].Date.ToString("dd.MM.yyyy")</small></div>
-<div><span>E fundit</span><strong aria-label="@(stars?Number(last!.Value)+" nga 5 yje":null)">@Value(last!.Value)</strong><small>@last.Date.ToString("dd.MM.yyyy")</small></div>
+<div><span>Në fillim</span><strong aria-label="@(stars?Number(points[0].Value)+" nga 5 yje":null)">@Value(points[0].Value)</strong><small>@points[0].Date.ToString("dd/MM/yyyy")</small></div>
+<div><span>E fundit</span><strong aria-label="@(stars?Number(last!.Value)+" nga 5 yje":null)">@Value(last!.Value)</strong><small>@last.Date.ToString("dd/MM/yyyy")</small></div>
 <div><span>Ndryshimi</span><strong>@(points.Count<2?"—":delta.ToString("+0.##;-0.##;0")+" "+(stars?"★":Model.Rating?"pikë":Model.Unit))</strong><small>@(points.Count<2?"Vetëm një regjistrim":Model.Title.StartsWith("Sprint")?(delta<0?"Më shpejt":delta>0?"Më ngadalë":"Pa ndryshim"):Model.Rating?(delta>0?"Përmirësim":delta<0?"Rënie":"Pa ndryshim"):"Nga matja e parë")</small></div>
 </div>
 @if(points.Count==1){<p class="progress-caption">Ecuria shfaqet pas regjistrimit të dytë.</p>}
 <svg viewBox="0 0 420 184" role="group" aria-label="Ecuria: @Model.Title" class="progress-plot">
 <g class="plot-grid"><path d="M48 28H396 M48 87H396 M48 146H396"/></g>
-<g class="plot-labels"><text x="40" y="32" text-anchor="end">@Number(maximum)</text><text x="40" y="91" text-anchor="end">@Number((maximum+minimum)/2)</text><text x="40" y="150" text-anchor="end">@Number(minimum)</text><text x="48" y="175">@points[0].Date.ToString("dd.MM.yyyy")</text>@if(points.Count>1){<g><text x="396" y="175" text-anchor="end">@points[^1].Date.ToString("dd.MM.yyyy")</text></g>}</g>
+<g class="plot-labels"><text x="40" y="32" text-anchor="end">@Number(maximum)</text><text x="40" y="91" text-anchor="end">@Number((maximum+minimum)/2)</text><text x="40" y="150" text-anchor="end">@Number(minimum)</text><text x="48" y="175">@points[0].Date.ToString("dd/MM/yyyy")</text>@if(points.Count>1){<g><text x="396" y="175" text-anchor="end">@points[^1].Date.ToString("dd/MM/yyyy")</text></g>}</g>
 @if(points.Count>1){<polyline points="@line" class="plot-line"/>}
-@foreach(var p in points){var label=p.Date.ToString("dd.MM.yyyy")+" · "+Value(p.Value);
+@foreach(var p in points){var label=p.Date.ToString("dd/MM/yyyy")+" · "+Value(p.Value);
 <g><circle cx="@Number(X(p))" cy="@Number(Y(p))" r="4" class="plot-dot"/><circle cx="@Number(X(p))" cy="@Number(Y(p))" r="13" class="plot-hit" tabindex="0" role="button" aria-label="@label" data-value="@label"><title>@label</title></circle></g>}
 </svg>
-<p class="plot-readout" aria-live="polite">@last!.Date.ToString("dd.MM.yyyy") · @Value(last.Value)</p>
+<p class="plot-readout" aria-live="polite">@last!.Date.ToString("dd/MM/yyyy") · @Value(last.Value)</p>
 }
 </section>

@@ -1,6 +1,6 @@
 @model MenuInput
 <details class="my-3 weekly-menu" open="@(ViewData["ExpandedMenu"] is true)"><summary>Menuja javore · @(Model.Individual?"Individuale":"E përbashkët")</summary>
-@if(Model.UpdatedAt.HasValue){<p class="small text-muted">@(Model.ApprovedRole==Roles.Nutritionist?"Rekomanduar nga nutricisti":Model.ApprovedRole==Roles.Coach?"Aprovuar nga trajneri":"Menuja javore") · @_2Korriku.Services.BillingClock.LocalDate(Model.UpdatedAt.Value).ToString("dd.MM.yyyy")</p>}
+@if(Model.UpdatedAt.HasValue){<p class="small text-muted">@(Model.ApprovedRole==Roles.Nutritionist?"Rekomanduar nga nutricisti":Model.ApprovedRole==Roles.Coach?"Aprovuar nga trajneri":"Menuja javore") · @_2Korriku.Services.BillingClock.LocalDate(Model.UpdatedAt.Value).ToString("dd/MM/yyyy")</p>}
 <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.85rem" class="table"><thead><tr><th>Dita</th><th>Mëngjesi</th><th>Dreka</th><th>Darka</th><th>Mesvakti</th></tr></thead><tbody>
 @for(var i=0;i<Model.Days.Count&&i<7;i++){var d=Model.Days[i];<tr><th style="padding:8px">@MenuInput.DayNames[i]</th>@foreach(var meal in new[]{d.Breakfast,d.Lunch,d.Dinner,d.Snack}){<td style="padding:8px;min-width:130px;border-bottom:1px solid #e5e7eb">@meal</td>}</tr>}
 </tbody></table></div><strong>Udhëzime ushqimore</strong><p style="white-space:pre-wrap">@Model.Recommendations</p></details>

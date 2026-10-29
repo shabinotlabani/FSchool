@@ -57,7 +57,7 @@
 </div>
 <script id="variant-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Products.SelectMany(p=>p.Variants.Where(v=>v.IsActive).OrderBy(v=>v.Id).Select(v=>new { id=v.Id, productId=p.Id, size=v.Size, stock=v.CurrentStock, price=v.PurchasePrice, unit=p.UnitName }))))</script>
 <script id="issue-product-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Products.Select(p => new { id = p.Id, name = p.Name, code = p.Code, unit = p.UnitName, price = p.SalePrice.ToString("0.00", CultureInfo.InvariantCulture) })))</script>
-<script id="player-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Students.Select(s => new { id = s.Id, name = s.FullName, parent = s.ParentName, phone = s.ParentPhone, birthDate = s.DateOfBirth.ToString("dd.MM.yyyy") })))</script>
+<script id="player-catalog" type="application/json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Students.Select(s => new { id = s.Id, name = s.FullName, parent = s.ParentName, phone = s.ParentPhone, birthDate = s.DateOfBirth.ToString("dd/MM/yyyy") })))</script>
 @section Scripts{<script src="~/js/bank-pending-hint.js" asp-append-version="true"></script><script src="~/js/issue-player-search.js" asp-append-version="true"></script><script src="~/js/issue-lines.js" asp-append-version="true"></script>}
 
 @section PageNavigation {

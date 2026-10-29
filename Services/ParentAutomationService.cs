@@ -97,7 +97,7 @@ public class ParentAutomationService(ApplicationDbContext db)
                     if(utcNow<due||utcNow>=due.AddMinutes(5))continue;
                     foreach(var child in rows.GroupBy(x=>x.StudentId))
                         await Add($"training:{source.Key}:{child.Key}:{start:O}","Training","Kujtesë për stërvitjen",
-                            $"{child.First().Student.FullName}: {source.Name}, më {date:dd.MM.yyyy} në {slot.Start:HH:mm}.",
+                            $"{child.First().Student.FullName}: {source.Name}, më {date:dd/MM/yyyy} në {slot.Start:HH:mm}.",
                             child.First().Student.FullName,child.ToList(),utcNow,start,source.Key,source.Hash);
                 }
             }
