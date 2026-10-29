@@ -13,6 +13,7 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<PlayerContractAudit> PlayerContractAudits => Set<PlayerContractAudit>();
     public DbSet<PlayerContractAnnex> PlayerContractAnnexes => Set<PlayerContractAnnex>();
     public DbSet<LeagueTeam> LeagueTeams => Set<LeagueTeam>();
+    public DbSet<CompetitionPlayerRegistration> CompetitionPlayerRegistrations => Set<CompetitionPlayerRegistration>();
     public DbSet<MatchPlayer> MatchPlayers => Set<MatchPlayer>();
     public DbSet<MatchChange> MatchChanges => Set<MatchChange>();
     public DbSet<DevelopmentMetric> DevelopmentMetrics => Set<DevelopmentMetric>();
@@ -146,6 +147,8 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<AttendanceChange>().HasOne(x=>x.Actor).WithMany().HasForeignKey(x=>x.ActorId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<TrainingTeam>().HasOne(t=>t.Coach).WithMany().HasForeignKey(t=>t.CoachId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<TrainingTeam>().HasOne(t=>t.AssistantCoach).WithMany().HasForeignKey(t=>t.AssistantCoachId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<TrainingTeam>().HasOne(t=>t.Doctor).WithMany().HasForeignKey(t=>t.DoctorId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<TrainingTeam>().HasOne(t=>t.Psychologist).WithMany().HasForeignKey(t=>t.PsychologistId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<TreasuryEntry>().HasIndex(x => x.RequestId).IsUnique();
         builder.Entity<TreasuryEntry>().HasIndex(x => x.Date);
         builder.Entity<TreasuryEntry>().HasIndex(x => x.Method).IsUnique().HasFilter("\"Kind\" = 'Opening' AND \"CancelledAt\" IS NULL");
@@ -345,6 +348,7 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<MatchPlayer>().HasIndex(x=>new{x.MatchGameId,x.StudentId}).IsUnique();
         builder.Entity<MatchPlayer>().HasOne(x=>x.MatchGame).WithMany(x=>x.Players).HasForeignKey(x=>x.MatchGameId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<MatchPlayer>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<MatchPlayer>().HasOne(x=>x.HomeTeam).WithMany().HasForeignKey(x=>x.HomeTeamId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<MatchChange>().HasOne(x=>x.MatchGame).WithMany().HasForeignKey(x=>x.MatchGameId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<MatchChange>().HasOne(x=>x.Actor).WithMany().HasForeignKey(x=>x.ActorId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<League>().Ignore(l=>l.Rule);
@@ -353,6 +357,9 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<LeagueTeam>().HasIndex(t=>new{t.LeagueId,t.TrainingTeamId}).IsUnique();
         builder.Entity<LeagueTeam>().HasOne(t=>t.League).WithMany(l=>l.Teams).HasForeignKey(t=>t.LeagueId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<LeagueTeam>().HasOne(t=>t.TrainingTeam).WithMany().HasForeignKey(t=>t.TrainingTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<CompetitionPlayerRegistration>().HasIndex(x=>new{x.LeagueTeamId,x.StudentId}).IsUnique();
+        builder.Entity<CompetitionPlayerRegistration>().HasOne(x=>x.LeagueTeam).WithMany().HasForeignKey(x=>x.LeagueTeamId).OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<CompetitionPlayerRegistration>().HasOne(x=>x.Student).WithMany().HasForeignKey(x=>x.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<MatchGame>().HasOne(g=>g.League).WithMany().HasForeignKey(g=>g.LeagueId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<PlayerContract>().HasIndex(c=>c.Number).IsUnique();
         builder.Entity<StudentPhoto>().HasIndex(p=>p.StudentId).IsUnique();

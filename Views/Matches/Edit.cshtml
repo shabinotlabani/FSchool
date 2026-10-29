@@ -7,6 +7,16 @@
 <div class="page-heading"><div><h1>@(Model.Id==0?"Ndeshje e re":Model.Opponent)</h1><p>@Model.TeamName · @SportDevelopmentService.Sports.GetValueOrDefault(Model.Sport,Model.Sport)</p></div></div>
 @if(TempData["Success"] is string success){<div class="alert alert-success" role="status">@success</div>}
 @if(staged){<nav class="match-steps" aria-label="Hapat e ndeshjes"><span class="@(Model.Id==0?"current":"done")">1 · Ndeshja</span><span class="@(Model.Id!=0&&preparing?"current":!preparing?"done":"")">2 · Formacioni</span><span class="@(Model.Status=="Live"?"current":Model.Status=="Completed"?"done":"")">3 · Ngjarjet</span><span class="@(Model.Status=="Completed"?"current":"")">4 · Raporti</span></nav>}
+@if(TempData["Error"] is string error){<div class="alert alert-danger" role="alert">@error</div>}
+@if(Model.Id!=0&&Model.Status=="Draft"&&Model.CallUpCandidates.Count>0){
+<details class="match-callup"><summary>Thirr lojtar nga ekip tjetër</summary>
+<form asp-action="CallUp" method="post" class="match-callup-form" data-callup-form><input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="studentId" data-callup-id/>
+<label class="match-callup-search"><span>Kërko lojtarin</span><input type="search" class="form-control" data-callup-search placeholder="Emri ose ekipi" autocomplete="off"/></label>
+<div class="match-callup-list" data-callup-list>@foreach(var player in Model.CallUpCandidates){<button type="button" data-callup-player data-id="@player.StudentId" data-search="@($"{player.Name} {player.TeamName}".ToLowerInvariant())"><strong>@player.Name</strong><small>@player.TeamName</small></button>}</div>
+<p class="match-callup-empty" data-callup-empty hidden>Nuk u gjet lojtar.</p>
+<div class="match-callup-selected" data-callup-selected hidden><span>Lojtari i zgjedhur</span><strong></strong><button type="button" data-callup-clear aria-label="Hiq zgjedhjen">×</button></div>
+<input name="reason" class="form-control" maxlength="300" placeholder="Urdhri / arsyeja (opsionale)"/><button class="btn btn-primary" data-callup-submit disabled>Shto në këtë ndeshje</button></form>
+</details>}
 <form method="post" id="match-form" data-stage="@(staged?Model.Status:"Other")" class="@(staged?"stage-"+Model.Status.ToLowerInvariant():"")">
 @if(staged){<input asp-for="Status" type="hidden"/>}
 <input asp-for="Id" type="hidden"/><input asp-for="TeamId" type="hidden"/><input asp-for="RequestId" type="hidden"/><input asp-for="Revision" type="hidden"/>
@@ -15,7 +25,8 @@
 <div class="match-fields">
 <label>Kundërshtari<input asp-for="Opponent" class="form-control" maxlength="150" required/></label>
 <input asp-for="Kind" type="hidden"/>
-<label>Liga<select asp-for="LeagueId" class="form-select" required="@adminMatch"><option value="">@(adminMatch?"Zgjidh ligën ose kupën":"Miqësore · pa ligë")</option>@foreach(var league in Model.Leagues){<option value="@league.Id" data-start="@league.StartsOn.ToString("yyyy-MM-dd")" data-end="@league.EndsOn.ToString("yyyy-MM-dd")">@league.Name · @league.StartsOn.Year/@league.EndsOn.Year</option>}</select></label>
+<label>Liga<select asp-for="LeagueId" class="form-select" required="@adminMatch"><option value="">@(adminMatch?"Zgjidh ligën ose kupën":"Miqësore · pa ligë")</option>@foreach(var league in Model.Leagues){<option value="@league.Id" data-start="@league.StartsOn.ToString("yyyy-MM-dd")" data-end="@league.EndsOn.ToString("yyyy-MM-dd")" data-stage="@league.Stage">@league.Name · @league.StartsOn.Year/@league.EndsOn.Year</option>}</select></label>
+<label>Faza<select asp-for="CompetitionStage" class="form-select"><option value="Qualifying">Kualifikime</option><option value="LeaguePhase">Faza e ligës</option><option value="GroupStage">Faza e grupeve</option><option value="Knockout">Eliminim direkt</option><option value="Final">Finale</option></select></label>
 <label>Data<input asp-for="Date" type="date" class="form-control" required/></label><label>Ora<input asp-for="Kickoff" type="time" class="form-control"/></label>
 <input asp-for="Competition" type="hidden"/><label>Vendi<input asp-for="Venue" class="form-control" maxlength="150"/></label>
 <label>Fusha<select asp-for="Home" class="form-select"><option value="true">Vendas</option><option value="false">Mysafir</option></select></label>
@@ -42,7 +53,7 @@
 </div><p id="sub-message" role="status"></p></details>
 <div class="table-responsive match-grid"><table class="table align-middle match-lineup"><thead><tr><th>Lojtari</th><th>Roli</th><th>Hyrja → dalja</th><th>Min</th><th>Vlerësimi</th><th>Vërejtje</th></tr></thead><tbody>
 @for(var i=0;i<Model.Players.Count;i++){var p=Model.Players[i];<tr data-match-player data-index="@i" data-name="@p.Name" data-student="@p.StudentId">
-<td><input asp-for="Players[i].StudentId" type="hidden"/><input asp-for="Players[i].PitchSlot" type="hidden" class="pitch-slot"/><strong>@p.Name</strong>@if(p.Care!=null){<small class="match-care">@p.Care</small>}</td>
+<td><input asp-for="Players[i].StudentId" type="hidden"/><input asp-for="Players[i].PitchSlot" type="hidden" class="pitch-slot"/><strong>@p.Name</strong>@if(p.IsCallUp){<small class="match-callup-badge">Thirrje · @p.HomeTeamName</small>}@if(p.Care!=null){<small class="match-care">@p.Care</small>}</td>
 <td><select asp-for="Players[i].Role" class="form-select match-role" aria-label="Roli i @p.Name"><option value="NotSelected">Jashtë listës</option><option value="Starter">Titullar</option><option value="Substitute">Nga stoli</option><option value="Unused">Rezervë pa hyrë</option></select></td>
 <td><div class="match-stints">@for(var j=0;j<p.Intervals.Count;j++){<div class="match-stint"><input asp-for="Players[i].Intervals[j].From" type="number" min="0" max="300" aria-label="Minuta e hyrjes" placeholder="Hyrja"/><span>→</span><input asp-for="Players[i].Intervals[j].To" type="number" min="0" max="300" aria-label="Minuta e daljes" placeholder="Dalja"/><button type="button" data-remove-stint aria-label="Hiq intervalin">×</button></div>}</div><button type="button" class="match-add-stint" data-add-stint>+ Hyrje / dalje</button></td><td><output class="match-minutes">@p.Intervals.Where(x=>x.From.HasValue&&x.To.HasValue).Sum(x=>x.To-x.From)</output></td><td><select asp-for="Players[i].CoachRating" class="form-select match-rating" aria-label="Vlerësimi i @p.Name"><option value="">Pa vlerësim</option>@for(var star=1;star<=5;star++){<option value="@star">@(new string('★',star))</option>}</select></td><td><textarea asp-for="Players[i].CoachNote" class="form-control match-note" maxlength="1000" rows="2" aria-label="Vërejtje për @p.Name"></textarea></td>
 </tr>}

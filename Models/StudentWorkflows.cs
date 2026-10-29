@@ -5,6 +5,8 @@ namespace _2Korriku.Models;
 
 public class FamilyChildInput : IValidatableObject
 {
+    [Phone,StringLength(50)] public string? Phone { get; set; }
+    [Required,RegularExpression("Male|Female")] public string Gender { get; set; } = "Male";
     [Range(typeof(decimal),"0","999999999.99")] public decimal? FirstMonthAmount { get; set; }
     [StringLength(200)] public string? FirstMonthReason { get; set; }
     [Required, StringLength(100)] public string FirstName { get; set; } = "";

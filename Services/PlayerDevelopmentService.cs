@@ -29,7 +29,7 @@ public class PlayerDevelopmentService(ApplicationDbContext db)
         await tx.CommitAsync();
     }
     public IQueryable<Student> Players(string coach) => db.Students.Where(x => x.IsActive && x.TrainingTeam != null && x.TrainingTeam.IsActive &&
-        (x.TrainingTeam.CoachId == coach || x.TrainingTeam.AssistantCoachId == coach));
+        (x.TrainingTeam.CoachId == coach || x.TrainingTeam.AssistantCoachId==coach || db.CoachTeams.Any(a=>a.TrainingTeamId==x.TrainingTeamId&&a.UserId==coach)));
     public async Task<Student> Player(int id, string coach) => await Players(coach).AsNoTracking().Include(x=>x.TrainingTeam).SingleOrDefaultAsync(x=>x.Id==id)
         ?? throw new UnauthorizedAccessException();
     public async Task Save(EvaluationInput input, string coach)

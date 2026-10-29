@@ -9,6 +9,7 @@ public class Student
     [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     public int Id { get; set; }
     public bool ContractPending { get; set; }
+    [StringLength(10)] public string Gender { get; set; } = "Male";
     public bool FirstMonthUsesWeeks { get; set; }
     public Guid Revision { get; set; } = Guid.NewGuid();
 
@@ -29,6 +30,9 @@ public class Student
 
     [Phone]
     public string? ParentPhone { get; set; }
+
+    [Phone, StringLength(50)]
+    public string? Phone { get; set; }
 
     public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
 

@@ -1,6 +1,7 @@
 ﻿(() => {
     const league = document.getElementById('LeagueId');
     const date = document.getElementById('Date');
+    const stage = document.getElementById('CompetitionStage');
     if (!league || !date) return;
     function update() {
         for (const option of league.options) {
@@ -14,6 +15,10 @@
         if (!league.value && eligible.length === 1) league.value = eligible[0].value;
     }
     date.addEventListener('change', update);
+    league.addEventListener('change', () => {
+        const value = league.selectedOptions[0]?.dataset.stage;
+        if (stage && value) stage.value = value;
+    });
     // The server preselects a league for new matches. Do not rewrite a saved
     // legacy or friendly match merely because an eligible league now exists.
 })();

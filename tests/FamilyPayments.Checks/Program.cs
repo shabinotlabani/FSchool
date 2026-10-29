@@ -484,6 +484,10 @@ try
     var invalidRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Invalid",LastName="Season",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=6,SeasonalExpectedRate=49};
     Check(await RegistrationController().Create(invalidRegistration) is ViewResult&&await db.Students.CountAsync()==beforeInvalid&&!await db.Payments.AnyAsync(p=>p.RequestId==invalidRegistration.SeasonalRequestId),"Stale seasonal price rolls back entire registration");
     db.ChangeTracker.Clear();
+    var contractRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Contract",LastName="Pending",DateOfBirth=new(2010,1,1),IsContractPlayer=true};
+    Check(await RegistrationController().Create(contractRegistration) is RedirectToActionResult{ActionName:"Index"},"Contract player registers without creating the contract immediately");
+    var pendingContractPlayer=await db.Students.SingleAsync(s=>s.FirstName=="Contract"&&s.LastName=="Pending");
+    Check(pendingContractPlayer.ContractPending&&pendingContractPlayer.TrainingTeamId==registrationTeam.Id&&!await db.StudentFeeAssignments.AnyAsync(a=>a.StudentId==pendingContractPlayer.Id)&&!await db.MonthlyFeePeriods.AnyAsync(p=>p.StudentId==pendingContractPlayer.Id),"Pending contract player requires a team and receives no fee or invoice");
     await billing.GenerateDueFeesAsync(asOf:TariffService.NextMonth);
     Check((await billing.GetInvoicesAsync(advancePlayer.Id)).Single(x=>x.Period.Year==TariffService.NextMonth.Year&&x.Period.Month==TariffService.NextMonth.Month).Due==0,"The next monthly invoice is automatically covered by the advance");
     var realPlayers=await db.Students.CountAsync();

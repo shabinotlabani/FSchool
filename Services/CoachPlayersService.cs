@@ -28,7 +28,7 @@ public class CoachPlayersService(ApplicationDbContext db)
         var entries = await db.AttendancePlayers.AsNoTracking()
             .Where(p => ids.Contains(p.StudentId) && p.TeamAttendance!.Date >= from && p.TeamAttendance.Date <= today &&
                 p.TeamAttendance.TrainingTeam!.IsActive &&
-                (p.TeamAttendance.TrainingTeam.CoachId == coach || p.TeamAttendance.TrainingTeam.AssistantCoachId == coach))
+                (p.TeamAttendance.TrainingTeam.CoachId == coach || p.TeamAttendance.TrainingTeam.AssistantCoachId==coach || db.CoachTeams.Any(x=>x.TrainingTeamId==p.TeamAttendance.TrainingTeamId&&x.UserId==coach)))
             .Select(p => new { p.StudentId, p.Present, p.TeamAttendance!.Date, p.TeamAttendance.TrainingTeamId, p.TeamAttendance.CoachRole, p.TeamAttendance.UpdatedAt }).ToListAsync();
         var rows = players.Select(s => {
             var days = entries.Where(p => p.StudentId == s.Id && p.TrainingTeamId == s.TrainingTeamId)

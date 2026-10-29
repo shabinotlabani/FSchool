@@ -1,0 +1,16 @@
+@model CompetitionCatalogModel
+@{ViewData["Title"]="Zgjidh garat";}
+<link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
+<div class="team-workspace competition-catalog">
+<div class="page-heading"><div><h1>Zgjidh garat</h1><p>Shto vetëm garat ku merr pjesë klubi</p></div></div>
+<form method="get" class="catalog-season-picker"><label>Kontrollo sezonin<input name="season" value="@Model.Season" class="form-control" placeholder="2026/27" required/></label><button class="btn btn-outline-secondary">Shfaq</button></form>
+<form method="post">
+<div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<div class="catalog-season"><label>Sezoni<input asp-for="Season" class="form-control" required readonly/></label><label>Fillimi<input asp-for="StartsOn" type="date" class="form-control" required/></label><label>Mbarimi<input asp-for="EndsOn" type="date" class="form-control" required/></label></div>
+@foreach(var group in Model.Items.GroupBy(x=>x.Group)){
+<section class="catalog-group"><h2>@group.Key</h2><div class="catalog-grid">
+@foreach(var item in group){var exists=Model.ExistingKeys.Contains(item.Key);<label class="catalog-item @(exists?"is-added":"")"><input type="checkbox" name="SelectedKeys" value="@item.Key" checked="@Model.SelectedKeys.Contains(item.Key)" disabled="@exists"/><span><strong>@item.Name</strong><small>@item.AgeCategory · @(item.Gender=="Female"?"Femra":"Meshkuj")</small></span><em>@(exists?"E shtuar":"Zgjidh")</em></label>}
+</div></section>}
+<div class="catalog-actions"><button class="btn btn-primary">Shto garat e zgjedhura</button><a class="btn btn-outline-secondary" asp-action="Index">Anulo</a></div>
+</form></div>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Garat</a>}

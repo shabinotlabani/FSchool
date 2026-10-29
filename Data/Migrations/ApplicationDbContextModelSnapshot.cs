@@ -752,6 +752,63 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("CoachTeams");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.CompetitionPlayerRegistration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateOnly?>("EligibleFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("EligibleUntil")
+                        .HasColumnType("date");
+
+                    b.Property<int>("LeagueTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ListType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateOnly>("RegisteredOn")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LeagueTeamId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("ClubId", "StudentId");
+
+                    b.HasIndex("ClubId", "LeagueTeamId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("CompetitionPlayerRegistrations");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.DemoImport", b =>
                 {
                     b.Property<string>("Id")
@@ -1958,19 +2015,64 @@ namespace _2Korriku.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AgeCategory")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<int>("ClubId")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(1);
 
+                    b.Property<string>("CompetitionScope")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("CompetitionType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<bool>("CountDismissalYellows")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)");
+
+                    b.Property<DateTime?>("DatesCheckedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("DatesSuggestedByAi")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Division")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateOnly>("EndsOn")
                         .HasColumnType("date");
 
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Group")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsOfficial")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVerified")
                         .HasColumnType("boolean");
 
                     b.Property<string>("Kind")
@@ -1983,6 +2085,11 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("Organizer")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("RedBan")
                         .HasColumnType("integer");
 
@@ -1993,8 +2100,27 @@ namespace _2Korriku.Data.Migrations
                     b.Property<bool>("RulesConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ScheduleSourceUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Season")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<int>("SecondYellowBan")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Sport")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateOnly>("StartsOn")
                         .HasColumnType("date");
@@ -2036,8 +2162,27 @@ namespace _2Korriku.Data.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(1);
 
+                    b.Property<string>("Group")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<int>("LeagueId")
                         .HasColumnType("integer");
+
+                    b.Property<DateOnly>("RegisteredOn")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("SquadDeadline")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Stage")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("TrainingTeamId")
                         .HasColumnType("integer");
@@ -2112,6 +2257,10 @@ namespace _2Korriku.Data.Migrations
                     b.Property<string>("Competition")
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
+
+                    b.Property<string>("CompetitionStage")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
@@ -2215,6 +2364,10 @@ namespace _2Korriku.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CallUpReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<int>("ClubId")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAdd()
@@ -2228,9 +2381,15 @@ namespace _2Korriku.Data.Migrations
                     b.Property<int?>("CoachRating")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("HomeTeamId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Intervals")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsCallUp")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("MatchGameId")
                         .HasColumnType("integer");
@@ -2256,9 +2415,13 @@ namespace _2Korriku.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("HomeTeamId");
+
                     b.HasIndex("MatchGameId");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("ClubId", "HomeTeamId");
 
                     b.HasIndex("ClubId", "StudentId");
 
@@ -4456,6 +4619,11 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<int?>("GroupId")
                         .HasColumnType("integer");
 
@@ -4487,6 +4655,10 @@ namespace _2Korriku.Data.Migrations
 
                     b.Property<string>("ParentPhone")
                         .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("PreferredPaymentMethod")
                         .IsRequired()
@@ -5010,8 +5182,16 @@ namespace _2Korriku.Data.Migrations
                     b.Property<string>("CoachId")
                         .HasColumnType("text");
 
+                    b.Property<string>("DoctorId")
+                        .HasColumnType("text");
+
                     b.Property<int?>("FootballFieldId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -5035,6 +5215,9 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<string>("PsychologistId")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("Revision")
                         .IsConcurrencyToken()
                         .HasColumnType("uuid");
@@ -5045,9 +5228,13 @@ namespace _2Korriku.Data.Migrations
 
                     b.HasIndex("CoachId");
 
+                    b.HasIndex("DoctorId");
+
                     b.HasIndex("FootballFieldId");
 
                     b.HasIndex("IsActive");
+
+                    b.HasIndex("PsychologistId");
 
                     b.HasIndex("ClubId", "FootballFieldId");
 
@@ -5451,6 +5638,45 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("TrainingTeam");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.CompetitionPlayerRegistration", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.LeagueTeam", "LeagueTeam")
+                        .WithMany()
+                        .HasForeignKey("LeagueTeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.LeagueTeam", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "LeagueTeamId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Student", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "StudentId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LeagueTeam");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.DemoImport", b =>
@@ -6168,6 +6394,11 @@ namespace _2Korriku.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("_2Korriku.Models.TrainingTeam", "HomeTeam")
+                        .WithMany()
+                        .HasForeignKey("HomeTeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("_2Korriku.Models.MatchGame", "MatchGame")
                         .WithMany("Players")
                         .HasForeignKey("MatchGameId")
@@ -6179,6 +6410,12 @@ namespace _2Korriku.Data.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.TrainingTeam", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "HomeTeamId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("_2Korriku.Models.MatchGame", null)
                         .WithMany()
@@ -6193,6 +6430,8 @@ namespace _2Korriku.Data.Migrations
                         .HasPrincipalKey("ClubId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("HomeTeam");
 
                     b.Navigation("MatchGame");
 
@@ -7480,9 +7719,19 @@ namespace _2Korriku.Data.Migrations
                         .HasForeignKey("CoachId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "Doctor")
+                        .WithMany()
+                        .HasForeignKey("DoctorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("_2Korriku.Models.FootballField", "FootballField")
                         .WithMany()
                         .HasForeignKey("FootballFieldId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("_2Korriku.Models.ApplicationUser", "Psychologist")
+                        .WithMany()
+                        .HasForeignKey("PsychologistId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("_2Korriku.Models.FootballField", null)
@@ -7495,7 +7744,11 @@ namespace _2Korriku.Data.Migrations
 
                     b.Navigation("Coach");
 
+                    b.Navigation("Doctor");
+
                     b.Navigation("FootballField");
+
+                    b.Navigation("Psychologist");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.TreasuryEntry", b =>

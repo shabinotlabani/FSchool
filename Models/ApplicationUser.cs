@@ -21,6 +21,7 @@ public static class Roles
     public const string Coach = "Trajner";
     public const string Doctor = "Mjek";
     public const string Nutritionist = "Nutricist";
+    public const string Psychologist = "Psikolog";
     public const string Viewer = "Shikues";
     public const string FieldOperator = "RezervimePrivate";
     public const string FieldRead = Read + "," + FieldOperator;
@@ -29,5 +30,5 @@ public static class Roles
     public const string Read = Admin + "," + Operator + "," + Viewer;
     public const string Write = Admin + "," + Operator;
     // Super administrators also hold Admin, so existing operational permissions remain intact.
-    public static readonly string[] All = [SuperAdmin, Admin, Operator, Viewer, Coach, FieldOperator, Doctor, Nutritionist];
+    public static readonly string[] All = [SuperAdmin, Admin, Operator, Viewer, Coach, FieldOperator, Doctor, Nutritionist, Psychologist];
 }

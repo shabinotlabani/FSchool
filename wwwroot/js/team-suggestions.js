@@ -16,11 +16,11 @@
             list.replaceChildren();
             for(const team of result.teams){
                 const label=node('label',null,'team-choice'),radio=node('input');radio.type='radio';radio.required=true;radio.name='TrainingTeamId';radio.value=String(team.id);radio.disabled=team.freePlaces===0;
-                const content=node('span');content.append(node('strong',team.name),node('small',`${team.minAge}–${team.maxAge} vjeç · ${team.freePlaces===0?'Ekipi është i mbushur':team.freePlaces+' vende të lira'} (${team.enrolled}/${team.capacity})`),node('span',team.sessions.map(s=>`${s.day} ${s.start}–${s.end}`).join('\n'),'team-choice-times'));
+                const content=node('span');content.append(node('strong',team.name),node('small',`${team.freePlaces===0?'Ekipi është i mbushur':team.freePlaces+' vende të lira'} (${team.enrolled}/${team.capacity})`),node('span',team.sessions.map(s=>`${s.day} ${s.start}–${s.end}`).join('\n'),'team-choice-times'));
                 if(team.location)content.append(node('small',team.location));label.append(radio,content);list.append(label);
                 if(String(team.id)===String(selected)&&!radio.disabled)radio.checked=true;
             }
-            status.textContent=`Mosha: ${result.age} vjeç. `+(result.teams.length?'Zgjidhni ekipin sipas ditëve, orarit dhe vendeve të lira.':'Nuk ka ekip aktiv për këtë moshë. Krijoni një ekip të përshtatshëm para regjistrimit.');
+            status.textContent=(result.teams.length?'Zgjidhni ekipin sipas ditëve, orarit dhe vendeve të lira.':'Nuk ka ekip aktiv me vende të lira.');
         }catch(error){if(error.name==='AbortError'||current!==sequence)return;status.textContent='Propozimet nuk u ngarkuan. Provoni ta zgjidhni datëlindjen përsëri.';}
     }
     birth.addEventListener('change',()=>{list.replaceChildren();load();});

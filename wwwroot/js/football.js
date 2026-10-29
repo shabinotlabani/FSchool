@@ -7,12 +7,13 @@
    const kind=row.querySelector('[data-field="Kind"]').value;
    const opponent=kind==='OpponentGoal'||kind==='OpponentOwnGoal';
    for(const field of ['PlayerId','AssistId']){const el=row.querySelector(`[data-field="${field}"]`);el.disabled=field==='PlayerId'?opponent:kind!=='Goal';if(el.disabled)el.value='';}
-   const red=kind==='Red'||kind==='SecondYellow';row.querySelector('[data-decision]').hidden=!red;
-   if(!red)for(const field of ['SuspensionGames','Decision'])row.querySelector(`[data-field="${field}"]`).value='';
+   const directRed=kind==='Red';row.querySelector('[data-decision]').hidden=!directRed;
+   if(!directRed)for(const field of ['SuspensionGames','Decision'])row.querySelector(`[data-field="${field}"]`).value='';
  });}
- function add(kind){body.append(document.querySelector('#football-event-template').content.cloneNode(true));const row=body.lastElementChild;row.querySelector('[data-field="Kind"]').value=kind;refresh();return row;}
+ function add(kind){body.append(document.querySelector('#football-event-template').content.cloneNode(true));const row=body.lastElementChild;row.querySelector('[data-field="Kind"]').value=kind;refresh();if(kind==='Red'){body.closest('details').open=true;row.querySelector('[data-decision]').open=true;}return row;}
  window.matchEvents={add};
- body.addEventListener('change',refresh);
+ body.addEventListener('change',e=>{refresh();if(e.target.matches('[data-field="Kind"]')&&e.target.value==='Red'){body.closest('details').open=true;e.target.closest('[data-football-event]').querySelector('[data-decision]').open=true;}});
  body.addEventListener('click',e=>{const button=e.target.closest('[data-remove-event]');if(button){button.closest('tr').remove();refresh();form.dispatchEvent(new Event('change',{bubbles:true}));}});
  refresh();
+ if([...body.querySelectorAll('[data-field="Kind"]')].some(x=>x.value==='Red'))body.closest('details').open=true;
 })();

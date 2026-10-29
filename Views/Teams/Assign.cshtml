@@ -10,13 +10,13 @@
 <fieldset class="transfer-groups">
 <legend class="h6">Ekipet · @Model.Options.Count</legend>
 @foreach(var option in Model.Options){
-    var team=option.Team;var matches=team.MinAge<=age&&team.MaxAge>=age;var current=team.Id==student.TrainingTeamId;
-    var available=current||(student.IsActive&&matches&&option.FreePlaces>0);
+    var team=option.Team;var current=team.Id==student.TrainingTeamId;
+    var available=current||(student.IsActive&&option.FreePlaces>0);
     <label class="transfer-group @(available?"":"is-unavailable")">
     <input asp-for="TeamId" type="radio" value="@team.Id" id="assign-team-@team.Id" disabled="@(!available)"/>
     <span class="transfer-group-body">
-        <span class="transfer-group-heading"><strong>@team.Name</strong><small class="@(available?"text-success":"text-secondary")">@(current?"Ekipi aktual":!student.IsActive?"Lojtari është joaktiv":!matches?"Jashtë moshës":option.FreePlaces==0?"I mbushur":"I propozuar për moshën")</small></span>
-        <small class="text-secondary">@team.MinAge–@team.MaxAge vjeç · @option.FreePlaces vende të lira</small>
+        <span class="transfer-group-heading"><strong>@team.Name</strong><small class="@(available?"text-success":"text-secondary")">@(current?"Ekipi aktual":!student.IsActive?"Lojtari është joaktiv":option.FreePlaces==0?"I mbushur":"I disponueshëm")</small></span>
+        <small class="text-secondary">@option.FreePlaces vende të lira</small>
         <span>Trajner: <strong>@team.Coach?.FirstName @team.Coach?.LastName</strong></span>
         <span>Ndihmëstrajner: <strong>@team.AssistantCoach?.FirstName @team.AssistantCoach?.LastName</strong></span>
         <span class="transfer-group-schedule">
@@ -27,7 +27,7 @@
     </span></label>
 }
 @if(Model.Options.Count==0){<p class="text-secondary">Nuk ka ekipe aktive.</p>}
-else if(!Model.Options.Any(x=>x.Team.MinAge<=age&&x.Team.MaxAge>=age&&x.FreePlaces>0)){<p class="text-secondary">Nuk ka ekip me vende të lira për moshën @age vjeç.</p>}
+else if(!Model.Options.Any(x=>x.FreePlaces>0)){<p class="text-secondary">Nuk ka ekip me vende të lira.</p>}
 @if(student.TrainingTeamId.HasValue&&!Model.Options.Any(x=>x.Team.Id==student.TrainingTeamId)){
 <label class="transfer-group"><input asp-for="TeamId" type="radio" value="@student.TrainingTeamId" id="assign-current"/><span class="transfer-group-body"><strong>@student.TrainingTeam?.Name</strong><small>Ekipi aktual · Joaktiv</small></span></label>
 }

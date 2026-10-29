@@ -31,7 +31,7 @@ public class UsersController(UserManager<ApplicationUser> users, UserAdministrat
         }
         return View(list);
     }
-    [HttpGet] public async Task<IActionResult> Create(string? role) => View("Edit", new UserEditModel { Role = role is Roles.Coach or Roles.FieldOperator or Roles.Doctor or Roles.Nutritionist ? role : Roles.Operator, Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync() });
+    [HttpGet] public async Task<IActionResult> Create(string? role) => View("Edit", new UserEditModel { Role = role is Roles.Coach or Roles.FieldOperator or Roles.Doctor or Roles.Nutritionist or Roles.Psychologist ? role : Roles.Operator, Teams = await db.TrainingTeams.OrderBy(t=>t.Name).ToListAsync() });
     [HttpGet]
     public async Task<IActionResult> Edit(string id)
     {

@@ -9,10 +9,15 @@ public class TrainingTeam
     public ApplicationUser? Coach { get; set; }
     public string? AssistantCoachId { get; set; }
     public ApplicationUser? AssistantCoach { get; set; }
+    public string? DoctorId { get; set; }
+    public ApplicationUser? Doctor { get; set; }
+    public string? PsychologistId { get; set; }
+    public ApplicationUser? Psychologist { get; set; }
     public int? FootballFieldId { get; set; }
     public FootballField? FootballField { get; set; }
     public int Id { get; set; }
     [Required,StringLength(100)] public string Name { get; set; } = "";
+    [StringLength(10)] public string Gender { get; set; } = "Male";
     public int MinAge { get; set; }
     public int MaxAge { get; set; }
     public int Capacity { get; set; }
@@ -66,15 +71,21 @@ public class TrainingSessionInput
 public class TeamEditModel : IValidatableObject
 {
     [Required(ErrorMessage="Zgjidhni trajnerin kryesor.")] public string? CoachId { get; set; }
-    [Required(ErrorMessage="Zgjidhni ndihmëstrajnerin.")] public string? AssistantCoachId { get; set; }
+    public string? AssistantCoachId { get; set; }
+    public List<string> AssistantCoachIds { get; set; } = [];
+    public string? DoctorId { get; set; }
+    public string? PsychologistId { get; set; }
     [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever] public List<ApplicationUser> Coaches { get; set; } = [];
+    [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever] public List<ApplicationUser> Doctors { get; set; } = [];
+    [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever] public List<ApplicationUser> Psychologists { get; set; } = [];
     [Range(1, int.MaxValue)] public int? FootballFieldId { get; set; }
     public List<FootballField> Fields { get; set; } = [];
     public int Id { get; set; }
     public Guid Revision { get; set; }
     [Required,StringLength(100)] public string Name { get; set; } = "";
-    [Range(0,100)] public int MinAge { get; set; } = 6;
-    [Range(0,100)] public int MaxAge { get; set; } = 8;
+    [Required,RegularExpression("Male|Female|Mixed")] public string Gender { get; set; } = "Male";
+    public int MinAge { get; set; } = 0;
+    public int MaxAge { get; set; } = 100;
     [Range(1,1000)] public int Capacity { get; set; } = 20;
     public bool IsActive { get; set; } = true;
     [StringLength(200)] public string? Location { get; set; }
@@ -83,8 +94,10 @@ public class TeamEditModel : IValidatableObject
     public List<TrainingSessionInput> Sessions { get; set; } = [new(){Day=1},new(){Day=2},new(){Day=4}];
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
-        if(!string.IsNullOrEmpty(CoachId) && CoachId == AssistantCoachId) yield return new("Trajneri dhe ndihmëstrajneri duhet të jenë persona të ndryshëm.");
-        if(MinAge>MaxAge)yield return new("Mosha minimale nuk mund të jetë mbi moshën maksimale.");
+        AssistantCoachIds ??= [];
+        AssistantCoachIds=AssistantCoachIds.Where(x=>!string.IsNullOrWhiteSpace(x)).Distinct().ToList();
+        if(!string.IsNullOrEmpty(AssistantCoachId)&&!AssistantCoachIds.Contains(AssistantCoachId))AssistantCoachIds.Add(AssistantCoachId);
+        if(!string.IsNullOrEmpty(CoachId) && AssistantCoachIds.Contains(CoachId)) yield return new("Trajneri kryesor nuk mund të jetë edhe ndihmëstrajner.");
         if(Id!=0&&string.IsNullOrWhiteSpace(Reason))yield return new("Shkruani arsyen e ndryshimit.");
         if(Sessions==null||Sessions.Count is <1 or >14){yield return new("Vendosni nga 1 deri në 14 seanca javore.");yield break;}
         if(Sessions.Any(s=>s.StartsAt.HasValue&&s.EndsAt.HasValue&&(s.StartsAt>=s.EndsAt || s.StartsAt.Value.Ticks%TimeSpan.TicksPerMinute!=0 || s.EndsAt.Value.Ticks%TimeSpan.TicksPerMinute!=0)))yield return new("Ora e përfundimit duhet të jetë pas fillimit, brenda së njëjtës ditë dhe me minuta të plota.");

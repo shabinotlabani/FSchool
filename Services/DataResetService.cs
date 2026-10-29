@@ -9,7 +9,7 @@ public static class DataResetService
     public static readonly string[] Tables = [
         "MatchChanges", "MatchPlayers", "MatchGames",
         "DisciplineRules",
-        "LeagueTeams", "Leagues",
+        "CompetitionPlayerRegistrations", "LeagueTeams", "Leagues",
         "StudentPhoto", "PlayerContractAudits", "PlayerContracts",
         "CoachMessages",
         "NutritionMenus", "CareReferrals", "CareEntries", "CareAssignments",

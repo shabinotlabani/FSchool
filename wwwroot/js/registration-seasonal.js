@@ -2,21 +2,22 @@
     const root=document.querySelector('#registration-payment');
     if(!root)return;
     const pricing=JSON.parse(document.querySelector('#first-month-pricing').textContent);
-    const plan=document.querySelector('#FeePlanId'), kind=document.querySelector('#RegistrationPayment');
+    const plan=document.querySelector('#FeePlanId'), kind=document.querySelector('#RegistrationPayment'), contract=document.querySelector('#IsContractPlayer');
     const months=document.querySelector('#SeasonalMonths'), method=document.querySelector('#SeasonalPaymentMethod');
     const monthly=document.querySelector('#registration-monthly');
     function update(){
+        const pending=contract?.checked===true;
         const tariff=pricing.plans.find(p=>String(p.id)===plan.value);
-        const allowed=tariff&&!tariff.isFamily&&tariff.amount>0&&root.dataset.familyPicker!=='true';
+        const allowed=!pending&&tariff&&!tariff.isFamily&&tariff.amount>0&&root.dataset.familyPicker!=='true';
         kind.querySelector('[value="Seasonal"]').disabled=!allowed;
         if(!allowed)kind.value='Monthly';
         const seasonal=kind.value==='Seasonal';
         root.closest('form').querySelector('button[type="submit"]').textContent=seasonal?(method.value==='Bank'?'Regjistro dhe dërgo në bankë':'Regjistro dhe paguaj sezonin'):'Regjistro lojtarin';
-        monthly.hidden=seasonal;monthly.disabled=seasonal;
+        root.hidden=pending;monthly.hidden=pending||seasonal;monthly.disabled=pending||seasonal;
         document.querySelector('#registration-seasonal').hidden=!seasonal;
         document.querySelector('#registration-season-length').hidden=!seasonal;
         document.querySelector('#SeasonalExpectedRate').value=Number(tariff?.amount||0).toFixed(2);
-        if(!seasonal)return;
+        if(pending||!seasonal)return;
         const duration=Number(months.value), paid=duration-duration/6, rate=Number(tariff.amount);
         const period=document.querySelector('#registration-season-period');
         const [year,month]=period.dataset.start.split('-').map(Number);
@@ -26,6 +27,6 @@
         document.querySelector('#registration-season-calculation').textContent=`${paid} × ${rate.toFixed(2)} · ${duration/6} muaj falas`;
         document.querySelector('#registration-season-bank').hidden=method.value!=='Bank';
     }
-    [plan,kind,months,method].forEach(el=>el.addEventListener('change',update));
+    [plan,kind,months,method,contract].filter(Boolean).forEach(el=>el.addEventListener('change',update));
     update();
 })();

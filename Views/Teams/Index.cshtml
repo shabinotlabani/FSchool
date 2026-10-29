@@ -1,4 +1,4 @@
-﻿@model List<TeamOption>
+@model List<TeamOption>
 @using _2Korriku.Services
 @{ViewData["Title"]="Ekipet dhe oraret";}
 <link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
@@ -7,7 +7,7 @@
 <div class="panel table-responsive" tabindex="0" role="region" aria-label="Ekipet dhe oraret">
 <table class="table team-list"><thead><tr><th>Ekipi</th><th>Trajnerët</th><th>Fusha</th><th>Orari</th><th>Lojtarë</th><th>Statusi</th><th></th></tr></thead><tbody>
 @foreach(var row in Model){
-<tr><td><a asp-action="Details" asp-route-id="@row.Team.Id"><strong>@row.Team.Name</strong></a><small class="d-block text-secondary">@row.Team.MinAge–@row.Team.MaxAge vjeç</small>@foreach(var league in ((List<LeagueTeam>)ViewData["Leagues"]!).Where(l=>l.TrainingTeamId==row.Team.Id)){<small class="d-block text-secondary">@league.League.Name</small>}</td>
+<tr><td><a asp-action="Details" asp-route-id="@row.Team.Id"><strong>@row.Team.Name</strong></a>@foreach(var league in ((List<LeagueTeam>)ViewData["Leagues"]!).Where(l=>l.TrainingTeamId==row.Team.Id)){<small class="d-block text-secondary">@league.League.Name</small>}</td>
 <td><span class="d-block">@(row.Team.Coach==null?"Pa trajner":row.Team.Coach.FirstName+" "+row.Team.Coach.LastName)</span>@if(row.Team.AssistantCoach!=null){<small class="d-block text-secondary">@row.Team.AssistantCoach.FirstName @row.Team.AssistantCoach.LastName · Ndihmëstrajner</small>}</td>
 <td>@(row.Team.FootballField?.Name ?? (string.IsNullOrWhiteSpace(row.Team.Location)?"Pa fushë të caktuar":row.Team.Location))</td>
 <td><ul class="team-schedule">@foreach(var s in row.Team.Sessions.OrderBy(s=>s.Day).ThenBy(s=>s.StartsAt)){<li><span>@TeamService.DayName(s.Day)</span><strong>@s.StartsAt.ToString("HH:mm") – @s.EndsAt.ToString("HH:mm")</strong></li>}</ul></td>

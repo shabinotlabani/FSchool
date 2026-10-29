@@ -20,7 +20,8 @@ public class AttendanceService(ApplicationDbContext db, TimeProvider? clock=null
         if(user==null || UserAdministrationService.IsDisabled(user)) throw new UnauthorizedAccessException();
         var roles=await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id where ur.UserId==actor select r.Name).ToListAsync();
         var team=await db.TrainingTeams.AsNoTracking().Include(x=>x.FootballField).SingleOrDefaultAsync(x=>x.Id==id);
-        if(team==null || (!roles.Contains(Roles.Admin) && (!roles.Contains(Roles.Coach) || (role=="head"?team.CoachId:team.AssistantCoachId)!=actor)))
+        var assigned=team!=null&&await db.CoachTeams.AnyAsync(x=>x.TrainingTeamId==id&&x.UserId==actor);
+        if(team==null || (!roles.Contains(Roles.Admin) && (!roles.Contains(Roles.Coach) || (role=="head"?team.CoachId!=actor:team.CoachId==actor||(team.AssistantCoachId!=actor&&!assigned)))))
             throw new UnauthorizedAccessException();
         return team;
     }

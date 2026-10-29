@@ -246,7 +246,7 @@ static class HttpChecks
             Check((await coachClient.GetStringAsync("/Matches/Matrix?teamId="+matchTeam+"&leagueId="+leagueId)).Contains("Youth Cup"),"Coach matrix offers league filter");
             Check((await staffClient.GetAsync(teamMinutesUrl+"&leagueId=2147483647")).StatusCode==HttpStatusCode.NotFound,"Admin report rejects inaccessible league");
             var registrationForm=await staffClient.GetStringAsync("/Students/Create");
-            Check(!registrationForm.Contains("HasContract")&&!registrationForm.Contains("Lojtar me kontratë"),"Academy registration is separate from employment contracts");
+            Check(registrationForm.Contains("IsContractPlayer")&&registrationForm.Contains("Lojtar me kontratë"),"Registration allows a contract player while deferring the contract");
             int contractPerson;
             using(var scope=app.Services.CreateScope()){
                 var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();db.Club.ClubId=3;
@@ -255,8 +255,8 @@ static class HttpChecks
             Check((await staffClient.GetAsync("/PlayerContracts")).StatusCode!=HttpStatusCode.OK,"Contracts are restricted to Super Admin");
             await Post(ownerClient,"/Clubs/Select","/Clubs",new(){["id"]="3"});
             var contractPage=await ownerClient.GetStringAsync("/PlayerContracts/Create?staffId="+contractPerson);
-            Check(contractPage.Contains("Paga bruto")&&contractPage.Contains("Skadon më")&&!contractPage.Contains("Lojtarët")&&!contractPage.Contains("PDF"),"Super Admin sees standalone contract people only");
-            var activated=await Post(ownerClient,"/PlayerContracts/Save","/PlayerContracts/Create?staffId="+contractPerson,new(){["Simple"]="true",["PersonKey"]="S:"+contractPerson,["RequestId"]=Guid.NewGuid().ToString(),["StartsOn"]=BillingClock.Today.ToString("yyyy-MM-dd"),["EndsOn"]=BillingClock.Today.AddDays(20).ToString("yyyy-MM-dd"),["GrossSalary"]="1000"});
+            Check(contractPage.Contains("Paga bruto")&&contractPage.Contains("Skadon më")&&contractPage.Contains("Stafi dhe personat e kontraktuar")&&!contractPage.Contains("PDF"),"Super Admin sees the simplified contract person list");
+            var activated=await Post(ownerClient,"/PlayerContracts/Save","/PlayerContracts/Create?staffId="+contractPerson,new(){["Simple"]="true",["command"]="Activate",["PersonKey"]="S:"+contractPerson,["RequestId"]=Guid.NewGuid().ToString(),["StartsOn"]=BillingClock.Today.ToString("yyyy-MM-dd"),["EndsOn"]=BillingClock.Today.AddDays(20).ToString("yyyy-MM-dd"),["GrossSalary"]="1000"});
             Check(activated.StatusCode==HttpStatusCode.Redirect,"Super Admin records a contract with gross salary and expiry only");
             int playerContractId;
             using(var scope=app.Services.CreateScope()){

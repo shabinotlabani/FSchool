@@ -1,7 +1,9 @@
 @model TrainingTeam
 <dl class="row mb-3 mt-3">
     <dt class="col-sm-5">Trajneri</dt><dd class="col-sm-7">@(Model.Coach == null ? "Pa caktuar" : $"{Model.Coach.FirstName} {Model.Coach.LastName}")</dd>
-    <dt class="col-sm-5">Ndihmëstrajneri</dt><dd class="col-sm-7">@(Model.AssistantCoach == null ? "Pa caktuar" : $"{Model.AssistantCoach.FirstName} {Model.AssistantCoach.LastName}")</dd>
+    <dt class="col-sm-5">Ndihmëstrajnerët</dt><dd class="col-sm-7">@{var assistants=ViewData["AssistantCoaches"] as List<ApplicationUser> ?? [];}@(assistants.Count==0?"Pa caktuar":string.Join(", ",assistants.Select(x=>$"{x.FirstName} {x.LastName}")))</dd>
+    <dt class="col-sm-5">Mjeku</dt><dd class="col-sm-7">@(Model.Doctor==null?"Pa caktuar":$"{Model.Doctor.FirstName} {Model.Doctor.LastName}")</dd>
+    <dt class="col-sm-5">Psikologu</dt><dd class="col-sm-7">@(Model.Psychologist==null?"Pa caktuar":$"{Model.Psychologist.FirstName} {Model.Psychologist.LastName}")</dd>
     <dt class="col-sm-5">Liga</dt><dd class="col-sm-7">@{var currentLeagues=(ViewData["Leagues"] as List<League> ?? []).Where(l=>l.IsActive&&l.StartsOn<=_2Korriku.Services.BillingClock.Today&&l.EndsOn>=_2Korriku.Services.BillingClock.Today).ToList();}@if(currentLeagues.Count==0){<span class="text-secondary">Pa ligë të caktuar</span>}@foreach(var league in currentLeagues){<span class="d-block">@league.Name <small class="text-secondary">· @league.StartsOn.Year/@league.EndsOn.Year</small></span>}</dd>
 </dl>
-@if(Model.CoachId == null || Model.AssistantCoachId == null){<p class="text-danger small">Duhet të caktohen trajneri dhe ndihmëstrajneri.</p>}
+@if(Model.CoachId == null){<p class="text-danger small">Duhet të caktohet trajneri kryesor.</p>}

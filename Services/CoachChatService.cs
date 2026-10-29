@@ -8,7 +8,7 @@ namespace _2Korriku.Services;
 public class CoachChatService(ApplicationDbContext db)
 {
     public IQueryable<Student> Assigned(string coach) => db.Students.Where(s => s.TrainingTeam != null && s.TrainingTeam.IsActive &&
-        (s.TrainingTeam.CoachId == coach || s.TrainingTeam.AssistantCoachId == coach));
+        (s.TrainingTeam.CoachId == coach || s.TrainingTeam.AssistantCoachId==coach || db.CoachTeams.Any(x=>x.TrainingTeamId==s.TrainingTeamId&&x.UserId==coach)));
 
     public async Task<bool> IsCoach(string actor) => await db.Users.AnyAsync(x => x.Id == actor &&
         (!x.LockoutEnabled || x.LockoutEnd == null || x.LockoutEnd <= DateTimeOffset.UtcNow)) &&
@@ -17,10 +17,13 @@ public class CoachChatService(ApplicationDbContext db)
     public async Task<List<ChatCoach>> Recipients(int studentId)
     {
         var team = await db.Students.Where(x => x.Id == studentId && x.TrainingTeam != null && x.TrainingTeam.IsActive)
-            .Select(x => new { x.TrainingTeam!.CoachId, x.TrainingTeam.AssistantCoachId }).SingleOrDefaultAsync();
+            .Select(x => new { x.TrainingTeamId, x.TrainingTeam!.CoachId, x.TrainingTeam.AssistantCoachId }).SingleOrDefaultAsync();
         var result = new List<ChatCoach>();
         if (team == null) return result;
-        foreach (var id in new[] { team.CoachId, team.AssistantCoachId }.Where(x => x != null).Distinct())
+        var coachIds=await db.CoachTeams.Where(x=>x.TrainingTeamId==team.TrainingTeamId).Select(x=>x.UserId).ToListAsync();
+        if(team.CoachId!=null)coachIds.Add(team.CoachId);
+        if(team.AssistantCoachId!=null)coachIds.Add(team.AssistantCoachId);
+        foreach (var id in coachIds.Distinct())
             if (await IsCoach(id!)) {
                 var user = await db.Users.AsNoTracking().SingleAsync(x => x.Id == id);
                 result.Add(new(id!, ((user.FirstName + " " + user.LastName).Trim() is { Length: > 0 } name) ? name : "Trajneri"));

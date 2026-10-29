@@ -1,11 +1,20 @@
-@model List<League>
-@{ViewData["Title"]="Ligat";}
+@model CompetitionListModel
+@{ViewData["Title"]="Garat";}
 <link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
-<div class="team-workspace">
-<div class="page-heading"><div><h1>Ligat</h1><p>Sezonet dhe ekipet pjesëmarrëse</p></div><a class="btn btn-primary" asp-action="Edit">+ Ligë e re</a></div>
-@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
-<div class="panel table-responsive" tabindex="0" role="region" aria-label="Ligat"><table class="table"><thead><tr><th>Liga / sezoni</th><th>Ekipet</th><th>Të verdhë → pezullim</th><th>I kuq direkt</th><th>Dy të verdhë</th><th>Statusi</th><th></th></tr></thead><tbody>
-@foreach(var league in Model){<tr><td><strong>@league.Name</strong><small class="d-block text-secondary">@league.StartsOn.ToString("dd/MM/yyyy") – @league.EndsOn.ToString("dd/MM/yyyy")</small></td><td>@foreach(var team in league.Teams){<a class="d-block" asp-controller="Teams" asp-action="Details" asp-route-id="@team.TrainingTeamId">@team.TrainingTeam.Name</a>}</td><td>@(league.RulesConfirmed?$"{league.YellowThreshold} → {league.YellowBan} ndeshje":"Pa konfirmuar")</td><td>@(league.RulesConfirmed?$"{league.RedBan} ndeshje":"—")</td><td>@(league.RulesConfirmed?$"{league.SecondYellowBan} ndeshje":"—")</td><td>@(league.IsActive?"Aktive":"Arkivuar")</td><td><a class="btn btn-outline-secondary" asp-action="Edit" asp-route-id="@league.Id">Ndrysho</a></td></tr>}
-@if(Model.Count==0){<tr><td colspan="7" class="p-4 text-secondary">Shtoni ligën e parë dhe caktoni ekipet.</td></tr>}
-</tbody></table></div></div>
+<div class="team-workspace competition-workspace">
+<div class="page-heading"><div><h1>Garat</h1><p>Katalogu dhe pjesëmarrjet sezonale</p></div><div class="d-flex gap-2"><a class="btn btn-outline-primary" asp-action="Catalog">Zgjidh nga katalogu</a><a class="btn btn-primary" asp-action="Edit">+ Garë e re</a></div></div>
+@if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}@if(TempData["Error"] is string error){<div class="alert alert-danger">@error</div>}
+<form method="get" class="competition-filters">
+<label>Sporti<input name="sport" value="@Model.Sport" class="form-control" placeholder="Football"/></label>
+<label>Gjinia<select name="gender" class="form-select"><option value="">Të gjitha</option><option value="Male" selected="@(Model.Gender=="Male")">Meshkuj</option><option value="Female" selected="@(Model.Gender=="Female")">Femra</option><option value="Mixed" selected="@(Model.Gender=="Mixed")">Përzier</option></select></label>
+<label>Sezoni<input name="season" value="@Model.Season" class="form-control" placeholder="2026/27"/></label>
+<label>Organizatori<input name="organizer" value="@Model.Organizer" class="form-control" placeholder="FFK, UEFA, FIFA"/></label>
+<label>Kategoria<input name="ageCategory" value="@Model.AgeCategory" class="form-control" placeholder="Senior, U19..."/></label>
+<label>Shtrirja<select name="scope" class="form-select"><option value="">Të gjitha</option><option value="Domestic" selected="@(Model.Scope=="Domestic")">Vendore</option><option value="Regional" selected="@(Model.Scope=="Regional")">Rajonale</option><option value="International" selected="@(Model.Scope=="International")">Ndërkombëtare</option></select></label>
+<button class="btn btn-primary">Filtro</button><a asp-action="Index" class="btn btn-outline-secondary">Pastro</a>
+</form>
+@{var active=Model.Rows.Where(x=>x.IsActive).ToList();var archived=Model.Rows.Where(x=>!x.IsActive).ToList();}
+<h2 class="h5 mt-3">Sezoni aktiv</h2><partial name="_CompetitionTable" model="active"/>
+@if(archived.Count>0){<details class="competition-archive mt-4"><summary>Arkiva <span>@archived.Count</span></summary><partial name="_CompetitionTable" model="archived"/></details>}
+</div>
 @section PageNavigation {<a class="btn btn-outline-secondary" asp-controller="Teams" asp-action="Index">← Ekipet</a>}

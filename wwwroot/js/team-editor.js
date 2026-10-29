@@ -1,7 +1,7 @@
 (() => {
     const body = document.querySelector('#sessions');
     const add = document.querySelector('#add-session');
-    if (!body?.rows.length || !add) return;
+    if (body?.rows.length && add) {
     const template = body.rows[0].cloneNode(true);
 
     function update() {
@@ -35,4 +35,36 @@
         }
     });
     update();
+    }
+
+    const assistantList = document.querySelector('#assistant-list');
+    const assistantTemplate = document.querySelector('#assistant-template');
+    const addAssistant = document.querySelector('#add-assistant');
+    if (!assistantList || !assistantTemplate || !addAssistant) return;
+
+    const refreshAssistants = () => {
+        const rows = [...assistantList.querySelectorAll('.assistant-row')];
+        const chosen = new Set(rows.map(row => row.querySelector('select')?.value).filter(Boolean));
+        rows.forEach(row => {
+            const select = row.querySelector('select');
+            [...select.options].forEach(option => {
+                option.disabled = option.value !== '' && option.value !== select.value && chosen.has(option.value);
+            });
+        });
+        addAssistant.disabled = rows.length >= Math.max(0, assistantTemplate.content.querySelectorAll('option').length - 1);
+    };
+    addAssistant.addEventListener('click', () => {
+        const row = assistantTemplate.content.firstElementChild.cloneNode(true);
+        assistantList.append(row);
+        row.querySelector('select').focus();
+        refreshAssistants();
+    });
+    assistantList.addEventListener('click', event => {
+        const remove = event.target.closest('.assistant-remove');
+        if (!remove) return;
+        remove.closest('.assistant-row').remove();
+        refreshAssistants();
+    });
+    assistantList.addEventListener('change', refreshAssistants);
+    refreshAssistants();
 })();

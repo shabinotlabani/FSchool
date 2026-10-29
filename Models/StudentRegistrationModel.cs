@@ -4,6 +4,8 @@ namespace _2Korriku.Models;
 
 public class StudentRegistrationModel : IValidatableObject
 {
+    public bool IsContractPlayer { get; set; }
+    [Required,RegularExpression("Male|Female")] public string Gender { get; set; } = "Male";
     [Required, RegularExpression("Monthly|Seasonal")] public string RegistrationPayment { get; set; } = "Monthly";
     public Guid SeasonalRequestId { get; set; } = Guid.NewGuid();
     public int SeasonalMonths { get; set; } = 6;
@@ -27,7 +29,8 @@ public class StudentRegistrationModel : IValidatableObject
     public string? ParentEmail { get; set; }
     [Phone(ErrorMessage = "Shkruani një numër telefoni të vlefshëm."), Display(Name = "Telefoni i prindit")]
     public string? ParentPhone { get; set; }
-    [Range(1,int.MaxValue,ErrorMessage="Zgjidhni kategorinë e tarifës.")]
+    [Phone(ErrorMessage = "Shkruani një numër telefoni të vlefshëm."), StringLength(50), Display(Name = "Telefoni i lojtarit (opsional)")]
+    public string? Phone { get; set; }
     public int FeePlanId { get; set; }
     public int? FamilyId { get; set; }
     public Dictionary<int,int> FamilyCounts { get; set; } = [];
@@ -46,12 +49,13 @@ public class StudentRegistrationModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if(RegistrationPayment=="Seasonal"){
+        if(!IsContractPlayer&&FeePlanId<1)yield return new("Zgjidhni kategorinë e tarifës.",[nameof(FeePlanId)]);
+        if(!IsContractPlayer&&RegistrationPayment=="Seasonal"){
             if(SeasonalMonths is not (6 or 12))yield return new("Zgjidhni sezonin 6 ose 12 muaj.");
             if(SeasonalRequestId==Guid.Empty)yield return new("Rihapni formularin e regjistrimit.");
             if(FirstMonthAmount.HasValue)yield return new("Pagesa sezonale nuk përdor shumën e muajit të parë.");
         }
-        if(FirstMonthAmount.HasValue && (decimal.Round(FirstMonthAmount.Value,2)!=FirstMonthAmount.Value || string.IsNullOrWhiteSpace(FirstMonthReason)))yield return new("Për shumën e caktuar të muajit të parë shkruani arsyen dhe përdorni deri në dy shifra dhjetore.");
+        if(!IsContractPlayer&&FirstMonthAmount.HasValue && (decimal.Round(FirstMonthAmount.Value,2)!=FirstMonthAmount.Value || string.IsNullOrWhiteSpace(FirstMonthReason)))yield return new("Për shumën e caktuar të muajit të parë shkruani arsyen dhe përdorni deri në dy shifra dhjetore.");
         if (DateOfBirth.HasValue && (DateOfBirth.Value == DateOnly.MinValue || DateOfBirth.Value > DateOnly.FromDateTime(DateTime.Today)))
             yield return new ValidationResult("Datëlindja duhet të jetë një datë e vlefshme, jo në të ardhmen.", [nameof(DateOfBirth)]);
     }

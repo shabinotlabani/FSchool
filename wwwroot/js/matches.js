@@ -1,4 +1,43 @@
 (() => {
+    const callup = document.querySelector('[data-callup-form]');
+    if (callup) {
+        const search = callup.querySelector('[data-callup-search]');
+        const id = callup.querySelector('[data-callup-id]');
+        const list = callup.querySelector('[data-callup-list]');
+        const empty = callup.querySelector('[data-callup-empty]');
+        const selected = callup.querySelector('[data-callup-selected]');
+        const submit = callup.querySelector('[data-callup-submit]');
+        const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        const filter = () => {
+            const term = normalize(search.value);
+            let visible = 0;
+            list.querySelectorAll('[data-callup-player]').forEach(player => {
+                const show = normalize(player.dataset.search).includes(term);
+                player.hidden = !show;
+                if (show) visible++;
+            });
+            empty.hidden = visible !== 0;
+        };
+        list.addEventListener('click', event => {
+            const player = event.target.closest('[data-callup-player]');
+            if (!player) return;
+            id.value = player.dataset.id;
+            selected.querySelector('strong').textContent = player.querySelector('strong').textContent + ' · ' + player.querySelector('small').textContent;
+            selected.hidden = false;
+            submit.disabled = false;
+            list.hidden = true;
+            search.closest('label').hidden = true;
+        });
+        callup.querySelector('[data-callup-clear]').addEventListener('click', () => {
+            id.value = '';
+            selected.hidden = true;
+            submit.disabled = true;
+            list.hidden = false;
+            search.closest('label').hidden = false;
+            search.focus();
+        });
+        search.addEventListener('input', filter);
+    }
     const form = document.getElementById('match-form');
     if (!form) return;
     const rows = [...form.querySelectorAll('[data-match-player]')];

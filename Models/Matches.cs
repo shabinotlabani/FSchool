@@ -18,6 +18,7 @@ public class MatchGame
     [MaxLength(30)] public string Sport { get; set; } = "Football";
     [MaxLength(150)] public string Opponent { get; set; } = "";
     [MaxLength(150)] public string? Competition { get; set; }
+    [MaxLength(30)] public string? CompetitionStage { get; set; }
     [MaxLength(150)] public string? Venue { get; set; }
     [MaxLength(20)] public string Kind { get; set; } = "Official";
     [MaxLength(20)] public string Status { get; set; } = "Draft";
@@ -38,6 +39,10 @@ public class MatchGame
 }
 public class MatchPlayer
 {
+    public bool IsCallUp { get; set; }
+    public int? HomeTeamId { get; set; }
+    public TrainingTeam? HomeTeam { get; set; }
+    [MaxLength(300)] public string? CallUpReason { get; set; }
     [Range(1,5)] public int? CoachRating { get; set; }
     [MaxLength(1000)] public string? CoachNote { get; set; }
     public int Id { get; set; }
@@ -69,6 +74,8 @@ public class MatchInterval
 }
 public class MatchPlayerInput
 {
+    public bool IsCallUp { get; set; }
+    [ValidateNever] public string? HomeTeamName { get; set; }
     [Range(1,5)] public int? CoachRating { get; set; }
     [StringLength(1000)] public string? CoachNote { get; set; }
     public int StudentId { get; set; }
@@ -80,6 +87,9 @@ public class MatchPlayerInput
 }
 public class MatchInput
 {
+    public int? CallUpStudentId { get; set; }
+    [StringLength(300)] public string? CallUpReason { get; set; }
+    [ValidateNever] public List<MatchCallUpCandidate> CallUpCandidates { get; set; } = [];
     public int? LeagueId { get; set; }
     [ValidateNever] public List<League> Leagues { get; set; } = [];
     public int Id { get; set; }
@@ -88,6 +98,7 @@ public class MatchInput
     [Range(1,int.MaxValue)] public int TeamId { get; set; }
     [Required, StringLength(150)] public string Opponent { get; set; } = "";
     [StringLength(150)] public string? Competition { get; set; }
+    [StringLength(30)] public string? CompetitionStage { get; set; }
     [StringLength(150)] public string? Venue { get; set; }
     [RegularExpression("Official|Cup|Friendly")] public string Kind { get; set; } = "Official";
     [RegularExpression("Draft|Live|Completed|Cancelled")] public string Status { get; set; } = "Draft";
@@ -106,8 +117,10 @@ public class MatchInput
     [ValidateNever] public string TeamName { get; set; } = "";
     [ValidateNever] public string Sport { get; set; } = "Football";
 }
+public record MatchCallUpCandidate(int StudentId,string Name,string TeamName);
 public class MatchList
 {
+    public string? CompetitionFilter { get; set; }
     public int? LeagueId { get; set; }
     public List<League> Leagues { get; set; } = [];
     public List<TrainingTeam> Teams { get; set; } = [];

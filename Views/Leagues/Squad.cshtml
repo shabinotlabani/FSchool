@@ -1,0 +1,11 @@
+@model CompetitionSquadModel
+@{ViewData["Title"]="Lista e lojtarëve";}
+<link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
+<div class="competition-squad">
+<div class="page-heading"><div><p class="eyebrow">@Model.CompetitionName</p><h1>@Model.TeamName</h1></div></div>
+<form method="get" class="competition-list-switch"><input type="hidden" name="id" value="@Model.LeagueId"/><input type="hidden" name="teamId" value="@Model.TeamId"/><label>Lista<select name="listType" class="form-select" onchange="this.form.submit()"><option value="Main" selected="@(Model.ListType=="Main")">Lista kryesore</option><option value="A" selected="@(Model.ListType=="A")">Lista A</option><option value="B" selected="@(Model.ListType=="B")">Lista B</option></select></label></form>
+<form method="post" class="panel p-3"><input asp-for="LeagueId" type="hidden"/><input asp-for="TeamId" type="hidden"/><input asp-for="ListType" type="hidden"/><div asp-validation-summary="All" class="text-danger"></div>
+@if(Model.Deadline.HasValue){<p class="competition-deadline">Afati · @Model.Deadline.Value.ToString("dd/MM/yyyy")</p>}
+<div class="competition-player-grid">@foreach(var player in Model.Players){<label class="competition-player"><input type="checkbox" name="StudentIds" value="@player.Id" checked="@Model.StudentIds.Contains(player.Id)"/><span><strong>@player.FirstName @player.LastName</strong><small>@player.TrainingTeam?.Name · @player.DateOfBirth.ToString("dd/MM/yyyy") · @(player.Gender=="Female"?"Femër":"Mashkull")</small></span></label>}@if(Model.Players.Count==0){<p>Nuk ka lojtarë aktivë në këtë ekip.</p>}</div>
+<button class="btn btn-primary mt-3">Ruaj listën</button></form></div>
+@section PageNavigation {<a class="btn btn-outline-secondary app-back-button" asp-action="Index">← Garat</a>}

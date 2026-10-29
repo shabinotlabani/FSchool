@@ -1,29 +1,31 @@
-﻿@model LeagueInput
-@{ViewData["Title"]=Model.Id==0?"Ligë e re":Model.Name;}
+@model LeagueInput
+@{ViewData["Title"]=Model.Id==0?"Garë e re":Model.Name;}
 <link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
 <div class="team-workspace league-editor"><div class="page-heading"><h1>@ViewData["Title"]</h1></div>
 <form method="post"><input asp-for="Id" type="hidden"/><input asp-for="Revision" type="hidden"/>
 <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-<div class="league-fields">
-<label>Emri i ligës<input asp-for="Name" class="form-control" required maxlength="150"/></label>
+<div class="league-fields competition-fields">
+<label>Emri i garës<input asp-for="Name" class="form-control" required maxlength="150"/></label>
+<label>Organizatori<input asp-for="Organizer" class="form-control" list="organizers" required/><datalist id="organizers"><option value="FFK"/><option value="UEFA"/><option value="FIFA"/></datalist></label>
+<label>Shteti<input asp-for="Country" class="form-control" required/></label>
+<label>Sporti<input asp-for="Sport" class="form-control" required/></label>
+<label>Gjinia<select asp-for="Gender" class="form-select"><option value="Male">Meshkuj</option><option value="Female">Femra</option><option value="Mixed">Përzier</option></select></label>
+<label>Sezoni<input asp-for="Season" class="form-control" placeholder="2026/27" required/></label>
+<label>Kategoria<input asp-for="AgeCategory" class="form-control" list="ages" required/><datalist id="ages"><option value="Senior"/><option value="U21"/><option value="U19"/><option value="U17"/><option value="U16"/><option value="U15"/></datalist></label>
+<label>Shtrirja<select asp-for="CompetitionScope" class="form-select"><option value="Domestic">Vendore</option><option value="Regional">Rajonale</option><option value="International">Ndërkombëtare</option></select></label>
+<label>Lloji<select asp-for="CompetitionType" class="form-select"><option value="League">Ligë</option><option value="Cup">Kupë</option><option value="SuperCup">Superkupë</option><option value="Tournament">Turne</option><option value="Friendly">Miqësore</option></select></label>
+<label>Faza<select asp-for="Stage" class="form-select"><option value="Qualifying">Kualifikime</option><option value="LeaguePhase">Faza e ligës</option><option value="GroupStage">Faza e grupeve</option><option value="Knockout">Eliminim direkt</option><option value="Final">Finale</option></select></label>
+<label>Niveli / divizioni<input asp-for="Division" class="form-control"/></label><label>Grupi<input asp-for="Group" class="form-control"/></label>
 <input asp-for="Kind" type="hidden"/>
 <label>Fillimi i sezonit<input asp-for="StartsOn" type="date" class="form-control" required/></label><label>Fundi i sezonit<input asp-for="EndsOn" type="date" class="form-control" required/></label>
 </div>
 <h2 class="h5 mt-4">Ekipet pjesëmarrëse</h2>
-<div class="table-responsive league-teams"><table class="table"><thead><tr><th>Zgjidh</th><th>Ekipi</th><th>Grupmosha</th></tr></thead><tbody>
-@foreach(var team in Model.Teams){<tr><td><input id="team-@team.Id" type="checkbox" name="TeamIds" value="@team.Id" checked="@Model.TeamIds.Contains(team.Id)"/></td><td><label for="team-@team.Id">@team.Name</label></td><td>@team.MinAge–@team.MaxAge</td></tr>}
+<div class="table-responsive league-teams"><table class="table"><thead><tr><th>Zgjidh</th><th>Ekipi</th><th>Gjinia / grupmosha</th><th>Statusi</th><th>Afati i listës</th></tr></thead><tbody>
+@foreach(var team in Model.Teams){<tr><td><input id="team-@team.Id" type="checkbox" name="TeamIds" value="@team.Id" checked="@Model.TeamIds.Contains(team.Id)"/></td><td><label for="team-@team.Id">@team.Name</label></td><td>@(team.Gender=="Female"?"Femra":team.Gender=="Mixed"?"Përzier":"Meshkuj") · @team.MinAge–@team.MaxAge</td><td><select name="TeamStatuses[@team.Id]" class="form-select form-select-sm"><option value="Registered" selected="@(Model.TeamStatuses.GetValueOrDefault(team.Id)=="Registered")">Regjistruar</option><option value="Pending" selected="@(Model.TeamStatuses.GetValueOrDefault(team.Id)=="Pending")">Në pritje</option><option value="Qualified" selected="@(Model.TeamStatuses.GetValueOrDefault(team.Id)=="Qualified")">Kualifikuar</option><option value="Withdrawn" selected="@(Model.TeamStatuses.GetValueOrDefault(team.Id)=="Withdrawn")">Tërhequr</option><option value="Eliminated" selected="@(Model.TeamStatuses.GetValueOrDefault(team.Id)=="Eliminated")">Eliminuar</option></select></td><td><input type="date" name="TeamDeadlines[@team.Id]" value="@(Model.TeamDeadlines.GetValueOrDefault(team.Id)?.ToString("yyyy-MM-dd"))" class="form-control form-control-sm"/></td></tr>}
 </tbody></table></div>
-<h2 class="h5 mt-4">Rregullat e kartonëve</h2>
-<p class="text-secondary small">Sipas rregullores së ligës. Vendimi disiplinor mund të shënohet te ndeshja.</p>
-<div class="league-fields">
-<label>Pragu i të verdhëve<input asp-for="YellowThreshold" type="number" min="1" max="20" class="form-control"/></label>
-<label>Pezullim nga të verdhët (ndeshje)<input asp-for="YellowBan" type="number" min="1" max="20" class="form-control"/></label>
-<label>I kuq direkt (ndeshje)<input asp-for="RedBan" type="number" min="0" max="20" class="form-control"/></label>
-<label>Dy të verdhë (ndeshje)<input asp-for="SecondYellowBan" type="number" min="0" max="20" class="form-control"/></label>
-</div>
-<label class="league-check"><input asp-for="CountDismissalYellows"/> Numëro në total edhe të verdhët që sollën përjashtimin</label>
-<label class="league-check"><input asp-for="RulesConfirmed"/> Rregullat janë konfirmuar sipas ligës</label>
+<label class="league-check"><input asp-for="IsVerified"/> Gara është verifikuar nga administratori</label>
+<label class="league-check"><input asp-for="IsOfficial"/> Shënoje si garë zyrtare</label>
 <label class="league-check"><input asp-for="IsActive"/> Liga aktive</label>
-<div class="mt-4"><button class="btn btn-primary">Ruaj ligën</button></div>
+<div class="mt-4"><button class="btn btn-primary">Ruaj garën</button></div>
 </form></div>
-@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Ligat</a>}
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Garat</a>}

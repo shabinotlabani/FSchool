@@ -54,7 +54,7 @@ public class UserAdministrationService(ApplicationDbContext db, UserManager<Appl
             if (!admins.Any(a => a.Id != user.Id && !IsDisabled(a))) throw new InvalidOperationException("Duhet të mbetet së paku një administrator aktiv.");
         }
         if (!isNew && (!input.IsActive || input.Role != Roles.Coach)
-            && await db.TrainingTeams.AnyAsync(t=>t.CoachId==user.Id || t.AssistantCoachId==user.Id))
+            && await db.TrainingTeams.AnyAsync(t=>t.CoachId==user.Id || db.CoachTeams.Any(x=>x.TrainingTeamId==t.Id&&x.UserId==user.Id)))
             throw new InvalidOperationException("Zëvendësoni trajnerin në ekipet përkatëse para çaktivizimit ose ndryshimit të rolit.");
         var email = input.Email.Trim();
         var normalizedEmail = users.NormalizeEmail(email);

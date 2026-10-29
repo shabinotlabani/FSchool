@@ -24,14 +24,14 @@ public class CoachesController(ApplicationDbContext db, UserManager<ApplicationU
    if(coachRole==null)
    {
     var isHead=await db.TrainingTeams.AnyAsync(t=>t.IsActive&&t.CoachId==id);
-    var isAssistant=await db.TrainingTeams.AnyAsync(t=>t.IsActive&&t.AssistantCoachId==id);
+    var isAssistant=await db.TrainingTeams.AnyAsync(t=>t.IsActive&&t.CoachId!=id&&(t.AssistantCoachId==id||db.CoachTeams.Any(x=>x.TrainingTeamId==t.Id&&x.UserId==id)));
     if(isHead&&!isAssistant)coachRole="head";
     else if(isAssistant&&!isHead)coachRole="assistant";
     else return View("RoleChoice");
    }
    if(coachRole is not ("head" or "assistant"))return BadRequest();
    ViewData["CoachRole"]=coachRole;
-   var teams=await db.TrainingTeams.AsNoTracking().Where(t=>t.IsActive && (coachRole=="head"?t.CoachId:t.AssistantCoachId)==id)
+   var teams=await db.TrainingTeams.AsNoTracking().Where(t=>t.IsActive && (coachRole=="head"?t.CoachId==id:t.CoachId!=id&&(t.AssistantCoachId==id||db.CoachTeams.Any(x=>x.TrainingTeamId==t.Id&&x.UserId==id))))
     .Include(t=>t.Coach).Include(t=>t.AssistantCoach).Include(t=>t.FootballField).Include(t=>t.Sessions).OrderBy(t=>t.Name).ToListAsync();
    return View("Portal",_2Korriku.Services.CoachSchedule.Order(teams,DateTime.UtcNow));
   }

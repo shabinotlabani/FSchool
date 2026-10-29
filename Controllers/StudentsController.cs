@@ -34,7 +34,8 @@ public class StudentsController : Controller
                 var pattern = "%" + term.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_") + "%";
                 query = query.Where(x => EF.Functions.ILike(x.FirstName + " " + x.LastName, pattern)
                     || (x.ParentName != null && EF.Functions.ILike(x.ParentName, pattern))
-                    || (x.ParentPhone != null && EF.Functions.ILike(x.ParentPhone, pattern)));
+                    || (x.ParentPhone != null && EF.Functions.ILike(x.ParentPhone, pattern))
+                    || (x.Phone != null && EF.Functions.ILike(x.Phone, pattern)));
             }
         }
 
@@ -96,44 +97,50 @@ public class StudentsController : Controller
         ViewData["FamilyPicker"]=familyPicker;
         await RegistrationChoices(model);
         if(model.DateOfBirth.HasValue)model.SuggestedTeams=await new TeamService(_context).OptionsAsync(model.DateOfBirth);
-        if(await _context.FeePlans.AnyAsync(p=>p.Id==model.FeePlanId && p.IsWaiver) && (!User.IsInRole(Roles.Admin) || string.IsNullOrWhiteSpace(model.FeeReason) || string.IsNullOrWhiteSpace(model.FeeNotes)))
+        if(model.IsContractPlayer&&familyPicker)ModelState.AddModelError("", "Lojtari me kontratë regjistrohet veçmas nga familja.");
+        if(!model.IsContractPlayer&&await _context.FeePlans.AnyAsync(p=>p.Id==model.FeePlanId && p.IsWaiver) && (!User.IsInRole(Roles.Admin) || string.IsNullOrWhiteSpace(model.FeeReason) || string.IsNullOrWhiteSpace(model.FeeNotes)))
             ModelState.AddModelError("", "Lirimi kërkon administratorin, arsyen dhe shënimin.");
         if (!ModelState.IsValid) return View(model);
         var now = DateTime.UtcNow;
         var student = new Student
         {
-            PreferredPaymentMethod = model.PreferredPaymentMethod, FirstName = model.FirstName.Trim(), LastName = model.LastName.Trim(),
+            PreferredPaymentMethod = model.PreferredPaymentMethod, Gender=model.Gender, FirstName = model.FirstName.Trim(), LastName = model.LastName.Trim(),
             DateOfBirth = model.DateOfBirth!.Value,
             ParentName = Clean(model.ParentName), ParentEmail = Clean(model.ParentEmail),
-            ParentPhone = Clean(model.ParentPhone),
-            Notes = Clean(model.Notes), IsActive = true, ContractPending = false,
+            ParentPhone = Clean(model.ParentPhone), Phone=Clean(model.Phone),
+            Notes = Clean(model.Notes), IsActive = true, ContractPending = model.IsContractPlayer,
             FirstMonthUsesWeeks = true, RegistrationDate = now, CreatedAt = now, UpdatedAt = now
         };
         try
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();
             await _context.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
-            if(model.RegistrationPayment=="Seasonal" && (await _context.Payments.AnyAsync(p=>p.RequestId==model.SeasonalRequestId)||await _context.PendingBankPayments.AnyAsync(p=>p.RequestId==model.SeasonalRequestId)))
+            if(!model.IsContractPlayer&&model.RegistrationPayment=="Seasonal" && (await _context.Payments.AnyAsync(p=>p.RequestId==model.SeasonalRequestId)||await _context.PendingBankPayments.AnyAsync(p=>p.RequestId==model.SeasonalRequestId)))
                 throw new InvalidOperationException("Ky regjistrim sezonal është ruajtur tashmë. Kontrolloni listën e lojtarëve.");
             var team=await new TeamService(_context).ValidatePlacementAsync(model.TrainingTeamId,student.DateOfBirth);
             student.TrainingTeamId=team?.Id;
-            var plan = (await new TariffService(_context).OptionsAsync()).SingleOrDefault(p=>p.Id==model.FeePlanId)
-                ?? throw new InvalidOperationException("Zgjidhni një tarifë të vlefshme.");
-            if(plan.IsFamily)
-                throw new InvalidOperationException("Për paketën familjare përdorni ‘Regjistro familjen së bashku’.");
-            student.MonthlyFee = plan.Amount;
-            if(model.RegistrationPayment=="Seasonal" && (plan.IsFamily||plan.IsWaiver||familyPicker))
-                throw new InvalidOperationException("Pagesa sezonale lejohet vetëm për tarifë individuale, jashtë paketës familjare.");
-            if(plan.IsFamily)student.PreferredPaymentMethod=await _context.PlayerFamilies.Where(f=>f.Id==model.FamilyId).Select(f=>f.PreferredPaymentMethod).SingleAsync();
+            FeePlanOption? plan=null;
+            if(!model.IsContractPlayer){
+                plan = (await new TariffService(_context).OptionsAsync()).SingleOrDefault(p=>p.Id==model.FeePlanId)
+                    ?? throw new InvalidOperationException("Zgjidhni një tarifë të vlefshme.");
+                if(plan.IsFamily)throw new InvalidOperationException("Për paketën familjare përdorni ‘Regjistro familjen së bashku’.");
+                student.MonthlyFee = plan.Amount;
+                if(model.RegistrationPayment=="Seasonal" && (plan.IsFamily||plan.IsWaiver||familyPicker))throw new InvalidOperationException("Pagesa sezonale lejohet vetëm për tarifë individuale, jashtë paketës familjare.");
+                if(plan.IsFamily)student.PreferredPaymentMethod=await _context.PlayerFamilies.Where(f=>f.Id==model.FamilyId).Select(f=>f.PreferredPaymentMethod).SingleAsync();
+            }
             _context.Students.Add(student);
             await _context.SaveChangesAsync();
             if(team!=null)_context.StudentTeamChanges.Add(new StudentTeamChange{StudentId=student.Id,ToTeamId=team.Id,ToTeamName=team.Name,Reason="Regjistrim i ri",ActorId=User.FindFirstValue(ClaimTypes.NameIdentifier)});
-            if(plan.IsFamily)await new FamilyService(_context).JoinRegistrationAsync(model.FamilyId??0,student,User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            else _context.StudentFeeAssignments.Add(new StudentFeeAssignment { StudentId=student.Id,FeePlanId=plan.Id,EffectiveMonth=TariffService.CurrentMonth,Reason=plan.IsWaiver?model.FeeReason!.Trim():"Tarifa e zgjedhur në regjistrim",Notes=Clean(model.FeeNotes),CreatedByUserId=User.FindFirstValue(ClaimTypes.NameIdentifier) });
+            if(!model.IsContractPlayer){
+                if(plan!.IsFamily)await new FamilyService(_context).JoinRegistrationAsync(model.FamilyId??0,student,User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                else _context.StudentFeeAssignments.Add(new StudentFeeAssignment { StudentId=student.Id,FeePlanId=plan.Id,EffectiveMonth=TariffService.CurrentMonth,Reason=plan.IsWaiver?model.FeeReason!.Trim():"Tarifa e zgjedhur në regjistrim",Notes=Clean(model.FeeNotes),CreatedByUserId=User.FindFirstValue(ClaimTypes.NameIdentifier) });
+            }
             await _context.SaveChangesAsync();
             var today = BillingClock.Today;
             var billing=new BillingService(_context);
-            if(model.RegistrationPayment=="Seasonal"){
+            if(model.IsContractPlayer){
+                // The player is registered now; Super Admin creates and activates the contract later.
+            }else if(model.RegistrationPayment=="Seasonal"){
                 var seasonal=new SeasonalPaymentModel{StudentId=student.Id,RequestId=model.SeasonalRequestId,StartMonth=TariffService.CurrentMonth.ToString("yyyy-MM"),Months=model.SeasonalMonths,ExpectedRate=model.SeasonalExpectedRate,PaymentMethod=model.SeasonalPaymentMethod,PaymentDate=today};
                 var actor=User.FindFirstValue(ClaimTypes.NameIdentifier)!;
                 if(model.SeasonalPaymentMethod=="Bank"){
@@ -152,6 +159,7 @@ public class StudentsController : Controller
             ModelState.AddModelError(string.Empty, "Regjistrimi nuk u ruajt. Provoni përsëri.");
             return View(model);
         }
+        if(model.IsContractPlayer){TempData["Success"]=$"Lojtari {student.FullName} u regjistrua në pritje të kontratës.";return RedirectToAction(nameof(Index));}
         if(familyPicker)return View("FamilyPickerCreated",student);
         if(model.RegistrationPayment=="Seasonal"){
             TempData["Success"]=model.SeasonalPaymentMethod=="Bank"?"Lojtari u regjistrua. Pagesa sezonale është në pritje të konfirmimit bankar.":"Lojtari u regjistrua me pagesë sezonale.";
@@ -194,7 +202,7 @@ public class StudentsController : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var student=await _context.Students.AsNoTracking().Include(s=>s.TrainingTeam).SingleOrDefaultAsync(s=>s.Id==id);if(student==null)return NotFound();
-        var model=new StudentEditModel{Id=id,PreferredPaymentMethod=student.PreferredPaymentMethod,Revision=student.Revision,FirstName=student.FirstName,LastName=student.LastName,DateOfBirth=student.DateOfBirth,ParentName=student.ParentName,ParentPhone=student.ParentPhone,ParentEmail=student.ParentEmail,Notes=student.Notes,TrainingTeamId=student.TrainingTeamId,IsActive=student.IsActive,CurrentTeamName=student.TrainingTeam?.Name};
+        var model=new StudentEditModel{Id=id,Gender=student.Gender,Phone=student.Phone,PreferredPaymentMethod=student.PreferredPaymentMethod,Revision=student.Revision,FirstName=student.FirstName,LastName=student.LastName,DateOfBirth=student.DateOfBirth,ParentName=student.ParentName,ParentPhone=student.ParentPhone,ParentEmail=student.ParentEmail,Notes=student.Notes,TrainingTeamId=student.TrainingTeamId,IsActive=student.IsActive,CurrentTeamName=student.TrainingTeam?.Name};
         await EditChoices(model);return View(model);
     }
     [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Write)]

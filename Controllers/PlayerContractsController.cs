@@ -31,10 +31,13 @@ public class PlayerContractsController(ApplicationDbContext db):Controller
   ViewData["Status"]=status;
   return View(await query.OrderBy(c=>c.EndedOn??c.EndsOn).ToListAsync());
  }
- public async Task<IActionResult> Create(int? staffId)
+ public async Task<IActionResult> Create(int? staffId,int? studentId)
  {
-  var club=await new ClubBranding(db).Get();var m=new PlayerContractInput{Simple=true,PersonType="Staff",BeneficiaryId=staffId,PersonKey=staffId.HasValue?"S:"+staffId:null,Terms=new(){EmployerName=club.LegalName,EmployerNumber=club.RegistrationNumber??"",EmployerAddress=club.Address??club.City??"",Representative=club.ResponsiblePerson??"",RepresentativePersonalNumber=club.ResponsiblePersonNumber,Position="Staf",Workplace=club.Address??club.Name,WeeklyHours=40,Schedule="Sipas orarit të miratuar nga klubi",Leave="Sipas Ligjit të Punës",Termination="Sipas Ligjit të Punës",Duties="Detyrat sipas pozitës dhe akteve të brendshme të klubit."}};
-  if(staffId.HasValue){var person=await db.SponsorshipBeneficiaries.AsNoTracking().SingleOrDefaultAsync(b=>b.Id==staffId&&b.StaffCategory!=null&&b.StudentId==null);if(person==null)return NotFound();m.Terms.PersonalNumber=person.Identifier;m.Terms.Position=person.StaffCategory=="ContractPlayer"?"Lojtar":m.Terms.Position;}await Choices(m);return View("Edit",m);
+  if(staffId.HasValue&&studentId.HasValue)return BadRequest();
+  var club=await new ClubBranding(db).Get();var m=new PlayerContractInput{Simple=true,PersonType=studentId.HasValue?"Player":"Staff",StudentId=studentId,BeneficiaryId=staffId,PersonKey=studentId.HasValue?"P:"+studentId:staffId.HasValue?"S:"+staffId:null,Terms=new(){EmployerName=club.LegalName,EmployerNumber=club.RegistrationNumber??"",EmployerAddress=club.Address??club.City??"",Representative=club.ResponsiblePerson??"",RepresentativePersonalNumber=club.ResponsiblePersonNumber,Position=studentId.HasValue?"Lojtar":"Staf",Workplace=club.Address??club.Name,WeeklyHours=40,Schedule="Sipas orarit të miratuar nga klubi",Leave="Sipas Ligjit të Punës",Termination="Sipas Ligjit të Punës",Duties="Detyrat sipas pozitës dhe akteve të brendshme të klubit."}};
+  if(staffId.HasValue){var person=await db.SponsorshipBeneficiaries.AsNoTracking().SingleOrDefaultAsync(b=>b.Id==staffId&&b.StaffCategory!=null&&b.StudentId==null);if(person==null)return NotFound();m.Terms.PersonalNumber=person.Identifier;m.Terms.Position=person.StaffCategory=="ContractPlayer"?"Lojtar":m.Terms.Position;}
+  if(studentId.HasValue&&!await db.Students.AnyAsync(s=>s.Id==studentId&&s.IsActive&&s.ContractPending))return NotFound();
+  await Choices(m);return View("Edit",m);
  }
  public async Task<IActionResult> Edit(int id)
  {
@@ -45,7 +48,10 @@ public class PlayerContractsController(ApplicationDbContext db):Controller
  public async Task<IActionResult> Save(PlayerContractInput m,string? command)
  {
   if(m.Simple){
-   var parts=(m.PersonKey??"").Split(':',2);if(parts.Length==2&&parts[0]=="S"&&int.TryParse(parts[1],out var personId)){m.PersonType="Staff";m.StudentId=null;m.BeneficiaryId=personId;}else ModelState.AddModelError(nameof(m.PersonKey),"Zgjidhni personin nga regjistri i kontratave.");
+   var parts=(m.PersonKey??"").Split(':',2);
+   if(parts.Length==2&&parts[0]=="S"&&int.TryParse(parts[1],out var personId)){m.PersonType="Staff";m.StudentId=null;m.BeneficiaryId=personId;}
+   else if(parts.Length==2&&parts[0]=="P"&&int.TryParse(parts[1],out var studentId)){m.PersonType="Player";m.StudentId=studentId;m.BeneficiaryId=null;}
+   else ModelState.AddModelError(nameof(m.PersonKey),"Zgjidhni personin nga regjistri i kontratave.");
    ModelState.Remove(nameof(m.StudentId));ModelState.Remove(nameof(m.BeneficiaryId));ModelState.Remove(nameof(m.PersonType));
   }
   if(ModelState.IsValid)try{var id=await new PlayerContractService(db).Save(m,Actor,command=="Activate");TempData["Success"]=command=="Activate"?"Kontrata u aktivizua.":"Kontrata u ruajt si draft.";return RedirectToAction(nameof(Details),new{id});}
@@ -128,7 +134,7 @@ public class PlayerContractsController(ApplicationDbContext db):Controller
   }
   ViewData["Staff"]=await db.SponsorshipBeneficiaries.AsNoTracking().Where(b=>b.StaffCategory!=null&&b.StudentId==null).OrderBy(b=>b.Name).ToListAsync();return View(m);
  }
- async Task Choices(PlayerContractInput m){m.Students=[];m.Beneficiaries=await db.SponsorshipBeneficiaries.AsNoTracking().Where(b=>b.IsPerson&&b.StudentId==null&&b.StaffCategory!=null).OrderBy(b=>b.Name).ToListAsync();}
+ async Task Choices(PlayerContractInput m){m.Students=await db.Students.AsNoTracking().Where(s=>s.IsActive&&s.ContractPending).OrderBy(s=>s.FirstName).ThenBy(s=>s.LastName).ToListAsync();m.Beneficiaries=await db.SponsorshipBeneficiaries.AsNoTracking().Where(b=>b.IsPerson&&b.StudentId==null&&b.StaffCategory!=null).OrderBy(b=>b.Name).ToListAsync();}
  [HttpPost,ValidateAntiForgeryToken]
  public async Task<IActionResult> Atk(int id,Guid revision,DateOnly date,string reference)
  {

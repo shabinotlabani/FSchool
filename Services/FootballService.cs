@@ -7,6 +7,7 @@ namespace _2Korriku.Services;
 
 public class FootballService(ApplicationDbContext db)
 {
+    private static DisciplineRule DefaultRule(DateOnly startsOn,DateOnly endsOn)=>new(){StartsOn=startsOn,EndsOn=endsOn,YellowThreshold=3,YellowBan=1,RedBan=1,SecondYellowBan=1,CountDismissalYellows=false};
     public static void Validate(MatchInput input, string sport)
     {
         if(input.Events==null || input.Events.Count>500 || input.Events.Any(e=>e==null))throw new ValidationException("Kontrolloni ngjarjet.");
@@ -39,8 +40,12 @@ public class FootballService(ApplicationDbContext db)
     }
     public async Task<DisciplineRule?> Rule(int team,string kind,DateOnly date,int? leagueId)
     {
-        if(leagueId.HasValue)return (await db.Leagues.AsNoTracking().SingleOrDefaultAsync(l=>l.Id==leagueId))?.Rule;
-        return await db.DisciplineRules.AsNoTracking().SingleOrDefaultAsync(r=>r.TrainingTeamId==team&&r.Kind==kind&&r.StartsOn<=date&&r.EndsOn>=date);
+        if(leagueId.HasValue){
+            var league=await db.Leagues.AsNoTracking().SingleOrDefaultAsync(l=>l.Id==leagueId);
+            return league==null?null:DefaultRule(league.StartsOn,league.EndsOn);
+        }
+        var start=new DateOnly(date.Month>=7?date.Year:date.Year-1,7,1);
+        return DefaultRule(start,start.AddYears(1).AddDays(-1));
     }
     public async Task<List<DisciplineAlert>> Alerts(int team,string kind,DateOnly date,TimeOnly? kickoff,int exclude=0,int? leagueId=null)
     {
@@ -57,7 +62,7 @@ public class FootballService(ApplicationDbContext db)
                 var yellow=s.Yellows+((dismissal?.Kind=="SecondYellow"&&rule?.CountDismissalYellows!=true)?0:group.Count(e=>e.Kind is "Yellow" or "SecondYellow"));
                 var ban=s.Remaining;var unknown=s.NeedsDecision;
                 if(rule!=null&&yellow>=rule.YellowThreshold){ban+=yellow/rule.YellowThreshold*rule.YellowBan;yellow%=rule.YellowThreshold;}
-                if(dismissal!=null){var penalty=dismissal.SuspensionGames??(rule==null?(int?)null:dismissal.Kind=="Red"?rule.RedBan:rule.SecondYellowBan);if(penalty.HasValue)ban+=penalty.Value;else unknown=true;}
+                if(dismissal!=null){var penalty=dismissal.SuspensionGames??(dismissal.Kind=="Red"?1:rule?.SecondYellowBan);if(penalty.HasValue)ban+=penalty.Value;else unknown=true;}
                 state[group.Key]=s with{Remaining=ban,NeedsDecision=unknown,Yellows=yellow};
             }
         }
