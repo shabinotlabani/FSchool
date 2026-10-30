@@ -2,7 +2,7 @@
 @using _2Korriku.Services
 @{ViewData["Title"]="Ekipet dhe oraret";}
 <link rel="stylesheet" href="~/css/teams.css" asp-append-version="true"/>
-<div class="team-workspace"><div class="page-heading"><h1>Ekipet dhe oraret</h1>@if(User.IsInRole(Roles.Admin)){<a asp-controller="Leagues" asp-action="Index" class="btn btn-outline-secondary">Ligat</a><a asp-action="Create" class="btn btn-primary">+ Ekip i ri</a>}</div>
+<div class="team-workspace"><div class="page-heading"><h1>Ekipet dhe oraret</h1>@if(User.IsInRole(Roles.Admin)){<div class="d-flex gap-2"><a asp-controller="Leagues" asp-action="Index" class="btn btn-outline-primary">Menaxho garat</a><a asp-action="Create" class="btn btn-primary">+ Ekip i ri</a></div>}</div>
 <form method="get" class="search-panel d-flex gap-3 flex-wrap align-items-center"><input name="search" type="search" value="@ViewData["Search"]" class="form-control" style="max-width:420px" placeholder="Kërko ekipin…" aria-label="Kërko ekip"/><label class="d-flex gap-2 align-items-center"><input type="checkbox" name="includeInactive" value="true" checked="@((bool?)ViewData["IncludeInactive"]==true)"/> Përfshi ekipet joaktive</label><button class="btn btn-dark">Kërko</button></form>
 <div class="panel table-responsive" tabindex="0" role="region" aria-label="Ekipet dhe oraret">
 <table class="table team-list"><thead><tr><th>Ekipi</th><th>Trajnerët</th><th>Fusha</th><th>Orari</th><th>Lojtarë</th><th>Statusi</th><th></th></tr></thead><tbody>

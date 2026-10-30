@@ -8,6 +8,12 @@
 <link rel="stylesheet" href="~/css/club-matches.css" asp-append-version="true"/>
 <div class="club-matches">
 @if(ViewData["ExpiringContracts"] is List<PlayerContract> contracts){<partial name="~/Views/PlayerContracts/_Expiry.cshtml" model="contracts"/>}
+@if(Model.CoachActivity is { } activity){var maximum=Math.Max(1,activity.Rows.Select(x=>x.Points).DefaultIfEmpty().Max());var active=activity.Rows.Count(x=>x.Points>0);var rank=0;
+<section class="coach-performance" aria-labelledby="coach-performance-title">
+<header><div><span>KRAHASIMI · @activity.From.ToString("dd/MM") – @activity.To.ToString("dd/MM")</span><h2 id="coach-performance-title">Aktiviteti i trajnerëve</h2></div><div class="coach-performance-summary"><strong>@active<small>/@activity.Rows.Count aktivë</small></strong><a asp-controller="Reports" asp-action="CoachActivity">Raporti i plotë ↗</a></div></header>
+<div class="coach-performance-list">@foreach(var coach in activity.Rows){rank++;var percent=coach.Points==0?0:(int)Math.Round(coach.Points*100d/maximum);<article class="coach-performance-row @(coach.Points==0?"is-idle":rank==1?"is-leading":"")"><span class="coach-rank">@rank</span><span class="coach-avatar">@(string.IsNullOrWhiteSpace(coach.Name)?"T":coach.Name[..1].ToUpperInvariant())</span><div class="coach-performance-main"><div><strong>@coach.Name</strong><small>@coach.Days ditë aktive</small></div><div class="coach-progress" role="progressbar" aria-label="@coach.Name · @coach.Points pikë" aria-valuemin="0" aria-valuemax="@maximum" aria-valuenow="@coach.Points"><i style="width:@percent%"></i></div><div class="coach-performance-details"><span>@coach.Attendance prezenca</span><span>@coach.Development vlerësime</span><span>@(coach.Lineups+coach.Matches) ndeshje</span></div></div><strong class="coach-points">@coach.Points<small>pikë</small></strong></article>}</div>
+@if(activity.Rows.Count==0){<p class="coach-performance-empty">Nuk ka trajnerë të regjistruar.</p>}
+</section>}
 @if(Model.ActivePlayersByMonth.Count>0){var peak=Math.Max(1,Model.ActivePlayersByMonth.Max(x=>x.Count));var current=Model.ActivePlayersByMonth.Last();
 <section class="player-year-chart" aria-labelledby="player-year-title">
 <header><div><span>@Model.Year</span><h2 id="player-year-title">Lojtarët aktivë</h2></div><strong>@current.Count<small>@current.Label</small></strong></header>

@@ -67,6 +67,15 @@ public class CompetitionPlayerRegistration
     public DateOnly? EligibleUntil { get; set; }
     [MaxLength(300)] public string? Notes { get; set; }
 }
+public class LeagueReportModel
+{
+    public League League { get; set; } = null!;
+    public List<MatchGame> Matches { get; set; } = [];
+    public List<LeagueTeamReportRow> Teams { get; set; } = [];
+    public List<LeaguePlayerReportRow> Players { get; set; } = [];
+}
+public record LeagueTeamReportRow(int TeamId,string Team,int Scheduled,int Played,int Wins,int Draws,int Losses,int GoalsFor,int GoalsAgainst,int Minutes);
+public record LeaguePlayerReportRow(int StudentId,string Name,string Team,int Appearances,int Starts,int Minutes,int Goals,int Assists,int YellowCards,int RedCards);
 public class LeagueInput
 {
     public int Id { get; set; }

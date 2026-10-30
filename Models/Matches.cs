@@ -143,6 +143,7 @@ public class MatchFixtureProposalModel
 }
 public class MatchList
 {
+    public CoachActivityReport? CoachActivity { get; set; }
     public string? CompetitionFilter { get; set; }
     public int? LeagueId { get; set; }
     public List<League> Leagues { get; set; } = [];

@@ -23,7 +23,7 @@ public class HomeController : Controller
     {
         if(User.IsInRole(_2Korriku.Models.Roles.Admin)||User.IsInRole(_2Korriku.Models.Roles.SuperAdmin)){
             var today=BillingClock.Today;
-            if(User.IsInRole(Roles.SuperAdmin))ViewData["ExpiringContracts"]=await _context.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Where(c=>c.Status!="Draft"&&(c.EndedOn??c.EndsOn)>=today&&(c.EndedOn??c.EndsOn)<=today.AddDays(30)).OrderBy(c=>c.EndedOn??c.EndsOn).ToListAsync();
+            if(User.IsInRole(Roles.SuperAdmin))ViewData["ExpiringContracts"]=await _context.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Where(c=>c.Status!="Draft"&&(c.StudentId.HasValue||c.Beneficiary!.StaffCategory=="ContractPlayer")&&(c.EndedOn??c.EndsOn)>=today&&(c.EndedOn??c.EndsOn)<=today.AddMonths(1)).OrderBy(c=>c.EndedOn??c.EndsOn).ToListAsync();
             var weekStart=today.AddDays(-(((int)today.DayOfWeek+6)%7));
             var weekEnd=weekStart.AddDays(7);
             var teams=await _context.TrainingTeams.AsNoTracking().Include(t=>t.Coach).OrderBy(t=>t.Name).ToListAsync();
@@ -53,7 +53,8 @@ public class HomeController : Controller
                 var paid=invoices.Count(i=>i.Due<=0.005m);var partial=invoices.Count(i=>i.Paid>0&&i.Due>0.005m);var rate=invoices.Count==0?0:Math.Round(paid*100m/invoices.Count,1,MidpointRounding.AwayFromZero);
                 paymentMonths.Add(new(invoices.Count,paid,partial,rate,monthNames[month-1]));
             }
-            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year,ActivePlayersByMonth=monthly,CurrentMonthPayments=paymentMonths.LastOrDefault(),MonthlyPayments=paymentMonths});
+            var coachActivity=await new CoachActivityService(_context).Load(new DateOnly(today.Year,today.Month,1),today);
+            return View("Matches",new _2Korriku.Models.MatchList{Teams=teams,Matches=matches,TeamId=teamId,Year=today.Year,ActivePlayersByMonth=monthly,CurrentMonthPayments=paymentMonths.LastOrDefault(),MonthlyPayments=paymentMonths,CoachActivity=coachActivity});
         }
         if(User.IsInRole(_2Korriku.Models.Roles.Doctor)||User.IsInRole(_2Korriku.Models.Roles.Nutritionist))return RedirectToAction("Index","PlayerCare");
         if (User.IsInRole(_2Korriku.Models.Roles.FieldOperator)) return RedirectToAction("Index", "Fields");

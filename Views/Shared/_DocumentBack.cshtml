@@ -7,4 +7,8 @@
             &&source.AbsolutePath!=Context.Request.Path.Value&&Url.IsLocalUrl(source.PathAndQuery))destination=source.PathAndQuery;
     }
 }
-<a href="@destination" class="app-back-button"><span aria-hidden="true">←</span> Mbrapa</a>
+@if(Context.Request.Query["embedded"]=="true"){
+    <button type="button" class="app-back-button" onclick="window.parent.postMessage('close-report-document',location.origin)"><span aria-hidden="true">←</span> Mbyll</button>
+}else{
+    <a href="@destination" class="app-back-button"><span aria-hidden="true">←</span> Mbrapa</a>
+}

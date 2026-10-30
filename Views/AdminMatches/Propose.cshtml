@@ -1,8 +1,8 @@
 @model MatchFixtureProposalModel
-@{ViewData["Title"]="Propozo ndeshjet";}
+@{ViewData["Title"]="Gjej ndeshjet zyrtare";}
 <link rel="stylesheet" href="~/css/admin-matches.css" asp-append-version="true"/>
 <div class="official-matches fixture-proposal">
-<header class="official-heading"><div><span>ORARI ZYRTAR</span><h1>Propozo ndeshjet</h1></div></header>
+<header class="official-heading"><div><span>ORARI ZYRTAR</span><h1>Gjej ndeshjet zyrtare</h1></div></header>
 <form asp-action="Propose" method="post" class="fixture-search"><div asp-validation-summary="All" class="text-danger" role="alert"></div>
 <label>Ekipi<select asp-for="TeamId" class="form-select" required><option value="">Zgjidh ekipin</option>@foreach(var team in Model.Teams){<option value="@team.Id">@team.Name</option>}</select></label>
 <label>Gara<select asp-for="LeagueId" class="form-select" required><option value="">Zgjidh garën</option>@foreach(var league in Model.Leagues){<option value="@league.Id">@league.Name · @league.Season</option>}</select></label>

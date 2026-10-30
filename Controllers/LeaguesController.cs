@@ -28,6 +28,31 @@ public class LeaguesController(ApplicationDbContext db):Controller
         var input=row==null?new LeagueInput():new LeagueInput{Id=row.Id,Revision=row.Revision,Name=row.Name,Kind=row.Kind,Country=row.Country,Organizer=row.Organizer,Sport=row.Sport,Gender=row.Gender,Season=row.Season,AgeCategory=row.AgeCategory,CompetitionScope=row.CompetitionScope,CompetitionType=row.CompetitionType,Division=row.Division,Group=row.Group,Stage=row.Stage,IsOfficial=row.IsOfficial,IsVerified=row.IsVerified,StartsOn=row.StartsOn,EndsOn=row.EndsOn,IsActive=row.IsActive,RulesConfirmed=row.RulesConfirmed,YellowThreshold=row.YellowThreshold==0?null:row.YellowThreshold,YellowBan=row.YellowBan==0?null:row.YellowBan,RedBan=row.RedBan,SecondYellowBan=row.SecondYellowBan,CountDismissalYellows=row.CountDismissalYellows,TeamIds=row.Teams.Select(t=>t.TrainingTeamId).ToList(),TeamStatuses=row.Teams.ToDictionary(t=>t.TrainingTeamId,t=>t.Status),TeamDeadlines=row.Teams.ToDictionary(t=>t.TrainingTeamId,t=>t.SquadDeadline)};
         await Choices(input);return View(input);
     }
+    public async Task<IActionResult> Report(int id)
+    {
+        var league=await db.Leagues.AsNoTracking().Include(x=>x.Teams).ThenInclude(x=>x.TrainingTeam).SingleOrDefaultAsync(x=>x.Id==id);
+        if(league==null)return NotFound();
+        var matches=await db.MatchGames.AsNoTracking().Include(x=>x.TrainingTeam).Include(x=>x.Players)
+            .Where(x=>x.LeagueId==id).OrderBy(x=>x.Date).ThenBy(x=>x.Kickoff).ToListAsync();
+        var completed=matches.Where(x=>x.Status=="Completed").ToList();
+        var teamRows=league.Teams.OrderBy(x=>x.TrainingTeam.Name).Select(registration=>
+        {
+            var all=matches.Where(x=>x.TrainingTeamId==registration.TrainingTeamId).ToList();
+            var done=all.Where(x=>x.Status=="Completed").ToList();
+            return new LeagueTeamReportRow(registration.TrainingTeamId,registration.TrainingTeam.Name,all.Count,done.Count,
+                done.Count(x=>x.ScoreFor>x.ScoreAgainst),done.Count(x=>x.ScoreFor==x.ScoreAgainst),done.Count(x=>x.ScoreFor<x.ScoreAgainst),
+                done.Sum(x=>x.ScoreFor??0),done.Sum(x=>x.ScoreAgainst??0),done.SelectMany(x=>x.Players).Sum(x=>x.Minutes));
+        }).ToList();
+        var playerRows=completed.SelectMany(game=>game.Players.Select(player=>(Game:game,Player:player)))
+            .GroupBy(x=>x.Player.StudentId).Select(group=>new LeaguePlayerReportRow(group.Key,group.First().Player.Name,group.First().Game.TrainingTeam.Name,
+                group.Count(x=>x.Player.Minutes>0),group.Count(x=>x.Player.Role=="Starter"),group.Sum(x=>x.Player.Minutes),
+                group.Sum(x=>x.Game.Events.Count(e=>e.PlayerId==group.Key&&(e.Kind is "Goal" or "PenaltyGoal"))),
+                group.Sum(x=>x.Game.Events.Count(e=>e.AssistId==group.Key&&e.Kind=="Goal")),
+                group.Sum(x=>x.Game.Events.Count(e=>e.PlayerId==group.Key&&(e.Kind is "Yellow" or "SecondYellow"))),
+                group.Sum(x=>x.Game.Events.Count(e=>e.PlayerId==group.Key&&FootballLabels.Dismissal(e)))))
+            .OrderByDescending(x=>x.Minutes).ThenBy(x=>x.Name).ToList();
+        return View(new LeagueReportModel{League=league,Matches=matches,Teams=teamRows,Players=playerRows});
+    }
     public async Task<IActionResult> Catalog(string? season=null)
     {
         var current=LeagueService.CurrentSeason();var model=new CompetitionCatalogModel{Season=current.Name,StartsOn=current.StartsOn,EndsOn=current.EndsOn};
