@@ -4,3 +4,4 @@
 .club-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#0a2341;margin-bottom:32px}.club-brand strong{font-size:20px;letter-spacing:1px}.club-brand small{display:block;font-size:8px;letter-spacing:2px;color:#89682d;margin-top:3px}.club-button.primary{background:#0a2341;border-color:#0a2341}.club-table-wrap,.club-form{border-radius:6px;box-shadow:none}.club-table th{background:#f0f3f6}.club-heading h1{font-size:26px}.club-shell{border-top:3px solid #e7bd68}.club-button:focus-visible,input:focus-visible{outline-color:#b88c43}
 .club-brand small{font-size:7px;letter-spacing:.65px;line-height:1.5}
 .club-form>select{width:100%;border:1px solid #dbe2eb;border-radius:8px;padding:12px;font:inherit;margin-bottom:23px;background:white}
+.club-brand img{display:block;width:150px;height:auto;aspect-ratio:10/3;object-fit:contain}

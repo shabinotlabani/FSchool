@@ -97,4 +97,6 @@ body.platform-ui{--brand:#0a2341;--primary:#0a2341;background:#f6f7f9}
 }
 @media screen and (max-width:991px){.platform-brand{margin:0 10px 8px}.platform-brand img{width:30px;height:32px}.platform-brand span{font-size:17px}.platform-brand small{font-size:7px}}
 @media screen{.platform-brand small{font-size:7px;letter-spacing:.65px;max-width:142px;line-height:1.5}}@media screen and (max-width:760px){.platform-brand small{font-size:6px;letter-spacing:.5px}}
+.platform-brand .platform-wordmark{width:128px;height:auto;aspect-ratio:10/3;object-fit:contain;object-position:left center}@media screen and (max-width:991px){.platform-brand .platform-wordmark{width:108px;height:auto}}
+.platform-brand:has(.platform-wordmark){width:max-content;padding:2px 0;border:0;border-radius:0;background:transparent;box-shadow:none}
 .developer-credit{color:inherit;font-weight:600;text-decoration:none}.developer-credit:hover{text-decoration:underline}.sidebar-credit .developer-credit{color:#e4eaff}
