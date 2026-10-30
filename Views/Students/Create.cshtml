@@ -65,8 +65,8 @@
             <legend class="h5 mb-1">Prindi ose kujdestari</legend>
             
             <div class="row g-3">
-                <div class="col-12"><label asp-for="ParentName" class="form-label"></label><input asp-for="ParentName" class="form-control" maxlength="150" /><span asp-validation-for="ParentName" class="text-danger small"></span></div>
-                <div class="col-md-6"><label asp-for="ParentPhone" class="form-label"></label><input asp-for="ParentPhone" type="tel" class="form-control" placeholder="+383 …" /><span asp-validation-for="ParentPhone" class="text-danger small"></span></div>
+                <div class="col-12"><label asp-for="ParentName" class="form-label">Emri i prindit / kujdestarit (opsional kur lojtari ka telefon)</label><input asp-for="ParentName" class="form-control" maxlength="150" /><span asp-validation-for="ParentName" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="ParentPhone" class="form-label">Telefoni i prindit (opsional kur lojtari ka telefon)</label><input asp-for="ParentPhone" type="tel" class="form-control" placeholder="+383 …" /><span asp-validation-for="ParentPhone" class="text-danger small"></span></div>
                 <div class="col-md-6"><label asp-for="ParentEmail" class="form-label">Emaili i prindit (opsional)</label><input asp-for="ParentEmail" type="email" class="form-control" placeholder="emri@shembull.com" /><span asp-validation-for="ParentEmail" class="text-danger small"></span></div>
             </div>
         </fieldset>

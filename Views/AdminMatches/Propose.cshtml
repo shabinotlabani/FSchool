@@ -1,0 +1,15 @@
+@model MatchFixtureProposalModel
+@{ViewData["Title"]="Propozo ndeshjet";}
+<link rel="stylesheet" href="~/css/admin-matches.css" asp-append-version="true"/>
+<div class="official-matches fixture-proposal">
+<header class="official-heading"><div><span>ORARI ZYRTAR</span><h1>Propozo ndeshjet</h1></div></header>
+<form asp-action="Propose" method="post" class="fixture-search"><div asp-validation-summary="All" class="text-danger" role="alert"></div>
+<label>Ekipi<select asp-for="TeamId" class="form-select" required><option value="">Zgjidh ekipin</option>@foreach(var team in Model.Teams){<option value="@team.Id">@team.Name</option>}</select></label>
+<label>Gara<select asp-for="LeagueId" class="form-select" required><option value="">Zgjidh garën</option>@foreach(var league in Model.Leagues){<option value="@league.Id">@league.Name · @league.Season</option>}</select></label>
+<label>Nga data<input asp-for="From" type="date" class="form-control" required/></label><button class="btn btn-primary">Kërko ndeshjet</button></form>
+@if(Model.Fixtures.Count>0){<form asp-action="ImportProposals" method="post"><input asp-for="TeamId" type="hidden"/><input asp-for="LeagueId" type="hidden"/><input asp-for="From" type="hidden"/>
+<div class="fixture-list">@for(var i=0;i<Model.Fixtures.Count;i++){var row=Model.Fixtures[i];<label class="fixture-choice"><input type="checkbox" name="Selected" value="@row.Index" checked/><input asp-for="Fixtures[i].Index" type="hidden"/><input asp-for="Fixtures[i].Opponent" type="hidden"/><input asp-for="Fixtures[i].Date" type="hidden"/><input asp-for="Fixtures[i].Kickoff" type="hidden"/><input asp-for="Fixtures[i].Home" type="hidden"/><input asp-for="Fixtures[i].Venue" type="hidden"/><input asp-for="Fixtures[i].Stage" type="hidden"/><input asp-for="Fixtures[i].SourceUrl" type="hidden"/><time>@row.Date.ToString("dd/MM/yyyy")<small>@(row.Kickoff?.ToString("HH:mm")??"Ora e pacaktuar")</small></time><span><strong>@(row.Home?Model.TeamName:row.Opponent) — @(row.Home?row.Opponent:Model.TeamName)</strong><small>@(row.Home?"Vendas":"Mysafir")@if(!string.IsNullOrWhiteSpace(row.Venue)){<text> · @row.Venue</text>}</small></span><a href="@row.SourceUrl" target="_blank" rel="noopener">Burimi</a></label>}</div>
+<div class="fixture-import"><button class="btn btn-primary">Shto të zgjedhurat</button></div></form>}
+else if(Context.Request.Method=="POST"&&ViewData.ModelState.IsValid){<div class="official-empty">Nuk u gjetën ndeshje të publikuara në burim zyrtar për këtë periudhë.</div>}
+</div>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">← Ndeshjet</a>}

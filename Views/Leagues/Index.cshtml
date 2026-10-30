@@ -13,8 +13,9 @@
 <label>Shtrirja<select name="scope" class="form-select"><option value="">Të gjitha</option><option value="Domestic" selected="@(Model.Scope=="Domestic")">Vendore</option><option value="Regional" selected="@(Model.Scope=="Regional")">Rajonale</option><option value="International" selected="@(Model.Scope=="International")">Ndërkombëtare</option></select></label>
 <button class="btn btn-primary">Filtro</button><a asp-action="Index" class="btn btn-outline-secondary">Pastro</a>
 </form>
-@{var active=Model.Rows.Where(x=>x.IsActive).ToList();var archived=Model.Rows.Where(x=>!x.IsActive).ToList();}
-<h2 class="h5 mt-3">Sezoni aktiv</h2><partial name="_CompetitionTable" model="active"/>
-@if(archived.Count>0){<details class="competition-archive mt-4"><summary>Arkiva <span>@archived.Count</span></summary><partial name="_CompetitionTable" model="archived"/></details>}
+@{var current=_2Korriku.Services.LeagueService.CurrentSeason();var active=Model.Rows.Where(x=>x.IsActive&&x.Season==current.Name).ToList();var upcoming=Model.Rows.Where(x=>x.IsActive&&x.Season!=current.Name&&x.StartsOn>_2Korriku.Services.BillingClock.Today).GroupBy(x=>x.Season).OrderBy(x=>x.Key).ToList();var archived=Model.Rows.Where(x=>!active.Contains(x)&&!upcoming.SelectMany(g=>g).Contains(x)).GroupBy(x=>x.Season).OrderByDescending(x=>x.Key).ToList();}
+<h2 class="h5 mt-3">Sezoni aktiv · @current.Name</h2><partial name="_CompetitionTable" model="active"/>
+@foreach(var season in upcoming){<details class="competition-archive mt-4"><summary>Sezoni i ardhshëm · @season.Key <span>@season.Count()</span></summary><partial name="_CompetitionTable" model="season.ToList()"/></details>}
+@if(archived.Count>0){<details class="competition-archive mt-4"><summary>Arkiva <span>@archived.Sum(x=>x.Count())</span></summary>@foreach(var season in archived){<h3 class="h6 mt-3 px-2">@season.Key</h3><partial name="_CompetitionTable" model="season.ToList()"/>}</details>}
 </div>
 @section PageNavigation {<a class="btn btn-outline-secondary" asp-controller="Teams" asp-action="Index">← Ekipet</a>}

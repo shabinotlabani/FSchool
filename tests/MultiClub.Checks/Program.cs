@@ -117,7 +117,7 @@ try
         Check(standard != 1 && family != 2 && (await tariffs.OptionsAsync()).Count == 3, "New club provisions independent functional tariffs");
         var team = await db.TrainingTeams.Select(x => x.Id).SingleAsync();
         var familyId = await new StudentWorkflowService(db).RegisterFamilyAsync(new FamilyRegistrationModel {
-            FamilyName = "Club 2 family", FeePlanId = family,
+            FamilyName = "Club 2 family", FeePlanId = family, ParentName="Parent", ParentPhone="044000001",
             Children = [new() { FirstName = "Child1", LastName = "Family", DateOfBirth = new(2015, 1, 1), TrainingTeamId = team },
                         new() { FirstName = "Child2", LastName = "Family", DateOfBirth = new(2016, 1, 1), TrainingTeamId = team }]
         }, "staff2");

@@ -49,6 +49,8 @@ public class StudentRegistrationModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if(string.IsNullOrWhiteSpace(Phone)&&string.IsNullOrWhiteSpace(ParentPhone))yield return new("Shkruani telefonin e lojtarit ose telefonin e prindit / kujdestarit.",[nameof(Phone),nameof(ParentPhone)]);
+        if(string.IsNullOrWhiteSpace(Phone)&&string.IsNullOrWhiteSpace(ParentName))yield return new("Shkruani emrin e prindit / kujdestarit kur lojtari nuk ka telefon.",[nameof(ParentName)]);
         if(!IsContractPlayer&&FeePlanId<1)yield return new("Zgjidhni kategorinë e tarifës.",[nameof(FeePlanId)]);
         if(!IsContractPlayer&&RegistrationPayment=="Seasonal"){
             if(SeasonalMonths is not (6 or 12))yield return new("Zgjidhni sezonin 6 ose 12 muaj.");

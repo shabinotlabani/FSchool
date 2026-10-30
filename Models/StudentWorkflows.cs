@@ -42,6 +42,8 @@ public class FamilyRegistrationModel : IValidatableObject
     public IEnumerable<ValidationResult> Validate(ValidationContext context)
     {
         if(RequestId==Guid.Empty)yield return new("Rihapni formularin e regjistrimit.");
+        if(Children!=null&&Children.Any(x=>string.IsNullOrWhiteSpace(x.Phone))&&string.IsNullOrWhiteSpace(ParentPhone))yield return new("Shkruani telefonin e prindit / kujdestarit për fëmijët që nuk kanë telefon.",[nameof(ParentPhone)]);
+        if(Children!=null&&Children.Any(x=>string.IsNullOrWhiteSpace(x.Phone))&&string.IsNullOrWhiteSpace(ParentName))yield return new("Shkruani emrin e prindit / kujdestarit për fëmijët që nuk kanë telefon.",[nameof(ParentName)]);
         if(FamilyId.HasValue && FamilyId<=0)yield return new("Zgjidhni një familje të vlefshme.");
         if(!FamilyId.HasValue && string.IsNullOrWhiteSpace(FamilyName))yield return new("Shkruani emrin e familjes së re.");
         if(Children==null || Children.Count is <2 or >20)yield return new("Regjistroni nga 2 deri në 20 fëmijë së bashku.");

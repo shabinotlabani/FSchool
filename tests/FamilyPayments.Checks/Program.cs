@@ -140,7 +140,7 @@ try
     Check((await tariffs.OptionsAsync()).Any(p => p.Id == monthlyId), "A removed tariff can be reactivated");
 
     var customFamilyId = await new StudentWorkflowService(db).RegisterFamilyAsync(new() {
-        FamilyName = "Custom family", FeePlanId = familyPlanId,
+        FamilyName = "Custom family", FeePlanId = familyPlanId, ParentName="Parent", ParentPhone="044000004",
         Children = [new() { TrainingTeamId=registrationTeam.Id, FirstName = "CustomOne", LastName = "Test", DateOfBirth = new(2015,1,1) },
                     new() { TrainingTeamId=registrationTeam.Id, FirstName = "CustomTwo", LastName = "Test", DateOfBirth = new(2016,1,1) }]
     }, actor.Id);
@@ -295,7 +295,7 @@ try
     Check(preferredFamily.PaymentMethod=="Bank","Family monthly form defaults to family bank preference");
     var editedStudent=await db.Students.AsNoTracking().SingleAsync(x=>x.Id==standardStudent.Id);
     editedStudent.TrainingTeamId=registrationTeam.Id; await db.SaveChangesAsync();
-    await new StudentWorkflowService(db).EditAsync(new(){Id=editedStudent.Id,Revision=editedStudent.Revision,FirstName=editedStudent.FirstName,LastName=editedStudent.LastName,DateOfBirth=editedStudent.DateOfBirth,IsActive=editedStudent.IsActive,TrainingTeamId=editedStudent.TrainingTeamId,PreferredPaymentMethod="Cash",Reason="Change usual method"},actor.Id);
+    await new StudentWorkflowService(db).EditAsync(new(){Id=editedStudent.Id,Revision=editedStudent.Revision,FirstName=editedStudent.FirstName,LastName=editedStudent.LastName,DateOfBirth=editedStudent.DateOfBirth,IsActive=editedStudent.IsActive,TrainingTeamId=editedStudent.TrainingTeamId,Phone="044100005",PreferredPaymentMethod="Cash",Reason="Change usual method"},actor.Id);
     Check(((RegisterPaymentModel)((ViewResult)await controller.Register((int?)standardStudent.Id)).Model!).PaymentMethod=="Cash","Editing player preference changes future form default");
     var bankOverride=(RegisterPaymentModel)((ViewResult)await controller.Register((int?)standardStudent.Id)).Model!;bankOverride.PaymentMethod="Bank";bankOverride.Amount=1;
     Check(await controller.Register(bankOverride) is RedirectToActionResult&&await db.PendingBankPayments.AnyAsync(x=>x.RequestId==bankOverride.RequestId&&x.ReviewedAt==null)&&!await db.Payments.AnyAsync(x=>x.RequestId==bankOverride.RequestId),"Bank override on cash preference still waits for bank verification");
@@ -313,7 +313,7 @@ try
     await Reject(()=>bankService.Review(new(){Id=autoRequest.Id,ExpectedAmount=autoDue},actor.Id,true),"Bank reviewer cannot confirm stale automatic amount");
     await bankService.Review(new(){Id=autoRequest.Id,ExpectedAmount=autoDue-1},actor.Id,true);
     Check((await billing.GetAccountAsync(autoPlayer.Id))!.MonthlyDue==0&&autoRequest.PaymentId.HasValue&&autoRequest.RejectionReason==null,"Automatic bank confirmation settles remainder once");
-    var autoFamilyInput=new FamilyRegistrationModel{FamilyName="Automatic family",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Auto",LastName="One",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Auto",LastName="Two",DateOfBirth=new(2016,1,1)}]};
+    var autoFamilyInput=new FamilyRegistrationModel{FamilyName="Automatic family",ParentName="Parent",ParentPhone="044000002",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Auto",LastName="One",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Auto",LastName="Two",DateOfBirth=new(2016,1,1)}]};
     var autoFamilyId=await new StudentWorkflowService(db).RegisterFamilyAsync(autoFamilyInput,actor.Id);
     var autoFamilyAccount=(await billing.GetFamilyAccountAsync(autoFamilyId))!;
     var autoFamilyRequest=await db.PendingBankPayments.SingleAsync(x=>x.Kind=="Family"&&x.TargetId==autoFamilyId&&x.ReviewedAt==null);
@@ -344,7 +344,7 @@ try
     Check(advanceAccount.MonthlyDue==0&&advanceAccount.MonthlyBalance==-50&&advanceRequest.Amount==50&&advanceRequest.ConfirmedAmount==100,"Receiving 100 against debt of 50 records 50 advance and retains suggested and actual amounts");
     Check(await bankService.Review(new(){Id=advanceRequest.Id,ReceivedAmount=100},actor.Id,true)==advanceReceipt,"Advance confirmation retry returns the same receipt");
     await Reject(()=>bankService.Review(new(){Id=advanceRequest.Id,ReceivedAmount=200},actor.Id,true),"Changed amount cannot reuse an already confirmed request");
-    var flexibleFamily=new FamilyRegistrationModel{FamilyName="Flexible bank family",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Flexible",LastName="One",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Flexible",LastName="Two",DateOfBirth=new(2016,1,1)}]};
+    var flexibleFamily=new FamilyRegistrationModel{FamilyName="Flexible bank family",ParentName="Parent",ParentPhone="044000003",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Flexible",LastName="One",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Flexible",LastName="Two",DateOfBirth=new(2016,1,1)}]};
     var bank100=await tariffs.CreateAsync(new(){Name="Bank actual 100",Amount=100},actor.Id);
     var bankOperator=new ApplicationUser{Id=Guid.NewGuid().ToString(),UserName="bank-operator-test",CanVerifyBank=true};
     var operatorRole=await db.Roles.SingleOrDefaultAsync(x=>x.Name==Roles.Operator);
@@ -430,7 +430,7 @@ try
         if(actual>160)Check(after.MonthlyBalance==-(actual-160),"Excess becomes usable monthly advance rather than equipment overpayment");
         Check((await bankService.ClientBalance(request)).Total==Math.Max(0,160-actual),"Updated proposal shows the remaining total only");
     }
-    var unifiedFamilyId=await new StudentWorkflowService(db).RegisterFamilyAsync(new(){FamilyName="Unified family",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Unified",LastName="Sibling1",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Unified",LastName="Sibling2",DateOfBirth=new(2016,1,1)}]},actor.Id);
+    var unifiedFamilyId=await new StudentWorkflowService(db).RegisterFamilyAsync(new(){FamilyName="Unified family",ParentName="Parent",ParentPhone="044000005",PreferredPaymentMethod="Bank",FeePlanId=2,Children=[new(){TrainingTeamId=registrationTeam.Id,FirstName="Unified",LastName="Sibling1",DateOfBirth=new(2015,1,1)},new(){TrainingTeamId=registrationTeam.Id,FirstName="Unified",LastName="Sibling2",DateOfBirth=new(2016,1,1)}]},actor.Id);
     var unifiedFamily=(await billing.GetFamilyAccountAsync(unifiedFamilyId))!;
     var familyGoods=new Sale{StudentId=unifiedFamily.Members[0].Student.Id,RequestId=Guid.NewGuid(),InvoiceNumber="UNIFIED-FAMILY",GrandTotal=50,Total=50};db.Add(familyGoods);await db.SaveChangesAsync();
     var familyGoodsRequestId=await bankService.QueueSale(new(){SaleId=familyGoods.Id,Amount=50},actor.Id);
@@ -461,7 +461,7 @@ try
         return c;
     }
     foreach(var duration in new[]{6,12}){
-        var registration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Seasonal",LastName="Cash"+duration,DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=duration,SeasonalExpectedRate=50,PreferredPaymentMethod="Bank"};
+        var registration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Seasonal",LastName="Cash"+duration,Phone="044100001",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=duration,SeasonalExpectedRate=50,PreferredPaymentMethod="Bank"};
         var result=await RegistrationController().Create(registration);
         Check(result is RedirectToActionResult{ControllerName:"Payments"},"Seasonal registration returns directly to payments");
         var receipt=await db.Payments.SingleAsync(p=>p.RequestId==registration.SeasonalRequestId);
@@ -472,7 +472,7 @@ try
         Check(await RegistrationController().Create(registration) is ViewResult&&await db.Students.CountAsync()==count,"Repeated seasonal registration cannot duplicate the player or payment");
         db.ChangeTracker.Clear();
     }
-    var bankRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Seasonal",LastName="NewBank",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=6,SeasonalExpectedRate=50,SeasonalPaymentMethod="Bank",PreferredPaymentMethod="Bank"};
+    var bankRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Seasonal",LastName="NewBank",Phone="044100002",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=6,SeasonalExpectedRate=50,SeasonalPaymentMethod="Bank",PreferredPaymentMethod="Bank"};
     Check(await RegistrationController().Create(bankRegistration) is RedirectToActionResult,"Bank season can be queued atomically inside player registration");
     var newSeason=await db.PendingBankPayments.SingleAsync(p=>p.RequestId==bankRegistration.SeasonalRequestId);
     await billing.GenerateDueFeesAsync();
@@ -481,10 +481,10 @@ try
     await bankService.Review(new(){Id=newSeason.Id},actor.Id,true);
     Check((await billing.GetInvoicesAsync(newSeason.StudentId)).Single().Due==0,"Bank season confirms successfully without first-month mismatch");
     var beforeInvalid=await db.Students.CountAsync();
-    var invalidRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Invalid",LastName="Season",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=6,SeasonalExpectedRate=49};
+    var invalidRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Invalid",LastName="Season",Phone="044100003",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=6,SeasonalExpectedRate=49};
     Check(await RegistrationController().Create(invalidRegistration) is ViewResult&&await db.Students.CountAsync()==beforeInvalid&&!await db.Payments.AnyAsync(p=>p.RequestId==invalidRegistration.SeasonalRequestId),"Stale seasonal price rolls back entire registration");
     db.ChangeTracker.Clear();
-    var contractRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Contract",LastName="Pending",DateOfBirth=new(2010,1,1),IsContractPlayer=true};
+    var contractRegistration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Contract",LastName="Pending",Phone="044100004",DateOfBirth=new(2010,1,1),IsContractPlayer=true};
     Check(await RegistrationController().Create(contractRegistration) is RedirectToActionResult{ActionName:"Index"},"Contract player registers without creating the contract immediately");
     var pendingContractPlayer=await db.Students.SingleAsync(s=>s.FirstName=="Contract"&&s.LastName=="Pending");
     Check(pendingContractPlayer.ContractPending&&pendingContractPlayer.TrainingTeamId==registrationTeam.Id&&!await db.StudentFeeAssignments.AnyAsync(a=>a.StudentId==pendingContractPlayer.Id)&&!await db.MonthlyFeePeriods.AnyAsync(p=>p.StudentId==pendingContractPlayer.Id),"Pending contract player requires a team and receives no fee or invoice");

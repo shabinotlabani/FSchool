@@ -30,8 +30,7 @@ public class LeaguesController(ApplicationDbContext db):Controller
     }
     public async Task<IActionResult> Catalog(string? season=null)
     {
-        var model=new CompetitionCatalogModel();
-        if(!string.IsNullOrWhiteSpace(season)){model.Season=season.Trim();if(int.TryParse(model.Season.Split('/')[0],out var year)&&year is >=1900 and <=2200){model.StartsOn=new(year,7,1);model.EndsOn=new(year+1,6,30);}}
+        var current=LeagueService.CurrentSeason();var model=new CompetitionCatalogModel{Season=current.Name,StartsOn=current.StartsOn,EndsOn=current.EndsOn};
         await CatalogChoices(model);return View(model);
     }
     [HttpPost,ValidateAntiForgeryToken]

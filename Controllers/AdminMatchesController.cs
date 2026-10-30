@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace _2Korriku.Controllers;
 
 [Authorize(Roles=Roles.Admin),ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
-public class AdminMatchesController(ApplicationDbContext db):Controller
+public class AdminMatchesController(ApplicationDbContext db,GeminiFixtureService fixtureAi):Controller
 {
     private string Actor=>User.FindFirstValue(ClaimTypes.NameIdentifier)!;
     private MatchService Service=>new(db);
@@ -34,6 +34,32 @@ public class AdminMatchesController(ApplicationDbContext db):Controller
             if(id==0&&!teamId.HasValue)return RedirectToAction(nameof(Index));
             return View("~/Views/Matches/Edit.cshtml",await Service.Load(Actor,id,teamId??0,true));
         }catch(UnauthorizedAccessException){return NotFound();}
+    }
+
+    public async Task<IActionResult> Propose(int? teamId=null,int? leagueId=null)
+    {
+        var model=new MatchFixtureProposalModel{TeamId=teamId??0,LeagueId=leagueId??0};await ProposalChoices(model);return View(model);
+    }
+    [HttpPost,ValidateAntiForgeryToken]
+    public async Task<IActionResult> Propose(MatchFixtureProposalModel input)
+    {
+        try{var model=await fixtureAi.Propose(input.TeamId,input.LeagueId,input.From,HttpContext.RequestAborted);await ProposalChoices(model);return View(model);}
+        catch(ValidationException e){ModelState.AddModelError("",e.Message);await ProposalChoices(input);return View(input);}
+    }
+    [HttpPost,ValidateAntiForgeryToken]
+    public async Task<IActionResult> ImportProposals(MatchFixtureProposalModel input)
+    {
+        input.Selected??=[];input.Fixtures??=[];
+        var league=await db.Leagues.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==input.LeagueId&&x.IsActive&&x.Teams.Any(t=>t.TrainingTeamId==input.TeamId));if(league==null)return NotFound();
+        var selected=input.Fixtures.Where(x=>input.Selected.Contains(x.Index)).GroupBy(x=>x.Index).Select(x=>x.First()).ToList();
+        if(selected.Count==0){ModelState.AddModelError("","Zgjidhni së paku një ndeshje.");await ProposalChoices(input);return View("Propose",input);}
+        if(selected.Any(x=>x.Date<BillingClock.Today||x.Date<league.StartsOn||x.Date>league.EndsOn||string.IsNullOrWhiteSpace(x.Opponent)||x.Opponent.Trim().Length>150||!GeminiFixtureService.OfficialSource(x.SourceUrl,league.Organizer))){ModelState.AddModelError("","Një propozim nuk është më i vlefshëm ose nuk ka burim zyrtar.");await ProposalChoices(input);return View("Propose",input);}
+        var added=0;
+        foreach(var row in selected.OrderBy(x=>x.Date).ThenBy(x=>x.Kickoff)){
+            if(await db.MatchGames.AnyAsync(x=>x.TrainingTeamId==input.TeamId&&x.LeagueId==input.LeagueId&&x.Date==row.Date&&x.Opponent.ToUpper()==row.Opponent.Trim().ToUpper()))continue;
+            await Service.Save(Actor,new(){TeamId=input.TeamId,LeagueId=input.LeagueId,Opponent=row.Opponent.Trim(),Date=row.Date,Kickoff=row.Kickoff,Home=row.Home,Venue=row.Venue,CompetitionStage=row.Stage,Status="Draft",Players=[],Events=[]},true);added++;
+        }
+        TempData["Success"]=$"U shtuan {added} ndeshje si propozime.";return RedirectToAction(nameof(Index),new{teamId=input.TeamId,year=input.From.Year});
     }
 
     [HttpPost,ValidateAntiForgeryToken]
@@ -69,5 +95,11 @@ public class AdminMatchesController(ApplicationDbContext db):Controller
         if(game==null)return NotFound();
         ViewData["AdminMatch"]=true;
         return View("~/Views/Matches/Summary.cshtml",game);
+    }
+    private async Task ProposalChoices(MatchFixtureProposalModel model)
+    {
+        model.Teams=await db.TrainingTeams.AsNoTracking().Where(x=>x.IsActive).OrderBy(x=>x.Name).ToListAsync();
+        model.Leagues=await db.Leagues.AsNoTracking().Where(x=>x.IsActive&&(model.TeamId==0||x.Teams.Any(t=>t.TrainingTeamId==model.TeamId))).OrderBy(x=>x.Name).ToListAsync();
+        model.TeamName=model.Teams.FirstOrDefault(x=>x.Id==model.TeamId)?.Name??model.TeamName;model.LeagueName=model.Leagues.FirstOrDefault(x=>x.Id==model.LeagueId)?.Name??model.LeagueName;
     }
 }

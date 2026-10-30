@@ -10,7 +10,7 @@
 <label>Shteti<input asp-for="Country" class="form-control" required/></label>
 <label>Sporti<input asp-for="Sport" class="form-control" required/></label>
 <label>Gjinia<select asp-for="Gender" class="form-select"><option value="Male">Meshkuj</option><option value="Female">Femra</option><option value="Mixed">Përzier</option></select></label>
-<label>Sezoni<input asp-for="Season" class="form-control" placeholder="2026/27" required/></label>
+<label>Sezoni<input asp-for="Season" class="form-control" required readonly/></label>
 <label>Kategoria<input asp-for="AgeCategory" class="form-control" list="ages" required/><datalist id="ages"><option value="Senior"/><option value="U21"/><option value="U19"/><option value="U17"/><option value="U16"/><option value="U15"/></datalist></label>
 <label>Shtrirja<select asp-for="CompetitionScope" class="form-select"><option value="Domestic">Vendore</option><option value="Regional">Rajonale</option><option value="International">Ndërkombëtare</option></select></label>
 <label>Lloji<select asp-for="CompetitionType" class="form-select"><option value="League">Ligë</option><option value="Cup">Kupë</option><option value="SuperCup">Superkupë</option><option value="Tournament">Turne</option><option value="Friendly">Miqësore</option></select></label>

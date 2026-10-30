@@ -88,6 +88,8 @@ public class StudentWorkflowService(ApplicationDbContext db)
     }
     public async Task EditAsync(StudentEditModel input,string actor)
     {
+        if(string.IsNullOrWhiteSpace(input.Phone)&&string.IsNullOrWhiteSpace(input.ParentPhone))throw new ValidationException("Shkruani telefonin e lojtarit ose telefonin e prindit / kujdestarit.");
+        if(string.IsNullOrWhiteSpace(input.Phone)&&string.IsNullOrWhiteSpace(input.ParentName))throw new ValidationException("Shkruani emrin e prindit / kujdestarit kur lojtari nuk ka telefon.");
         Validator.ValidateObject(input,new ValidationContext(input),true);
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);

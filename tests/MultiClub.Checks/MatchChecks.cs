@@ -158,9 +158,10 @@ static class MatchChecks
             await Reject(()=>new LeagueService(db).Save(new(){Id=leagueId,Revision=previous.Revision,Name=previous.Name,StartsOn=previous.StartsOn,EndsOn=previous.EndsOn,TeamIds=[]},"match-coach"),"League cannot remove a team with registered matches");
             await new LeagueService(db).Save(new(){Name="Default rules",StartsOn=BillingClock.Today,EndsOn=BillingClock.Today.AddDays(30)},"match-coach");
             Check(await db.Leagues.AnyAsync(l=>l.Name=="Default rules"&&l.RedBan==1&&l.YellowThreshold==3),"Every competition receives the same default card rules");
-            var catalog=new CompetitionCatalogModel{Season="2098/99",StartsOn=new(2098,7,1),EndsOn=new(2099,6,30),SelectedKeys=["fifa-cwc"]};
+            var season=LeagueService.CurrentSeason();var catalog=new CompetitionCatalogModel{Season=season.Name,StartsOn=season.StartsOn,EndsOn=season.EndsOn,SelectedKeys=["fifa-cwc"]};
             Check(await new LeagueService(db).AddFromCatalog(catalog,"match-coach")==1,"Admin adds only checked catalog competitions");
             await Reject(()=>new LeagueService(db).AddFromCatalog(catalog,"match-coach"),"Catalog prevents the same competition twice in one season");
+            await Reject(()=>new LeagueService(db).AddFromCatalog(new(){Season=$"{season.StartsOn.Year+1}/{(season.StartsOn.Year+2).ToString()[2..]}",StartsOn=season.StartsOn.AddYears(1),EndsOn=season.EndsOn.AddYears(1),SelectedKeys=["uefa-ucl"]},"match-coach"),"Future competition season cannot be created early");
         }
         await using(var db=Db(2)){
             Check(!await db.Leagues.AnyAsync(l=>l.Id==leagueId),"League data hidden from other clubs");

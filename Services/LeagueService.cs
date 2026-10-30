@@ -6,6 +6,11 @@ namespace _2Korriku.Services;
 
 public class LeagueService(ApplicationDbContext db)
 {
+    public static (string Name,DateOnly StartsOn,DateOnly EndsOn) CurrentSeason(DateOnly? day=null)
+    {
+        var today=day??BillingClock.Today;var year=today.Month>=7?today.Year:today.Year-1;
+        return($"{year}/{(year+1).ToString()[2..]}",new(year,7,1),new(year+1,6,30));
+    }
     public static readonly IReadOnlyList<CompetitionCatalogItem> Catalog = new CompetitionCatalogItem[]{
         new("ffk-superliga","Kosovë","Superliga e Kosovës","FFK","Kosovë","Male","Senior","Domestic","League","LeaguePhase"),
         new("ffk-first","Kosovë","Liga e Parë e Kosovës","FFK","Kosovë","Male","Senior","Domestic","League","LeaguePhase"),
@@ -35,6 +40,8 @@ public class LeagueService(ApplicationDbContext db)
         input.TeamStatuses??=[];
         input.TeamDeadlines??=[];
         if(string.IsNullOrWhiteSpace(input.Name)||input.StartsOn.Year<1900||input.EndsOn.Year>2200||input.EndsOn<input.StartsOn)throw new ValidationException("Kontrolloni emrin dhe datat e sezonit.");
+        var current=CurrentSeason();
+        if(input.Id==0&&(input.Season.Trim()!=current.Name||input.StartsOn<current.StartsOn||input.EndsOn>current.EndsOn))throw new ValidationException($"Aktualisht mund të krijohen gara vetëm për sezonin {current.Name}.");
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         var ids=input.TeamIds.Distinct().ToList();
@@ -44,6 +51,7 @@ public class LeagueService(ApplicationDbContext db)
         var statuses=new[]{"Registered","Pending","Qualified","Withdrawn","Eliminated"};
         if(input.TeamStatuses.Values.Any(x=>!statuses.Contains(x)))throw new ValidationException("Kontrolloni statusin e pjesëmarrjes.");
         var row=input.Id==0?new League():await db.Leagues.Include(l=>l.Teams).SingleOrDefaultAsync(l=>l.Id==input.Id)??throw new UnauthorizedAccessException();
+        if(input.Id!=0&&input.Season.Trim()!=row.Season)throw new ValidationException("Sezoni i garës nuk mund të ndryshohet pas krijimit.");
         input.Kind=input.CompetitionType=="Friendly"?"Friendly":input.CompetitionType is "Cup" or "SuperCup"?"Cup":"Official";
         if(input.IsOfficial&&!input.IsVerified)throw new ValidationException("Gara mund të shënohet zyrtare vetëm pasi të verifikohet.");
         if(input.Id!=0&&row.Revision!=input.Revision)throw new ValidationException("Liga ndryshoi. Rihapeni para ruajtjes.");
@@ -67,6 +75,8 @@ public class LeagueService(ApplicationDbContext db)
         Validator.ValidateObject(input,new(input),true);
         input.SelectedKeys??=[];
         if(input.EndsOn<input.StartsOn)throw new ValidationException("Kontrolloni datat e sezonit.");
+        var current=CurrentSeason();
+        if(input.Season.Trim()!=current.Name||input.StartsOn<current.StartsOn||input.EndsOn>current.EndsOn)throw new ValidationException($"Aktualisht mund të shtohen gara vetëm për sezonin {current.Name}.");
         var selected=Catalog.Where(x=>input.SelectedKeys.Contains(x.Key,StringComparer.OrdinalIgnoreCase)).ToList();
         if(selected.Count==0)throw new ValidationException("Zgjidhni së paku një garë.");
         if(selected.Count!=input.SelectedKeys.Distinct(StringComparer.OrdinalIgnoreCase).Count())throw new ValidationException("Përzgjedhja përmban garë të pavlefshme.");

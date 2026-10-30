@@ -81,6 +81,7 @@ builder.Services.Configure<IdentityOptions>(options => options.User.RequireUniqu
 builder.Services.AddScoped<UserAdministrationService>();
 builder.Services.AddScoped<ClubBranding>();
 builder.Services.AddHttpClient<GeminiMenuService>(client=>client.Timeout=TimeSpan.FromSeconds(35));
+builder.Services.AddHttpClient<GeminiFixtureService>(client=>client.Timeout=TimeSpan.FromSeconds(45));
 builder.Services.AddScoped<NutritionDraftProcessor>();
 builder.Services.AddHostedService<NutritionDraftWorker>();
 builder.Services.AddScoped<DashboardService>();

@@ -118,6 +118,29 @@ public class MatchInput
     [ValidateNever] public string Sport { get; set; } = "Football";
 }
 public record MatchCallUpCandidate(int StudentId,string Name,string TeamName);
+public class MatchFixtureProposal
+{
+    public int Index { get; set; }
+    [Required,StringLength(150)] public string Opponent { get; set; } = "";
+    public DateOnly Date { get; set; }
+    public TimeOnly? Kickoff { get; set; }
+    public bool Home { get; set; }
+    [StringLength(150)] public string? Venue { get; set; }
+    [StringLength(30)] public string? Stage { get; set; }
+    [Required,StringLength(500)] public string SourceUrl { get; set; } = "";
+}
+public class MatchFixtureProposalModel
+{
+    [Range(1,int.MaxValue)] public int TeamId { get; set; }
+    [Range(1,int.MaxValue)] public int LeagueId { get; set; }
+    public DateOnly From { get; set; } = BillingClock.Today;
+    public List<int> Selected { get; set; } = [];
+    public List<MatchFixtureProposal> Fixtures { get; set; } = [];
+    [ValidateNever] public string TeamName { get; set; } = "";
+    [ValidateNever] public string LeagueName { get; set; } = "";
+    [ValidateNever] public List<TrainingTeam> Teams { get; set; } = [];
+    [ValidateNever] public List<League> Leagues { get; set; } = [];
+}
 public class MatchList
 {
     public string? CompetitionFilter { get; set; }
