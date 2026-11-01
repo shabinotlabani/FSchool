@@ -50,6 +50,11 @@ public class MatchService(ApplicationDbContext db,bool enforceOfficialRest=true)
         if(game==null)input.LeagueId=await new LeagueService(db).Eligible(teamId,input.Date).OrderByDescending(l=>l.StartsOn).ThenBy(l=>l.Name).Select(l=>(int?)l.Id).FirstOrDefaultAsync();
         if(game==null)input.Kind=input.LeagueId.HasValue?input.Leagues.Single(l=>l.Id==input.LeagueId).Kind:"Friendly";
         if(game==null&&input.LeagueId.HasValue)input.CompetitionStage=input.Leagues.Single(l=>l.Id==input.LeagueId).Stage;
+        if(sport=="Football" && input.LeagueId.HasValue && (game==null || game.Status=="Draft"))
+        {
+            input.PlayersOnCourt=input.Leagues.Single(l=>l.Id==input.LeagueId).PlayersOnCourt;
+            if(input.PlayersOnCourt!=11)input.Formation="Auto";
+        }
         input.Events=game?.Events??[];
         if(sport=="Football"){input.DisciplineAlerts=await new FootballService(db).Alerts(teamId,input.Kind,input.Date,input.Kickoff,input.Id,input.LeagueId);input.HasDisciplineRule=await new FootballService(db).Rule(teamId,input.Kind,input.Date,input.LeagueId)!=null;}
         var stored=game?.Players.ToDictionary(p=>p.StudentId)??[];
@@ -153,6 +158,14 @@ public class MatchService(ApplicationDbContext db,bool enforceOfficialRest=true)
             }
         }
         input.Kind=league?.Kind??(input.Id!=0&&game.LeagueId==null?game.Kind:input.Kind);
+        if(game.Sport=="Football" && league!=null)
+        {
+            var capacity=input.Id==0||game.Status=="Draft"?league.PlayersOnCourt:game.PlayersOnCourt;
+            if(input.Id!=0 && input.PlayersOnCourt!=capacity)
+                throw new ValidationException("Numri i lojtarëve përcaktohet nga liga. Rihapni ndeshjen për formacionin e përditësuar.");
+            input.PlayersOnCourt=capacity;
+            if(capacity!=11)input.Formation="Auto";
+        }
         var minutes=ValidateMinutes(input);
         game.LeagueId=input.LeagueId;
         if(!manageAll&&game.Sport=="Football"&&input.Id!=0){

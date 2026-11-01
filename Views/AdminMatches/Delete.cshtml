@@ -1,0 +1,9 @@
+@model MatchGame
+@{ ViewData["Title"] = "Fshi ndeshjen"; }
+<div class="page-heading"><div><h1>Fshi ndeshjen</h1><p>Kontrolloni ndeshjen para konfirmimit.</p></div></div>
+<section class="panel p-4">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="table-responsive"><table class="table"><thead><tr><th>Data</th><th>Ekipi</th><th>Kundërshtari</th><th>Gara</th><th>Statusi</th></tr></thead><tbody><tr><td>@Model.Date.ToString("dd/MM/yyyy") @Model.Kickoff?.ToString("HH:mm")</td><td>@Model.TrainingTeam.Name</td><td>@Model.Opponent</td><td>@(Model.Competition ?? MatchLabels.Kind(Model.Kind))</td><td>@MatchLabels.Status(Model.Status)</td></tr></tbody></table></div>
+    <p>Ndeshja do të largohet nga kalendari dhe raportet. Do të fshihen edhe formacioni, ngjarjet, minutat, vlerësimet dhe historiku i kësaj ndeshjeje. Ky veprim nuk mund të kthehet.</p>
+    <form asp-action="Delete" method="post"><input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="revision" value="@Model.Revision"/><button type="submit" class="btn btn-danger">Po, fshije ndeshjen</button> <a asp-controller="Home" asp-action="MatchReport" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Anulo</a></form>
+</section>

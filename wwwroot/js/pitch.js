@@ -51,6 +51,9 @@
  function layout(){const cap=capacity();if(cap===11&&el('Formation').value!=='Auto')return [1,...el('Formation').value.split('-').map(Number)];
   if(cap===1)return [1];const remaining=cap-1,lines=Math.ceil(remaining/4),base=Math.floor(remaining/lines),extra=remaining%lines;return [1,...Array.from({length:lines},(_,i)=>base+(i<extra?1:0))];}
  function render(){const starters=rows.filter(r=>role(r)==='Starter'),used=new Set();
+  el('pitch-format-label').textContent=`Formati ${capacity()-1}+1 · ${capacity()} lojtarë gjithsej`;
+  for(const option of el('Formation').options)option.disabled=capacity()!==11&&option.value!=='Auto';
+  if(capacity()!==11&&!locked)el('Formation').value='Auto';
   starters.forEach(r=>{const value=Number(slot(r).value);if(slot(r).value===''||value>=capacity()||used.has(value))slot(r).value='';else used.add(value);});
   starters.filter(r=>slot(r).value==='').forEach(r=>{for(let i=0;i<capacity();i++)if(!used.has(i)){slot(r).value=i;used.add(i);break;}});
   pitch.replaceChildren();let index=0;

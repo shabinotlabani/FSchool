@@ -5,6 +5,7 @@ namespace _2Korriku.Models;
 
 public class League
 {
+    public int PlayersOnCourt { get; set; } = 11;
     public int Id { get; set; }
     [MaxLength(150)] public string Name { get; set; } = "";
     [MaxLength(20)] public string Kind { get; set; } = "Official";
@@ -78,6 +79,8 @@ public record LeagueTeamReportRow(int TeamId,string Team,int Scheduled,int Playe
 public record LeaguePlayerReportRow(int StudentId,string Name,string Team,int Appearances,int Starts,int Minutes,int Goals,int Assists,int YellowCards,int RedCards);
 public class LeagueInput
 {
+    [Range(2,11,ErrorMessage = "Zgjidhni nga 2 deri në 11 lojtarë, përfshirë portierin.")]
+    public int PlayersOnCourt { get; set; } = 11;
     public int Id { get; set; }
     public Guid Revision { get; set; }
     [Required,StringLength(150)] public string Name { get; set; } = "";

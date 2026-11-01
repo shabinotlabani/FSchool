@@ -3,6 +3,7 @@
 @{ViewData["Title"]=Model.Id==0?"Ndeshje e re":"Ndeshja";var staged=Model.Sport=="Football";var preparing=Model.Status=="Draft";var adminMatch=ViewContext.RouteData.Values["controller"]?.ToString()=="AdminMatches";}
 <link rel="stylesheet" href="~/css/matches.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/pitch-ui.css" asp-append-version="true"/>
+@if(Model.Id != 0 && User.IsInRole(Roles.Admin)){<a class="btn btn-outline-danger" asp-controller="AdminMatches" asp-action="Delete" asp-route-id="@Model.Id">Fshi ndeshjen</a>}
 <div class="matches-page @(Model.Id!=0&&Model.Sport=="Football"?"match-football-page":"")">
 <div class="page-heading"><div><h1>@(Model.Id==0?"Ndeshje e re":Model.Opponent)</h1><p>@Model.TeamName · @SportDevelopmentService.Sports.GetValueOrDefault(Model.Sport,Model.Sport)</p></div></div>
 @if(TempData["Success"] is string success){<div class="alert alert-success" role="status">@success</div>}
@@ -25,7 +26,7 @@
 <div class="match-fields">
 <label>Kundërshtari<input asp-for="Opponent" class="form-control" maxlength="150" required/></label>
 <input asp-for="Kind" type="hidden"/>
-<label>Liga<select asp-for="LeagueId" class="form-select" required="@adminMatch"><option value="">@(adminMatch?"Zgjidh ligën ose kupën":"Miqësore · pa ligë")</option>@foreach(var league in Model.Leagues){<option value="@league.Id" data-start="@league.StartsOn.ToString("yyyy-MM-dd")" data-end="@league.EndsOn.ToString("yyyy-MM-dd")" data-stage="@league.Stage">@league.Name · @league.StartsOn.Year/@league.EndsOn.Year</option>}</select></label>
+<label>Liga<select asp-for="LeagueId" class="form-select" required="@adminMatch"><option value="">@(adminMatch?"Zgjidh ligën ose kupën":"Miqësore · pa ligë")</option>@foreach(var league in Model.Leagues){<option value="@league.Id" data-start="@league.StartsOn.ToString("yyyy-MM-dd")" data-end="@league.EndsOn.ToString("yyyy-MM-dd")" data-stage="@league.Stage" data-players="@league.PlayersOnCourt">@league.Name · @league.StartsOn.Year/@league.EndsOn.Year</option>}</select></label>
 <label>Faza<select asp-for="CompetitionStage" class="form-select"><option value="Qualifying">Kualifikime</option><option value="LeaguePhase">Faza e ligës</option><option value="GroupStage">Faza e grupeve</option><option value="Knockout">Eliminim direkt</option><option value="Final">Finale</option></select></label>
 <label>Data<input asp-for="Date" type="date" class="form-control" required/></label><label>Ora<input asp-for="Kickoff" type="time" class="form-control"/></label>
 <input asp-for="Competition" type="hidden"/><label>Vendi<input asp-for="Venue" class="form-control" maxlength="150"/></label>
@@ -34,7 +35,7 @@
 @if(Model.Id!=0){
 <h2>Rezultati</h2><div class="match-fields">
 <label>Kohëzgjatja (min)<input asp-for="Duration" type="number" min="1" max="300" class="form-control" required/></label>
-<label>Lojtarë në fushë<input asp-for="PlayersOnCourt" type="number" min="1" max="30" class="form-control" required/></label>
+<label>Lojtarë në fushë<input asp-for="PlayersOnCourt" readonly="@(Model.Sport=="Football" && Model.LeagueId.HasValue)" type="number" min="1" max="30" class="form-control" required/></label>
 @if(!staged){<label>Rezultati ynë<input asp-for="ScoreFor" type="number" min="0" max="999" class="form-control"/></label><label>Kundërshtari<input asp-for="ScoreAgainst" type="number" min="0" max="999" class="form-control"/></label>
 <label>Statusi<select asp-for="Status" class="form-select"><option value="Draft">Në përgatitje</option><option value="Completed">Përfunduar</option><option value="Cancelled">Anuluar</option></select></label>}
 </div>

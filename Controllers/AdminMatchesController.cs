@@ -15,6 +15,29 @@ public class AdminMatchesController(ApplicationDbContext db,GeminiFixtureService
     private string Actor=>User.FindFirstValue(ClaimTypes.NameIdentifier)!;
     private MatchService Service=>new(db);
 
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var game = await db.MatchGames.AsNoTracking().Include(g => g.TrainingTeam).SingleOrDefaultAsync(g => g.Id == id);
+        return game == null ? NotFound() : View(game);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, ActionName("Delete")]
+    public async Task<IActionResult> DeleteConfirmed(int id, Guid revision)
+    {
+        try
+        {
+            await new MatchDeletionService(db).Delete(id, revision);
+            TempData["Success"] = "Ndeshja u fshi.";
+            return RedirectToAction("Index", "Home");
+        }
+        catch (UnauthorizedAccessException) { return NotFound(); }
+        catch (ValidationException ex) { ModelState.AddModelError("", ex.Message); }
+        catch (DbUpdateConcurrencyException) { ModelState.AddModelError("", "Ndeshja ndryshoi. Rihapni faqen para fshirjes."); }
+        var game = await db.MatchGames.AsNoTracking().Include(g => g.TrainingTeam).SingleOrDefaultAsync(g => g.Id == id);
+        return game == null ? NotFound() : View("Delete", game);
+    }
+
     public async Task<IActionResult> Index(int? teamId,int? year)
     {
         var selectedYear=year??BillingClock.Today.Year;
@@ -83,6 +106,12 @@ public class AdminMatchesController(ApplicationDbContext db,GeminiFixtureService
         catch(DbUpdateConcurrencyException){ModelState.AddModelError("","Ndeshja ndryshoi. Rihapeni para ruajtjes.");}
         try{
             var fresh=await Service.Load(Actor,input.Id,input.TeamId,true);
+            if(fresh.Sport=="Football" && input.LeagueId.HasValue)
+            {
+                var capacity=fresh.Status=="Draft"?fresh.Leagues.FirstOrDefault(l=>l.Id==input.LeagueId)?.PlayersOnCourt:fresh.PlayersOnCourt;
+                if(capacity.HasValue){input.PlayersOnCourt=capacity.Value;ModelState.Remove(nameof(input.PlayersOnCourt));
+                    if(capacity!=11){input.Formation="Auto";ModelState.Remove(nameof(input.Formation));}}
+            }
             input.Leagues=fresh.Leagues;input.DisciplineAlerts=fresh.DisciplineAlerts;input.HasDisciplineRule=fresh.HasDisciplineRule;input.TeamName=fresh.TeamName;input.Sport=fresh.Sport;
             foreach(var player in input.Players){var known=fresh.Players.SingleOrDefault(x=>x.StudentId==player.StudentId);if(known==null)return NotFound();player.Name=known.Name;player.Care=known.Care;}
             return View("~/Views/Matches/Edit.cshtml",input);

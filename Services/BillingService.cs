@@ -192,7 +192,7 @@ public partial class BillingService(ApplicationDbContext db)
     public Task<int> ExemptAsync(ExemptInvoiceModel input, string actorId) => WriteAsync(async () =>
     {
         Validator.ValidateObject(input, new ValidationContext(input), true);
-        if (input.ExemptionType is not ("Sickness" or "Vacation")) throw new InvalidOperationException("Zgjidhni sëmundje ose pushime.");
+        if (input.ExemptionType is not ("Sickness" or "Vacation" or "Other")) throw new InvalidOperationException("Zgjidhni sëmundje, pushime ose arsye tjetër.");
         var period = await db.MonthlyFeePeriods.FindAsync(input.PeriodId) ?? throw new InvalidOperationException("Fatura nuk u gjet.");
         var invoice = (await GetInvoicesAsync(period.StudentId)).Single(i => i.Period.Id == period.Id);
         if (invoice.IsSeasonal) throw new InvalidOperationException("Muaji mbulohet nga pagesa sezonale. Për korrigjim, anuloni fillimisht sezonin me arsye.");
@@ -259,6 +259,12 @@ public partial class BillingService(ApplicationDbContext db)
         Description = description, Debit = debit, Credit = credit, ReferenceType = referenceType,
         ReferenceId = referenceId, CreatedByUserId = actorId, CreatedAt = DateTime.UtcNow, TransactionDate = DateTime.UtcNow
     };
-    public static string TypeLabel(string type) => type == "Sickness" ? "Sëmundje" : "Pushime";
+    public static string TypeLabel(string type) => type switch
+    {
+        "Sickness" => "Sëmundje",
+        "Vacation" => "Pushime",
+        "Other" => "Arsye tjetër",
+        _ => type
+    };
     public static string MethodLabel(string method) => method switch { "Cash" => "Para në dorë", "Bank" => "Bankë", _ => "Tjetër" };
 }

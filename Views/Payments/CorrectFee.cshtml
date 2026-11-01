@@ -1,0 +1,21 @@
+@model CorrectMonthlyFeeModel
+@{ ViewData["Title"] = "Korrigjo tarifën"; }
+<div class="page-heading mt-3"><div><h1>Korrigjo tarifën e faturës</h1><p>@Model.Invoice!.Student.FullName · @Model.Invoice.MonthLabel</p></div></div>
+<div class="panel p-4">
+    <div class="table-responsive"><table class="table"><thead><tr><th>Tarifa aktuale</th><th>Mbuluar</th><th>Borxhi aktual</th></tr></thead><tbody><tr><td>@Model.Invoice.Amount.ToString("N2")</td><td>@Model.Invoice.Paid.ToString("N2")</td><td>@Model.Invoice.Due.ToString("N2")</td></tr></tbody></table></div>
+    <p>Korrigjimi vlen vetëm për këtë faturë. Pagesa e regjistruar ruhet. Për muajt e ardhshëm përdorni <a asp-controller="Tariffs" asp-action="Assign" asp-route-id="@Model.Invoice.Student.Id">Ndrysho kategorinë</a>.</p>
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    @if(Model.Invoice.CanCorrectFee)
+    {
+        <form method="post" data-financial-confirm>
+            <input asp-for="PeriodId" type="hidden"/><input asp-for="ExpectedRevision" type="hidden"/>
+            <div class="mb-3"><label asp-for="Amount" class="form-label">Tarifa e saktë e faturës</label><input asp-for="Amount" type="number" min="0" max="999999999.99" step="0.01" required class="form-control"/><small>Shkruani tarifën përfundimtare, p.sh. 30.00 për korrigjimin nga 50.00 në 30.00.</small></div>
+            <div class="mb-3"><label asp-for="Reason" class="form-label">Arsyeja e korrigjimit</label><textarea asp-for="Reason" maxlength="200" required class="form-control" rows="3"></textarea></div>
+            <button class="btn btn-primary">Ruaj korrigjimin</button>
+        </form>
+    }
+    else { <p>Kjo faturë është sezonale ose ka lirim aktiv dhe nuk mund të korrigjohet këtu.</p> }
+</div>
+@section PageNavigation {
+    <a class="btn btn-outline-secondary app-back-button" asp-action="Account" asp-route-id="@Model.Invoice.Student.Id">Mbrapa</a>
+}

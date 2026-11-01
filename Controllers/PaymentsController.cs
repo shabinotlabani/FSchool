@@ -210,6 +210,39 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
     }
 
     [HttpGet, Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> CorrectFee(int id)
+    {
+        await using var snapshot = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
+        var period = await db.MonthlyFeePeriods.AsNoTracking().SingleOrDefaultAsync(p => p.Id == id);
+        if (period == null) return NotFound();
+        var invoice = (await billing.GetInvoicesAsync(period.StudentId)).Single(i => i.Period.Id == id);
+        var model = new CorrectMonthlyFeeModel { PeriodId = id, Invoice = invoice, Amount = invoice.Amount,
+            ExpectedRevision = await billing.CorrectionRevisionAsync(period.StudentId) };
+        await snapshot.CommitAsync();
+        return View(model);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> CorrectFee(CorrectMonthlyFeeModel model)
+    {
+        var period = await db.MonthlyFeePeriods.AsNoTracking().SingleOrDefaultAsync(p => p.Id == model.PeriodId);
+        if (period == null) return NotFound();
+        if (ModelState.IsValid)
+        {
+            try
+            {
+                var studentId = await billing.CorrectMonthlyFeeAsync(model, ActorId);
+                TempData["Success"] = "Tarifa e faturës u korrigjua. Pagesat dhe historiku u ruajtën. Për muajt e ardhshëm përdorni Ndrysho kategorinë.";
+                return RedirectToAction(nameof(Account), new { id = studentId });
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ValidationException)
+            { ModelState.AddModelError("", ex.Message); }
+        }
+        model.Invoice = (await billing.GetInvoicesAsync(period.StudentId)).Single(i => i.Period.Id == period.Id);
+        return View(model);
+    }
+
+    [HttpGet, Authorize(Roles = Roles.Admin)]
     public async Task<IActionResult> Exempt(int id)
     {
         var period = await db.MonthlyFeePeriods.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);

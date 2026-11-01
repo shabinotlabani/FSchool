@@ -33,13 +33,13 @@ if(games.Count==0){continue;}
 <section id="week-day-@i" class="week-day @(date<today?"is-past":date==today?"is-today":"is-future")">
 <header class="week-day-heading"><div><span class="week-date">@date.ToString("dd.MM")</span><h2>@days[i]</h2><span class="week-day-state">@(date<today?"Kaluar":date==today?"Sot":"Pritet")</span></div><span class="week-day-count">@games.Count ndeshje</span></header>
 <div class="week-games">@foreach(var game in games){var done=game.Status=="Completed";var live=game.Status=="Live"&&game.Date==today;var cancelled=game.Status=="Cancelled";var scorers=game.Events.Where(e=>e.PlayerId.HasValue&&(e.Kind is "Goal" or "PenaltyGoal")).GroupBy(e=>e.PlayerId!.Value).Select(g=>new{Name=game.Players.FirstOrDefault(p=>p.StudentId==g.Key)?.Name??"Lojtar",Goals=g.Count()}).ToList();var coach=string.Join(" ",new[]{game.TrainingTeam.Coach?.FirstName,game.TrainingTeam.Coach?.LastName}.Where(x=>!string.IsNullOrWhiteSpace(x)));if(string.IsNullOrWhiteSpace(coach)){coach=game.TrainingTeam.Coach?.Email??"Pa trajner";}
-<a class="week-game @(done?"completed":live?"live":cancelled?"cancelled":"upcoming")" asp-action="MatchReport" asp-route-id="@game.Id">
+<article class="week-game @(done?"completed":live?"live":cancelled?"cancelled":"upcoming")">
 <div class="week-game-top"><span>@(game.Competition??"Miqësore")</span><span class="week-game-status"><i></i>@(done?"Përfunduar":live?"Në lojë":cancelled?"Anuluar":game.Date<today?"Pa rezultat":"E planifikuar")</span></div>
 <div class="week-matchup"><div class="week-team"><span class="week-team-mark" aria-hidden="true">@(string.IsNullOrWhiteSpace(game.TrainingTeam.Name)?"K":game.TrainingTeam.Name[..1])</span><strong>@game.TrainingTeam.Name</strong></div><div class="week-score">@if(done||live){<strong>@game.ScoreFor <span>:</span> @game.ScoreAgainst</strong>}else{<strong class="week-kickoff">@(game.Kickoff?.ToString("HH:mm")??"—")</strong><small>@(game.Kickoff.HasValue?"Fillimi":"Pa orar")</small>}</div><div class="week-team opponent"><span class="week-team-mark" aria-hidden="true">@(string.IsNullOrWhiteSpace(game.Opponent)?"K":game.Opponent[..1])</span><strong>@game.Opponent</strong></div></div>
 @if(scorers.Count>0){<div class="week-scorers">@foreach(var scorer in scorers){<span>⚽ @scorer.Name@if(scorer.Goals>1){<b>×@scorer.Goals</b>}</span>}</div>}
 <div class="week-coach"><span aria-hidden="true">◉</span> @coach</div>
-<div class="week-game-bottom"><span>@(game.Home?"Vendas":"Mysafir")@if(!string.IsNullOrWhiteSpace(game.Venue)){<text> · @game.Venue</text>}@if((done||live)&&game.Kickoff.HasValue){<text> · @game.Kickoff.Value.ToString("HH:mm")</text>}</span><strong>@(done?"Raporti":"Detajet") ↗</strong></div>
-</a>}</div>
+<div class="week-game-bottom"><span>@(game.Home?"Vendas":"Mysafir")@if(!string.IsNullOrWhiteSpace(game.Venue)){<text> · @game.Venue</text>}@if((done||live)&&game.Kickoff.HasValue){<text> · @game.Kickoff.Value.ToString("HH:mm")</text>}</span><a asp-action="MatchReport" asp-route-id="@game.Id">@(done?"Raporti":"Detajet") ↗</a>@if(User.IsInRole(Roles.Admin)){<a asp-controller="AdminMatches" asp-action="Delete" asp-route-id="@game.Id" class="text-danger">Fshi</a>}</div>
+</article>}</div>
 </section>}
 </div>
 </div>

@@ -9,6 +9,7 @@
 <label>Organizatori<input asp-for="Organizer" class="form-control" list="organizers" required/><datalist id="organizers"><option value="FFK"/><option value="UEFA"/><option value="FIFA"/></datalist></label>
 <label>Shteti<input asp-for="Country" class="form-control" required/></label>
 <label>Sporti<input asp-for="Sport" class="form-control" required/></label>
+<label>Formati i futbollit<select asp-for="PlayersOnCourt" class="form-select">@for(var total=2;total<=11;total++){<option value="@total">@(total-1)+1 · @total lojtarë gjithsej</option>}</select><small>Përfshin një portier. Vlen për ndeshjet e reja dhe formacionet ende të pakonfirmuara.</small></label>
 <label>Gjinia<select asp-for="Gender" class="form-select"><option value="Male">Meshkuj</option><option value="Female">Femra</option><option value="Mixed">Përzier</option></select></label>
 <label>Sezoni<input asp-for="Season" class="form-control" required readonly/></label>
 <label>Kategoria<input asp-for="AgeCategory" class="form-control" list="ages" required/><datalist id="ages"><option value="Senior"/><option value="U21"/><option value="U19"/><option value="U17"/><option value="U16"/><option value="U15"/></datalist></label>

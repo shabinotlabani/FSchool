@@ -2090,6 +2090,11 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("PlayersOnCourt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(11);
+
                     b.Property<int>("RedBan")
                         .HasColumnType("integer");
 

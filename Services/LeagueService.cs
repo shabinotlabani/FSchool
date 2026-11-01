@@ -61,6 +61,7 @@ public class LeagueService(ApplicationDbContext db)
         row.Name=input.Name.Trim();row.Kind=input.Kind;row.Country=input.Country.Trim();row.Organizer=input.Organizer.Trim();row.Sport=input.Sport;row.Gender=input.Gender;row.Season=input.Season.Trim();
         row.AgeCategory=input.AgeCategory.Trim();row.CompetitionScope=input.CompetitionScope;row.CompetitionType=input.CompetitionType;row.Division=input.Division?.Trim();row.Group=input.Group?.Trim();row.Stage=input.Stage;row.IsOfficial=input.IsOfficial;row.IsVerified=input.IsVerified;
         row.StartsOn=input.StartsOn;row.EndsOn=input.EndsOn;row.IsActive=input.IsActive;row.RulesConfirmed=true;
+        row.PlayersOnCourt=input.PlayersOnCourt;
         row.YellowThreshold=3;row.YellowBan=1;row.RedBan=1;row.SecondYellowBan=1;row.CountDismissalYellows=false;
         row.UpdatedById=actor;row.UpdatedAt=DateTime.UtcNow;row.Revision=Guid.NewGuid();
         foreach(var removed in row.Teams.Where(t=>!ids.Contains(t.TrainingTeamId)).ToList()){db.LeagueTeams.Remove(removed);row.Teams.Remove(removed);}

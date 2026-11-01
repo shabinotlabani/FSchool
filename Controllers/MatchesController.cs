@@ -105,6 +105,12 @@ public class MatchesController(ApplicationDbContext db) : Controller
         try{
             var fresh=await Service.Load(Actor,input.Id,input.TeamId);
             input.Status=fresh.Status;ModelState.Remove(nameof(input.Status));
+            if(fresh.Sport=="Football" && input.LeagueId.HasValue)
+            {
+                var capacity=fresh.Status=="Draft"?fresh.Leagues.FirstOrDefault(l=>l.Id==input.LeagueId)?.PlayersOnCourt:fresh.PlayersOnCourt;
+                if(capacity.HasValue){input.PlayersOnCourt=capacity.Value;ModelState.Remove(nameof(input.PlayersOnCourt));
+                    if(capacity!=11){input.Formation="Auto";ModelState.Remove(nameof(input.Formation));}}
+            }
             input.Leagues=fresh.Leagues;input.DisciplineAlerts=fresh.DisciplineAlerts;input.HasDisciplineRule=fresh.HasDisciplineRule;input.TeamName=fresh.TeamName;input.Sport=fresh.Sport;input.CallUpCandidates=fresh.CallUpCandidates;
             if(input.Players==null)return BadRequest();
             foreach(var p in input.Players){var known=fresh.Players.SingleOrDefault(x=>x.StudentId==p.StudentId);if(known==null)return NotFound();p.Name=known.Name;p.Care=known.Care;}

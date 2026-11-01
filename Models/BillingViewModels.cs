@@ -16,6 +16,7 @@ public class MonthlyInvoiceView
     public bool CanEditFirstMonth => Student.FirstMonthUsesWeeks && Period.FirstMonthWeeks.HasValue && !IsSeasonal && !Period.IsFeeWaived && Paid==0 && Exempted==0
         && Period.Year==TariffService.CurrentMonth.Year && Period.Month==TariffService.CurrentMonth.Month
         && BillingClock.LocalDate(Student.RegistrationDate).Year==Period.Year && BillingClock.LocalDate(Student.RegistrationDate).Month==Period.Month;
+    public bool CanCorrectFee => !IsSeasonal && !Period.IsFeeWaived && Exempted == 0;
     public bool CanExempt => !IsSeasonal && !Period.IsFeeWaived && Paid == 0 && Due > 0 && Exempted == 0;
     public decimal Due => Math.Max(0, Amount - Exempted - Paid);
     public string Number => $"2K-{Period.Year}{Period.Month:00}-{Period.StudentId:00000}";

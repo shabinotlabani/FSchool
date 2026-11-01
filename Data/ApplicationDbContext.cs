@@ -336,6 +336,7 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<DevelopmentRecord>().Property(x=>x.SchemaData).HasDefaultValue("");
         builder.Entity<PlayerEvaluation>().Property(x=>x.Sport).HasDefaultValue("Football");
         builder.Entity<DevelopmentMetric>().HasIndex(x=>new{x.Sport,x.Section,x.Key}).IsUnique();
+        builder.Entity<League>().Property(x=>x.PlayersOnCourt).HasDefaultValue(11);
         builder.Entity<MatchGame>().HasIndex(x=>x.RequestId).IsUnique();
         builder.Entity<MatchGame>().Ignore(x=>x.Events);
         builder.Entity<MatchGame>().Property(x=>x.EventData).HasDefaultValue("[]");
