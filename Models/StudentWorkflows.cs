@@ -23,7 +23,7 @@ public class FamilyChildInput : IValidatableObject
             yield return new("Datëlindja duhet të jetë e vlefshme dhe jo në të ardhmen.");
     }
 }
-public class FamilyRegistrationModel : IValidatableObject
+public class FamilyRegistrationModel : DuplicateAcknowledgement, IValidatableObject
 {
     [Required, RegularExpression("Cash|Bank"), StringLength(10)] public string PreferredPaymentMethod { get; set; } = "Cash";
     [Range(1,int.MaxValue)] public int FeePlanId { get; set; }

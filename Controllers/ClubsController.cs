@@ -12,9 +12,49 @@ namespace _2Korriku.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class ClubsController(ApplicationDbContext db, IDataProtectionProvider protection) : Controller
 {
+    [AllowAnonymous, HttpGet]
+    public IActionResult Register() => View(new ClubRegistrationInput());
+
+    [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("club-registration")]
+    public async Task<IActionResult> Register(ClubRegistrationInput input)
+    {
+        if (!ModelState.IsValid) return View(input);
+        db.ClubRegistrations.Add(new ClubRegistration {
+            Name = input.Name.Trim(), Activity = input.Activity.Trim(),
+            Email = input.Email.Trim(), Phone = input.Phone.Trim()
+        });
+        await db.SaveChangesAsync();
+        return RedirectToAction(nameof(RegistrationThanks));
+    }
+
+    [AllowAnonymous, HttpGet]
+    public IActionResult RegistrationThanks() => View();
+
+    [HttpGet]
+    public async Task<IActionResult> Requests()
+    {
+        if (!db.Club.IsOwner) return Forbid();
+        return View(await db.ClubRegistrations.AsNoTracking()
+            .OrderBy(x => x.ReviewedAt != null).ThenByDescending(x => x.CreatedAt).ToListAsync());
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReviewRequest(int id)
+    {
+        if (!db.Club.IsOwner) return Forbid();
+        var request = await db.ClubRegistrations.SingleOrDefaultAsync(x => x.Id == id);
+        if (request == null) return NotFound();
+        request.ReviewedAt ??= DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        TempData["Success"] = "Kërkesa u shënua si e shqyrtuar. Klubi dhe llogaria krijohen veçmas nga ju.";
+        return RedirectToAction(nameof(Requests));
+    }
+
     public async Task<IActionResult> Index()
     {
         if (!db.Club.IsOwner) return Forbid();
+        ViewBag.PendingRequests = await db.ClubRegistrations.CountAsync(x => x.ReviewedAt == null);
         return View(await db.Clubs.AsNoTracking().OrderBy(x => x.Name).ToListAsync());
     }
 

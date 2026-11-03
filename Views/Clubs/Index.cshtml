@@ -2,6 +2,7 @@
 @{ Layout = "_ClubLayout"; ViewData["Title"] = "Klubet"; }
 <header class="club-heading"><div><h1>Te cili klub do të futesh?</h1></div><a class="club-button primary" asp-action="Edit">+ Shto klub</a></header>
 @if(TempData["Success"] is string success){<div class="club-notice">@success</div>}
+<p><a class="club-button" asp-action="Requests">Kërkesat për regjistrim · @ViewBag.PendingRequests në pritje</a></p>
 @if(TempData["Error"] is string error){<div class="club-notice error">@error</div>}
 <div class="club-table-wrap"><table class="club-table"><thead><tr><th>Klubi</th><th>Skadenca</th><th>Statusi</th><th></th></tr></thead><tbody>
 @foreach(var club in Model){

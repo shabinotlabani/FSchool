@@ -20,9 +20,10 @@ public class StudentsController : Controller
         _financialService = financialService;
     }
 
-    public async Task<IActionResult> Index(string? search)
+    public async Task<IActionResult> Index(string? search, int page = 1)
     {
         search = search?.Trim();
+        if (search?.Length > 150) return BadRequest("Kërkimi mund të ketë deri në 150 karaktere.");
         ViewData["Search"] = search;
         var query = _context.Students.AsNoTracking().Include(s=>s.TrainingTeam).AsQueryable();
 
@@ -39,9 +40,19 @@ public class StudentsController : Controller
             }
         }
 
+        const int pageSize = 10;
+        var total = await query.CountAsync();
+        var pages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
+        page = Math.Clamp(page, 1, pages);
+        ViewData["Page"] = page;
+        ViewData["Pages"] = pages;
+        ViewData["Total"] = total;
+        ViewData["FirstResult"] = total == 0 ? 0 : (page - 1) * pageSize + 1;
+        // Apply the limit in PostgreSQL before loading players or computing financial details.
         var students = await query
-            .OrderBy(x => x.LastName)
-            .ThenBy(x => x.FirstName)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
 
         var model = new List<StudentListItem>();
@@ -80,6 +91,15 @@ public class StudentsController : Controller
         var model=new StudentRegistrationModel{FeePlanId=await new TariffService(_context).StandardPlanIdAsync()};
         await RegistrationChoices(model);return View(model);
     }
+
+    [HttpPost, ValidateAntiForgeryToken, Authorize(Roles = Roles.Write)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public async Task<IActionResult> CheckDuplicates(string? firstName, string? lastName, string? phone, string? parentPhone)
+    {
+        if ((firstName?.Length ?? 0) > 100 || (lastName?.Length ?? 0) > 100 || (phone?.Length ?? 0) > 50 || (parentPhone?.Length ?? 0) > 50) return BadRequest();
+        var review = await new StudentDuplicateService(_context).FindAsync([new(firstName, lastName, phone, parentPhone)]);
+        return PartialView("_DuplicateWarning", review);
+    }
     private async Task RegistrationChoices(StudentRegistrationModel model)
     {
         model.FeePlans=(await AvailablePlans()).Where(p=>!p.IsFamily).ToList();
@@ -115,6 +135,8 @@ public class StudentsController : Controller
         {
             await using var transaction = await _context.Database.BeginTransactionAsync();
             await _context.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
+            await new StudentDuplicateService(_context).RequireReviewAsync(
+                [new(model.FirstName, model.LastName, model.Phone, model.ParentPhone)], model.ConfirmDuplicate, model.DuplicateToken);
             if(!model.IsContractPlayer&&model.RegistrationPayment=="Seasonal" && (await _context.Payments.AnyAsync(p=>p.RequestId==model.SeasonalRequestId)||await _context.PendingBankPayments.AnyAsync(p=>p.RequestId==model.SeasonalRequestId)))
                 throw new InvalidOperationException("Ky regjistrim sezonal është ruajtur tashmë. Kontrolloni listën e lojtarëve.");
             var team=await new TeamService(_context).ValidatePlacementAsync(model.TrainingTeamId,student.DateOfBirth);
@@ -153,6 +175,7 @@ public class StudentsController : Controller
             }
             await transaction.CommitAsync();
         }
+        catch (StudentDuplicateWarning ex) { ViewData["DuplicateReview"] = ex.Review; ModelState.AddModelError(string.Empty, ex.Message); return View(model); }
         catch (Exception ex) when(ex is InvalidOperationException or System.ComponentModel.DataAnnotations.ValidationException) { ModelState.AddModelError(string.Empty,ex.Message); return View(model); }
         catch (DbUpdateException)
         {
@@ -184,6 +207,7 @@ public class StudentsController : Controller
             TempData["Success"]="Fëmijët u regjistruan së bashku. Faturat e para u krijuan sipas paketës së plotë familjare.";
             return RedirectToAction("Details","Families",new{id});
         }
+        catch(StudentDuplicateWarning ex){ViewData["DuplicateReview"] = ex.Review; ModelState.AddModelError("",ex.Message);}
         catch(Exception ex)when(ex is InvalidOperationException or System.ComponentModel.DataAnnotations.ValidationException){ModelState.AddModelError("",ex.Message);}
         catch(DbUpdateException){ModelState.AddModelError("","Regjistrimi nuk u ruajt. Asnjë pjesë e paketës nuk është regjistruar; kontrolloni të dhënat dhe provoni përsëri.");}
         if(model.Children==null||model.Children.Count==0)model.Children=[new(),new()];

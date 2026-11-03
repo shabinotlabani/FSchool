@@ -28,6 +28,8 @@ public class StudentWorkflowService(ApplicationDbContext db)
         // Hold the same locks and order as individual registration. Each saved
         // child reserves a team seat before the following child is checked.
         await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
+        await new StudentDuplicateService(db).RequireReviewAsync(input.Children.Select(c =>
+            new StudentDuplicateInput(c.FirstName, c.LastName, c.Phone, input.ParentPhone)), input.ConfirmDuplicate, input.DuplicateToken);
         PlayerFamily family;
         if(input.FamilyId.HasValue)
             family=await db.PlayerFamilies.SingleOrDefaultAsync(f=>f.Id==input.FamilyId)??throw new InvalidOperationException("Familja nuk u gjet.");

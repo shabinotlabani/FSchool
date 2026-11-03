@@ -11,17 +11,22 @@ public partial class ApplicationDbContext
     public int CurrentClubId => Club.ClubId;
     public bool IdentityAccess => Club.IdentityAccess;
     public DbSet<ClubTenant> Clubs => Set<ClubTenant>();
+    public DbSet<ClubRegistration> ClubRegistrations => Set<ClubRegistration>();
 
     private void ConfigureClubs(ModelBuilder builder)
     {
         builder.Entity<ClubTenant>().ToTable("Clubs");
+        builder.Entity<ClubRegistration>().ToTable("ClubRegistrations");
+        builder.Entity<ClubRegistration>().HasIndex(x => x.CreatedAt);
+        builder.Entity<ClubRegistration>().HasQueryFilter(x => Club.IsOwner);
         builder.Entity<ClubTenant>().HasData(new ClubTenant { Id = 1, Name = "2 Korriku", IsActive = true,
             CreatedAt = new DateTime(2026, 10, 23, 0, 0, 0, DateTimeKind.Utc) });
         builder.Entity<ApplicationUser>().Property(x => x.ClubId).HasDefaultValue(1);
         builder.Entity<ApplicationUser>().HasOne<ClubTenant>().WithMany().HasForeignKey(x => x.ClubId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<ApplicationUser>().HasQueryFilter(x => IdentityAccess || x.ClubId == CurrentClubId || x.IsPlatformOwner);
         var entities = builder.Model.GetEntityTypes().Where(e => e.ClrType.Namespace == typeof(Student).Namespace
-            && e.ClrType != typeof(ApplicationUser) && e.ClrType != typeof(ClubTenant)).ToList();
+            && e.ClrType != typeof(ApplicationUser) && e.ClrType != typeof(ClubTenant)
+            && e.ClrType != typeof(ClubRegistration)).ToList();
         foreach (var entity in entities)
         {
             var eb = builder.Entity(entity.ClrType);
@@ -59,6 +64,16 @@ public partial class ApplicationDbContext
         var staffIds = new HashSet<string>();
         foreach (var entry in changes)
         {
+            if (entry.Entity is ClubRegistration registration)
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    registration.CreatedAt = DateTime.UtcNow;
+                    registration.ReviewedAt = null;
+                }
+                else if (!Club.IsOwner) throw new InvalidOperationException("Vetëm pronari mund të shqyrtojë kërkesat.");
+                continue;
+            }
             if (entry.Entity is ClubTenant)
             {
                 if (!Club.ManagePlatform) throw new InvalidOperationException("Nuk keni qasje në menaxhimin e klubeve.");

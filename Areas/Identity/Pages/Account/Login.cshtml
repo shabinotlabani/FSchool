@@ -75,6 +75,7 @@
                     <label class="remember"><input asp-for="Input.RememberMe" /> @Model.T("Remember")</label>
                     <button type="submit" class="submit-button" data-loading="@Model.T("Loading")"><span class="submit-label">@Model.T("Title")</span><span class="submit-arrow" aria-hidden="true">→</span><span class="submit-spinner" aria-hidden="true"></span></button><span id="login-status" class="visually-hidden" role="status" aria-live="polite"></span>
                 </form>
+                <p style="text-align:center;margin:22px 0 0;font-size:14px">Dëshironi të bashkoheni? <a asp-area="" asp-controller="Clubs" asp-action="Register" style="font-weight:600;color:#183d68">Regjistro Klubin</a></p>
             </div>
             <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>@Model.T("Credit") <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
         </section>

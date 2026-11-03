@@ -41,12 +41,29 @@
       "FamilyPickerCreated": "Familja e krijuar"
     },
     "Details": {
+      "Index": {
+        "Summary": "Lista shfaq 10 lojtarët e fundit; kërkimi kontrollon të gjithë lojtarët e klubit.",
+        "Steps": [
+          "Shkruani emrin, mbiemrin, prindin ose telefonin dhe shtypni Kërko lojtar.",
+          "Përdorni 10 të tjerë për faqen pasuese; kërkimi mbetet i njëjtë.",
+          "Hapni kartelën e lojtarit ose pastroni kërkimin për t’u kthyer te regjistrimet e fundit."
+        ]
+      },
+      "Create": {
+        "Summary": "Regjistroni lojtarin dhe kontrolloni nëse ekziston tashmë sipas emrit e mbiemrit ose telefonit.",
+        "Steps": [
+          "Plotësoni emrin, mbiemrin dhe telefonin e lojtarit ose të prindit.",
+          "Nëse shfaqen përputhje, krahasoni datëlindjen, ekipin dhe kontaktet; hapni lojtarin ekzistues nëse është i njëjti person.",
+          "Vetëm nëse është person tjetër, shënoni se i kontrolluat përputhjet dhe vazhdoni regjistrimin."
+        ]
+      },
       "CreateFamily": {
         "Summary": "Regjistroni disa fëmijë në një proces të përbashkët me paketën familjare.",
         "Steps": [
           "Plotësoni të dhënat e përbashkëta të prindit.",
           "Plotësoni veçmas çdo fëmijë dhe kontrolloni ekipin e tij.",
-          "Kontrolloni paketën dhe tarifat para regjistrimit të përbashkët."
+          "Kontrolloni paketën dhe tarifat para regjistrimit të përbashkët.",
+          "Nëse ka lojtarë ekzistues me të njëjtin emër e mbiemër ose telefon, kontrolloni tabelën dhe konfirmoni vetëm kur fëmijët janë persona të tjerë."
         ],
         "Notes": [
           "Regjistrimi i përbashkët i llogarit anëtarët së bashku që në faturimin fillestar."
@@ -1018,9 +1035,25 @@
     "Pages": {
       "Index": "Zgjedhja e klubit",
       "Edit": "Editimi i klubit",
-      "Expired": "Afati i qasjes në klub"
+        "Expired": "Afati i qasjes në klub",
+        "Register": "Regjistro Klubin",
+        "RegistrationThanks": "Kërkesa u pranua",
+        "Requests": "Kërkesat për regjistrim"
     },
-    "Details": {}
+      "Details": {
+        "Register": {
+          "Summary": "Dërgoni interesimin për klubin tuaj. Kërkesa ruhet në pritje dhe shqyrtohet nga pronari i platformës.",
+          "Steps": ["Shkruani emrin e klubit dhe llojin e aktivitetit.", "Plotësoni emailin dhe numrin e kontaktit ku mund t’ju njoftojmë.", "Dërgoni kërkesën dhe prisni kontaktimin; klubi dhe llogaria nuk hapen automatikisht."]
+        },
+        "RegistrationThanks": {
+          "Summary": "Kërkesa u dërgua për shqyrtim.",
+          "Steps": ["Kërkesa mbetet në pritje.", "Do t’ju kontaktojmë përmes emailit ose telefonit të dhënë.", "Të dhënat e hyrjes dërgohen pas shqyrtimit nga pronari."]
+        },
+        "Requests": {
+          "Summary": "Vetëm pronari i platformës shikon dhe shqyrton kërkesat e klubeve të reja.",
+          "Steps": ["Lexoni kërkesat në pritje dhe kontrolloni aktivitetin e kontaktet.", "Kontaktoni klubin dhe shënoni kërkesën si të shqyrtuar pasi ta keni trajtuar.", "Krijoni klubin dhe llogarinë veçmas, pastaj dërgojini vetë të dhënat e hyrjes."]
+        }
+      }
   },
   {
     "Key": "DataReset",

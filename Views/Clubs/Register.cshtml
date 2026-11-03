@@ -1,0 +1,26 @@
+@model ClubRegistrationInput
+@{ Layout = "_ClubLayout"; ViewData["Title"] = "Regjistro Klubin"; }
+<section class="registration-intro">
+    <p class="registration-eyebrow">Bëhuni pjesë e UPNEXT</p>
+    <h1>Regjistro Klubin</h1>
+    <p>Na tregoni pak për klubin tuaj. Do ta shqyrtojmë kërkesën dhe do t’ju kontaktojmë për hapat e ardhshëm.</p>
+</section>
+<form asp-action="Register" method="post" class="club-form registration-form">
+    <div asp-validation-summary="ModelOnly" class="club-error" role="alert"></div>
+    <label asp-for="Name"></label>
+    <input asp-for="Name" autocomplete="organization" maxlength="100" required placeholder="Emri i klubit tuaj" />
+    <span asp-validation-for="Name" class="club-error"></span>
+    <label asp-for="Activity"></label>
+    <input asp-for="Activity" list="activities" maxlength="100" required placeholder="P.sh. futboll, basketboll, not…" />
+    <datalist id="activities">@foreach(var sport in _2Korriku.Services.SportDevelopmentService.Sports.Values){<option value="@sport"></option>}</datalist>
+    <span asp-validation-for="Activity" class="club-error"></span>
+    <label asp-for="Email"></label>
+    <input asp-for="Email" type="email" autocomplete="email" maxlength="254" required placeholder="klubi@shembull.com" />
+    <span asp-validation-for="Email" class="club-error"></span>
+    <label asp-for="Phone"></label>
+    <input asp-for="Phone" type="tel" autocomplete="tel" maxlength="30" required placeholder="+383 44 123 456" />
+    <span asp-validation-for="Phone" class="club-error"></span>
+    <p class="registration-note">Kërkesa mbetet në pritje të shqyrtimit. Të dhënat e hyrjes do t’jua dërgojmë pasi të përfundojmë shqyrtimin.</p>
+    <button class="club-button primary" type="submit">Dërgo kërkesën →</button>
+</form>
+<p class="registration-note">Keni llogari? <a asp-area="Identity" asp-page="/Account/Login">Hyni këtu</a></p>

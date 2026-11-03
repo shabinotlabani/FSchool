@@ -1,0 +1,21 @@
+@model _2Korriku.Services.StudentDuplicateReview
+@if(Model.Matches.Count > 0){
+<section class="border border-warning rounded p-3 mb-4 bg-light" aria-labelledby="duplicate-title">
+    <h2 id="duplicate-title" class="h5">Ky lojtar mund të jetë regjistruar më parë</h2>
+    <p>U gjetën përputhje me <strong>emrin dhe mbiemrin</strong> ose <strong>numrin e telefonit</strong>. Kontrolloni detajet para regjistrimit. Fëmijë të ndryshëm mund të kenë të njëjtin numër të prindit.</p>
+    <p class="small text-secondary mb-2">Lëvizni tabelën anash për të parë të gjithë telefonat dhe lidhjen e detajeve.</p>
+    <div class="table-responsive" tabindex="0" role="region" aria-label="Lojtarët me të dhëna të ngjashme"><table class="table table-sm align-middle" style="min-width:850px">
+        <thead><tr><th>Lojtari</th><th>Datëlindja</th><th>Ekipi / statusi</th><th>Prindi / kujdestari</th><th>Telefoni i lojtarit</th><th>Telefoni i prindit</th><th>Përputhja</th><th>Detajet</th></tr></thead>
+        <tbody>@foreach(var player in Model.Matches){<tr>
+            <td><strong>@player.FirstName @player.LastName</strong><small class="d-block">#@player.Id</small></td>
+            <td>@player.DateOfBirth.ToString("dd/MM/yyyy")</td><td>@(player.Team ?? "Pa ekip")<small class="d-block">@(player.IsActive ? "Aktiv" : "Joaktiv")</small></td>
+            <td>@(player.ParentName ?? "—")</td><td>@(player.Phone ?? "—")</td><td>@(player.ParentPhone ?? "—")</td>
+            <td>@(player.NameMatches && player.PhoneMatches ? "Emri + mbiemri dhe telefoni" : player.NameMatches ? "Emri + mbiemri" : "Telefoni")</td>
+            <td><a asp-action="Edit" asp-route-id="@player.Id" target="_blank" rel="noopener">Hap lojtarin ↗</a></td>
+        </tr>}</tbody>
+    </table></div>
+    <input type="hidden" name="DuplicateToken" value="@Model.Token" />
+    <label class="d-flex gap-2 align-items-start mt-3"><input type="checkbox" name="ConfirmDuplicate" value="true" required class="mt-1"/><span>I kontrollova përputhjet. Është person tjetër dhe dua të vazhdoj regjistrimin.</span></label>
+    <p class="small text-secondary mt-2 mb-0">Nëse është i njëjti lojtar, hapni regjistrimin ekzistues dhe mos e regjistroni përsëri.</p>
+</section>
+}

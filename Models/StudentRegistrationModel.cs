@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace _2Korriku.Models;
 
-public class StudentRegistrationModel : IValidatableObject
+public class StudentRegistrationModel : DuplicateAcknowledgement, IValidatableObject
 {
     public bool IsContractPlayer { get; set; }
     [Required,RegularExpression("Male|Female")] public string Gender { get; set; } = "Male";

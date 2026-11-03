@@ -15,6 +15,9 @@
     <form asp-action="Create" method="post" data-financial-confirm class="card shadow-sm p-3 p-md-4">
         @if(ViewData["FamilyPicker"] is true){<input type="hidden" name="familyPicker" value="true"/>}
         <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div id="duplicate-review" aria-live="polite" data-check-url="@Url.Action("CheckDuplicates")">
+            @if(ViewData["DuplicateReview"] is StudentDuplicateReview duplicates){<partial name="_DuplicateWarning" model="duplicates"/>}
+        </div>
         <label class="contract-player-choice mb-3"><input asp-for="IsContractPlayer" type="checkbox"/><span><strong>Lojtar me kontratë</strong><small>Regjistrohet pa obligim mujor. Kontrata plotësohet më vonë.</small></span></label>
         <div class="mb-3" id="registration-payment-method"><label asp-for="PreferredPaymentMethod" class="form-label">Pagesa mujore zakonisht</label><select asp-for="PreferredPaymentMethod" class="form-select"><option value="Cash">Cash</option><option value="Bank">Bankë</option></select><small class="text-secondary">Mund të ndryshohet për çdo pagesë.</small><span asp-validation-for="PreferredPaymentMethod" class="text-danger"></span></div>
         <fieldset class="mb-4">
@@ -77,6 +80,7 @@
         </div>
     </form>
 </div>
+<script src="~/js/student-duplicates.js" asp-append-version="true" defer></script>
 <script type="application/json" id="first-month-pricing">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new{standard=Model.StandardPrice,weeks=FirstMonthPricing.Weeks(BillingClock.Today),counts=Model.FamilyCounts,plans=Model.FeePlans.Select(p=>new{id=p.Id,isFamily=p.IsFamily,amount=p.Amount,additional=p.FamilyAdditionalAmount,limit=p.FamilyFirstCount,singleStandard=p.SingleUsesStandard})}))</script>
 @section Scripts{<script src="~/js/registration-seasonal.js" asp-append-version="true" defer></script><script src="~/js/first-month-registration.js" asp-append-version="true"></script><script>const plan=document.querySelector('#FeePlanId'),contract=document.querySelector('#IsContractPlayer');function waiver(){const pending=contract.checked;document.querySelector('#registration-family-link').hidden=pending;document.querySelector('#registration-payment-method').hidden=pending;document.querySelector('#registration-fee-plan').hidden=pending;document.querySelector('#registration-payment').hidden=pending;document.querySelector('#registration-monthly').hidden=pending;plan.required=!pending;plan.disabled=pending;const family=!pending&&plan.selectedOptions[0]?.dataset.family==='true';document.querySelector('#fee-family').hidden=!family;document.querySelector('#FamilyId').required=family;const method=document.querySelector('#PreferredPaymentMethod');method.disabled=pending||family;if(family)method.value=document.querySelector('#FamilyId').selectedOptions[0]?.dataset.paymentMethod||'Cash';const free=!pending&&plan.selectedOptions[0]?.dataset.waiver==='true';document.querySelector('#fee-waiver').hidden=!free;document.querySelector('#FeeReason').required=free;document.querySelector('#FeeNotes').required=free;}document.querySelector('#FamilyId').addEventListener('change',waiver);plan.addEventListener('change',waiver);contract.addEventListener('change',waiver);waiver();</script><script src="~/js/team-suggestions.js" asp-append-version="true"></script>}
 
