@@ -1,0 +1,29 @@
+@inject _2Korriku.Services.HelpCatalog Manual
+@{
+    var helpController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var helpAction = ViewContext.RouteData.Values["action"]?.ToString();
+    if (ViewContext.RouteData.Values["area"]?.ToString() == "Identity") { helpController = "Identity"; helpAction = "Login"; }
+    var guide = Manual.Resolve(helpController, helpAction, ViewData["HelpView"] as string);
+    var staffManual = User.Identity?.IsAuthenticated == true && helpController is not ("ParentPortal" or "ParentChat" or "Identity");
+}
+<link rel="stylesheet" href="~/css/help.css" asp-append-version="true"/>
+@if(ViewData["HelpInTopbar"] is not true){<button type="button" class="help-launcher" data-help-open aria-haspopup="dialog" aria-controls="context-help"><span aria-hidden="true">?</span> Ndihmë</button>}
+<dialog id="context-help" class="help-drawer" aria-labelledby="help-heading" data-help-owned>
+    <header class="help-drawer-head"><div><span class="help-eyebrow">UDHËZUESI I PËRDORIMIT</span><h2 id="help-heading">@guide.Title</h2><p>@guide.Module</p></div><button type="button" data-help-close class="help-icon-button" aria-label="Mbyll ndihmën">×</button></header>
+    <div class="help-drawer-body">
+        <p class="help-intro">@guide.Summary</p>
+        <div class="help-reading-label"><span aria-hidden="true">01</span><h3>Si ta përdorni</h3></div>
+        <ol class="help-steps">@foreach(var step in guide.Steps){<li>@step</li>}</ol>
+        <section id="help-form-tools" hidden><div class="help-reading-label"><span aria-hidden="true">02</span><h3>Formularët në këtë faqe</h3></div><p class="help-muted">Zgjidhni një formular për të parë shpjegimin e fushave. Asnjë e dhënë nuk plotësohet ose ruhet nga udhëzuesi.</p><div id="help-form-list"></div></section>
+        @if(guide.Notes.Count>0){<section class="help-notes"><h3>Para se të vazhdoni</h3><ul>@foreach(var note in guide.Notes){<li>@note</li>}</ul></section>}
+        <details class="help-troubleshooting"><summary>Nuk po mund ta përfundoj veprimin</summary><ul><li>Lexoni mesazhin pranë fushës ose në krye të formularit.</li><li>Kontrolloni fushat e detyrueshme, datat dhe kufijtë e shumave.</li><li>Nëse regjistrimi ka ndryshuar ndërkohë, shënoni ndryshimet që ju duhen dhe rihapeni formularin.</li><li>Nëse një buton mungon, veprimi mund të varet nga roli ose gjendja e regjistrimit.</li></ul></details>
+        @if(staffManual){<a class="help-library-link" asp-controller="Help" asp-action="Index">Hap manualin dhe kërko një pyetje <span aria-hidden="true">↗</span></a>}
+    </div>
+    <footer class="help-drawer-foot">Udhëzime të aplikacionit · pa dërgim të të dhënave te shërbime të jashtme</footer>
+</dialog>
+<section id="help-tour" class="help-tour" hidden aria-labelledby="help-tour-title" data-help-owned>
+    <div class="help-tour-top"><span id="help-tour-count" class="help-eyebrow"></span><button type="button" id="help-tour-close" class="help-icon-button" aria-label="Përfundo udhëzimin">×</button></div>
+    <div aria-live="polite" aria-atomic="true"><h2 id="help-tour-title"></h2><p id="help-tour-text"></p></div>
+    <div class="help-tour-actions"><button type="button" id="help-tour-prev">← Mbrapa</button><button type="button" id="help-tour-next">Vazhdo →</button></div>
+</section>
+<script src="~/js/help.js" asp-append-version="true" defer></script>

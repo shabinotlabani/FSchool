@@ -1,4 +1,4 @@
-@{ var club = await Club.Get(); }
+@{ var club = await Club.Get(); ViewData["HelpInTopbar"] = true; }
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var navigation = new[] {
@@ -69,6 +69,7 @@
                     <a asp-controller="@item.Controller" asp-action="Index" class="side-link @(active ? "is-active" : "")" aria-current="@(active ? "page" : null)"><svg class="icon" aria-hidden="true"><use href="#i-@item.Icon" /></svg>@item.Label @if(active){<span class="nav-dot" aria-hidden="true"></span>}</a>
                     }
                 }
+                <a asp-controller="Help" asp-action="Index" class="side-link @(currentController=="Help"?"is-active":"")"><svg class="icon" aria-hidden="true"><use href="#i-menu"/></svg>Manuali i përdorimit</a>
             </nav>
             @if(User.IsInRole(Roles.Admin)){<nav class="side-navigation" aria-label="Administrimi"><div class="side-group-title">Administrimi</div><a asp-controller="Users" asp-action="Index" class="side-link @(currentController == "Users" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-players"/></svg>Shfrytëzuesit</a><a asp-controller="Tariffs" asp-action="Index" class="side-link @(currentController == "Tariffs" ? "is-active" : "")"><svg class="icon" aria-hidden="true"><use href="#i-wallet"/></svg>Tarifat</a></nav>}
             @if(User.IsInRole(Roles.Admin) && Context.RequestServices.GetRequiredService<_2Korriku.Services.ClubContext>().IsOwner){<nav class="side-navigation" aria-label="Mirëmbajtja"><a asp-controller="DataReset" asp-action="Index" class="side-link">Zerimi i të dhënave</a></nav>}
@@ -100,6 +101,7 @@
                 <nav class="page-back-navigation" aria-label="Kthimi"><a asp-area="" asp-controller="@backController" asp-action="Index" class="btn btn-outline-secondary app-back-button"><span aria-hidden="true">←</span><span>Mbrapa</span></a></nav>
             }
             </div>
+            <button type="button" class="help-topbar-button" data-help-open aria-haspopup="dialog" aria-controls="context-help">? Ndihmë</button>
             <span class="today-label"><svg class="icon" aria-hidden="true"><use href="#i-calendar" /></svg>@DateTime.Today.ToString("dd/MM/yyyy")</span>
         </header>
         <main class="app-content" id="main-content" tabindex="-1">
@@ -133,5 +135,6 @@
     <script src="~/js/financial-confirmation.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
     @if(User.Identity?.IsAuthenticated == true){<partial name="_PwaInstall" />}
+    <partial name="_ContextHelp" />
 </body>
 </html>

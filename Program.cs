@@ -65,7 +65,8 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 }).AddRoles<IdentityRole>()
   .AddEntityFrameworkStores<ApplicationDbContext>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options => options.Filters.Add<HelpViewFilter>());
+builder.Services.AddSingleton<HelpCatalog>();
 builder.Services.AddRateLimiter(options => {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddPolicy("nutrition-ai", context => RateLimitPartition.GetFixedWindowLimiter(

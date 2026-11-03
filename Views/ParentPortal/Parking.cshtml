@@ -14,4 +14,4 @@
         @foreach(var session in Model.TodaySessions){<p class="parking-time">@session.Start.ToString("HH:mm")–@session.End.ToString("HH:mm")</p>}
         <p class="empty">Vlen vetëm për datën e shënuar.</p>
     </section>
-</main><script src="~/js/parent-portal-visit.js" asp-append-version="true"></script></body></html>
+</main><script src="~/js/parent-portal-visit.js" asp-append-version="true"></script><partial name="~/Views/Shared/_ContextHelp.cshtml" /></body></html>

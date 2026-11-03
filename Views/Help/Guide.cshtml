@@ -1,0 +1,11 @@
+@model HelpGuide
+@{ViewData["Title"]=Model.Title;}
+<link rel="stylesheet" href="~/css/help.css" asp-append-version="true"/>
+<article class="manual-article">
+    <a class="manual-back" asp-action="Index">← Manuali i përdorimit</a>
+    <header class="manual-heading"><span class="help-eyebrow">@Model.Module</span><h1>@Model.Title</h1><p>@Model.Summary</p></header>
+    <h2>Hapat e punës</h2><ol class="help-steps">@foreach(var step in Model.Steps){<li>@step</li>}</ol>
+    @if(Model.Notes.Count>0){<section class="help-notes"><h2>Çfarë duhet të dini</h2><ul>@foreach(var note in Model.Notes){<li>@note</li>}</ul></section>}
+    <p class="manual-footnote">Ky udhëzim shpjegon veprimin. Për ta kryer, hapni faqen përkatëse dhe zgjidhni regjistrimin e duhur. Veprimet e disponueshme varen edhe nga gjendja e atij regjistrimi.</p>
+</article>
+@section PageNavigation {<a class="btn btn-outline-secondary" asp-action="Index">Manuali</a>}

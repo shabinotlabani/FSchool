@@ -1,0 +1,1131 @@
+[
+  {
+    "Key": "Home",
+    "Title": "Përmbledhja",
+    "Summary": "Pamja e punës së klubit: treguesit, ndeshjet dhe lidhjet drejt moduleve.",
+    "Steps": [
+      "Lexoni periudhën që tregon secila tabelë ose grafik.",
+      "Zgjidhni ekipin kur doni të kufizoni listën e ndeshjeve.",
+      "Hapni Detajet ose Raportin e ndeshjes për formacionin dhe ngjarjet."
+    ],
+    "Notes": [
+      "Shifrat e një periudhe nuk duhen krahasuar me periudha të ndryshme pa kontrolluar filtrat."
+    ],
+    "Pages": {
+      "Index": "Përmbledhja e klubit",
+      "Matches": "Java dhe ndeshjet e klubit",
+      "MatchReport": "Detajet e ndeshjes",
+      "MatchPlayer": "Paraqitja e lojtarit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Students",
+    "Title": "Lojtarët",
+    "Summary": "Regjistroni lojtarët dhe mbani të sakta të dhënat e tyre personale, ekipin dhe kontaktet.",
+    "Steps": [
+      "Gjeni lojtarin përmes kërkimit ose hapni regjistrimin e ri.",
+      "Plotësoni identitetin, datëlindjen dhe kontaktet; kontrolloni ekipin dhe kategorinë e pagesës kur shfaqen.",
+      "Kontrolloni të dhënat para ruajtjes dhe hapni kartelën e krijuar."
+    ],
+    "Notes": [
+      "Editimi i lojtarit nuk korrigjon automatikisht faturat e lëshuara.",
+      "Për tarifën përdorni kategorinë e pagesës; për faturën ekzistuese përdorni kartelën financiare."
+    ],
+    "Pages": {
+      "Index": "Gjetja e lojtarit",
+      "Create": "Regjistrimi i një lojtari",
+      "CreateFamily": "Regjistrimi i fëmijëve së bashku",
+      "Edit": "Editimi i lojtarit",
+      "PrintRegistration": "Formulari i regjistrimit",
+      "FamilyPickerCreated": "Familja e krijuar"
+    },
+    "Details": {
+      "CreateFamily": {
+        "Summary": "Regjistroni disa fëmijë në një proces të përbashkët me paketën familjare.",
+        "Steps": [
+          "Plotësoni të dhënat e përbashkëta të prindit.",
+          "Plotësoni veçmas çdo fëmijë dhe kontrolloni ekipin e tij.",
+          "Kontrolloni paketën dhe tarifat para regjistrimit të përbashkët."
+        ],
+        "Notes": [
+          "Regjistrimi i përbashkët i llogarit anëtarët së bashku që në faturimin fillestar."
+        ]
+      },
+      "Edit": {
+        "Summary": "Korrigjoni të dhënat personale të një lojtari ekzistues.",
+        "Steps": [
+          "Kontrolloni se keni hapur lojtarin e saktë.",
+          "Ndryshoni fushat përkatëse dhe shkruani arsyen e ndryshimit.",
+          "Ruani dhe kontrolloni kartelën e lojtarit."
+        ],
+        "Notes": [
+          "Çaktivizimi nuk fshin borxhet ose historikun financiar."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "Teams",
+    "Title": "Ekipet dhe oraret",
+    "Summary": "Organizoni ekipet, stafin, kapacitetin dhe oraret e stërvitjeve.",
+    "Steps": [
+      "Zgjidhni ekipin ose hapni krijimin e një ekipi.",
+      "Kontrolloni emrin, grupmoshën, kapacitetin dhe seancat që paraqet formulari.",
+      "Caktoni stafin dhe kontrolloni listën e lojtarëve pas ruajtjes."
+    ],
+    "Notes": [
+      "Transferimi i lojtarit dhe ndryshimi i tarifës janë veprime të veçanta."
+    ],
+    "Pages": {
+      "Index": "Lista e ekipeve",
+      "Edit": "Ekipi dhe orari",
+      "Details": "Kartela e ekipit",
+      "Assign": "Caktimi i stafit",
+      "Minutes": "Minutat e lojtarëve"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Payments",
+    "Title": "Pagesat dhe kartela financiare",
+    "Summary": "Ndiqni faturat, arkëtimet, borxhin dhe korrigjimet e një lojtari ose familjeje.",
+    "Steps": [
+      "Gjeni lojtarin dhe kontrolloni muajin, tarifën, shumën e mbuluar dhe borxhin.",
+      "Zgjidhni pagesën ose veprimin korrigjues që përputhet me rastin.",
+      "Pas ruajtjes kontrolloni gjendjen në kartelë dhe dëftesën kur krijohet."
+    ],
+    "Notes": [
+      "Pagesat e zakonshme mbulojnë fillimisht detyrimet më të vjetra; teprica mbetet parapagim.",
+      "Pagesat bankare që presin verifikim nuk janë arkëtime të konfirmuara."
+    ],
+    "Pages": {
+      "Index": "Kërkimi i faturave dhe borxheve",
+      "Account": "Kartela financiare",
+      "Register": "Regjistrimi i pagesës mujore",
+      "Seasonal": "Pagesa sezonale",
+      "Family": "Pagesa e përbashkët e familjes",
+      "Exempt": "Lirimi nga tarifa",
+      "CorrectFee": "Korrigjimi i tarifës së faturës",
+      "Reverse": "Anulimi me arsye",
+      "CancelPayment": "Anulimi i pagesës",
+      "ReverseExemption": "Kthimi i lirimit",
+      "CancelFamilyPayment": "Anulimi i pagesës familjare",
+      "Progress": "Ecuria e lojtarit",
+      "PrintAccount": "Printimi i kartelës",
+      "Invoice": "Fletëpagesa mujore",
+      "Receipt": "Dëftesa e arkëtimit",
+      "Document": "Dokumenti financiar",
+      "FamilyReceipt": "Dëftesa familjare"
+    },
+    "Details": {
+      "CorrectFee": {
+        "Summary": "Korrigjoni një tarifë të vendosur gabim, duke ruajtur pagesën dhe gjurmën financiare.",
+        "Steps": [
+          "Në kartelën financiare hapni Korrigjo tarifën te fatura përkatëse.",
+          "Vendosni tarifën përfundimtare, jo diferencën: për faturë 50 me pagesë 30, shkruani 30.",
+          "Shkruani arsyen dhe ruani korrigjimin. Në këtë shembull borxhi bëhet 0."
+        ],
+        "Notes": [
+          "Tarifa e re nuk mund të jetë nën shumën e mbuluar.",
+          "Për muajt e ardhshëm përdorni Ndrysho kategorinë.",
+          "Korrigjimi nuk lejohet për faturat sezonale ose me lirim aktiv."
+        ]
+      },
+      "Exempt": {
+        "Summary": "Regjistroni lirimin e plotë ose të pjesshëm të një fature pa pagesë.",
+        "Steps": [
+          "Zgjidhni Sëmundje, Pushime ose Arsye tjetër.",
+          "Shkruani shumën që falet dhe përshkrimin e arsyes.",
+          "Kontrolloni faturën dhe përdorni Aprovo lirimin."
+        ],
+        "Notes": [
+          "Butoni i lirimit nuk shfaqet pasi fatura është paguar edhe pjesërisht.",
+          "Për gabim në tarifën e një fature të paguar pjesërisht, përdorni Korrigjo tarifën.",
+          "Lejohet një lirim aktiv për faturë; për ta korrigjuar, kthejeni lirimin e mëparshëm."
+        ]
+      },
+      "Register": {
+        "Summary": "Regjistroni shumën reale të paguar nga lojtari.",
+        "Steps": [
+          "Kontrolloni emrin dhe borxhin në krye të formularit.",
+          "Vendosni shumën, datën dhe mënyrën Cash ose Bankë.",
+          "Ruani dhe kontrolloni dëftesën ose statusin në pritje të bankës."
+        ],
+        "Notes": [
+          "Data e pagesës nuk mund të jetë në të ardhmen.",
+          "Pagesat e familjes kryhen nga formulari i përbashkët i familjes."
+        ]
+      },
+      "Family": {
+        "Summary": "Arkëtoni detyrimin e familjes nga një formular i përbashkët.",
+        "Steps": [
+          "Kontrolloni familjen, anëtarët dhe detyrimin e secilit.",
+          "Kontrolloni totalin dhe mënyrën e pagesës.",
+          "Ruani pagesën dhe kontrolloni dëftesën familjare."
+        ],
+        "Notes": [
+          "Nëse gjendja ka ndryshuar ndërkohë, rihapni formularin para pagesës."
+        ]
+      },
+      "Seasonal": {
+        "Summary": "Përgatitni pagesën për një periudhë sezonale sipas përllogaritjes që paraqet sistemi.",
+        "Steps": [
+          "Zgjidhni muajin e fillimit dhe numrin e muajve.",
+          "Lexoni muajt e mbuluar, tarifën, zbritjen dhe totalin e përllogaritur.",
+          "Zgjidhni mënyrën e pagesës dhe ruajeni pasi të keni kontrolluar periudhën."
+        ],
+        "Notes": [
+          "Fatura e parë proporcionale nuk përfshihet në sezonin me muaj të plotë.",
+          "Rregullat e sezonit mund të kufizojnë ndryshimet e tarifës gjatë mbulimit."
+        ]
+      },
+      "CancelPayment": {
+        "Summary": "Regjistroni një veprim korrigjues me arsyen përkatëse.",
+        "Steps": [
+          "Kontrolloni dokumentin dhe lojtarin ose familjen.",
+          "Shkruani arsyen e korrigjimit.",
+          "Konfirmoni veprimin dhe kontrolloni detyrimin e rillogaritur."
+        ],
+        "Notes": [
+          "Anulimi i pagesës mund të rikthejë borxhin.",
+          "Regjistrimi fillestar ruhet në historik; anulimi nuk është pagesë e re."
+        ]
+      },
+      "CancelFamilyPayment": {
+        "Summary": "Regjistroni një veprim korrigjues me arsyen përkatëse.",
+        "Steps": [
+          "Kontrolloni dokumentin dhe lojtarin ose familjen.",
+          "Shkruani arsyen e korrigjimit.",
+          "Konfirmoni veprimin dhe kontrolloni detyrimin e rillogaritur."
+        ],
+        "Notes": [
+          "Anulimi i pagesës mund të rikthejë borxhin.",
+          "Regjistrimi fillestar ruhet në historik; anulimi nuk është pagesë e re."
+        ]
+      },
+      "ReverseExemption": {
+        "Summary": "Regjistroni një veprim korrigjues me arsyen përkatëse.",
+        "Steps": [
+          "Kontrolloni dokumentin dhe lojtarin ose familjen.",
+          "Shkruani arsyen e korrigjimit.",
+          "Konfirmoni veprimin dhe kontrolloni detyrimin e rillogaritur."
+        ],
+        "Notes": [
+          "Anulimi i pagesës mund të rikthejë borxhin.",
+          "Regjistrimi fillestar ruhet në historik; anulimi nuk është pagesë e re."
+        ]
+      },
+      "Reverse": {
+        "Summary": "Regjistroni një veprim korrigjues me arsyen përkatëse.",
+        "Steps": [
+          "Kontrolloni dokumentin dhe lojtarin ose familjen.",
+          "Shkruani arsyen e korrigjimit.",
+          "Konfirmoni veprimin dhe kontrolloni detyrimin e rillogaritur."
+        ],
+        "Notes": [
+          "Anulimi i pagesës mund të rikthejë borxhin.",
+          "Regjistrimi fillestar ruhet në historik; anulimi nuk është pagesë e re."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "Tariffs",
+    "Title": "Tarifat mujore",
+    "Summary": "Menaxhoni kategoritë e pagesës, çmimet dhe caktimin e kategorisë te lojtari.",
+    "Steps": [
+      "Zgjidhni tarifën ose lojtarin për të cilin po veproni.",
+      "Kontrolloni shumën dhe muajin nga i cili ndryshimi duhet të vlejë.",
+      "Shkruani arsyen kur kërkohet dhe verifikoni historikun pas ruajtjes."
+    ],
+    "Notes": [
+      "Ndryshimi i çmimit të një kategorie prek lojtarët që përdorin atë kategori.",
+      "Faturat e krijuara nuk rishkruhen nga ndryshimi i kategorisë."
+    ],
+    "Pages": {
+      "Index": "Tarifat dhe historiku",
+      "Create": "Krijimi i një tarife",
+      "Price": "Ndryshimi i çmimit",
+      "Assign": "Kategoria e pagesës së lojtarit",
+      "Rename": "Emri i tarifës"
+    },
+    "Details": {
+      "Assign": {
+        "Summary": "Caktoni kategorinë e pagesës nga muaji i zgjedhur.",
+        "Steps": [
+          "Zgjidhni kategorinë individuale të duhur.",
+          "Vendosni muajin e fillimit nga kufiri që lejon formulari dhe shkruani arsyen.",
+          "Ruani dhe kontrolloni caktimin në historik."
+        ],
+        "Notes": [
+          "Paketat familjare menaxhohen te Familjet.",
+          "Për një tarifë individuale 30, përdorni kategorinë përkatëse; mos ulni çmimin e kategorisë së përbashkët 50 për të gjithë."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "Families",
+    "Title": "Familjet dhe paketat",
+    "Summary": "Lidhni fëmijët në një paketë familjare dhe kontrolloni përbërjen sipas muajit.",
+    "Steps": [
+      "Gjeni familjen ose krijoni një të re.",
+      "Zgjidhni fëmijët, renditjen dhe muajin e fillimit që paraqet formulari.",
+      "Kontrolloni tarifën e secilit fëmijë dhe totalin para ruajtjes."
+    ],
+    "Notes": [
+      "Familjet nuk krijohen automatikisht nga mbiemri ose telefoni.",
+      "Detyrimet dhe historia financiare mbeten të lidhura me secilin lojtar."
+    ],
+    "Pages": {
+      "Index": "Kërkimi i familjes",
+      "Details": "Përbërja dhe çmimi sipas muajit",
+      "Edit": "Ndryshimi i paketës familjare"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "BankPayments",
+    "Title": "Verifikimi i bankës",
+    "Summary": "Shqyrtoni pagesat bankare në pritje duke i krahasuar me evidencën bankare.",
+    "Steps": [
+      "Gjeni kërkesën dhe kontrolloni lojtarin, llojin e pagesës dhe shumën.",
+      "Krahasoni kërkesën me pagesën reale në bankë.",
+      "Konfirmoni ose refuzoni veprimin dhe kontrolloni gjendjen e re."
+    ],
+    "Notes": [
+      "Mos konfirmoni një pagesë vetëm sepse është regjistruar si kërkesë."
+    ],
+    "Pages": {
+      "Index": "Pagesat bankare në pritje",
+      "Receipt": "Dokumenti i kërkesës bankare"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Leagues",
+    "Title": "Garat dhe ligat",
+    "Summary": "Caktoni garën, sezonin, ekipet pjesëmarrëse, formatin e lojës dhe listat e lojtarëve.",
+    "Steps": [
+      "Zgjidhni garën dhe kontrolloni sezonin, llojin dhe datat.",
+      "Caktoni ekipet dhe formatin e futbollit, për shembull 8+1 ose 6+1.",
+      "Ruajeni; kontrolloni rregullat dhe listën e lojtarëve të ekipit."
+    ],
+    "Notes": [
+      "8+1 do të thotë 9 lojtarë gjithsej, përfshirë portierin; 6+1 do të thotë 7.",
+      "Formatet e ndryshuara vlejnë për ndeshjet e reja dhe formacionet e pakonfirmuara. Ndeshjet e nisura ruajnë formatin e tyre."
+    ],
+    "Pages": {
+      "Index": "Gjetja e garës",
+      "Edit": "Rregullat dhe formati i ligës",
+      "Catalog": "Shtimi i garave nga katalogu",
+      "Squad": "Lista e lojtarëve të garës",
+      "Report": "Raporti i garës"
+    },
+    "Details": {
+      "Edit": {
+        "Summary": "Vendosni rregullat e garës dhe numrin e lojtarëve që shfaqet në formacionin e trajnerit.",
+        "Steps": [
+          "Kontrolloni emrin, sezonin, datat dhe ekipet pjesëmarrëse.",
+          "Te Formati i futbollit zgjidhni, për shembull, 8+1 për nëntë ose 6+1 për shtatë lojtarë.",
+          "Ruani garën. Trajneri duhet të rihapë formacionin e pakonfirmuar për ta marrë formatin e ri."
+        ],
+        "Notes": [
+          "Nëse kufiri ulet, trajneri duhet të rishikojë titullarët; sistemi nuk zgjedh cilët lojtarë të largohen."
+        ]
+      },
+      "Squad": {
+        "Summary": "Përzgjidhni lojtarët e regjistruar për ekipin në këtë garë.",
+        "Steps": [
+          "Kontrolloni garën, ekipin dhe llojin e listës.",
+          "Përzgjidhni lojtarët e lejuar dhe kontrolloni afatin.",
+          "Ruani listën para përdorimit të lojtarëve në formacion."
+        ],
+        "Notes": [
+          "Afati dhe e drejta e pjesëmarrjes kontrollohen nga sistemi."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "Matches",
+    "Title": "Ndeshjet e trajnerit",
+    "Summary": "Përgatitni formacionin, regjistroni ngjarjet dhe përfundoni raportin e ndeshjes.",
+    "Steps": [
+      "Hapni ndeshjen e ekipit dhe kontrolloni kundërshtarin, datën, ligën e formatin.",
+      "Vendosni titullarët dhe rezervat; konfirmoni formacionin kur është gati.",
+      "Regjistroni ngjarjet dhe ndërrimet gjatë lojës, pastaj përfundoni e kontrolloni raportin."
+    ],
+    "Notes": [
+      "Titullari fillon në minutën 0; lojtari nga stoli hyn pas fillimit.",
+      "Numri i titullarëve dhe i lojtarëve njëkohësisht në fushë nuk mund të tejkalojë kufirin.",
+      "Pas konfirmimit të formacionit përdorni ndërrimet për hyrjet dhe daljet."
+    ],
+    "Pages": {
+      "Index": "Ndeshjet e ekipit",
+      "Edit": "Formacioni dhe ngjarjet",
+      "Summary": "Raporti i ndeshjes",
+      "Report": "Statistikat e lojtarëve",
+      "Matrix": "Minutat sipas ndeshjeve",
+      "LeagueRules": "Rregullat e ligës",
+      "Discipline": "Rregullat disiplinore"
+    },
+    "Details": {
+      "Edit": {
+        "Summary": "Përgatitni formacionin në fushën vizuale dhe ndiqni hapat e ndeshjes.",
+        "Steps": [
+          "Kontrolloni formatin. Klikoni një vend të lirë në fushë dhe zgjidhni lojtarin; vendosni rezervat.",
+          "Përdorni Konfirmo formacionin pasi të keni kontrolluar titullarët.",
+          "Regjistroni minutat, ndërrimet e ngjarjet. Në fund kontrolloni rezultatin dhe përfundoni ndeshjen."
+        ],
+        "Notes": [
+          "Për një ligë 6+1 shfaqen shtatë vende gjithsej, duke përfshirë portierin.",
+          "Nëse rregulli i ligës ndryshon ndërkohë, rihapni formularin dhe rishikoni formacionin."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "AdminMatches",
+    "Title": "Administrimi i ndeshjeve",
+    "Summary": "Planifikoni ndeshjet zyrtare dhe korrigjoni ose fshini regjistrimet sipas nevojës.",
+    "Steps": [
+      "Zgjidhni ekipin dhe vitin ose hapni ndeshjen nga java e klubit.",
+      "Kontrolloni ligën, kundërshtarin, datën dhe orarin para ruajtjes.",
+      "Për fshirje hapni Fshi dhe lexoni përmbledhjen e ndeshjes para konfirmimit."
+    ],
+    "Notes": [
+      "Fshirja largon edhe formacionin, ngjarjet, minutat dhe historikun e ndeshjes.",
+      "Ndeshja me shpenzime të lidhura nuk mund të fshihet."
+    ],
+    "Pages": {
+      "Index": "Ndeshjet zyrtare",
+      "Edit": "Korrigjimi i ndeshjes",
+      "Summary": "Raporti i ndeshjes",
+      "Delete": "Fshirja e ndeshjes",
+      "Propose": "Propozimet e ndeshjeve zyrtare"
+    },
+    "Details": {
+      "Delete": {
+        "Summary": "Fshini një ndeshje të regjistruar gabim.",
+        "Steps": [
+          "Kontrolloni datën, ekipin, kundërshtarin dhe garën në tabelë.",
+          "Lexoni cilat të dhëna fshihen bashkë me ndeshjen.",
+          "Përdorni Po, fshije ndeshjen vetëm nëse dëshironi fshirjen përfundimtare."
+        ],
+        "Notes": [
+          "Ky veprim nuk mund të kthehet nga formulari.",
+          "Lojtarët dhe ekipet nuk fshihen nga sistemi."
+        ]
+      },
+      "Propose": {
+        "Summary": "Shqyrtoni ndeshjet e propozuara para se t’i shtoni në kalendar.",
+        "Steps": [
+          "Zgjidhni ekipin, ligën dhe datën nga e cila kërkoni propozime.",
+          "Kontrolloni kundërshtarin, datën, vendin dhe burimin e secilit propozim.",
+          "Përzgjidhni vetëm rreshtat e saktë dhe kryeni importin."
+        ],
+        "Notes": [
+          "Propozimet kërkojnë shqyrtim; një rezultat i gjeneruar nuk është automatikisht konfirmim zyrtar."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "Attendance",
+    "Title": "Prezenca",
+    "Summary": "Regjistroni pjesëmarrjen e lojtarëve për datën dhe ekipin e duhur.",
+    "Steps": [
+      "Kontrolloni ekipin, datën dhe seancën që shfaqet.",
+      "Vendosni gjendjen e prezencës për secilin lojtar.",
+      "Ruani dhe rishikoni përmbledhjen për të njëjtën datë."
+    ],
+    "Notes": [
+      "Ndryshimi i grupit është veprim më vete; kontrolloni ekipin burim dhe ekipin e ri."
+    ],
+    "Pages": {
+      "Index": "Regjistrimi i prezencës",
+      "ChangeGroup": "Ndryshimi i grupit të lojtarit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Coaches",
+    "Title": "Puna e trajnerit",
+    "Summary": "Hapni ekipet, lojtarët dhe trajnimet që ju janë caktuar.",
+    "Steps": [
+      "Zgjidhni rolin ose ekipin kur paraqitet zgjedhja.",
+      "Gjeni lojtarin ose seancën përkatëse.",
+      "Hapni prezencën, ecurinë ose ndeshjet nga lidhjet e faqes."
+    ],
+    "Notes": [
+      "Lista e ekipeve dhe lojtarëve varet nga caktimet e llogarisë."
+    ],
+    "Pages": {
+      "Index": "Ekipet e trajnerit",
+      "Personal": "Trajnimet personale të trajnerit",
+      "Players": "Kërkimi i lojtarëve",
+      "Team": "Lojtarët e ekipit",
+      "Portal": "Hapësira e trajnerit",
+      "RoleChoice": "Zgjedhja e rolit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "CoachInbox",
+    "Title": "Mesazhet e trajnerit",
+    "Summary": "Lexoni bisedat me prindërit dhe ndiqni komunikimin për lojtarin.",
+    "Steps": [
+      "Hapni bisedën e lojtarit të duhur.",
+      "Lexoni mesazhet e fundit para se të shkruani përgjigjen.",
+      "Kontrolloni tekstin dhe përdorni Dërgo vetëm kur është gati."
+    ],
+    "Notes": [
+      "Mos dërgoni të dhëna të një lojtari në bisedën e një lojtari tjetër."
+    ],
+    "Pages": {
+      "Index": "Kutia e mesazheve",
+      "Thread": "Biseda me prindin",
+      "Deactivate": "Çaktivizimi i lojtarit me arsye"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "PlayerDevelopment",
+    "Title": "Zhvillimi i lojtarit",
+    "Summary": "Mbani vlerësime, matje, objektiva dhe historik të ecurisë.",
+    "Steps": [
+      "Hapni lojtarin dhe zgjidhni llojin e regjistrimit ose periudhën.",
+      "Plotësoni vlerësimin sipas fushave dhe shkallës së shfaqur; shënoni datën.",
+      "Ruani dhe kontrolloni rezultatin në historikun e lojtarit."
+    ],
+    "Notes": [
+      "Njësitë e matjes dhe shkallët e vlerësimit duhen lexuar te secila fushë."
+    ],
+    "Pages": {
+      "Index": "Lojtarët dhe zhvillimi",
+      "Overview": "Pozita dhe lloji i vlerësimit",
+      "Player": "Historiku i zhvillimit",
+      "Edit": "Vlerësimi i lojtarit",
+      "Record": "Regjistrimi i matjeve",
+      "Progress": "Ecuria dhe objektivat"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "DevelopmentSettings",
+    "Title": "Parametrat e zhvillimit",
+    "Summary": "Përcaktoni fushat e matjeve dhe vlerësimeve që përdor klubi.",
+    "Steps": [
+      "Zgjidhni seksionin dhe parametrin përkatës.",
+      "Kontrolloni emrin, njësinë dhe kufijtë që shfaq formulari.",
+      "Ruani dhe kontrolloni shfaqjen në formularin e vlerësimit."
+    ],
+    "Notes": [
+      "Ndryshoni parametrat duke marrë parasysh mënyrën si janë regjistruar vlerësimet e mëparshme."
+    ],
+    "Pages": {
+      "Index": "Parametrat sipas seksionit",
+      "Edit": "Editimi i parametrit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "CareStaff",
+    "Title": "Stafi shëndetësor",
+    "Summary": "Menaxhoni caktimin e lojtarëve te profesionistët shëndetësorë.",
+    "Steps": [
+      "Zgjidhni anëtarin e stafit.",
+      "Shënoni lojtarët që duhet t’i caktohen.",
+      "Ruani dhe kontrolloni caktimet në listë."
+    ],
+    "Notes": [
+      "Qasja në të dhënat e kujdesit varet nga roli dhe caktimet."
+    ],
+    "Pages": {
+      "Index": "Stafi shëndetësor",
+      "Assign": "Caktimi i lojtarëve te stafi"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "PlayerCare",
+    "Title": "Kujdesi për lojtarin",
+    "Summary": "Regjistroni kontrollet dhe udhëzimet për lojtarët që ju janë caktuar.",
+    "Steps": [
+      "Hapni kartelën e lojtarit të saktë.",
+      "Plotësoni datën, vlerësimin dhe fushat përkatëse të vizitës.",
+      "Kontrolloni statusin dhe udhëzimin që ndahet me trajnerin para ruajtjes."
+    ],
+    "Notes": [
+      "Fushat e shënuara si të ndara me trajnerin bëhen pjesë e informacionit të tij të punës.",
+      "Manuali shpjegon përdorimin e formularit; përmbajtja profesionale plotësohet nga stafi përkatës."
+    ],
+    "Pages": {
+      "Index": "Lojtarët e caktuar",
+      "Player": "Kartela e kujdesit",
+      "Visit": "Regjistrimi i vizitës"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "CareReferrals",
+    "Title": "Referimet",
+    "Summary": "Dërgoni kërkesën për shqyrtim te stafi i kujdesit dhe ndiqni statusin.",
+    "Steps": [
+      "Kontrolloni lojtarin dhe marrësin e referimit.",
+      "Shkruani arsyen e qartë dhe informacionin që kërkon formulari.",
+      "Ruani referimin dhe ndiqeni në listën e kërkesave."
+    ],
+    "Notes": [
+      "Mbylleni referimin vetëm pasi të keni shqyrtuar rastin përkatës."
+    ],
+    "Pages": {
+      "Index": "Lista e referimeve",
+      "Create": "Referimi i lojtarit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "CoachMenus",
+    "Title": "Planet e ushqimit",
+    "Summary": "Shqyrtoni propozimin e menysë së lojtarit para miratimit.",
+    "Steps": [
+      "Kontrolloni lojtarin dhe udhëzimet që përdoren për propozimin.",
+      "Lexoni të gjithë planin e paraqitur.",
+      "Miratojeni vetëm pasi ta keni shqyrtuar dhe sipas përgjegjësive të rolit tuaj."
+    ],
+    "Notes": [
+      "Një propozim i gjeneruar duhet shqyrtuar para miratimit."
+    ],
+    "Pages": {
+      "Index": "Propozimi dhe miratimi i menysë"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "NutritionMenus",
+    "Title": "Menytë ushqimore",
+    "Summary": "Plotësoni planin ushqimor dhe udhëzimet e lojtarit.",
+    "Steps": [
+      "Kontrolloni lojtarin dhe periudhën e planit.",
+      "Plotësoni vaktet dhe udhëzimet sipas fushave të formularit.",
+      "Rishikoni përmbajtjen para ruajtjes."
+    ],
+    "Notes": [
+      "Kontrolloni kufizimet dhe informacionin përkatës të lojtarit para përfundimit të planit."
+    ],
+    "Pages": {
+      "Edit": "Editimi i menysë ushqimore"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Fields",
+    "Title": "Fushat dhe terminet",
+    "Summary": "Menaxhoni fushat, rezervimet, pagesat dhe anulimet e termineve.",
+    "Steps": [
+      "Zgjidhni fushën dhe datën në kalendar.",
+      "Kontrolloni orarin e lirë, klientin dhe tarifën në formularin e rezervimit.",
+      "Ruani rezervimin dhe regjistroni arkëtimin nga detajet e tij kur kryhet pagesa."
+    ],
+    "Notes": [
+      "Anulimi i rezervimit dhe anulimi i pagesës janë veprime të ndryshme.",
+      "Kontrolloni nëse veprimi prek vetëm një termin ose gjithë serinë."
+    ],
+    "Pages": {
+      "Index": "Kalendari i rezervimeve",
+      "Manage": "Menaxhimi i fushave",
+      "Edit": "Të dhënat e fushës",
+      "Booking": "Rezervimi i terminit",
+      "Details": "Detajet e rezervimit",
+      "Pay": "Arkëtimi i terminit",
+      "Cancel": "Anulimi i rezervimit",
+      "CancelPayment": "Anulimi i pagesës së terminit",
+      "Delete": "Fshirja e fushës",
+      "Receipt": "Dëftesa e terminit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "FieldCash",
+    "Title": "Dorëzimi i cash-it",
+    "Summary": "Ndiqni dorëzimin dhe konfirmimin e parave të arkëtuara nga rezervimet.",
+    "Steps": [
+      "Kontrolloni periudhën dhe arkëtimet që përfshin dorëzimi.",
+      "Krahasoni shumën me paratë e dorëzuara.",
+      "Përdorni veprimin që lejon roli juaj: krijim dorëzimi, konfirmim ose refuzim me arsye."
+    ],
+    "Notes": [
+      "Konfirmimi duhet të përputhet me dorëzimin real të parave."
+    ],
+    "Pages": {
+      "Index": "Dorëzimi dhe barazimi i cash-it"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "PersonalTraining",
+    "Title": "Trajnimet personale",
+    "Summary": "Regjistroni trajnimet individuale, seancat, tarifat dhe pagesat e tyre.",
+    "Steps": [
+      "Zgjidhni lojtarin, tarifën dhe trajnerin.",
+      "Kontrolloni datën ose seancat dhe mënyrën e tarifimit.",
+      "Ruani trajnimin dhe ndiqni pagesat nga detajet."
+    ],
+    "Notes": [
+      "Tarifat personale dhe pagesat mujore të shkollës menaxhohen veçmas."
+    ],
+    "Pages": {
+      "Index": "Lista e trajnimeve personale",
+      "Create": "Regjistrimi i trajnimit",
+      "Details": "Kartela e trajnimit",
+      "Pay": "Pagesa e trajnimit",
+      "Tariffs": "Tarifat personale",
+      "Tariff": "Editimi i tarifës personale",
+      "Action": "Veprim korrigjues në trajnim"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Products",
+    "Title": "Rekuizitat dhe magazina",
+    "Summary": "Menaxhoni artikujt, madhësitë, hyrjet dhe gjendjen e magazinës.",
+    "Steps": [
+      "Gjeni rekuizitën dhe kontrolloni variantin ose madhësinë.",
+      "Për hyrje regjistroni dokumentin, datën dhe sasitë reale.",
+      "Kontrolloni gjendjen dhe lëvizjet në kartelën e artikullit."
+    ],
+    "Notes": [
+      "Sasitë ndiqen sipas madhësisë; emri i artikullit vetëm nuk mjafton për të zgjedhur variantin."
+    ],
+    "Pages": {
+      "Index": "Kërkimi i rekuizitave",
+      "Create": "Krijimi i rekuizitës",
+      "Edit": "Editimi i rekuizitës",
+      "Sizes": "Madhësitë e artikullit",
+      "Receive": "Hyrja në magazinë",
+      "Entries": "Dokumentet e hyrjeve",
+      "Entry": "Detajet e hyrjes",
+      "Card": "Kartela e lëvizjeve",
+      "Stock": "Gjendja e stokut",
+      "PrintCard": "Printimi i kartelës së artikullit",
+      "PrintEntry": "Fletëhyrja",
+      "PrintStock": "Printimi i gjendjes"
+    },
+    "Details": {
+      "Receive": {
+        "Summary": "Shtoni hyrjen reale të mallrave në magazinë.",
+        "Steps": [
+          "Vendosni datën, furnitorin dhe numrin e dokumentit kur ka.",
+          "Shtoni rekuizitat dhe sasitë sipas madhësive.",
+          "Krahasoni rreshtat me mallin e pranuar dhe ruani hyrjen."
+        ],
+        "Notes": [
+          "Krijimi i emrit të rekuizitës dhe hyrja e sasive në magazinë janë veprime të ndryshme."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "SizeGroups",
+    "Title": "Grupet e madhësive",
+    "Summary": "Përcaktoni grupet e madhësive që përdoren nga rekuizitat.",
+    "Steps": [
+      "Zgjidhni grupin ose krijoni një të ri.",
+      "Kontrolloni emrin dhe madhësitë e përfshira.",
+      "Ruani grupin dhe përdoreni gjatë krijimit të artikullit."
+    ],
+    "Notes": [
+      "Përdorni emërtime të njëtrajtshme që madhësitë të dallohen qartë."
+    ],
+    "Pages": {
+      "Index": "Grupet e madhësive",
+      "Edit": "Editimi i grupit të madhësive"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Sales",
+    "Title": "Daljet e rekuizitave",
+    "Summary": "Regjistroni rekuizitat që i dorëzohen lojtarit dhe pagesën përkatëse.",
+    "Steps": [
+      "Zgjidhni lojtarin dhe rekuizitën; kontrolloni madhësinë dhe stokun.",
+      "Vendosni sasinë dhe kontrolloni çmimin e secilit rresht.",
+      "Rishikoni totalin dhe mënyrën e pagesës para ruajtjes së daljes."
+    ],
+    "Notes": [
+      "Dorëzimi i rekuizitës dhe arkëtimi duhet të pasqyrojnë veprimet reale.",
+      "Kontrolloni çdo rresht kur në një dalje përfshihen disa artikuj."
+    ],
+    "Pages": {
+      "Index": "Daljet e regjistruara",
+      "Create": "Dorëzimi i rekuizitave",
+      "Details": "Detajet e daljes",
+      "Pay": "Arkëtimi i borxhit të rekuizitave",
+      "Print": "Fletëdalja"
+    },
+    "Details": {
+      "Create": {
+        "Summary": "Dorëzoni artikujt te lojtari duke dalluar madhësinë dhe sasinë e secilit rresht.",
+        "Steps": [
+          "Gjeni lojtarin; kërkoni artikullin dhe zgjidhni madhësinë e saktë.",
+          "Vendosni sasinë dhe kontrolloni çmimin e stokun. Shtoni rresht tjetër për artikull tjetër.",
+          "Kontrolloni totalin, pagesën ose lirimin që shfaq formulari dhe ruani daljen."
+        ],
+        "Notes": [
+          "Një madhësi tjetër është variant tjetër i stokut; kontrollojeni para ruajtjes."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "Expenses",
+    "Title": "Shpenzimet",
+    "Summary": "Regjistroni shpenzimet me kategori, dokument dhe mënyrën e pagesës.",
+    "Steps": [
+      "Zgjidhni kategorinë dhe nënkategorinë kur ka.",
+      "Plotësoni datën, shumën, përshkrimin dhe dokumentin; zgjidhni ndeshjen kur kategoria e kërkon.",
+      "Ruani dhe kontrolloni detajet ose dëftesën."
+    ],
+    "Notes": [
+      "Shpenzimet e lidhura me ndeshje ruhen në evidencën financiare.",
+      "Anulimi kërkon arsye; mos regjistroni dy herë të njëjtin dokument."
+    ],
+    "Pages": {
+      "Index": "Kërkimi i shpenzimeve",
+      "Create": "Regjistrimi i shpenzimit",
+      "Details": "Detajet e shpenzimit",
+      "Cancel": "Anulimi i shpenzimit",
+      "Categories": "Kategoritë e shpenzimeve",
+      "Category": "Editimi i kategorisë",
+      "Print": "Dëftesa e shpenzimit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Treasury",
+    "Title": "Arkat",
+    "Summary": "Ndiqni gjendjen dhe veprimet e arkës sipas periudhës.",
+    "Steps": [
+      "Kontrolloni arkën dhe periudhën e zgjedhur.",
+      "Hapni veprimin e duhur dhe plotësoni datën, shumën dhe personin sipas formularit.",
+      "Kontrolloni dokumentin dhe gjendjen pas ruajtjes."
+    ],
+    "Notes": [
+      "Mos e përdorni një veprim arke për të zëvendësuar regjistrimin e pagesës së lojtarit."
+    ],
+    "Pages": {
+      "Index": "Gjendja dhe historiku i arkës",
+      "Create": "Regjistrimi i veprimit të arkës",
+      "Details": "Dokumenti i arkës",
+      "Cancel": "Anulimi i veprimit të arkës",
+      "Print": "Printimi i dokumentit të arkës"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Reports",
+    "Title": "Raportet",
+    "Summary": "Analizoni financat, borxhet, veprimet dhe aktivitetin sipas filtrave të shfaqur.",
+    "Steps": [
+      "Zgjidhni periudhën dhe filtrat që ju duhen.",
+      "Shfaqni raportin dhe kontrolloni titujt e kolonave e totalet.",
+      "Përdorni Printo ose PDF kur dëshironi kopje të raportit."
+    ],
+    "Notes": [
+      "Raporti pasqyron filtrat e zgjedhur; kontrollojini para se ta ndani ose printoni."
+    ],
+    "Pages": {
+      "Index": "Raporti financiar",
+      "Operations": "Raporti i veprimeve",
+      "Reasons": "Arsyet dhe korrigjimet",
+      "CoachActivity": "Aktiviteti i trajnerëve",
+      "Print": "Printimi i raportit",
+      "PrintDebts": "Raporti i borxheve"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "PlayerContracts",
+    "Title": "Kontratat",
+    "Summary": "Përgatitni kontratat, anekset dhe evidencën e pagave për lojtarët ose stafin.",
+    "Steps": [
+      "Zgjidhni personin dhe kontrolloni identitetin e tij.",
+      "Plotësoni kushtet, datat dhe pagën; ruajeni draftin për rishikim.",
+      "Aktivizoni vetëm pasi të keni kontrolluar përmbajtjen dhe dokumentin."
+    ],
+    "Notes": [
+      "Ruajtja si draft dhe aktivizimi janë dy veprime të ndryshme.",
+      "Manuali shpjegon formularin, jo vlefshmërinë ligjore të kushteve të kontratës."
+    ],
+    "Pages": {
+      "Index": "Lista e kontratave",
+      "Staff": "Personat e stafit",
+      "Edit": "Përgatitja e kontratës",
+      "Annex": "Aneksi i kontratës",
+      "Details": "Detajet dhe aktivizimi",
+      "Payroll": "Evidenca e pagave",
+      "Print": "Printimi i kontratës",
+      "PrintAnnex": "Printimi i aneksit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Sponsorships",
+    "Title": "Sponsorizimet",
+    "Summary": "Mbani evidencën e kontratave, pranimeve, buxheteve dhe shpenzimeve të sponsorizimit.",
+    "Steps": [
+      "Zgjidhni sponsorin, kontratën dhe periudhën përkatëse.",
+      "Kontrolloni shumën, kategorinë, përfituesin dhe dokumentin për veprimin që po regjistroni.",
+      "Rishikoni ndarjen e buxhetit dhe raportin pas ruajtjes."
+    ],
+    "Notes": [
+      "Shuma e kontraktuar dhe shuma e pranuar janë të dhëna të ndryshme.",
+      "Propozimet për ndarje buxheti duhet të shqyrtohen para regjistrimit."
+    ],
+    "Pages": {
+      "Index": "Përmbledhja e sponsorizimeve",
+      "Contract": "Kontrata e sponsorizimit",
+      "Receive": "Pranimi i mjeteve",
+      "Plan": "Plani i buxhetit",
+      "Beneficiaries": "Përfituesit dhe furnitorët",
+      "Spend": "Pagesa nga sponsorizimi",
+      "Invoice": "Fatura dhe ndarja e buxhetit",
+      "Invoices": "Lista e faturave",
+      "InvoiceDetails": "Detajet e faturës",
+      "Details": "Kartela e sponsorizimit",
+      "Cancel": "Anulimi i regjistrimit",
+      "Coverage": "Mbulimi sipas vitit",
+      "Salaries": "Pagat nga sponsorizimi",
+      "SponsorReport": "Raporti për sponsorin"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "ParentLinks",
+    "Title": "Lidhja e prindit",
+    "Summary": "Hapni ose ndani lidhjen që i jep prindit qasje te të dhënat përkatëse.",
+    "Steps": [
+      "Kontrolloni lojtarin ose familjen që paraqitet në faqe.",
+      "Përdorni veprimin e kopjimit ose ndarjes së lidhjes që shfaqet.",
+      "Nëse lidhja duhet zëvendësuar, lexoni ndikimin e rigjenerimit para veprimit."
+    ],
+    "Notes": [
+      "Lidhja është private dhe duhet ndarë vetëm me prindin ose kujdestarin përkatës."
+    ],
+    "Pages": {
+      "Index": "Menaxhimi i lidhjes së prindit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "ParentNotifications",
+    "Title": "Njoftimet për prindërit",
+    "Summary": "Konfiguroni kujtesat dhe dërgoni njoftime te marrësit e zgjedhur.",
+    "Steps": [
+      "Zgjidhni ekipin ose lojtarin marrës dhe kontrolloni datën e orën.",
+      "Shkruani titullin dhe mesazhin e qartë.",
+      "Rishikoni marrësit para se të përdorni Dërgo njoftimin."
+    ],
+    "Notes": [
+      "Dërgimi është veprim real; udhëzuesi nuk e kryen atë në emrin tuaj.",
+      "Ruajtja e kujtesave dhe dërgimi i një njoftimi janë veprime të veçanta."
+    ],
+    "Pages": {
+      "Index": "Kujtesat dhe njoftimet"
+    },
+    "Details": {
+      "Index": {
+        "Summary": "Përgatisni kujtesa ose një njoftim për marrësit e përcaktuar.",
+        "Steps": [
+          "Për kujtesa kontrolloni adresën publike, datën dhe orën; përdorni Ruaj kujtesat.",
+          "Për një njoftim zgjidhni ekipin ose lojtarin dhe plotësoni titullin e tekstin.",
+          "Kontrolloni marrësit dhe përdorni Dërgo njoftimin."
+        ],
+        "Notes": [
+          "Nuk duhet të dërgoni një njoftim prove te prindërit realë pa e synuar këtë veprim."
+        ]
+      }
+    }
+  },
+  {
+    "Key": "StudentPhotos",
+    "Title": "Fotografia e lojtarit",
+    "Summary": "Shtoni ose përditësoni fotografinë e lojtarit të zgjedhur.",
+    "Steps": [
+      "Kontrolloni identitetin e lojtarit.",
+      "Zgjidhni fotografinë sipas formatit dhe kufirit që tregon formulari.",
+      "Kontrolloni pamjen dhe ruajeni."
+    ],
+    "Notes": [
+      "Përdorni fotografinë e lojtarit përkatës dhe kontrolloni orientimin para ruajtjes."
+    ],
+    "Pages": {
+      "Edit": "Ndryshimi i fotografisë"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Users",
+    "Title": "Shfrytëzuesit",
+    "Summary": "Menaxhoni llogaritë, rolet dhe të dhënat e stafit.",
+    "Steps": [
+      "Gjeni llogarinë ose hapni krijimin e një shfrytëzuesi.",
+      "Kontrolloni emailin, rolin dhe fushat shtesë që shfaqen për atë rol.",
+      "Plotësoni fjalëkalimin kur kërkohet dhe ruani ndryshimet."
+    ],
+    "Notes": [
+      "Roli përcakton veprimet që lejon sistemi.",
+      "Mos vendosni fjalëkalime në shënime ose në mesazhe të ndara me të tjerët."
+    ],
+    "Pages": {
+      "Index": "Kërkimi i shfrytëzuesit",
+      "Edit": "Llogaria dhe roli"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "ClubSettings",
+    "Title": "Të dhënat e klubit",
+    "Summary": "Përditësoni identitetin dhe kontaktet që shfaqen në platformë e dokumente.",
+    "Steps": [
+      "Kontrolloni klubin aktiv.",
+      "Plotësoni emrin, kontaktet dhe të dhënat që kërkon formulari; zgjidhni logon nëse duhet ndryshuar.",
+      "Ruani dhe kontrolloni pamjen e dokumenteve."
+    ],
+    "Notes": [
+      "Ndryshimet e identitetit të klubit mund të shfaqen edhe në dokumentet e printuara."
+    ],
+    "Pages": {
+      "Index": "Identiteti, kontaktet dhe logoja"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Clubs",
+    "Title": "Klubet",
+    "Summary": "Zgjidhni klubin aktiv ose menaxhoni të dhënat e tij kur llogaria e lejon.",
+    "Steps": [
+      "Kontrolloni emrin e klubit në listë.",
+      "Zgjidhni klubin ku dëshironi të punoni.",
+      "Para regjistrimit të të dhënave kontrolloni përsëri emrin e klubit aktiv."
+    ],
+    "Notes": [
+      "Formulari i hapur për një klub nuk duhet përdorur pasi të ndryshoni klubin në një skedë tjetër."
+    ],
+    "Pages": {
+      "Index": "Zgjedhja e klubit",
+      "Edit": "Editimi i klubit",
+      "Expired": "Afati i qasjes në klub"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "DataReset",
+    "Title": "Zerimi i të dhënave",
+    "Summary": "Faqe mirëmbajtjeje për pronarin me rol administratori.",
+    "Steps": [
+      "Lexoni me kujdes cilat të dhëna do të preken.",
+      "Kontrolloni klubin aktiv dhe siguroni kopjen rezervë sipas procedurës së punës.",
+      "Plotësoni konfirmimin dhe fjalëkalimin vetëm nëse synoni vërtet zerimin."
+    ],
+    "Notes": [
+      "Ky është veprim shkatërrues. Nuk përdoret për korrigjimin e një pagese ose një lojtari."
+    ],
+    "Pages": {
+      "Index": "Zerimi i të dhënave të klubit"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Presentation",
+    "Title": "Të dhënat demonstruese",
+    "Summary": "Përdorni funksionet e demonstrimit vetëm për qëllimin e treguar në faqe.",
+    "Steps": [
+      "Lexoni statusin e importit dhe përshkrimin e demonstrimit.",
+      "Kontrolloni në cilin klub do të shtohen të dhënat.",
+      "Kryeni importin vetëm kur ju duhen të dhënat demonstrative."
+    ],
+    "Notes": [
+      "Të dhënat demonstrative nuk përfaqësojnë veprime reale të klubit."
+    ],
+    "Pages": {
+      "Index": "Importi për prezantim"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "ParentPortal",
+    "Title": "Portali i prindit",
+    "Summary": "Shikoni informacionin e fëmijës, pagesat, oraret dhe komunikimin që ju është vënë në dispozicion.",
+    "Steps": [
+      "Hapni lidhjen private dhe zgjidhni fëmijën kur shfaqen disa.",
+      "Zgjidhni seksionin që ju intereson: pagesat, prezenca, ecuria ose mesazhet.",
+      "Për paqartësi hapni komunikimin me trajnerin ose kontaktoni administratën."
+    ],
+    "Notes": [
+      "Mos e ndani lidhjen private me persona të tjerë.",
+      "Udhëzuesi nuk lexon dhe nuk dërgon të dhënat e fëmijës."
+    ],
+    "Pages": {
+      "Index": "Përdorimi i portalit të prindit",
+      "Parking": "Bileta e parkingut"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "ParentChat",
+    "Title": "Biseda me trajnerin",
+    "Summary": "Komunikoni me trajnerin përmes lidhjes private të prindit.",
+    "Steps": [
+      "Kontrolloni emrin e fëmijës dhe bisedën që është hapur.",
+      "Lexoni mesazhet dhe shkruani pyetjen tuaj.",
+      "Kontrolloni tekstin para dërgimit."
+    ],
+    "Notes": [
+      "Nëse lidhja nuk është më e vlefshme, kërkoni një lidhje të re nga administrata."
+    ],
+    "Pages": {
+      "Thread": "Dërgimi i mesazhit",
+      "Unavailable": "Lidhja e bisedës nuk është e disponueshme"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Identity",
+    "Title": "Hyrja në llogari",
+    "Summary": "Hyni me llogarinë e krijuar nga administrata e klubit.",
+    "Steps": [
+      "Shkruani emailin e llogarisë.",
+      "Vendosni fjalëkalimin duke kontrolluar shkronjat e mëdha dhe tastierën.",
+      "Përdorni butonin e hyrjes; nëse nuk hyni, lexoni mesazhin e gabimit."
+    ],
+    "Notes": [
+      "Për rikthimin e qasjes kontaktoni administratorin. Mos ia dërgoni fjalëkalimin askujt."
+    ],
+    "Pages": {
+      "Login": "Hyrja në platformë"
+    },
+    "Details": {}
+  },
+  {
+    "Key": "Help",
+    "Title": "Manuali i përdorimit",
+    "Summary": "Gjeni udhëzimin për veprimin që dëshironi.",
+    "Steps": [
+      "Kërkoni me emrin e faqes ose me një pyetje të shkurtër.",
+      "Hapni udhëzimin dhe ndiqni hapat.",
+      "Për fushat konkrete, hapni formularin dhe zgjidhni Më udhëzo."
+    ],
+    "Notes": [
+      "Manuali shfaq udhëzimet sipas rolit tuaj dhe nuk kryen veprime."
+    ],
+    "Pages": {
+      "Index": "Kërkimi në manual",
+      "Guide": "Leximi i udhëzimit"
+    },
+    "Details": {}
+  }
+]

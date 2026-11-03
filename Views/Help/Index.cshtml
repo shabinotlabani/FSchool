@@ -1,0 +1,12 @@
+@model HelpIndex
+@{ViewData["Title"]="Manuali i përdorimit";}
+<link rel="stylesheet" href="~/css/help.css" asp-append-version="true"/>
+<div class="manual-page">
+    <header class="manual-heading"><span class="help-eyebrow">QENDRA E NDIHMËS</span><h1>Punoni me siguri, hap pas hapi.</h1><p>Udhëzime për faqet që lejon roli juaj. Kërkoni një veprim ose shkruani pyetjen me fjalët tuaja.</p></header>
+    <form method="get" class="manual-search" data-help-owned role="search"><label for="manual-query">Çfarë dëshironi të bëni?</label><div><input id="manual-query" name="q" value="@Model.Query" maxlength="200" type="search" placeholder="P.sh. si ta korrigjoj borxhin, formacioni 6+1…"/><button type="submit">Kërko</button></div></form>
+    <div class="manual-suggestions"><span>Provoni:</span>@foreach(var question in new[]{"korrigjim tarife","regjistrimi i lojtarit","formacioni","fshirja e ndeshjes"}){<a asp-action="Index" asp-route-q="@question">@question</a>}</div>
+    <div class="manual-results-heading"><h2>@(string.IsNullOrWhiteSpace(Model.Query)?"Udhëzimet sipas fushës së punës":"Rezultatet e kërkimit")</h2><span>@Model.Guides.Count nga @Model.Total udhëzime</span></div>
+    @if(Model.Guides.Count==0){<div class="manual-empty"><h3>Nuk u gjet një udhëzim për këtë kërkim.</h3><p>Provoni emrin e faqes ose një fjalë si “pagesë”, “ligë” apo “prezencë”. Manuali nuk krijon përgjigje të hamendësuara.</p><a asp-action="Index">Shfaq të gjitha udhëzimet</a></div>}
+    else {<div class="table-responsive"><table class="manual-table"><thead><tr><th>Udhëzimi</th><th>Fusha e punës</th><th>Çfarë mbulon</th></tr></thead><tbody>@foreach(var guide in Model.Guides){<tr><th scope="row"><a asp-action="Index" asp-route-topic="@guide.Id">@guide.Title <span aria-hidden="true">↗</span></a></th><td>@guide.Module</td><td>@guide.Summary</td></tr>}</tbody></table></div>}
+    <p class="manual-footnote">Për ndihmë mbi një fushë konkrete, hapni faqen përkatëse dhe zgjidhni “Ndihmë” → “Më udhëzo”. Udhëzuesi nuk kryen veprime në llogarinë tuaj.</p>
+</div>
