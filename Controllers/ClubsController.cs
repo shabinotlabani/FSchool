@@ -15,6 +15,12 @@ public class ClubsController(ApplicationDbContext db, IDataProtectionProvider pr
     [AllowAnonymous, HttpGet]
     public IActionResult Register() => View(new ClubRegistrationInput());
 
+    [AllowAnonymous, HttpGet]
+    public IActionResult Security() => View();
+
+    [AllowAnonymous, HttpGet]
+    public IActionResult Team() => View();
+
     [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("club-registration")]
     public async Task<IActionResult> Register(ClubRegistrationInput input)

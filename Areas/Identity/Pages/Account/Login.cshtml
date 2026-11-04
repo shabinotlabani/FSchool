@@ -73,7 +73,6 @@
             <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>@Model.T("Credit") <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
         </section>
     </main>
-    <div class="login-trust-shell"><partial name="~/Views/Shared/_AboutSecurity.cshtml" model='(Model.Language == "en")'/></div>
     <script>
         const languages = document.querySelector('.login-language-combo');
         document.addEventListener('click', event => { if (!languages.contains(event.target)) languages.open = false; });

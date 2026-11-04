@@ -11,17 +11,23 @@ const fs = require('fs');
       await page.setViewportSize({width,height:950});
       await page.goto(process.argv[2]+'/Clubs/Register');
       await page.getByRole('heading',{name:'Regjistro Klubin',exact:true}).waitFor();
-      await page.locator('#security a[href="https://trust.railway.com/"]').waitFor();
-      if(await page.locator('#about-us a[href="https://www.volcanopixels.com/team"]').count() !== 1) throw Error('Missing official team link');
+      await page.locator('a[href="/Clubs/Security"]').waitFor();
       if(await page.locator('form.registration-form input:not([type=hidden])').count() !== 4) throw Error('Expected four fields');
       if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw Error('Horizontal overflow');
       await page.screenshot({path:path.join(output,`register-${width}.png`),fullPage:true});
       for (const language of ['sq','en']) {
         await page.goto(process.argv[2]+'/Identity/Account/Login?language='+language);
         await page.locator('.product-reasons').waitFor();
-        await page.locator('#security').waitFor();
+        await page.locator('a[href="/Clubs/Security"]').waitFor();
         if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw Error('Login horizontal overflow');
         await page.screenshot({path:path.join(output,`login-${language}-${width}.png`),fullPage:true,animations:'disabled'});
+      }
+      for (const section of ['Security','Team']) {
+        await page.goto(process.argv[2]+'/Clubs/'+section);
+        const official = section === 'Security' ? 'https://trust.railway.com' : 'https://www.volcanopixels.com/team';
+        await page.locator(`a[href="${official}"]`).waitFor();
+        if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw Error('Information page horizontal overflow');
+        await page.screenshot({path:path.join(output,`${section}-${width}.png`),fullPage:true,animations:'disabled'});
       }
     }
     await page.goto(process.argv[2]+'/Clubs/RegistrationThanks');
