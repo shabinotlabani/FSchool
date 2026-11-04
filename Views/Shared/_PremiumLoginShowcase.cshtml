@@ -1,0 +1,56 @@
+@model string
+@using _2Korriku.Services
+@{
+    string T(string key) => LoginLanguage.Text(Model, key);
+    var modules = new[]{("ModulePlayers","players"),("ModuleMinutes","clock"),("ModulePayments","wallet"),("ModuleContracts","document"),("ModuleSponsors","star"),("ModuleSchedule","calendar"),("ModuleFields","field"),("ModuleEvents","flag"),("ModuleStaff","players"),("ModuleAi","spark")};
+    var metrics = new[]{("Players","248"),("Teams","12"),("Attendance","94%"),("ModuleSponsors","8"),("Salaries","18"),("ModuleContracts","32"),("FieldBookings","24"),("ModuleEvents","6"),("Performance","86%")};
+    var matchRows = new[]{(Number:7,Player:"01",Matches:12,Minutes:864,Percent:80),(Number:10,Player:"02",Matches:11,Minutes:792,Percent:73),(Number:14,Player:"03",Matches:10,Minutes:684,Percent:63)};
+}
+<svg class="premium-icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="pm-players" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 4a3 3 0 0 1 0 6m1 4a5 5 0 0 1 3 4v3"/></symbol>
+    <symbol id="pm-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M9 2h6m-3 3V2m0 7v5l3 2"/></symbol>
+    <symbol id="pm-wallet" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18m0 4h-6v4h6m-3-2h.1"/></symbol>
+    <symbol id="pm-document" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 12h8m-8 4h6"/></symbol>
+    <symbol id="pm-star" viewBox="0 0 24 24"><path d="m12 3 3 6 6 1-4 5 1 6-6-3-6 3 1-6-4-5 6-1 3-6Z"/></symbol>
+    <symbol id="pm-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-13 5h2m4 0h2"/></symbol>
+    <symbol id="pm-field" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M3 9h3v6H3m18-6h-3v6h3"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="pm-flag" viewBox="0 0 24 24"><path d="M5 22V3c5-4 9 4 15 0v11c-6 4-10-4-15 0"/></symbol>
+    <symbol id="pm-spark" viewBox="0 0 24 24"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3ZM20 2v4m-2-2h4"/></symbol>
+</defs></svg>
+<header class="premium-brand-row"><a href="~/" aria-label="UPNEXT"><img src="~/images/upnext/logo.svg" width="150" height="45" alt="UPNEXT"/></a><span>SPORTS MANAGEMENT</span></header>
+<svg class="premium-stadium-light" viewBox="0 0 180 190" aria-hidden="true"><path d="M104 42v148m-6-148v148" stroke="#9ebde1" stroke-width="3"/><g fill="#fff" stroke="#bdd0eb" stroke-width="2" transform="rotate(-14 90 35)"><rect x="45" y="9" width="100" height="52" rx="5"/><path d="M65 9v52m20-52v52m20-52v52m20-52v52M45 35h100"/></g><path d="M48 60 0 190h180L144 42" fill="#ffffff40"/></svg>
+<div class="premium-headline"><p>@T("PremiumSlogan")</p><h2>@T("PremiumTitle")<br/><span>@T("PremiumAccent")</span></h2><div>@T("PremiumIntro")</div></div>
+<div class="premium-modules" aria-label="UPNEXT">
+    @foreach(var (key,icon) in modules){<div class="premium-module @(icon == "spark" ? "module-ai" : "")"><svg aria-hidden="true"><use href="#pm-@icon"/></svg><span>@T(key)</span></div>}
+</div>
+<p class="premium-demo-label"><span aria-hidden="true"></span>@T("DemoLabel")</p>
+<div class="premium-stage">
+    <section class="demo-laptop" aria-label="@T("Overview")">
+        <div class="laptop-camera" aria-hidden="true"></div>
+        <div class="laptop-screen">
+            <header class="demo-dashboard-title"><strong>@T("Overview")</strong><span>@T("DemoShort")</span></header>
+            <dl class="demo-metrics">@foreach(var (key,value) in metrics){<div><dt>@T(key)</dt><dd>@value</dd></div>}</dl>
+            <section class="demo-minutes"><h3>@T("OfficialMinutes")</h3><div class="demo-minutes-scroll"><table><thead><tr><th>#</th><th>@T("Player")</th><th>@T("Matches")</th><th>@T("Minutes")</th><th>@T("Percentage")</th></tr></thead><tbody>
+            @foreach(var row in matchRows){<tr><td>@row.Number</td><td>@T("Player") @row.Player</td><td>@row.Matches</td><td>@row.Minutes</td><td><div class="demo-progress"><span style="--progress:@(row.Percent)%"></span><small>@row.Percent%</small></div></td></tr>}
+            </tbody></table></div></section>
+            <div class="performance-strip"><span>@T("Performance")</span><svg viewBox="0 0 200 30" role="img" aria-label="@T("DemoShort")"><path d="M2 27 20 23 38 25 55 18 72 20 89 12 107 15 125 7 143 10 161 3 179 6 198 1" fill="none" stroke="currentColor" stroke-width="2.5"/></svg><strong>86%</strong></div>
+        </div><div class="laptop-base" aria-hidden="true"></div>
+    </section>
+    <div class="demo-people">
+        <section class="coach-scene" aria-label="@T("CoachCaption")">
+            <img src="~/images/upnext/login-coach.png" asp-append-version="true" width="1086" height="1448" alt="" decoding="async"/>
+            <div class="demo-tablet"><div class="device-screen"><div class="device-brand">UPNEXT <span>AI · @T("DemoShort")</span></div><strong>@T("TrainingPlan")</strong><p>U15 · 45 min</p><div class="training-line"><span>@T("Warmup")</span><b>10 min</b></div><div class="training-line"><span>@T("BallControl")</span><b>15 min</b></div><div class="training-line"><span>@T("TeamPlay")</span><b>20 min</b></div><small>@T("Attendance") 94% · @T("Progress") ↗</small></div></div>
+            <span class="scene-caption">@T("CoachCaption")</span>
+        </section>
+        <section class="parent-scene" aria-label="@T("ParentCaption")">
+            <img src="~/images/upnext/login-parent.png" asp-append-version="true" width="1086" height="1448" alt="" decoding="async"/>
+            <div class="demo-phone"><div class="phone-camera" aria-hidden="true"></div><div class="device-screen"><strong>@T("MyChild")</strong><small>@T("DemoShort") · U15</small><div class="phone-stat">@T("Attendance") <b>94%</b></div><div class="phone-stat">@T("Minutes") <b>864</b></div><div class="phone-stat">@T("PaymentStatus") <b>@T("Paid")</b></div><div class="phone-stat">@T("Balance") <b>0.00</b></div><div class="phone-stat">@T("Progress") <b>↗</b></div><small class="phone-plan">@T("TrainingPlan")<br/>@T("Nutrition")</small></div></div>
+            <span class="scene-caption">@T("ParentCaption")</span>
+        </section>
+    </div>
+</div>
+<div class="premium-ai-row">
+    <section class="premium-ai training-ai"><div class="ai-mark"><svg aria-hidden="true"><use href="#pm-spark"/></svg><span>AI</span></div><div><h3>@T("TrainingAi")</h3><p>@T("TrainingAiDescription")</p><small>@T("TrainingAiInputs")</small></div></section>
+    <section class="premium-ai nutrition-ai"><svg class="nutrition-art" viewBox="0 0 70 70" aria-hidden="true"><ellipse cx="35" cy="43" rx="29" ry="18" fill="#e1ecff"/><path d="M8 38h54c-2 26-48 26-54 0" fill="#fff" stroke="#b4c6ed"/><ellipse cx="35" cy="37" rx="26" ry="11" fill="#8cbab0"/><path d="M18 35c-10-18 16-25 17-3 3-24 28-20 14-1" fill="#3f9b75"/><ellipse cx="37" cy="36" rx="8" ry="7" fill="#f4c968"/><circle cx="21" cy="38" r="5" fill="#e88073"/><circle cx="51" cy="37" r="4" fill="#e88073"/></svg><div><h3>@T("NutritionAi")</h3><p>@T("NutritionAiDescription")</p><small>@T("NutritionAiInputs")</small><em>@T("NutritionInfo")</em></div></section>
+</div>
+<p class="premium-concept-note">@T("AiConcept")</p>
