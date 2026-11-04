@@ -12,6 +12,7 @@
     <meta name="color-scheme" content="light" />
     <title>@Model.T("Title") · UPNEXT</title>
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/onboarding.css" asp-append-version="true" />
     <link rel="icon" href="~/images/upnext/favicon.ico" asp-append-version="true" />
 </head>
 <body>
@@ -25,19 +26,8 @@
     </defs></svg>
     <main class="login-shell">
         <section class="login-identity" aria-label="UPNEXT Sports Management Software">
-            <a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo_dark.svg" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="156" height="47" fetchpriority="high" /></a>
-            <div class="identity-copy"><span class="identity-rule" aria-hidden="true"></span><h2>@Model.T("HeroLead")<br/><span>@Model.T("HeroAccent")</span></h2><p>@Model.T("HeroDescription")</p></div>
-            <div class="login-showcase" aria-label="UPNEXT">
-                <article class="showcase-player">
-                    <header><span class="showcase-team">@Model.T("YourTeam")</span><span class="showcase-active"><i></i>@Model.T("Active")</span></header>
-                    <div class="showcase-photo"><img src="~/images/upnext/login-player.jpg" asp-append-version="true" alt="" width="480" height="640" loading="eager" decoding="async"/><span>@Model.T("YourLogo")</span><b>10</b></div>
-                    <div class="showcase-player-main"><span class="showcase-player-name"><strong>@Model.T("PlayerSample")</strong><small>@Model.T("PlayerRoleSample")</small></span></div>
-                    <div class="showcase-metrics"><span><small>@Model.T("Attendance")</small><strong>92%</strong></span><span><small>@Model.T("Progress")</small><strong>84</strong></span><span><small>@Model.T("Matches")</small><strong>12</strong></span></div>
-                </article>
-                <article class="showcase-notice"><span class="showcase-notice-icon" aria-hidden="true">!</span><div><small>@Model.T("Notice")</small><strong>@Model.T("TrainingMissed")</strong><span>@Model.T("Today") · 18:30</span></div></article>
-                <div class="showcase-quick"><span class="showcase-payment"><i aria-hidden="true">89</i><small>@Model.T("MonthlyCollection")</small><strong>89% @Model.T("Collected")</strong><em><b></b></em></span><span class="showcase-development"><i aria-hidden="true">↗</i><small>@Model.T("PlayerDevelopment")</small><strong>+12% · 30 ditë</strong><em><b></b></em></span></div>
-            </div>
-            <div class="identity-bottom"><ul class="login-benefits"><li><svg aria-hidden="true"><use href="#login-players"/></svg>@Model.T("Players")</li><li><svg aria-hidden="true"><use href="#login-training"/></svg>@Model.T("Training")</li><li><svg aria-hidden="true"><use href="#login-finance"/></svg>@Model.T("Finances")</li><li><svg aria-hidden="true"><use href="#login-stats"/></svg>@Model.T("Statistics")</li></ul><p class="identity-sports">@Model.T("Sports")</p></div>
+            <a href="~/" class="login-brand" aria-label="UPNEXT SPORTS MANAGEMENT SOFTWARE"><img src="~/images/upnext/logo.svg" asp-append-version="true" alt="UPNEXT SPORTS MANAGEMENT SOFTWARE" width="156" height="47" fetchpriority="high" /></a>
+            <partial name="~/Views/Shared/_LoginBenefits.cshtml" model='(Model.Language == "en")' />
         </section>
         <section class="form-panel" aria-label="@Model.T("Identity")">
             <div class="form-topbar">
@@ -75,11 +65,15 @@
                     <label class="remember"><input asp-for="Input.RememberMe" /> @Model.T("Remember")</label>
                     <button type="submit" class="submit-button" data-loading="@Model.T("Loading")"><span class="submit-label">@Model.T("Title")</span><span class="submit-arrow" aria-hidden="true">→</span><span class="submit-spinner" aria-hidden="true"></span></button><span id="login-status" class="visually-hidden" role="status" aria-live="polite"></span>
                 </form>
-                <p style="text-align:center;margin:22px 0 0;font-size:14px">Dëshironi të bashkoheni? <a asp-area="" asp-controller="Clubs" asp-action="Register" style="font-weight:600;color:#183d68">Regjistro Klubin</a></p>
+                <div class="login-register-prompt">
+                    <p>@(Model.Language == "en" ? "Ready to organise your club with UPNEXT?" : "Doni ta organizoni klubin tuaj me UPNEXT?")</p>
+                    <a asp-area="" asp-controller="Clubs" asp-action="Register"><span>@(Model.Language == "en" ? "Register your club" : "Regjistro Klubin")</span><span aria-hidden="true">&#8594;</span></a>
+                </div>
             </div>
             <footer class="form-footer"><span>© @DateTime.UtcNow.Year UPNEXT</span><span>@Model.T("Credit") <a href="https://www.volcanopixels.com" target="_blank" rel="noopener noreferrer">Volcano Pixels <span aria-hidden="true">↗</span></a></span></footer>
         </section>
     </main>
+    <div class="login-trust-shell"><partial name="~/Views/Shared/_AboutSecurity.cshtml" model='(Model.Language == "en")'/></div>
     <script>
         const languages = document.querySelector('.login-language-combo');
         document.addEventListener('click', event => { if (!languages.contains(event.target)) languages.open = false; });

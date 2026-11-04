@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="sq"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>@ViewData["Title"] · UPNEXT</title>
+<link rel="stylesheet" href="~/css/clubs.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/onboarding.css" asp-append-version="true"/>
+<link rel="icon" href="~/images/upnext/favicon.ico"/></head>
+<body class="public-onboarding"><main class="onboarding-shell">
+<header class="onboarding-header"><a asp-area="Identity" asp-page="/Account/Login" aria-label="UPNEXT"><img src="~/images/upnext/logo.svg" width="150" height="45" alt="UPNEXT"/></a><a class="club-button" asp-area="Identity" asp-page="/Account/Login">Hyr në llogari ↗</a></header>
+@RenderBody()
+<partial name="~/Views/Shared/_AboutSecurity.cshtml" model="false"/>
+<footer class="onboarding-footer"><span>UPNEXT · Menaxhimi i klubit sportiv</span><span>Lojtarët. Ekipi. Organizimi.</span></footer>
+</main><partial name="~/Views/Shared/_ContextHelp.cshtml"/></body></html>

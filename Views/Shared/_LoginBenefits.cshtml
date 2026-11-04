@@ -1,0 +1,17 @@
+@model bool
+@{ string L(string sq, string en) => Model ? en : sq; }
+<div class="product-story">
+    <p class="product-kicker">@L("MË SHUMË KOHË PËR SPORTIN", "MORE TIME FOR SPORT")</p>
+    <h2>@L("Klubi juaj.", "Your club.")<br/><span>@L("Më i organizuar çdo ditë.", "Better organised every day.")</span></h2>
+    <p class="product-lead">@L("Nga regjistrimi i parë te stërvitja e radhës. Lojtarët, trajnerët dhe administrata punojnë me informacionin që u duhet, në një vend.", "From the first registration to the next training session. Players, coaches and administrators get the information they need in one place.")</p>
+    <h3>@L("Pse UPNEXT për klubin tuaj?", "Why choose UPNEXT for your club?")</h3>
+    <table class="product-reasons"><tbody>
+        <tr><th scope="row"><span>01</span>@L("Njihni çdo lojtar", "Know every player")</th><td>@L("Kartela, kontaktet dhe ekipi gjenden lehtë, pa kërkuar në lista të ndryshme.", "Find profiles, contacts and teams without searching through separate lists.")</td></tr>
+        <tr><th scope="row"><span>02</span>@L("Pagesa më të qarta", "Clearer payments")</th><td>@L("Shihni faturat, pagesat dhe detyrimet në kartelën e secilit lojtar.", "See invoices, payments and outstanding amounts in each player's account.")</td></tr>
+        <tr><th scope="row"><span>03</span>@L("Ekipi në të njëjtin ritëm", "Keep your team in sync")</th><td>@L("Organizoni ekipet, oraret, prezencën dhe ndeshjet në të njëjtin program.", "Organise teams, schedules, attendance and matches in the same application.")</td></tr>
+        <tr><th scope="row"><span>04</span>@L("Më lehtë për stafin", "Easier for your staff")</th><td>@L("Qasje sipas rolit dhe udhëzime brenda formularëve për punën e përditshme.", "Role-based access and guidance within forms support everyday work.")</td></tr>
+    </tbody></table>
+    <p class="product-closing">@L("Një përvojë e përbashkët për drejtuesin, operatorin dhe trajnerin.", "A shared workspace for club managers, operators and coaches.")</p>
+    <a class="infrastructure-audit" href="#security"><strong>UPNEXT</strong><span>@L("Infrastrukturë Railway me auditim SOC 2 Type II", "Railway infrastructure audited to SOC 2 Type II")</span></a>
+    <nav class="trust-shortcuts" aria-label="@L("Rreth programit", "About the platform")"><a href="#about-us">@L("Kush jemi", "About us")</a><a href="#security">@L("Siguria", "Security")</a></nav>
+</div>

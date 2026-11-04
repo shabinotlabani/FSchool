@@ -1,15 +1,27 @@
 @model ClubRegistrationInput
-@{ Layout = "_ClubLayout"; ViewData["Title"] = "Regjistro Klubin"; }
-<section class="registration-intro">
-    <p class="registration-eyebrow">Bëhuni pjesë e UPNEXT</p>
+@{ Layout = "_PublicClubLayout"; ViewData["Title"] = "Regjistro Klubin"; }
+<div class="onboarding-grid">
+<section class="onboarding-story">
+    <p class="product-kicker">HAPI I PARË PËR KLUBIN TUAJ</p>
     <h1>Regjistro Klubin</h1>
-    <p>Na tregoni pak për klubin tuaj. Do ta shqyrtojmë kërkesën dhe do t’ju kontaktojmë për hapat e ardhshëm.</p>
+    <p class="onboarding-tagline">Më pak kohë me administrimin.<br/><strong>Më shumë fokus te sporti.</strong></p>
+    <p class="onboarding-description">Jepini klubit tuaj një vend të përbashkët për lojtarët, pagesat, ekipet dhe stërvitjet. Filloni me një kërkesë të thjeshtë.</p>
+    <h2>Çfarë ndodh më pas?</h2>
+    <table class="onboarding-steps"><tbody>
+        <tr><th scope="row"><span>01</span>Dërgoni kërkesën</th><td>Vetëm të dhënat e klubit dhe kontaktet tuaja.</td></tr>
+        <tr><th scope="row"><span>02</span>E shqyrtojmë së bashku</th><td>Ju kontaktojmë për klubin dhe hapat e ardhshëm.</td></tr>
+        <tr><th scope="row"><span>03</span>Merrni të dhënat e hyrjes</th><td>Pas shqyrtimit, ju dërgojmë të dhënat për klubin e ri.</td></tr>
+    </tbody></table>
+    <p class="onboarding-footnote">Për klube dhe shkolla sportive të aktiviteteve të ndryshme.</p>
+    <a class="infrastructure-audit" href="#security"><strong>UPNEXT</strong><span>Infrastrukturë Railway me auditim SOC 2 Type II</span></a>
+    <nav class="trust-shortcuts" aria-label="Rreth programit"><a href="#about-us">Kush jemi</a><a href="#security">Siguria</a></nav>
 </section>
 <form asp-action="Register" method="post" class="club-form registration-form">
+    <header class="registration-form-heading"><span>LE TË NJIHEMI</span><h2>Na tregoni për klubin</h2><p>Plotësoni katër fushat më poshtë. Ju njoftojmë shumë shpejt.</p></header>
     <div asp-validation-summary="ModelOnly" class="club-error" role="alert"></div>
     <label asp-for="Name"></label>
-    <input asp-for="Name" autocomplete="organization" maxlength="100" required placeholder="Emri i klubit tuaj" />
-    <span asp-validation-for="Name" class="club-error"></span>
+    <input asp-for="Name" autocomplete="organization" maxlength="100" required placeholder="Emri i klubit tuaj" aria-describedby="name-error"/>
+    <span asp-validation-for="Name" id="name-error" class="club-error"></span>
     <label asp-for="Activity"></label>
     <input asp-for="Activity" list="activities" maxlength="100" required placeholder="P.sh. futboll, basketboll, not…" />
     <datalist id="activities">@foreach(var sport in _2Korriku.Services.SportDevelopmentService.Sports.Values){<option value="@sport"></option>}</datalist>
@@ -22,5 +34,6 @@
     <span asp-validation-for="Phone" class="club-error"></span>
     <p class="registration-note">Kërkesa mbetet në pritje të shqyrtimit. Të dhënat e hyrjes do t’jua dërgojmë pasi të përfundojmë shqyrtimin.</p>
     <button class="club-button primary" type="submit">Dërgo kërkesën →</button>
+    <p class="registration-login">Keni llogari? <a asp-area="Identity" asp-page="/Account/Login">Hyni këtu</a></p>
 </form>
-<p class="registration-note">Keni llogari? <a asp-area="Identity" asp-page="/Account/Login">Hyni këtu</a></p>
+</div>
