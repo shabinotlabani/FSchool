@@ -46,14 +46,16 @@ public class StudentsController : Controller
         ViewData["Pages"] = pages;
         ViewData["Total"] = total;
         ViewData["FirstResult"] = total == 0 ? 0 : (page - 1) * pageSize + 1;
-        // Fetch only the visible contact fields for this page; financial details belong to the account.
+        // Fetch only displayed fields and the team name for this page, without financial queries.
         var model = await query
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .Select(x => new StudentListItem {
                 Id = x.Id, FirstName = x.FirstName, LastName = x.LastName,
-                Phone = x.Phone, ParentPhone = x.ParentPhone
+                Phone = x.Phone, ParentPhone = x.ParentPhone, ParentName = x.ParentName,
+                DateOfBirth = x.DateOfBirth, IsActive = x.IsActive,
+                TeamName = x.TrainingTeam == null ? null : x.TrainingTeam.Name
             }).ToListAsync();
 
         return View(model);
@@ -246,5 +248,9 @@ public class StudentListItem
     public string LastName { get; set; } = "";
     public string? Phone { get; set; }
     public string? ParentPhone { get; set; }
+    public string? ParentName { get; set; }
+    public DateOnly DateOfBirth { get; set; }
+    public string? TeamName { get; set; }
+    public bool IsActive { get; set; }
     public string FullName => $"{FirstName} {LastName}".Trim();
 }
