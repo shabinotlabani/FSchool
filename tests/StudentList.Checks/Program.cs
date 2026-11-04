@@ -59,19 +59,19 @@ try{
             CreatedAt=date.AddMinutes(i), ParentName="Test Parent",ParentPhone=i==1?"044999888":null
         }));
         await db.SaveChangesAsync();
-        var controller=new _2Korriku.Controllers.StudentsController(db,new FinancialService(db));
+        var controller=new _2Korriku.Controllers.StudentsController(db);
         async Task<List<_2Korriku.Controllers.StudentListItem>> List(string? search,int page=1){
             var result=(Microsoft.AspNetCore.Mvc.ViewResult)await controller.Index(search,page);
             return (List<_2Korriku.Controllers.StudentListItem>)result.Model!;
         }
         var expected=await db.Students.OrderByDescending(x=>x.CreatedAt).ThenByDescending(x=>x.Id).Take(10).Select(x=>x.Id).ToListAsync();
         var first=await List(null);
-        Check(first.Count==10&&first.Select(x=>x.Student.Id).SequenceEqual(expected),"5001 players: initial page loads only latest ten in stable order");
+        Check(first.Count==10&&first.Select(x=>x.Id).SequenceEqual(expected),"5001 players: initial page loads only latest ten in stable order");
         var second=await List(null,2);
-        Check(second.Count==10&&!second.Any(x=>first.Any(y=>y.Student.Id==x.Student.Id)),"Next page has ten distinct players");
+        Check(second.Count==10&&!second.Any(x=>first.Any(y=>y.Id==x.Id)),"Next page has ten distinct players");
         Check((await List("LoadTest")).Count==10&&(int)controller.ViewData["Total"]! ==5000,"Broad search is limited to ten with accurate total");
-        Check((await List("LoadTest 0001")).Single().Student.LastName=="0001","Search finds older player outside loaded page");
-        Check((await List("044999888")).Single().Student.LastName=="0001","Phone search finds older player");
+        Check((await List("LoadTest 0001")).Single().LastName=="0001","Search finds older player outside loaded page");
+        Check((await List("044999888")).Single().LastName=="0001","Phone search finds older player");
         Check((await List("%_")).Count==0,"Search wildcards remain literal");
         Check((await List(null,int.MaxValue)).Count==1&&(int)controller.ViewData["Page"]! ==501,"Out-of-range page clamps safely");
         Check((await List(null,-1)).Count==10&&(int)controller.ViewData["Page"]! ==1,"Negative page clamps to first page");

@@ -455,7 +455,7 @@ try
         Check(await db.Payments.Where(x=>x.StudentId==seasonalClient.Id&&x.SeasonalStartMonth!=null).SumAsync(x=>x.Amount)==Math.Min(250,actual),"Season receives only its allocated portion of the bank transfer");
     }
     StudentsController RegistrationController(){
-        var c=new StudentsController(db,new FinancialService(db));
+        var c=new StudentsController(db);
         c.ControllerContext=new(){HttpContext=paymentHttp};
         c.TempData=new Microsoft.AspNetCore.Mvc.ViewFeatures.TempDataDictionary(paymentHttp,new PaymentTestTempData());
         return c;

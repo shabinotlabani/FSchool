@@ -12,12 +12,10 @@ namespace _2Korriku.Controllers;
 public class StudentsController : Controller
 {
     private readonly ApplicationDbContext _context;
-    private readonly FinancialService _financialService;
 
-    public StudentsController(ApplicationDbContext context, FinancialService financialService)
+    public StudentsController(ApplicationDbContext context)
     {
         _context = context;
-        _financialService = financialService;
     }
 
     public async Task<IActionResult> Index(string? search, int page = 1)
@@ -25,7 +23,7 @@ public class StudentsController : Controller
         search = search?.Trim();
         if (search?.Length > 150) return BadRequest("Kërkimi mund të ketë deri në 150 karaktere.");
         ViewData["Search"] = search;
-        var query = _context.Students.AsNoTracking().Include(s=>s.TrainingTeam).AsQueryable();
+        var query = _context.Students.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -48,28 +46,15 @@ public class StudentsController : Controller
         ViewData["Pages"] = pages;
         ViewData["Total"] = total;
         ViewData["FirstResult"] = total == 0 ? 0 : (page - 1) * pageSize + 1;
-        // Apply the limit in PostgreSQL before loading players or computing financial details.
-        var students = await query
+        // Fetch only the visible contact fields for this page; financial details belong to the account.
+        var model = await query
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .Skip((page - 1) * pageSize).Take(pageSize)
-            .ToListAsync();
-
-        var model = new List<StudentListItem>();
-        foreach (var student in students)
-        {
-            var balance = await _financialService.GetCurrentBalanceAsync(student.Id);
-            var tariff = await new TariffService(_context).ResolveAsync(student, TariffService.CurrentMonth);
-            student.MonthlyFee = tariff.Amount;
-            model.Add(new StudentListItem
-            {
-                Student = student,
-                FeePlanName = tariff.Name,
-                Balance = balance,
-                Debt = Math.Max(balance, 0),
-                Advance = Math.Max(-balance, 0)
-            });
-        }
+            .Select(x => new StudentListItem {
+                Id = x.Id, FirstName = x.FirstName, LastName = x.LastName,
+                Phone = x.Phone, ParentPhone = x.ParentPhone
+            }).ToListAsync();
 
         return View(model);
     }
@@ -256,9 +241,10 @@ public class StudentsController : Controller
 
 public class StudentListItem
 {
-    public string FeePlanName { get; set; } = "";
-    public Student Student { get; set; } = new();
-    public decimal Balance { get; set; }
-    public decimal Debt { get; set; }
-    public decimal Advance { get; set; }
+    public int Id { get; set; }
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
+    public string? Phone { get; set; }
+    public string? ParentPhone { get; set; }
+    public string FullName => $"{FirstName} {LastName}".Trim();
 }
