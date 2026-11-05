@@ -51,6 +51,7 @@ public static class LoginLanguage
         ["ParentCaption"] = ["Për prindin", "For the parent"],
         ["OurTeam"] = ["Ekipi ynë", "Our team"],
         ["DataSecurity"] = ["Siguria e të dhënave", "Data security"],
+        ["PrivacyPolicy"] = ["Politika e privatësisë", "Privacy policy"],
         ["RegisterClub"] = ["Regjistro Klubin", "Register your club"],
         ["RegisterPrompt"] = ["Gati për hapin e radhës të klubit tuaj?", "Ready for your club's next step?"],
         ["HeroLead"] = ["Klubi yt.", "Your club."],

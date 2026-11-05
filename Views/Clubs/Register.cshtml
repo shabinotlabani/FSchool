@@ -32,6 +32,7 @@
     <input asp-for="Phone" type="tel" autocomplete="tel" maxlength="30" required placeholder="+383 44 123 456" />
     <span asp-validation-for="Phone" class="club-error"></span>
     <p class="registration-note">Kërkesa mbetet në pritje të shqyrtimit. Të dhënat e hyrjes do t’jua dërgojmë pasi të përfundojmë shqyrtimin.</p>
+    <p class="registration-note">Lexoni <a asp-action="Privacy">Politikën e privatësisë</a> për përdorimin e të dhënave tuaja.</p>
     <button class="club-button primary" type="submit">Dërgo kërkesën →</button>
     <p class="registration-login">Keni llogari? <a asp-area="Identity" asp-page="/Account/Login">Hyni këtu</a></p>
 </form>

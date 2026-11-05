@@ -19,6 +19,9 @@ public class ClubsController(ApplicationDbContext db, IDataProtectionProvider pr
     public IActionResult Security() => View();
 
     [AllowAnonymous, HttpGet]
+    public IActionResult Privacy() => View();
+
+    [AllowAnonymous, HttpGet]
     public IActionResult Team() => View();
 
     [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]

@@ -66,7 +66,7 @@
                     <label class="remember"><input asp-for="Input.RememberMe" /> @Model.T("Remember")</label>
                     <button type="submit" class="submit-button" data-loading="@Model.T("Loading")"><span class="submit-label">@Model.T("Title")</span><span class="submit-arrow" aria-hidden="true">→</span><span class="submit-spinner" aria-hidden="true"></span></button><span id="login-status" class="visually-hidden" role="status" aria-live="polite"></span>
                 </form>
-                <nav class="login-info-links" aria-label="UPNEXT"><a asp-area="" asp-controller="Clubs" asp-action="Team">@Model.T("OurTeam")</a><span aria-hidden="true">·</span><a asp-area="" asp-controller="Clubs" asp-action="Security">@Model.T("DataSecurity")</a></nav>
+                <nav class="login-info-links" aria-label="UPNEXT"><a asp-area="" asp-controller="Clubs" asp-action="Team">@Model.T("OurTeam")</a><span aria-hidden="true">·</span><a asp-area="" asp-controller="Clubs" asp-action="Security">@Model.T("DataSecurity")</a><span aria-hidden="true">·</span><a asp-area="" asp-controller="Clubs" asp-action="Privacy">@Model.T("PrivacyPolicy")</a></nav>
                 <div class="login-register-prompt">
                     <p>@Model.T("RegisterPrompt")</p>
                     <a asp-area="" asp-controller="Clubs" asp-action="Register"><span>@Model.T("RegisterClub")</span><span aria-hidden="true">&#8594;</span></a>
