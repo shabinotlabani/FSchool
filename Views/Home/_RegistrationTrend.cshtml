@@ -1,0 +1,15 @@
+@model _2Korriku.Services.RegistrationTrend
+@using System.Globalization
+@{ var peak = Math.Max(1, Model.Months.Max(x => x.Count)); }
+<link rel="stylesheet" href="~/css/registration-trend.css" asp-append-version="true"/>
+<section class="registration-trend" aria-labelledby="registration-trend-title">
+    <header><div><span class="trend-eyebrow">RRITJA E KLUBIT · 6 MUAJT E FUNDIT</span><h2 id="registration-trend-title">Regjistrimet e reja</h2><p>Të gjithë lojtarët e regjistruar, pavarësisht statusit aktual.</p></div><a asp-controller="Students" asp-action="Index">Shiko lojtarët ↗</a></header>
+    <div class="trend-summary"><div><strong>@Model.CurrentMonth</strong><span>këtë muaj · deri më @Model.AsOf.ToString("dd/MM")</span></div><div><strong>@Model.Total</strong><span>gjithsej në periudhë</span></div></div>
+    @if(Model.Total == 0){<p class="trend-empty" role="status">Nuk ka regjistrime të reja në këtë periudhë.</p>}
+    <div class="trend-chart" role="img" aria-label="Regjistrimet sipas muajve. @string.Join("; ", Model.Months.Select(m => $"{m.Label} {m.Month.Year}: {m.Count}"))">
+        @foreach(var month in Model.Months){var current=month.Month.Year==Model.AsOf.Year&&month.Month.Month==Model.AsOf.Month;var height=(month.Count*100d/peak).ToString("0.##",CultureInfo.InvariantCulture);
+            <div class="trend-column @(current ? "is-current" : "")"><div class="trend-bar-area"><div class="trend-bar" style="--trend-height:@height%"><strong>@month.Count</strong></div></div><span>@month.Label</span><small>@month.Month.Year</small></div>
+        }
+    </div>
+    <footer><span><i aria-hidden="true"></i>Muaji aktual është ende në vazhdim.</span><small>Sipas datës së regjistrimit · I gjithë klubi</small></footer>
+</section>

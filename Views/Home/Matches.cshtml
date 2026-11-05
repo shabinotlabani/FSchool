@@ -7,6 +7,7 @@
 }
 <link rel="stylesheet" href="~/css/club-matches.css" asp-append-version="true"/>
 <div class="club-matches">
+@if(ViewData["RegistrationTrend"] is _2Korriku.Services.RegistrationTrend trend){<partial name="_RegistrationTrend" model="trend"/>}
 @if(ViewData["ExpiringContracts"] is List<PlayerContract> contracts){<partial name="~/Views/PlayerContracts/_Expiry.cshtml" model="contracts"/>}
 @if(Model.CoachActivity is { } activity){var maximum=Math.Max(1,activity.Rows.Select(x=>x.Points).DefaultIfEmpty().Max());var active=activity.Rows.Count(x=>x.Points>0);var rank=0;
 <section class="coach-performance" aria-labelledby="coach-performance-title">

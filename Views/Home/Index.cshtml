@@ -1,5 +1,6 @@
 @model DashboardViewModel
 @{ ViewData["Title"] = "Përmbledhja"; }
+@if(ViewData["RegistrationTrend"] is _2Korriku.Services.RegistrationTrend trend){<partial name="_RegistrationTrend" model="trend"/>}
 @if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator))
 {
     <div class="d-flex justify-content-end mb-4"><a class="btn btn-primary" asp-controller="Students" asp-action="Create"><svg class="icon" aria-hidden="true"><use href="#i-plus" /></svg>Regjistro lojtar</a></div>

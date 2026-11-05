@@ -32,6 +32,7 @@ public class HomeController : Controller
                 .Where(g=>g.Date>=weekStart&&g.Date<weekEnd&&(!teamId.HasValue||g.TrainingTeamId==teamId))
                 .OrderBy(g=>g.Date).ThenBy(g=>g.Kickoff).ToListAsync();
             var students=await _context.Students.AsNoTracking().ToListAsync();
+            ViewData["RegistrationTrend"] = RegistrationTrend.Build(students.Select(s => s.RegistrationDate), today);
             var studentIds=students.Select(s=>s.Id).ToList();
             var changes=await _context.StudentChanges.AsNoTracking().Where(c=>studentIds.Contains(c.StudentId)).OrderBy(c=>c.CreatedAt).ThenBy(c=>c.Id).ToListAsync();
             var contracts=await _context.PlayerContracts.AsNoTracking().Where(c=>c.StudentId.HasValue&&c.Status!="Draft").ToListAsync();
@@ -60,6 +61,13 @@ public class HomeController : Controller
         if (User.IsInRole(_2Korriku.Models.Roles.FieldOperator)) return RedirectToAction("Index", "Fields");
         if (User.IsInRole(_2Korriku.Models.Roles.Coach)) return RedirectToAction("Index", "Coaches");
         var stats = await _dashboardService.GetStatsAsync();
+        var trendToday = BillingClock.Today;
+        var trendStart = BillingClock.UtcDate(new DateOnly(trendToday.Year, trendToday.Month, 1).AddMonths(-5));
+        var trendEnd = BillingClock.UtcDate(trendToday.AddDays(1));
+        var registrationDates = await _context.Students.AsNoTracking()
+            .Where(s => s.RegistrationDate >= trendStart && s.RegistrationDate < trendEnd)
+            .Select(s => s.RegistrationDate).ToListAsync();
+        ViewData["RegistrationTrend"] = RegistrationTrend.Build(registrationDates, trendToday);
         var latestStudents = _context.Students
             .OrderByDescending(x => x.RegistrationDate)
             .Take(5)
