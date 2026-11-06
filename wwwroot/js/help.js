@@ -5,10 +5,25 @@
     drawer.dataset.ready = 'true';
     const tour = document.getElementById('help-tour');
     const formList = document.getElementById('help-form-list');
-    const formsSeen = new WeakSet();
+    let formsSeen = new WeakSet();
     const byId = id => document.getElementById(id);
     let trigger = null, fields = [], current = 0, marked = null, formTrigger = null;
     const openedDetails = new Set();
+    const guidanceAllowed = drawer.dataset.formGuidance === 'true';
+    const preferenceKey = 'upnext:hide-form-guidance:' + drawer.dataset.helpUser;
+    const hiddenPreference = byId('help-guidance-hidden');
+    let guidanceHidden = false;
+    try { guidanceHidden = localStorage.getItem(preferenceKey) === '1'; } catch { /* Optional browser preference. */ }
+    if (hiddenPreference) hiddenPreference.checked = guidanceHidden;
+    function setGuidanceHidden(hidden) {
+        guidanceHidden = hidden;
+        if (hiddenPreference) hiddenPreference.checked = hidden;
+        try { if(hidden)localStorage.setItem(preferenceKey,'1');else localStorage.removeItem(preferenceKey); } catch { /* Keep the choice for this visit. */ }
+        document.querySelectorAll('.help-inline-controls').forEach(node=>node.remove());
+        stopTour(false); refreshForms();
+        if(!hidden) { formsSeen = new WeakSet(); enhanceForms(); }
+    }
+    hiddenPreference?.addEventListener('change',()=>setGuidanceHidden(hiddenPreference.checked));
     const hints = {
         Reason: 'Shpjegoni pse po bëhet ky veprim. Përdorni një arsye konkrete që kuptohet edhe kur lexohet më vonë në historik.',
         Notes: 'Shtoni vetëm sqarimet që lidhen me këtë regjistrim.',
@@ -73,6 +88,7 @@
         return (form.getAttribute('aria-label') || submit?.textContent || heading?.textContent || `Formulari ${index+1}`).replace(/\s+/g,' ').trim().slice(0,100);
     }
     function availableForms() {
+        if (!guidanceAllowed || guidanceHidden) return [];
         return [...document.forms].filter(f => !f.closest('[data-help-owned],.app-sidebar,.club-footer') && formFields(f).length > 0);
     }
     function refreshForms() {
@@ -143,13 +159,17 @@
         drawer.close(); showStep();
     }
     function enhanceForms() {
+        if (!guidanceAllowed || guidanceHidden) return;
         availableForms().forEach((form,index) => {
             if (formsSeen.has(form)) return;
             formsSeen.add(form);
             const button = document.createElement('button'); button.type = 'button';
             button.className = 'help-inline-button'; button.dataset.helpOwned = '';
             button.textContent = 'ⓘ Më udhëzo'; button.setAttribute('aria-label',`Më udhëzo: ${title(form,index)}`);
-            button.onclick = () => startTour(form,button); form.prepend(button);
+            button.onclick = () => startTour(form,button);
+            const controls=document.createElement('div');controls.className='help-inline-controls';controls.dataset.helpOwned='';
+            const hide=document.createElement('button');hide.type='button';hide.className='help-hide-guidance';hide.textContent='Mos e shfaq më';
+            hide.onclick=()=>setGuidanceHidden(true);controls.append(button,hide);form.prepend(controls);
         });
     }
     document.querySelectorAll('[data-help-open]').forEach(button => button.addEventListener('click', () => {

@@ -1,7 +1,7 @@
 (() => {
  const root=document.querySelector('.portal-actions');if(!root||typeof HTMLDialogElement==='undefined')return;
  const panels=new Map();let current=null;
- function open(id,push=true){const item=panels.get(id);if(!item)return;if(current){panels.get(current).dialog.close();panels.get(current).button.setAttribute('aria-expanded','false');}current=id;item.dialog.showModal();item.button.setAttribute('aria-expanded','true');document.body.classList.add('portal-panel-open');if(push)history.pushState({portalPanel:id},'',location.pathname+location.search+'#'+id);}
+ function open(id,push=true){const item=panels.get(id);if(!item)return;if(current){panels.get(current).dialog.close();panels.get(current).button.setAttribute('aria-expanded','false');}current=id;item.dialog.showModal();item.button.setAttribute('aria-expanded','true');document.body.classList.add('portal-panel-open');if(push)history.pushState({portalPanel:id},'',location.pathname+location.search+'#'+id);document.dispatchEvent(new CustomEvent('portal-panel-open',{detail:{id,dialog:item.dialog}}));}
  function close(){if(!current)return;const item=panels.get(current);item.dialog.close();item.button.setAttribute('aria-expanded','false');item.button.focus();current=null;document.body.classList.remove('portal-panel-open');}
  function dismiss(){if(history.state?.portalPanel)history.back();else{close();history.replaceState(null,'',location.pathname+location.search);}}
  root.querySelectorAll('details[id]').forEach(section=>{

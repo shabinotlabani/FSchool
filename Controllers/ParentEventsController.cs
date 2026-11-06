@@ -12,7 +12,7 @@ namespace _2Korriku.Controllers;
 public class ParentEventsController(ApplicationDbContext db):Controller
 {
     [HttpGet("p/{token}/events")]
-    public async Task<IActionResult> Index(string token,int? studentId)
+    public async Task<IActionResult> Index(string token,int? studentId,bool panel=false)
     {
         Response.Headers["Referrer-Policy"]="no-referrer";Response.Headers["X-Robots-Tag"]="noindex, nofollow, noarchive";
         Response.Headers["Content-Security-Policy"]="default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
@@ -21,17 +21,18 @@ public class ParentEventsController(ApplicationDbContext db):Controller
         var rows=await db.EventInvitations.AsNoTracking().Include(x=>x.Event).Include(x=>x.Consents).Where(x=>x.StudentId==player.Id&&x.Event.Status!="Draft").OrderByDescending(x=>x.Event.StartsAt).ToListAsync();
         ViewData["Members"]=access.Students;ViewData["Payments"]=await db.Payments.AsNoTracking().Where(x=>x.StudentId==player.Id&&x.EventInvitationId!=null).OrderByDescending(x=>x.Id).ToListAsync();
         ViewData["Settlements"]=await db.EventSettlements.AsNoTracking().Where(x=>x.Invitation.StudentId==player.Id).ToListAsync();
-        return View(new ParentEvents(token,player.Id,player.FullName,rows));
+        var model=new ParentEvents(token,player.Id,player.FullName,rows);
+        return panel?PartialView("_Panel",model):View(model);
     }
     [HttpPost("p/{token}/events/respond"),ValidateAntiForgeryToken]
-    public async Task<IActionResult> Respond(string token,int invitationId,int version,string decision,string guardian,bool terms)
+    public async Task<IActionResult> Respond(string token,int invitationId,int version,string decision,string guardian,bool terms,bool panel=false)
     {
         var access=await new ParentAccessService(db).Resolve(token);if(access==null)return NotFound();
         var ids=access.Students.Select(x=>x.Id).ToList();var studentId=await db.EventInvitations.Where(x=>x.Id==invitationId&&ids.Contains(x.StudentId)).Select(x=>(int?)x.StudentId).SingleOrDefaultAsync();
         if(studentId==null)return NotFound();
         try{await new ClubEventService(db).Respond(token,invitationId,version,decision,guardian??"",terms);TempData["Success"]="Përgjigjja juaj u ruajt.";}
         catch(Exception e)when(e is ValidationException or InvalidOperationException){TempData["Error"]=e.Message;}
-        return RedirectToAction(nameof(Index),new{token,studentId});
+        return RedirectToAction(nameof(Index),new{token,studentId,panel});
     }
     [HttpGet("p/{token}/events/{id:int}/photo")]
     public async Task<IActionResult> Photo(string token,int id)

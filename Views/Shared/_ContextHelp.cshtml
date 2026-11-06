@@ -5,13 +5,16 @@
     if (ViewContext.RouteData.Values["area"]?.ToString() == "Identity") { helpController = "Identity"; helpAction = "Login"; }
     var guide = Manual.Resolve(helpController, helpAction, ViewData["HelpView"] as string);
     var staffManual = User.Identity?.IsAuthenticated == true && helpController is not ("ParentPortal" or "ParentChat" or "Identity");
+    var financialGuidance = User.Identity?.IsAuthenticated == true && new[]{"Payments","BankPayments","Expenses","Treasury","Reports","Sponsorships","FieldCash","Tariffs","Families"}.Contains(helpController);
+    var helpUser = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
 }
 <link rel="stylesheet" href="~/css/help.css" asp-append-version="true"/>
 @if(ViewData["HelpInTopbar"] is not true){<button type="button" class="help-launcher" data-help-open aria-haspopup="dialog" aria-controls="context-help"><span aria-hidden="true">?</span> Ndihmë</button>}
-<dialog id="context-help" class="help-drawer" aria-labelledby="help-heading" data-help-owned>
+<dialog id="context-help" class="help-drawer" aria-labelledby="help-heading" data-help-owned data-form-guidance="@financialGuidance.ToString().ToLowerInvariant()" data-help-user="@helpUser">
     <header class="help-drawer-head"><div><span class="help-eyebrow">UDHËZUESI I PËRDORIMIT</span><h2 id="help-heading">@guide.Title</h2><p>@guide.Module</p></div><button type="button" data-help-close class="help-icon-button" aria-label="Mbyll ndihmën">×</button></header>
     <div class="help-drawer-body">
         <p class="help-intro">@guide.Summary</p>
+        @if(financialGuidance){<label class="help-guidance-preference"><input type="checkbox" id="help-guidance-hidden"/> Mos e shfaq më “Më udhëzo”</label>}
         <div class="help-reading-label"><span aria-hidden="true">01</span><h3>Si ta përdorni</h3></div>
         <ol class="help-steps">@foreach(var step in guide.Steps){<li>@step</li>}</ol>
         <section id="help-form-tools" hidden><div class="help-reading-label"><span aria-hidden="true">02</span><h3>Formularët në këtë faqe</h3></div><p class="help-muted">Zgjidhni një formular për të parë shpjegimin e fushave. Asnjë e dhënë nuk plotësohet ose ruhet nga udhëzuesi.</p><div id="help-form-list"></div></section>

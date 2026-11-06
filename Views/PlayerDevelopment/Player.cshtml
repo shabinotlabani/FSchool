@@ -6,6 +6,7 @@
 @if(Model.Section=="Assessment"){<a asp-action="Edit" asp-route-studentId="@Model.Player.Id" class="btn btn-primary">Vlerësim i ri</a>}
 else if(Model.Section!="Progress"){<a asp-action="Record" asp-route-studentId="@Model.Player.Id" asp-route-kind="@Model.Section" class="btn btn-primary">Regjistrim i ri</a>}</div>
 
+<div class="mb-3"><a asp-controller="StudentPhotos" asp-action="Edit" asp-route-id="@Model.Player.Id" class="btn btn-outline-primary">Fotoja e lojtarit</a></div>
 <nav class="development-tabs" aria-label="Zhvillimi i lojtarit">
 @foreach(var tab in new[]{("Skills","Aftësitë"),("Assessment","Vlerësimi"),("Profile","Profili"),("Testing","Testimet"),("Progress","Progresi ndër vite"),("Talent","Talenti"),("Measurements","Matjet fizike")}){<a asp-action="Player" asp-route-id="@Model.Player.Id" asp-route-section="@tab.Item1" class="btn btn-sm @(Model.Section==tab.Item1?"btn-primary":"btn-outline-secondary")" aria-current="@(Model.Section==tab.Item1?"page":null)">@tab.Item2</a>}
 </nav>

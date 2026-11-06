@@ -89,6 +89,22 @@ try {
         db.StudentTransactions.Add(new(){StudentId=child.Id,TransactionType="MonthlyFee",Debit=50,Description="Private reason"});
         await db.SaveChangesAsync(); return child.Id;
     });
+    await WithDb(async db=>{
+        var team=await db.Students.Where(x=>x.Id==childId).Select(x=>x.TrainingTeam!).SingleAsync();
+        StudentPhotosController Photos(string coach)=>new(db){ControllerContext=new(){HttpContext=new DefaultHttpContext{User=new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[]{new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier,coach),new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role,Roles.Coach)},"test"))}}};
+        Check(await Photos(team.CoachId!).Edit(childId) is ViewResult,"Assigned head coach can open the player photo editor");
+        Check(await Photos(team.AssistantCoachId!).Edit(childId) is ViewResult,"Assigned assistant coach can open the player photo editor");
+        Check(await Photos("unassigned-coach").Edit(childId) is NotFoundResult,"Unassigned coach cannot open another player's photo editor");
+        foreach(var size in new[]{256,512}){
+            var bytes=await File.ReadAllBytesAsync(Path.Combine(root,"wwwroot","images","upnext",$"logo_{size}.webp"));
+            using var stream=new MemoryStream(bytes);var photo=new FormFile(stream,0,bytes.Length,"photo","test.webp"){Headers=new HeaderDictionary(),ContentType="image/webp"};
+            Check(await Photos(team.CoachId!).Save(childId,photo) is JsonResult,"Assigned coach can save or update the shared player photo");
+        }
+        Check(await db.Set<StudentPhoto>().CountAsync(x=>x.StudentId==childId)==1,"Photo updates replace the existing photo without duplicate rows");
+        Check((await new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,false,_=>true))!.HasPhoto,"The coach's updated photo is available in the parent portal");
+        Check(await Photos("unassigned-coach").Save(childId,null,true) is NotFoundResult,"Unassigned coach cannot remove another player's photo");
+        await Photos(team.CoachId!).Save(childId,null,true);return true;
+    });
     foreach(var date in new[]{new DateOnly(2026,10,5),new(2026,10,10),new(2026,10,11),new(2026,10,31),new(2026,11,1)})
     foreach(var finance in new[]{false,true}) {
         var warning = await WithDb(db=>new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,finance,currentDate:date));

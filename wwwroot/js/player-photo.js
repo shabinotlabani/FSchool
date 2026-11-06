@@ -1,6 +1,8 @@
 document.querySelectorAll('.player-photo-form').forEach(form=>{
  const status=form.querySelector('.photo-status'),file=form.querySelector('input[type=file]'),submit=form.querySelector('button[type=submit]'),preview=form.querySelector('.photo-preview'),previewImage=preview?.querySelector('img');
  let busy=false,previewUrl='';
+ const camera=form.querySelector('[data-photo-camera]');
+ camera?.addEventListener('change',()=>{if(camera.files.length){file.files=camera.files;file.dispatchEvent(new Event('change',{bubbles:true}));}});
  function clearPreview(){if(previewUrl)URL.revokeObjectURL(previewUrl);previewUrl='';if(preview)preview.hidden=true;if(previewImage)previewImage.removeAttribute('src');submit.disabled=true;}
  file.addEventListener('change',()=>{
   clearPreview();status.textContent='';const source=file.files[0];if(!source)return;

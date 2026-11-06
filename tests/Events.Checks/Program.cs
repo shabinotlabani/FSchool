@@ -154,10 +154,14 @@ try{
   var posted=await client.PostAsync("/Events/Edit",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",csrf},{"Name",input.Name},{"Description",input.Description},{"CategoryId",category.ToString()},{"StartsAt",input.StartsAt.ToString("yyyy-MM-ddTHH:mm")},{"EndsAt",input.EndsAt.ToString("yyyy-MM-ddTHH:mm")},{"Deadline",input.Deadline.ToString("yyyy-MM-ddTHH:mm")},{"Location",input.Location},{"Capacity","30"},{"IsPaid","false"},{"Price","0"},{"RequiresConsent","false"},{"Terms",""},{"Transport",""},{"Instructions",""},{"Organizer",""},{"Contact",""},{"CancellationPolicy","Refund"},{"StudentIds",player.ToString()}}));
   Check(posted.StatusCode==System.Net.HttpStatusCode.Redirect&&posted.Headers.Location?.ToString().Contains("/Events/Details/")==true,"A real event form submits successfully with optional fields left blank");
   var parentHtml=await client.GetStringAsync("/p/"+token+"/events?studentId="+player);
+  var fragment=await client.GetStringAsync("/p/"+token+"/events?studentId="+player+"&panel=true");
+  Check(fragment.Contains("parent-event-content")&&!fragment.Contains("<html",StringComparison.OrdinalIgnoreCase),"The event popup loads a fragment without a second page layout");
   var parentCsrf=System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(parentHtml,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
   var parentInvitation=await Invite(reminderId,player);
-  var responsePost=await client.PostAsync("/p/"+token+"/events/respond",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",parentCsrf},{"invitationId",parentInvitation.Id.ToString()},{"version","1"},{"decision","Accepted"},{"guardian","HTTP Guardian"},{"terms","true"}}));
+  var responsePost=await client.PostAsync("/p/"+token+"/events/respond",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",parentCsrf},{"invitationId",parentInvitation.Id.ToString()},{"version","1"},{"decision","Accepted"},{"guardian","HTTP Guardian"},{"terms","true"},{"panel","true"}}));
   Check(responsePost.StatusCode==System.Net.HttpStatusCode.Redirect&&(await Invite(reminderId,player)).Status=="Accepted","A real parent form confirms only its selected invitation with valid antiforgery");
+  var updated=await client.GetStringAsync(responsePost.Headers.Location!);
+  Check(updated.Contains("HTTP Guardian")&&!updated.Contains("<html",StringComparison.OrdinalIgnoreCase),"An event response refreshes inside the popup and retains consent history");
  }
  await app.StopAsync();
  Console.WriteLine("All event integration checks passed.");
