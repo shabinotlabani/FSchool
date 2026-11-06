@@ -1,0 +1,35 @@
+/* Shared totals for all grids, including module styles loaded in the page body. */
+table tfoot > tr > :is(th, td),
+table .official-total > :is(th, td) {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #263752 !important;
+    background: #e8eef6 !important;
+    border-top: 2px solid #aebdd1 !important;
+    padding-top: .8rem !important;
+    padding-bottom: .8rem !important;
+    font-variant-numeric: tabular-nums;
+}
+
+table tfoot > tr > :is(th, td) strong {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+@media print {
+    table tfoot > tr > :is(th, td),
+    table .official-total > :is(th, td) {
+        font-size: 11pt !important;
+        padding-top: 8pt !important;
+        padding-bottom: 8pt !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    /* Keep twelve monthly columns legible on one landscape salary report. */
+    .sp-salary-report .sp-salary-grid tfoot > tr > :is(th, td) {
+        font-size: 7pt !important;
+        padding-top: 4pt !important;
+        padding-bottom: 4pt !important;
+    }
+}

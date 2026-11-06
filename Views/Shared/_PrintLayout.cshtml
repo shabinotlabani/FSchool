@@ -1,6 +1,6 @@
 @{ var club = await Club.Get(); }
 <!DOCTYPE html>
 <html lang="sq">
-<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>@ViewData["Title"] · @club.DisplayName</title><link rel="icon" href="@Club.LogoUrl"/><link rel="stylesheet" href="~/css/print-documents.css" asp-append-version="true"/></head>
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>@ViewData["Title"] · @club.DisplayName</title><link rel="icon" href="@Club.LogoUrl"/><link rel="stylesheet" href="~/css/print-documents.css" asp-append-version="true"/><link rel="stylesheet" href="~/css/table-totals.css" asp-append-version="true"/></head>
 <body class="print-preview">@RenderBody()</body>
 </html>
