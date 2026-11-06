@@ -461,7 +461,7 @@ try
         return c;
     }
     foreach(var duration in new[]{6,12}){
-        var registration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Seasonal",LastName="Cash"+duration,Phone="044100001",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=duration,SeasonalExpectedRate=50,PreferredPaymentMethod="Bank"};
+        var registration=new StudentRegistrationModel{TrainingTeamId=registrationTeam.Id,FirstName="Seasonal",LastName="Cash"+duration,Phone=$"0441000{duration:00}",DateOfBirth=new(2015,1,1),FeePlanId=customIndividual,RegistrationPayment="Seasonal",SeasonalMonths=duration,SeasonalExpectedRate=50,PreferredPaymentMethod="Bank"};
         var result=await RegistrationController().Create(registration);
         Check(result is RedirectToActionResult{ControllerName:"Payments"},"Seasonal registration returns directly to payments");
         var receipt=await db.Payments.SingleAsync(p=>p.RequestId==registration.SeasonalRequestId);

@@ -21,12 +21,14 @@ public partial class BillingService
     public async Task<Dictionary<int, FinancialPosition>> GetFinancialPositionsAsync(int? studentId = null)
     {
         await using var snapshot = db.Database.CurrentTransaction == null ? await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead) : null;
-        var balances = await db.StudentTransactions.AsNoTracking().Where(t => !t.IsCancelled && (!studentId.HasValue || t.StudentId == studentId.Value))
+        var balances = await db.StudentTransactions.AsNoTracking().Where(t => !t.IsCancelled && !t.TransactionType.StartsWith("Event") && (!studentId.HasValue || t.StudentId == studentId.Value))
             .GroupBy(t => t.StudentId).Select(g => new { Id = g.Key, Balance = g.Sum(t => t.Debit - t.Credit) }).ToListAsync();
         var seasons = await db.Payments.AsNoTracking().Where(p => !p.IsCancelled && p.SeasonalStartMonth != null && (!studentId.HasValue || p.StudentId == studentId.Value)).ToListAsync();
         var invoices = seasons.Count == 0 ? [] : await GetInvoicesAsync(studentId);
         var personal = await db.PersonalCharges.Where(c=>!c.IsCancelled && (!studentId.HasValue || c.PersonalTraining!.StudentId==studentId)).GroupBy(c=>c.PersonalTraining!.StudentId).Select(g=>new{Id=g.Key,Due=g.Sum(c=>Math.Max(0,c.Amount-c.Paid-c.Waived))}).ToDictionaryAsync(x=>x.Id,x=>x.Due);
-        var result = balances.ToDictionary(b => b.Id, b => new FinancialPosition(b.Balance, ReservedSeasonalFunds(seasons.Where(p => p.StudentId == b.Id), invoices.Where(i => i.Student.Id == b.Id)), personal.GetValueOrDefault(b.Id)));
+        var eventDebts = await db.EventInvitations.Where(x=>!studentId.HasValue||x.StudentId==studentId).GroupBy(x=>x.StudentId).Select(g=>new{Id=g.Key,Due=g.Sum(x=>Math.Max(0,x.Amount-x.Waived-x.Paid))}).ToDictionaryAsync(x=>x.Id,x=>x.Due);
+        foreach(var pair in eventDebts.Where(x=>!balances.Any(b=>b.Id==x.Key))) balances.Add(new { Id=pair.Key, Balance=0m });
+        var result = balances.ToDictionary(b => b.Id, b => new FinancialPosition(b.Balance+eventDebts.GetValueOrDefault(b.Id), ReservedSeasonalFunds(seasons.Where(p => p.StudentId == b.Id), invoices.Where(i => i.Student.Id == b.Id)), personal.GetValueOrDefault(b.Id),eventDebts.GetValueOrDefault(b.Id)));
         if (snapshot != null) await snapshot.CommitAsync();
         return result;
     }
@@ -145,10 +147,11 @@ public partial class BillingService
     }
 }
 
-public record FinancialPosition(decimal LedgerBalance, decimal SeasonalReserve, decimal PersonalDebt = 0)
+public record FinancialPosition(decimal LedgerBalance, decimal SeasonalReserve, decimal PersonalDebt = 0, decimal EventDebt = 0)
 {
-    private decimal CoreBalance => LedgerBalance + SeasonalReserve - PersonalDebt;
-    public decimal AvailableBalance => PersonalDebt > 0 ? PersonalDebt + Math.Max(0, CoreBalance) : CoreBalance;
+    private decimal ProtectedDebt => PersonalDebt + EventDebt;
+    private decimal CoreBalance => LedgerBalance + SeasonalReserve - ProtectedDebt;
+    public decimal AvailableBalance => ProtectedDebt > 0 ? ProtectedDebt + Math.Max(0, CoreBalance) : CoreBalance;
     public decimal Debt => Math.Max(0, AvailableBalance);
     public decimal Advance => Math.Max(0, -CoreBalance) + SeasonalReserve;
 }

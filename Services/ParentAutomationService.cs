@@ -130,6 +130,7 @@ public class ParentAutomationService(ApplicationDbContext db)
         if(message.AutomaticKind==null)return true;
         if(message.AutomaticKind=="Menu")return await new MenuNotificationService(db).IsCurrent(delivery.Subscription.StudentId,message.ScheduleHash);
         if(message.ExpiresAt<=now)return false;
+        if(message.AutomaticKind.StartsWith("Event"))return await new EventNotificationPolicy(db).IsCurrent(delivery);
         if(message.AutomaticKind=="Payment")return settings.PaymentReminders&&await Debt(delivery.Subscription)>0;
         if(message.AutomaticKind=="Training"&&!settings.TrainingReminders||message.AutomaticKind=="Schedule"&&!settings.ScheduleNotifications)return false;
         var source=(await Sources()).SingleOrDefault(x=>x.Key==message.SourceKey);

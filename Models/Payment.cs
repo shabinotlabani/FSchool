@@ -5,6 +5,8 @@ namespace _2Korriku.Models;
 
 public class Payment
 {
+    public int? EventInvitationId { get; set; }
+    public EventInvitation? EventInvitation { get; set; }
     public int? FamilyPaymentId { get; set; }
     public FamilyPayment? FamilyPayment { get; set; }
     public int Id { get; set; }

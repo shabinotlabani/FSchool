@@ -559,6 +559,121 @@ namespace _2Korriku.Data.Migrations
                     b.ToTable("CareReferrals");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.ClubEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CancellationPolicy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<string>("Contact")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateTime>("Deadline")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasMaxLength(1500)
+                        .HasColumnType("character varying(1500)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Organizer")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<byte[]>("Photo")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PhotoType")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("RequiresConsent")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Terms")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Transport")
+                        .IsRequired()
+                        .HasMaxLength(1500)
+                        .HasColumnType("character varying(1500)");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("ClubId", "CategoryId");
+
+                    b.ToTable("ClubEvents");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.ClubRegistration", b =>
                 {
                     b.Property<int>("Id")
@@ -1084,6 +1199,322 @@ namespace _2Korriku.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("DisciplineRules");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventAudit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("ClubEventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubEventId");
+
+                    b.HasIndex("ClubId", "ClubEventId");
+
+                    b.ToTable("EventAudits");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("EventCategories");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventConsent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("EventInvitationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Guardian")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Snapshot")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("TermsAccepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventInvitationId");
+
+                    b.HasIndex("ClubId", "EventInvitationId");
+
+                    b.ToTable("EventConsents");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventExpenseLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubEventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("ExpenseId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubEventId");
+
+                    b.HasIndex("ExpenseId");
+
+                    b.HasIndex("ClubId", "ClubEventId");
+
+                    b.HasIndex("ClubId", "ExpenseId")
+                        .IsUnique();
+
+                    b.ToTable("EventExpenseLinks");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventInvitation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcceptedVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool?>("Attended")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ClubEventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<decimal>("Paid")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Waived")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<bool>("WithdrawalRequested")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubEventId");
+
+                    b.HasIndex("StudentId");
+
+                    b.HasIndex("ClubId", "StudentId");
+
+                    b.HasIndex("ClubId", "ClubEventId", "StudentId")
+                        .IsUnique();
+
+                    b.ToTable("EventInvitations");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventSettlement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EventInvitationId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ExpenseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventInvitationId");
+
+                    b.HasIndex("ExpenseId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("ClubId", "EventInvitationId");
+
+                    b.HasIndex("ClubId", "ExpenseId");
+
+                    b.ToTable("EventSettlements");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventSponsorLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClubEventId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ClubId")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.Property<int>("SponsorshipReceiptId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClubEventId");
+
+                    b.HasIndex("SponsorshipReceiptId");
+
+                    b.HasIndex("ClubId", "ClubEventId");
+
+                    b.HasIndex("ClubId", "SponsorshipReceiptId")
+                        .IsUnique();
+
+                    b.ToTable("EventSponsorLinks");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.Expense", b =>
@@ -2896,6 +3327,9 @@ namespace _2Korriku.Data.Migrations
                     b.Property<string>("CreatedByUserId")
                         .HasColumnType("text");
 
+                    b.Property<int?>("EventInvitationId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("FamilyPaymentId")
                         .HasColumnType("integer");
 
@@ -2939,6 +3373,8 @@ namespace _2Korriku.Data.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
+                    b.HasIndex("EventInvitationId");
+
                     b.HasIndex("FamilyPaymentId");
 
                     b.HasIndex("PersonalChargeId");
@@ -2949,6 +3385,8 @@ namespace _2Korriku.Data.Migrations
                     b.HasIndex("SaleId");
 
                     b.HasIndex("StudentId");
+
+                    b.HasIndex("ClubId", "EventInvitationId");
 
                     b.HasIndex("ClubId", "FamilyPaymentId");
 
@@ -5613,6 +6051,30 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("_2Korriku.Models.ClubEvent", b =>
+                {
+                    b.HasOne("_2Korriku.Models.EventCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.EventCategory", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "CategoryId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("_2Korriku.Models.ClubSettings", b =>
                 {
                     b.HasOne("_2Korriku.Models.ClubTenant", null)
@@ -5805,6 +6267,217 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("TrainingTeam");
 
                     b.Navigation("UpdatedBy");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventAudit", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubEvent", "Event")
+                        .WithMany()
+                        .HasForeignKey("ClubEventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubEvent", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "ClubEventId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventCategory", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventConsent", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.EventInvitation", "Invitation")
+                        .WithMany("Consents")
+                        .HasForeignKey("EventInvitationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.EventInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "EventInvitationId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invitation");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventExpenseLink", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubEvent", "Event")
+                        .WithMany()
+                        .HasForeignKey("ClubEventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Expense", "Expense")
+                        .WithMany()
+                        .HasForeignKey("ExpenseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubEvent", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "ClubEventId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Expense", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "ExpenseId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Expense");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventInvitation", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubEvent", "Event")
+                        .WithMany("Invitations")
+                        .HasForeignKey("ClubEventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubEvent", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "ClubEventId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Student", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "StudentId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventSettlement", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.EventInvitation", "Invitation")
+                        .WithMany()
+                        .HasForeignKey("EventInvitationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Expense", "Expense")
+                        .WithMany()
+                        .HasForeignKey("ExpenseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("_2Korriku.Models.EventInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "EventInvitationId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.Expense", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "ExpenseId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Expense");
+
+                    b.Navigation("Invitation");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventSponsorLink", b =>
+                {
+                    b.HasOne("_2Korriku.Models.ClubEvent", "Event")
+                        .WithMany()
+                        .HasForeignKey("ClubEventId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubTenant", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.SponsorshipReceipt", "Receipt")
+                        .WithMany()
+                        .HasForeignKey("SponsorshipReceiptId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.ClubEvent", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "ClubEventId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.SponsorshipReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "SponsorshipReceiptId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Receipt");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.Expense", b =>
@@ -6619,6 +7292,11 @@ namespace _2Korriku.Data.Migrations
                         .WithMany()
                         .HasForeignKey("CreatedByUserId");
 
+                    b.HasOne("_2Korriku.Models.EventInvitation", "EventInvitation")
+                        .WithMany()
+                        .HasForeignKey("EventInvitationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("_2Korriku.Models.FamilyPayment", "FamilyPayment")
                         .WithMany("Payments")
                         .HasForeignKey("FamilyPaymentId")
@@ -6638,6 +7316,12 @@ namespace _2Korriku.Data.Migrations
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("_2Korriku.Models.EventInvitation", null)
+                        .WithMany()
+                        .HasForeignKey("ClubId", "EventInvitationId")
+                        .HasPrincipalKey("ClubId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("_2Korriku.Models.FamilyPayment", null)
                         .WithMany()
@@ -6665,6 +7349,8 @@ namespace _2Korriku.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("EventInvitation");
 
                     b.Navigation("FamilyPayment");
 
@@ -7819,6 +8505,16 @@ namespace _2Korriku.Data.Migrations
                     b.Navigation("CancelledBy");
 
                     b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.ClubEvent", b =>
+                {
+                    b.Navigation("Invitations");
+                });
+
+            modelBuilder.Entity("_2Korriku.Models.EventInvitation", b =>
+                {
+                    b.Navigation("Consents");
                 });
 
             modelBuilder.Entity("_2Korriku.Models.FamilyPayment", b =>

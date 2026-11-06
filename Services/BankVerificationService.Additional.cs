@@ -16,9 +16,10 @@ public partial class BankVerificationService
     }
     public Task<int> QueueSale(IssuePaymentModel m,string actor)=>QueueAdditional(new IssuePaymentModel{SaleId=m.SaleId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueuePersonal(PersonalPaymentModel m,string actor)=>QueueAdditional(new PersonalPaymentModel{ChargeId=m.ChargeId,RequestId=m.RequestId,Amount=m.Amount,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
+    public Task<int> QueueEvent(EventBankInput m,string actor)=>QueueAdditional(m,actor);
     public Task<int> QueueField(FieldPaymentModel m,string actor)=>QueueAdditional(new FieldPaymentModel{WholeSeries=m.WholeSeries,ExpectedState=m.ExpectedState,BookingId=m.BookingId,Revision=m.Revision,RequestId=m.RequestId,Amount=m.Amount,Method="Bank"},actor);
     public Task<int> QueueFamily(FamilyPaymentModel m,string actor)=>QueueAdditional(new FamilyPaymentModel{FamilyId=m.FamilyId,ExpectedState=m.ExpectedState,StudentId=m.StudentId,RequestId=m.RequestId,Amount=m.Amount,PaymentDate=m.PaymentDate,PaymentMethod="Bank",Notes=m.Notes?.Trim()},actor);
-    public Task<int> QueueExpense(ExpenseCreateModel m,string actor)=>QueueAdditional(new ExpenseCreateModel{RequestId=m.RequestId,CategoryId=m.CategoryId,SubcategoryId=m.SubcategoryId,MatchGameId=m.MatchGameId,Date=m.Date,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method="Bank",Notes=m.Notes?.Trim()},actor);
+    public Task<int> QueueExpense(ExpenseCreateModel m,string actor)=>QueueAdditional(new ExpenseCreateModel{EventId=m.EventId,RequestId=m.RequestId,CategoryId=m.CategoryId,SubcategoryId=m.SubcategoryId,MatchGameId=m.MatchGameId,Date=m.Date,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method="Bank",Notes=m.Notes?.Trim()},actor);
     public Task<int> QueueTreasury(TreasuryCreateModel m,string actor)=>QueueAdditional(new TreasuryCreateModel{RequestId=m.RequestId,Kind=m.Kind,Date=m.Date,Amount=m.Amount,Owner=m.Owner?.Trim(),Notes=m.Notes?.Trim(),Method="Bank"},actor);
 
     private async Task<int> QueueAdditional<T>(T model,string actor) where T:class
@@ -27,10 +28,11 @@ public partial class BankVerificationService
         await using var tx=db.Database.CurrentTransaction==null?await db.Database.BeginTransactionAsync():null;
         if(model is FieldPaymentModel)await db.Database.ExecuteSqlRawAsync(TeamService.LockSql);
         await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);
-        await CheckActor(actor,model is TreasuryCreateModel,model is FieldPaymentModel);
+        await CheckActor(actor,model is TreasuryCreateModel || model is EventBankInput { Refund:true },model is FieldPaymentModel);
         var (kind,request,amount,target)=model switch {
             IssuePaymentModel m => ("Sale",m.RequestId,m.Amount,m.SaleId),
             PersonalPaymentModel m => ("Personal",m.RequestId,m.Amount,m.ChargeId),
+            EventBankInput m => (m.Refund?"EventRefund":"Event",m.RequestId,m.Amount,m.InvitationId),
             FieldPaymentModel m => ("Field",m.RequestId,m.Amount,m.BookingId),
             FamilyPaymentModel m => ("Family",m.RequestId,m.Amount!.Value,m.FamilyId),
             ExpenseCreateModel m => ("Expense",m.RequestId,m.Amount,0),
@@ -44,6 +46,10 @@ public partial class BankVerificationService
         if(target!=0&&await db.PendingBankPayments.AnyAsync(x=>x.Kind==kind&&x.TargetId==target&&x.ReviewedAt==null))throw new InvalidOperationException("Ky dokument ka pagesë bankare në pritje. Verifikojeni para një kërkese tjetër.");
         int? student=null;string description;
         switch(model){
+            case EventBankInput m:
+                var invitation=await db.EventInvitations.Include(x=>x.Event).SingleOrDefaultAsync(x=>x.Id==m.InvitationId)??throw new ValidationException("Ftesa nuk u gjet.");
+                if(amount>(m.Refund?invitation.Refundable:invitation.Due))throw new ValidationException("Shuma tejkalon gjendjen e eventit.");
+                student=invitation.StudentId;description=invitation.Event.Name;break;
             case IssuePaymentModel m:
                 var sale=await db.Sales.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.SaleId&&x.RequestId!=null)??throw new InvalidOperationException("Dalja nuk u gjet.");
                 if(sale.Status=="Cancelled"||amount>sale.Due)throw new InvalidOperationException("Kontrolloni borxhin e rekuizitave.");
@@ -88,6 +94,13 @@ public partial class BankVerificationService
     private async Task ConfirmAdditional(PendingBankPayment pending,DateOnly date,string actor)
     {
         switch(pending.Kind){
+            case "Event":
+                var eventPayment=JsonSerializer.Deserialize<EventBankInput>(pending.Payload)!;
+                pending.PaymentId=await new ClubEventService(db).Pay(eventPayment.InvitationId,pending.ConfirmedAmount!.Value,"Bank",pending.RequestId,actor);break;
+            case "EventRefund":
+                var eventRefund=JsonSerializer.Deserialize<EventBankInput>(pending.Payload)!;
+                pending.ResultId=await new ClubEventService(db).Settle(eventRefund.InvitationId,pending.ConfirmedAmount!.Value,"Refund","Bank",pending.RequestId,eventRefund.Reason,actor,date);
+                break;
             case "Sale":
                 var sale=JsonSerializer.Deserialize<IssuePaymentModel>(pending.Payload)!;sale.Amount=pending.ConfirmedAmount!.Value;
                 pending.PaymentId=await new IssueService(db).PayAsync(sale,actor);break;
@@ -111,9 +124,9 @@ public partial class BankVerificationService
         }
         if(pending.PaymentId.HasValue){
             var payment=await db.Payments.SingleAsync(x=>x.Id==pending.PaymentId);payment.PaymentDate=BillingClock.UtcDate(date);
-            foreach(var entry in await db.StudentTransactions.Where(x=>x.ReferenceId==payment.Id&&(x.ReferenceType=="SalePayment"||x.ReferenceType=="TrainingPayment")).ToListAsync()){
+            foreach(var entry in await db.StudentTransactions.Where(x=>x.ReferenceId==payment.Id&&(x.ReferenceType=="SalePayment"||x.ReferenceType=="TrainingPayment"||x.TransactionType=="EventPayment")).ToListAsync()){
                 entry.TransactionDate=payment.PaymentDate;
-                if(entry.ReferenceType=="SalePayment"){entry.Year=date.Year;entry.Month=date.Month;}
+                if(entry.ReferenceType=="SalePayment"||entry.TransactionType=="EventPayment"){entry.Year=date.Year;entry.Month=date.Month;}
             }
         }
     }

@@ -55,6 +55,8 @@ public class BillingGridRow
 
 public class PlayerBillingModel
 {
+    public List<EventInvitation> EventInvitations { get; set; } = [];
+    public decimal EventDue => EventInvitations.Sum(x=>x.Due);
     public List<PlayerAttendanceMonth> AttendanceHistory { get; set; } = [];
     public decimal PendingBankAmount { get; set; }
     public int? CurrentFamilyId { get; set; }
@@ -65,15 +67,15 @@ public class PlayerBillingModel
     public List<StudentFeeAssignment> FeeAssignments { get; set; } = [];
     public List<Sale> Sales { get; set; } = [];
     public decimal SeasonalReserve => BillingService.ReservedSeasonalFunds(Payments, Invoices);
-    public decimal AvailableBalance => PersonalDue > 0 ? PersonalDue + Math.Max(0, Balance + SeasonalReserve - PersonalDue) : Balance + SeasonalReserve;
+    public decimal AvailableBalance => EventDue + PersonalDue > 0 ? EventDue + PersonalDue + Math.Max(0, Balance + SeasonalReserve - PersonalDue) : Balance + SeasonalReserve;
     public decimal MonthlyDue => Invoices.Sum(i => i.Due);
-    public decimal MonthlyBalance => History.Where(t => !t.IsCancelled && !t.TransactionType.StartsWith("Sale") && !t.TransactionType.StartsWith("Training")).Sum(t => t.Debit - t.Credit);
+    public decimal MonthlyBalance => History.Where(t => !t.IsCancelled && !t.TransactionType.StartsWith("Sale") && !t.TransactionType.StartsWith("Training") && !t.TransactionType.StartsWith("Event")).Sum(t => t.Debit - t.Credit);
     public Student Student { get; set; } = new();
     public List<MonthlyInvoiceView> Invoices { get; set; } = [];
     public List<StudentTransaction> History { get; set; } = [];
     public List<StudentMonthlyExemption> Exemptions { get; set; } = [];
     public List<Payment> Payments { get; set; } = [];
-    public decimal Balance => History.Where(t => !t.IsCancelled).Sum(t => t.Debit - t.Credit);
+    public decimal Balance => History.Where(t => !t.IsCancelled && !t.TransactionType.StartsWith("Event")).Sum(t => t.Debit - t.Credit);
     public bool IsExemptionReversed(int id) => History.Any(t => !t.IsCancelled && t.TransactionType == "ExemptionReversal" && t.ReferenceId == id);
 }
 

@@ -75,6 +75,8 @@ public class ExpenseCategoryModel : IValidatableObject
 }
 public class ExpenseCreateModel : IValidatableObject
 {
+    [System.Text.Json.Serialization.JsonIgnore(Condition=System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public int? EventId { get; set; }
     public Guid RequestId { get; set; } = Guid.NewGuid();
     [Range(1,int.MaxValue,ErrorMessage="Zgjidhni kategorinë.")] public int CategoryId { get; set; }
     public int? SubcategoryId { get; set; }

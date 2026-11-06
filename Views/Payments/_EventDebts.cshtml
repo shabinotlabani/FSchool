@@ -1,0 +1,4 @@
+@model PlayerBillingModel
+@if(Model.EventInvitations.Count>0){
+<h2 class="h5 mt-4">Eventet · Detyrimet dhe pagesat</h2><div class="table-responsive"><table class="table"><thead><tr><th>Eventi</th><th>Pjesëmarrja</th><th>Detyrimi</th><th>Paguar neto</th><th>Borxhi</th></tr></thead><tbody>@foreach(var i in Model.EventInvitations){<tr><td><a asp-controller="Events" asp-action="Details" asp-route-id="@i.ClubEventId">@i.Event.Name</a></td><td>@i.StatusLabel</td><td>@((i.Amount-i.Waived).ToString("N2"))</td><td>@i.Paid.ToString("N2")</td><td>@i.Due.ToString("N2")</td></tr>}</tbody><tfoot><tr><th colspan="2">Gjithsej evente</th><td>@Model.EventInvitations.Sum(x=>x.Amount-x.Waived).ToString("N2")</td><td>@Model.EventInvitations.Sum(x=>x.Paid).ToString("N2")</td><td>@Model.EventDue.ToString("N2")</td></tr></tfoot></table></div>
+}

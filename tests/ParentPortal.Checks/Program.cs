@@ -70,8 +70,8 @@ try {
     var childId = await WithDb(async db => {
         await db.Database.MigrateAsync();
         var originalClub = await new ClubBranding(db).Get();
-        Check(originalClub.Name == "2 Korriku" && originalClub.RegistrationNumber == "5110633-4" && originalClub.Logo == null,
-            "Existing club identity remains the default before settings are saved");
+        Check(originalClub.Name == "2 Korriku" && originalClub.RegistrationNumber == null && originalClub.Logo == null,
+            "An unconfigured club uses its tenant name without inventing a legal registration number");
         db.ClubSettings.Add(new ClubSettings { Name="Klubi Test", DisplayName="FC Test", LegalName="Klubi Test OJQ",
             RegistrationNumber="TEST-123", City="Test", Logo=new byte[]{1,2,3}, LogoType="image/png" });
         await db.SaveChangesAsync();

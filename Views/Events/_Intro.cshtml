@@ -1,0 +1,4 @@
+<link rel="stylesheet" href="~/css/events.css" asp-append-version="true"/>
+<nav class="event-nav"><a asp-action="Index">Eventet</a>@if(User.IsInRole(Roles.Admin)){<a asp-action="Edit">Event i ri</a><a asp-action="Categories">Kategoritë</a>}</nav>
+@if(TempData["Success"] is string success){<p class="alert alert-success" role="status">@success</p>}
+@if(TempData["Error"] is string error){<p class="alert alert-danger" role="alert">@error</p>}

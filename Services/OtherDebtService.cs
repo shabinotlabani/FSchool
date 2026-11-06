@@ -18,6 +18,7 @@ public class OtherDebtService(ApplicationDbContext db)
             .Select(s=>new OtherDebt(s.Id,s.StudentId!.Value,s.Student!.FirstName+" "+s.Student.LastName,"Rekuzita",s.InvoiceNumber,s.GrandTotal-s.AmountPaid,"Sales",s.RequestId.HasValue?"Pay":"Details")).ToListAsync();
         var personal=await db.PersonalCharges.AsNoTracking().Where(c=>!c.IsCancelled&&c.Amount>c.Paid+c.Waived&&ids.Contains(c.PersonalTraining!.StudentId))
             .Select(c=>new OtherDebt(c.Id,c.PersonalTraining!.StudentId,c.PersonalTraining.Student!.FirstName+" "+c.PersonalTraining.Student.LastName,"Trajnim personal",c.Description,c.Amount-c.Paid-c.Waived,"PersonalTraining","Pay")).ToListAsync();
-        return sales.Concat(personal).OrderBy(x=>x.StudentName).ThenBy(x=>x.Category).ThenBy(x=>x.Id).ToList();
+        var events=await db.EventInvitations.AsNoTracking().Where(x=>ids.Contains(x.StudentId)&&x.Amount>x.Waived+x.Paid).Select(x=>new OtherDebt(x.ClubEventId,x.StudentId,x.Student.FirstName+" "+x.Student.LastName,"Event",x.Event.Name,x.Amount-x.Waived-x.Paid,"Events","Details")).ToListAsync();
+        return sales.Concat(personal).Concat(events).OrderBy(x=>x.StudentName).ThenBy(x=>x.Category).ThenBy(x=>x.Id).ToList();
     }
 }

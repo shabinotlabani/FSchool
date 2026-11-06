@@ -118,7 +118,7 @@ public partial class BillingService(ApplicationDbContext db)
         foreach (var studentPeriods in periods.GroupBy(p => p.StudentId))
         {
             var ledger = ledgers[studentPeriods.Key].ToList();
-            var available = Math.Max(0, ledger.Where(t => !t.TransactionType.StartsWith("Training") && !t.TransactionType.StartsWith("Sale") && !t.TransactionType.StartsWith("Seasonal") && t.TransactionType != "MonthlyFee" && t.TransactionType != "MonthlyFeeAdjustment" && t.TransactionType != "Exemption" && t.TransactionType != "ExemptionReversal").Sum(t => t.Credit - t.Debit));
+            var available = Math.Max(0, ledger.Where(t => !t.TransactionType.StartsWith("Event") && !t.TransactionType.StartsWith("Training") && !t.TransactionType.StartsWith("Sale") && !t.TransactionType.StartsWith("Seasonal") && t.TransactionType != "MonthlyFee" && t.TransactionType != "MonthlyFeeAdjustment" && t.TransactionType != "Exemption" && t.TransactionType != "ExemptionReversal").Sum(t => t.Credit - t.Debit));
             foreach (var period in studentPeriods)
             {
                 var monthEntries = ledger.Where(t => t.Year == period.Year && t.Month == period.Month).ToList();
@@ -153,6 +153,7 @@ public partial class BillingService(ApplicationDbContext db)
             Student = student,
             CurrentFeeName = currentFee.Name,
             FirstMonthChanges = await db.FirstMonthFeeChanges.AsNoTracking().Include(x=>x.Actor).Where(x=>x.Period!.StudentId==studentId).OrderByDescending(x=>x.Id).ToListAsync(),
+            EventInvitations = await db.EventInvitations.AsNoTracking().Include(x=>x.Event).Where(x=>x.StudentId==studentId&&x.Event.Status!="Draft").ToListAsync(),
             PersonalTrainings = await db.PersonalTrainings.AsNoTracking().Include(x=>x.Sessions).Include(x=>x.Charges).Where(x=>x.StudentId==studentId).OrderByDescending(x=>x.Id).ToListAsync(),
             FeeAssignments = await db.StudentFeeAssignments.AsNoTracking().Include(a=>a.FeePlan).Include(a=>a.CreatedByUser).Where(a=>a.StudentId==studentId).OrderByDescending(a=>a.EffectiveMonth).ThenByDescending(a=>a.Id).ToListAsync(),
             Sales = await db.Sales.AsNoTracking().Where(s => s.StudentId == studentId).OrderByDescending(s => s.Id).ToListAsync(),
@@ -174,7 +175,7 @@ public partial class BillingService(ApplicationDbContext db)
         var duplicate = await db.Payments.SingleOrDefaultAsync(p => p.RequestId == input.RequestId);
         if (duplicate != null)
         {
-            if (duplicate.PersonalChargeId != null || duplicate.SeasonalStartMonth != null || duplicate.SaleId != null || duplicate.StudentId != input.StudentId || duplicate.Amount != input.Amount || duplicate.CreatedByUserId != actorId)
+            if (duplicate.EventInvitationId != null || duplicate.PersonalChargeId != null || duplicate.SeasonalStartMonth != null || duplicate.SaleId != null || duplicate.StudentId != input.StudentId || duplicate.Amount != input.Amount || duplicate.CreatedByUserId != actorId)
                 throw new InvalidOperationException("Ky formular është përdorur. Hapni një pagesë të re.");
             return duplicate.Id;
         }
@@ -231,6 +232,7 @@ public partial class BillingService(ApplicationDbContext db)
         if (payment.IsCancelled) return payment.StudentId;
         await new ExpenseService(db).EnsureReceiptCancellationAsync(payment);
         payment.CancelledAt = DateTime.UtcNow;
+        if (payment.EventInvitationId.HasValue) return await new ClubEventService(db).CancelPayment(payment, reason, actorId);
         if (payment.PersonalChargeId.HasValue) return await new PersonalTrainingService(db).CancelPaymentAsync(payment, reason, actorId);
         if (payment.SeasonalStartMonth.HasValue) return await CancelSeasonalAsync(payment, reason, actorId);
         var original = await db.StudentTransactions.SingleOrDefaultAsync(t => t.TransactionType == (payment.SaleId.HasValue ? "SalePayment" : "Payment") && t.ReferenceId == id && !t.IsCancelled);

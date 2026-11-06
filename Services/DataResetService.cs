@@ -7,6 +7,7 @@ public static class DataResetService
 {
     // Explicit list: new tables must be reviewed before becoming part of a reset.
     public static readonly string[] Tables = [
+        "EventSettlements", "EventSponsorLinks", "EventExpenseLinks", "EventAudits", "EventConsents", "EventInvitations", "ClubEvents", "EventCategories",
         "MatchChanges", "MatchPlayers", "MatchGames",
         "DisciplineRules",
         "CompetitionPlayerRegistrations", "LeagueTeams", "Leagues",

@@ -9,10 +9,10 @@
     var balance=balances.GetValueOrDefault(item.Id);
     var proposal=balance?.Total??proposals.GetValueOrDefault(item.Id,item.Amount);
     var confirmed=item.PaymentId.HasValue||item.ResultId.HasValue;
-    var label=item.Kind switch {"Seasonal"=>"Sezonale","Sale"=>"Rekuizita","Personal"=>"Trajnim personal","Field"=>"Termin privat","Family"=>"Familje","Expense"=>"Shpenzim","Withdrawal"=>"Tërheqje pronari","Opening"=>"Gjendje fillestare",_=>"Mujore"};
-    var outgoing=item.Kind is "Expense" or "Withdrawal";
-    var controller=item.Kind switch {"Field"=>"Fields","Expense"=>"Expenses","Opening" or "Withdrawal"=>"Treasury",_=>"Payments"};
-    var action=item.Kind switch {"Family"=>"FamilyReceipt","Expense" or "Opening" or "Withdrawal"=>"Details",_=>"Receipt"};
+    var label=item.Kind switch {"Event"=>"Event","EventRefund"=>"Rimbursim eventi","Seasonal"=>"Sezonale","Sale"=>"Rekuizita","Personal"=>"Trajnim personal","Field"=>"Termin privat","Family"=>"Familje","Expense"=>"Shpenzim","Withdrawal"=>"Tërheqje pronari","Opening"=>"Gjendje fillestare",_=>"Mujore"};
+    var outgoing=item.Kind is "Expense" or "Withdrawal" or "EventRefund";
+    var controller=item.Kind switch {"EventRefund"=>"Events","Field"=>"Fields","Expense"=>"Expenses","Opening" or "Withdrawal"=>"Treasury",_=>"Payments"};
+    var action=item.Kind switch {"EventRefund"=>"Details","Family"=>"FamilyReceipt","Expense" or "Opening" or "Withdrawal"=>"Details",_=>"Receipt"};
     <tr><td>
     @if(item.StudentId.HasValue){<a asp-controller="Payments" asp-action="Account" asp-route-id="@item.StudentId">@item.Student?.FullName</a>}
     <span class="d-block">@item.Description</span><small class="d-block text-secondary">@TimeZoneInfo.ConvertTimeFromUtc(item.CreatedAt,BillingClock.Zone).ToString("dd/MM/yyyy HH:mm")</small></td>

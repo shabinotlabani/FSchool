@@ -19,6 +19,7 @@
 @if(User.IsInRole(Roles.Admin)){<a asp-controller="Tariffs" asp-action="Assign" asp-route-id="@Model.Student.Id" class="btn btn-outline-secondary">Ndrysho kategorinë</a>}
 </div>
 <partial name="_BillingNotice"/>
+<partial name="_EventDebts" model="Model"/>
 <div class="collapse" id="player-attendance">
     <section class="panel p-3 mb-3" aria-label="Historiku i prezencës sipas muajve">
         <div class="d-flex justify-content-between align-items-center gap-2 mb-2"><h2>Prezenca sipas muajve</h2><small class="text-secondary">Prezent / ditë të regjistruara</small></div>

@@ -2,6 +2,7 @@
 
 public class PaymentDocumentModel
 {
+    public bool IsEventPayment { get; set; }
     public string? ParentQrDataUrl { get; set; }
     public string? ServiceDescription { get; set; }
     public bool IsReceipt { get; set; }

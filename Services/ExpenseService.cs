@@ -58,7 +58,7 @@ public class ExpenseService(ApplicationDbContext db)
             if (p.CancelledAt.HasValue) result.Add(new(BillingClock.LocalDate(p.CancelledAt.Value), "Termine private", "", null, -p.Amount, 0, p.Number, "Anulim: " + p.CancellationReason, "Fields", "Receipt", p.Id, NormalizeMethod(p.Method)));
         }
         foreach(var p in payments){
-            var group=p.SaleId.HasValue?"Shitje të rekuizitave":p.PersonalChargeId.HasValue?"Trajnime shtesë":p.SeasonalStartMonth.HasValue?"Pagesa sezonale":"Mujorja e rregullt";
+            var group=p.EventInvitationId.HasValue?"Evente":p.SaleId.HasValue?"Shitje të rekuizitave":p.PersonalChargeId.HasValue?"Trajnime shtesë":p.SeasonalStartMonth.HasValue?"Pagesa sezonale":"Mujorja e rregullt";
             var date=BillingClock.LocalDate(p.PaymentDate);
             var reference=$"ARK-{date.Year}-{p.Id:000000}";
             result.Add(new(date,group,"",null,p.Amount,0,reference,p.Student?.FullName??"Arkëtim","Payments","Receipt",p.Id,NormalizeMethod(p.PaymentMethod)));
@@ -98,6 +98,7 @@ public class ExpenseService(ApplicationDbContext db)
     public Task<int> CreateAsync(ExpenseCreateModel m,string actor)=>Write(async()=>{
         Validator.ValidateObject(m,new(m),true);
         var hash=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new{m.CategoryId,m.SubcategoryId,m.MatchGameId,m.Date,m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),Document=m.DocumentNumber?.Trim(),m.Method,Notes=m.Notes?.Trim()}))));
+        if(m.EventId.HasValue)hash=ParentPushService.Hash(hash+":"+m.EventId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
         var existing=await db.Expenses.AsNoTracking().SingleOrDefaultAsync(x=>x.RequestId==m.RequestId);
         if(existing!=null){if(existing.PayloadHash!=hash||existing.CreatedById!=actor)throw new InvalidOperationException("Ky formular është përdorur. Hapni një shpenzim të ri.");return existing.Id;}
         var category=await db.ExpenseCategories.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==m.CategoryId&&x.ParentId==null&&x.IsActive)??throw new InvalidOperationException("Zgjidhni kategori kryesore aktive.");
@@ -106,16 +107,20 @@ public class ExpenseService(ApplicationDbContext db)
         if(category.ContextType=="Match"&&!m.MatchGameId.HasValue)throw new InvalidOperationException("Zgjidhni ndeshjen zyrtare për këtë shpenzim.");
         if(category.ContextType!="Match"&&m.MatchGameId.HasValue)throw new InvalidOperationException("Kjo kategori nuk lidhet me ndeshje.");
         if(m.MatchGameId.HasValue&&!await db.MatchGames.AnyAsync(x=>x.Id==m.MatchGameId&&x.Kind!="Friendly"&&x.Status!="Cancelled"))throw new InvalidOperationException("Zgjidhni një ndeshje zyrtare të vlefshme.");
+        if(m.EventId.HasValue&&!await db.ClubEvents.AnyAsync(x=>x.Id==m.EventId))throw new InvalidOperationException("Eventi nuk u gjet.");
         var available=await AvailableFromAsync(m.Date!.Value);
         if(m.Amount>available)throw new InvalidOperationException($"Mjete të pamjaftueshme. Për këtë datë mund të regjistroni deri në {Math.Max(0,available):N2}. Kontrolli përfshin edhe shpenzimet e regjistruara në ditët pasuese.");
         var e=new Expense{RequestId=m.RequestId,PayloadHash=hash,CategoryId=category.Id,SubcategoryId=sub?.Id,MatchGameId=m.MatchGameId,CategoryName=category.Name,SubcategoryName=sub?.Name,Date=m.Date.Value,Amount=m.Amount,Description=m.Description.Trim(),Recipient=m.Recipient?.Trim(),DocumentNumber=m.DocumentNumber?.Trim(),Method=m.Method,Notes=m.Notes?.Trim(),CreatedById=actor};
-        db.Expenses.Add(e);await db.SaveChangesAsync();return e.Id;
+        db.Expenses.Add(e);await db.SaveChangesAsync();
+        if(m.EventId.HasValue){db.EventExpenseLinks.Add(new(){ClubEventId=m.EventId.Value,ExpenseId=e.Id});await db.SaveChangesAsync();}
+        return e.Id;
     });
     public Task<int> CancelAsync(ExpenseCancelModel m,string actor)=>Write(async()=>{
         Validator.ValidateObject(m,new(m),true);
         var expense=await db.Expenses.SingleOrDefaultAsync(x=>x.Id==m.Id)??throw new InvalidOperationException("Shpenzimi nuk u gjet.");
         await db.Entry(expense).ReloadAsync();
         if(expense.CancelledAt.HasValue)return expense.Id;
+        if(await db.EventSettlements.AnyAsync(x=>x.ExpenseId==expense.Id))throw new InvalidOperationException("Rimbursimi i eventit ruhet në historikun financiar dhe nuk anulohet si shpenzim i zakonshëm.");
         expense.CancelledAt=DateTime.UtcNow;expense.CancelledById=actor;expense.CancellationReason=m.Reason.Trim();
         await db.SaveChangesAsync();return expense.Id;
     });
@@ -131,7 +136,7 @@ public class ExpenseService(ApplicationDbContext db)
         await using var tx=db.Database.CurrentTransaction==null?await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead):null;
         var all=await MovementsAsync();
         var rows=all.Where(x=>x.Date>=filter.From&&x.Date<=filter.To).OrderBy(x=>x.Date).ThenBy(x=>x.Reference).ToList();
-        var groups=new[]{"Mujorja e rregullt","Pagesa sezonale","Trajnime shtesë","Shitje të rekuizitave","Termine private"};
+        var groups=new[]{"Evente","Mujorja e rregullt","Pagesa sezonale","Trajnime shtesë","Shitje të rekuizitave","Termine private"};
         var result=new CashReportModel{HasUndatedCancellations=await db.Payments.AnyAsync(x=>x.IsCancelled&&x.CancelledAt==null),Filter=filter,Opening=all.Where(x=>x.Date<filter.From).Sum(x=>x.Income-x.Outgoing),Movements=rows,
             IncomeRows=groups.Select(g=>new MoneyReportRow(g,rows.Where(x=>x.Group==g&&x.Income>0).Sum(x=>x.Income),-rows.Where(x=>x.Group==g&&x.Income<0).Sum(x=>x.Income))).ToList()};
         var methods = new List<(string Code, string Name)> { ("Cash", "Cash"), ("Bank", "Bankë") };

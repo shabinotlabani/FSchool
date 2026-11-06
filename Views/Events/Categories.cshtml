@@ -1,0 +1,8 @@
+@model List<EventCategory>
+@{ViewData["Title"]="Kategoritë e eventeve";}
+<partial name="_Intro"/><h1>Kategoritë e eventeve</h1>
+@if(Model.Count==0){<form asp-action="DefaultCategories" method="post"><button class="btn btn-outline-primary">Shto kategoritë fillestare</button></form>}
+<div class="event-scroll"><table class="table event-table"><thead><tr><th>Emri</th><th>Lloji</th><th>Aktive</th><th></th></tr></thead><tbody>
+@foreach(var c in Model){<tr><td colspan="4"><form asp-action="Category" method="post" class="event-category-form"><input type="hidden" name="id" value="@c.Id"/><input name="name" value="@c.Name" maxlength="100" required class="form-control"/><select name="kind" class="form-select"><option value="Sport" selected="@(c.Kind=="Sport")">Sportive</option><option value="Social" selected="@(c.Kind=="Social")">Sociale / edukative</option></select><label><input name="active" type="checkbox" value="true" checked="@c.IsActive"/> Aktive</label><button class="btn btn-outline-primary">Ruaj</button></form></td></tr>}
+<tr><td colspan="4"><form asp-action="Category" method="post" class="event-category-form"><input name="name" placeholder="Kategori e re" maxlength="100" required class="form-control"/><select name="kind" class="form-select"><option value="Sport">Sportive</option><option value="Social">Sociale / edukative</option></select><input type="hidden" name="active" value="true"/><button class="btn btn-primary">Shto</button></form></td></tr>
+</tbody></table></div>

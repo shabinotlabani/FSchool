@@ -22,6 +22,7 @@ public class ParentPushWorker(IServiceScopeFactory scopes,ILogger<ParentPushWork
                     using var scanScope=scopes.CreateScope();
                     var scanDb=ClubJobs.SetClub(scanScope.ServiceProvider,clubId);
                     await new ParentAutomationService(scanDb).Scan(DateTime.UtcNow);
+                    await new ClubEventService(scanDb).Reminders(DateTime.UtcNow);
                 }
                 for(var i=0;i<30&&!stoppingToken.IsCancellationRequested;i++){
                     using var scope=scopes.CreateScope();var db=ClubJobs.SetClub(scope.ServiceProvider,clubId);
@@ -44,7 +45,7 @@ public class ParentPushWorker(IServiceScopeFactory scopes,ILogger<ParentPushWork
                             var body=delivery.Message.AutomaticKind=="Payment"
                                 ?$"Keni {await new ParentAutomationService(db).Debt(sub):N2} për t’u paguar. Ju lutem kontrolloni pagesat në portal."
                                 :delivery.Message.Body;
-                            var payload=JsonSerializer.Serialize(new{title=delivery.Message.Title,body,icon="/ClubSettings/Logo?clubId="+clubId,url="/p/"+token+"?studentId="+sub.StudentId+(delivery.Message.AutomaticKind=="Menu"?"#menu":""),tag="parent-"+delivery.Id});
+                            var payload=JsonSerializer.Serialize(new{title=delivery.Message.Title,body,icon="/ClubSettings/Logo?clubId="+clubId,url="/p/"+token+"?studentId="+sub.StudentId+(delivery.Message.AutomaticKind=="Menu"?"#menu":delivery.Message.AutomaticKind?.StartsWith("Event")==true?"#events":""),tag="parent-"+delivery.Id});
                             var ttl=delivery.Message.ExpiresAt.HasValue?Math.Clamp((int)(delivery.Message.ExpiresAt.Value-DateTime.UtcNow).TotalSeconds,0,3600):3600;
                             await client.RequestPushMessageDeliveryAsync(subscription,new PushMessage(payload){TimeToLive=ttl},auth,stoppingToken);
                             delivery.SentAt=DateTime.UtcNow;
