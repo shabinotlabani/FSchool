@@ -16,3 +16,4 @@
  .official-signature{font-size:11pt}
  .sp-no-print{display:none!important}
 }
+.official-table .official-total>th,.official-table .official-total>td{font-size:15px;font-weight:700;border-top:2px solid #333;padding-top:12px;padding-bottom:12px}@media print{.official-table .official-total>th,.official-table .official-total>td{font-size:11pt;padding-top:8pt;padding-bottom:8pt}}

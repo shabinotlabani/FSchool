@@ -12,6 +12,20 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles = Roles.Read)]
 public class PaymentsController(ApplicationDbContext db, BillingService billing) : Controller
 {
+    private async Task<string?> ParentQr(int studentId)
+    {
+        var token = await new ParentAccessService(db).EnsureLinkFor(studentId);
+        if (token == null) return null;
+        var link = Url.Action("Index", "ParentPortal", new { token }, Request.Scheme)
+            ?? throw new InvalidOperationException("Nuk u krijua linku i prindit.");
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
+        using var generator = new QRCoder.QRCodeGenerator();
+        using var data = generator.CreateQrCode(link, QRCoder.QRCodeGenerator.ECCLevel.Q);
+        using var png = new QRCoder.PngByteQRCode(data);
+        return "data:image/png;base64," + Convert.ToBase64String(png.GetGraphic(12));
+    }
+
     [HttpGet,ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
     public async Task<IActionResult> Progress(int id)
     {
@@ -104,6 +118,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         return model == null ? NotFound() : View(model);
     }
 
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Invoice(int id)
     {
         var period = await db.MonthlyFeePeriods.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
@@ -111,15 +126,16 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         var account = (await billing.GetAccountAsync(period.StudentId))!;
         var invoice = account.Invoices.Single(i => i.Period.Id == id);
         var preparedBy = StaffName(await db.Users.FindAsync(ActorId));
-        return View("Document", new PaymentDocumentModel { Number = invoice.Number, Date = BillingClock.LocalDate(period.GeneratedAt), Student = account.Student, Description = invoice.MonthLabel, Amount = invoice.Amount, Exempted = invoice.Exempted, Paid = invoice.Paid, Due = invoice.Due, PreparedBy = preparedBy, Notes = string.Join(" · ", new[] { period.ProrationDescription, period.FeePlanName, period.FeeReason, period.FeeNotes, "Gjendja më " + BillingClock.Today.ToString("dd/MM/yyyy") }.Where(s => !string.IsNullOrWhiteSpace(s))) });
+        return View("Document", new PaymentDocumentModel { ParentQrDataUrl = await ParentQr(account.Student.Id), Number = invoice.Number, Date = BillingClock.LocalDate(period.GeneratedAt), Student = account.Student, Description = invoice.MonthLabel, Amount = invoice.Amount, Exempted = invoice.Exempted, Paid = invoice.Paid, Due = invoice.Due, PreparedBy = preparedBy, Notes = string.Join(" · ", new[] { period.ProrationDescription, period.FeePlanName, period.FeeReason, period.FeeNotes, "Gjendja më " + BillingClock.Today.ToString("dd/MM/yyyy") }.Where(s => !string.IsNullOrWhiteSpace(s))) });
     }
 
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<IActionResult> Receipt(int id, string? returnUrl = null)
     {
         var payment = await db.Payments.AsNoTracking().Include(p => p.Student).Include(p => p.CreatedByUser).Include(p => p.Sale).Include(p=>p.PersonalCharge).SingleOrDefaultAsync(p => p.Id == id);
         if (payment == null) return NotFound();
         if (payment.FamilyPaymentId.HasValue) return RedirectToAction(nameof(FamilyReceipt), new { id = payment.FamilyPaymentId, returnUrl });
-        return View("Document", new PaymentDocumentModel { IsReceipt = true, ServiceDescription = payment.PersonalCharge?.Description, SaleNumber = payment.Sale?.InvoiceNumber, IsCancelled = payment.IsCancelled, CancellationReason = payment.CancellationReason, Number = $"ARK-{BillingClock.LocalDate(payment.PaymentDate).Year}-{payment.Id:000000}", Date = BillingClock.LocalDate(payment.PaymentDate), Student = payment.Student!, Amount = payment.Amount, SeasonalDescription = payment.SeasonalStartMonth.HasValue ? payment.SeasonalLabel : null, SeasonalGross = payment.SeasonalRate * payment.SeasonalMonths ?? 0, SeasonalDiscount = payment.SeasonalRate * (payment.SeasonalMonths / 6) ?? 0, Method = BillingService.MethodLabel(payment.PaymentMethod), Notes = payment.Notes, PreparedBy = StaffName(payment.CreatedByUser) });
+        return View("Document", new PaymentDocumentModel { ParentQrDataUrl = await ParentQr(payment.StudentId), IsReceipt = true, ServiceDescription = payment.PersonalCharge?.Description, SaleNumber = payment.Sale?.InvoiceNumber, IsCancelled = payment.IsCancelled, CancellationReason = payment.CancellationReason, Number = $"ARK-{BillingClock.LocalDate(payment.PaymentDate).Year}-{payment.Id:000000}", Date = BillingClock.LocalDate(payment.PaymentDate), Student = payment.Student!, Amount = payment.Amount, SeasonalDescription = payment.SeasonalStartMonth.HasValue ? payment.SeasonalLabel : null, SeasonalGross = payment.SeasonalRate * payment.SeasonalMonths ?? 0, SeasonalDiscount = payment.SeasonalRate * (payment.SeasonalMonths / 6) ?? 0, Method = BillingService.MethodLabel(payment.PaymentMethod), Notes = payment.Notes, PreparedBy = StaffName(payment.CreatedByUser) });
     }
 
     [HttpGet, Authorize(Roles = Roles.Write)]

@@ -2,6 +2,7 @@
 
 public class PaymentDocumentModel
 {
+    public string? ParentQrDataUrl { get; set; }
     public string? ServiceDescription { get; set; }
     public bool IsReceipt { get; set; }
     public string? SeasonalDescription { get; set; }

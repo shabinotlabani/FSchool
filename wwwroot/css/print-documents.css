@@ -9,3 +9,4 @@
 .print-toolbar .app-back-button:hover{background:#f1f5f9}
 .print-toolbar .app-back-button:focus-visible{outline:3px solid #2c3f9366;outline-offset:3px}
 .print-toolbar .app-back-button span{display:inline;font-size:inherit;color:inherit}
+.document-player-access{display:flex;align-items:flex-start;gap:6mm}.document-player-access .document-metadata{flex:1;min-width:0}.document-parent-qr{flex:0 0 26mm;text-align:center;margin-top:-2mm;margin-bottom:2mm}.document-parent-qr img{display:block;width:24mm;height:24mm;margin:0 auto;image-rendering:pixelated}.document-parent-qr span{display:block;font-size:6pt;font-weight:600}.document-parent-qr small{display:block;font-size:5.5pt;line-height:1.2;color:#68768f}
