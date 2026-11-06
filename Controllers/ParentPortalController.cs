@@ -39,7 +39,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     {
         Response.Headers["Referrer-Policy"] = "no-referrer";
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
-        Response.Headers["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
+        Response.Headers["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; img-src 'self' blob:; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
         base.OnActionExecuting(context);
     }
 
