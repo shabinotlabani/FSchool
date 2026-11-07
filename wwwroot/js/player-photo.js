@@ -1,4 +1,6 @@
+window.initPlayerPhotos = () => {
 document.querySelectorAll('.player-photo-form').forEach(form=>{
+ if(form.dataset.photoInitialized)return;form.dataset.photoInitialized='true';
  const status=form.querySelector('.photo-status'),file=form.querySelector('input[type=file]'),submit=form.querySelector('button[type=submit]'),preview=form.querySelector('.photo-preview'),previewImage=preview?.querySelector('img');
  let busy=false,previewUrl='';
  const camera=form.querySelector('[data-photo-camera]');
@@ -41,3 +43,6 @@ document.querySelectorAll('.player-photo-form').forEach(form=>{
  }
  form.addEventListener('submit',e=>{e.preventDefault();send(false);});form.querySelector('[data-remove-photo]')?.addEventListener('click',()=>send(true));
 });
+
+};
+window.initPlayerPhotos();

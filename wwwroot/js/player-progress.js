@@ -1,3 +1,4 @@
+window.initPlayerProgress = () => {
 document.querySelectorAll('.progress-chart').forEach(chart => {
     const readout = chart.querySelector('.plot-readout');
     chart.querySelectorAll('.plot-hit').forEach(point => {
@@ -25,3 +26,6 @@ if (metricPicker) {
 }
 
 if (['#injuries', '#doctor', '#psychologist'].includes(window.location.hash)) { const section = document.getElementById(window.location.hash.slice(1)); if (section) section.open = true; }
+
+};
+window.initPlayerProgress();

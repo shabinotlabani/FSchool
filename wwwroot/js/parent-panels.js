@@ -1,4 +1,5 @@
-(() => {
+window.initParentPanels = () => {
+ window.cleanupParentPanels?.();
  const root=document.querySelector('.portal-actions');if(!root||typeof HTMLDialogElement==='undefined')return;
  const panels=new Map();let current=null;
  function open(id,push=true){const item=panels.get(id);if(!item)return;if(current){panels.get(current).dialog.close();panels.get(current).button.setAttribute('aria-expanded','false');}current=id;item.dialog.showModal();item.button.setAttribute('aria-expanded','true');document.body.classList.add('portal-panel-open');if(push)history.pushState({portalPanel:id},'',location.pathname+location.search+'#'+id);document.dispatchEvent(new CustomEvent('portal-panel-open',{detail:{id,dialog:item.dialog}}));}
@@ -12,6 +13,9 @@
   button.addEventListener('click',()=>open(id));dialog.addEventListener('cancel',e=>{e.preventDefault();dismiss();});dialog.addEventListener('click',e=>{if(e.target===dialog){const box=dialog.getBoundingClientRect();if(e.clientX<box.left||e.clientX>box.right||e.clientY<box.top||e.clientY>box.bottom)dismiss();}});
  });
  document.querySelectorAll('[data-portal-target]').forEach(link=>link.addEventListener('click',e=>{if(panels.has(link.dataset.portalTarget)){e.preventDefault();open(link.dataset.portalTarget);}}));
- window.addEventListener('popstate',()=>{close();const id=location.hash.slice(1);if(panels.has(id))open(id,false);});
+ const onPopState=()=>{close();const student=new URL(location.href).searchParams.get('studentId'),shown=document.getElementById('parent-athlete-content')?.dataset.studentId;if(student&&shown&&student!==shown)return;const id=location.hash.slice(1);if(panels.has(id))open(id,false);};
+ window.addEventListener('popstate',onPopState);
+ window.cleanupParentPanels=()=>{window.removeEventListener('popstate',onPopState);panels.forEach(item=>item.dialog.remove());document.body.classList.remove('portal-panel-open');};
  const initial=location.hash.slice(1)||root.dataset.startPanel;if(panels.has(initial))open(initial,false);
-})();
+};
+window.initParentPanels();

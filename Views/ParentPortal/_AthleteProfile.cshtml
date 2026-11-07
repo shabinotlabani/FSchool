@@ -1,0 +1,10 @@
+@model ParentPortalModel
+@{var token=Context.Request.RouteValues["token"]?.ToString();}
+<div id="parent-athlete-content" data-student-id="@Model.StudentId" data-student-name="@Model.Name" data-reopen-url="@Url.Action("Index",new{token,studentId=Model.StudentId})">
+<partial name="_PlayerCard" model="Model"/>
+<partial name="_SportsOverview" model="Model"/>
+<partial name="_PortalPanels" model="Model"/>
+@if(Model.Show("Parking")&&Model.ParkingTicketId != null){
+<footer class="parent-parking-footer"><form asp-action="GenerateParking" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post"><button class="parking-link" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M10 17V7h3a3 3 0 0 1 0 6h-3"/></svg><span>Bileta e parkingut</span></button></form></footer>
+}
+</div>

@@ -159,7 +159,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     }
 
     [HttpGet("p/{token}")]
-    public async Task<IActionResult> Index(string token, string? month, bool finance = false, bool continueVisit = false, int? studentId = null)
+    public async Task<IActionResult> Index(string token, string? month, bool finance = false, bool continueVisit = false, int? studentId = null, bool profile = false)
     {
         Response.Headers["Referrer-Policy"] = "no-referrer";
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
@@ -172,6 +172,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
             Response.Cookies.Delete("ParentDebtRead", new CookieOptions { Path = Request.PathBase + "/p/" + token });
         var model = continueVisit ? await Load(token, selected, finance,studentId)
             : await new ParentPortalService(db).LoadAsync(token, selected, finance,studentId:studentId);
-        return model == null ? NotFound() : View(model);
+        if(model==null)return NotFound();
+        return profile&&!model.NeedsAcknowledgement?PartialView("_AthleteProfile",model):View(model);
     }
 }

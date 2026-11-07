@@ -11,21 +11,17 @@
 <header class="parent-header sports-app-header"><div class="parent-brand"><img src="@Club.LogoUrl" alt="" width="34" height="40"/><span>@club.Name <small>AKADEMIA SPORTIVE</small></span></div><time>@Model.Today.ToString("dd MMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</time></header>
 @if(Model.Members.Count>0){
 <div class="parent-athlete-selector" role="region" aria-label="Zgjidh sportistin"><table><caption>Sportistët e familjes</caption><tbody><tr>
-@foreach(var member in Model.Members){<td><a class="parent-athlete-choice @(member.Id==Model.StudentId?"selected":"")" asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">
+@foreach(var member in Model.Members){<td><a data-student-id="@member.Id" class="parent-athlete-choice @(member.Id==Model.StudentId?"selected":"")" asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">
 @if(member.HasPhoto){<img src="@Url.Action("Photo",new{token,studentId=member.Id})" alt="" width="48" height="48" loading="lazy"/>}else{<span class="parent-athlete-initial" aria-hidden="true">@member.Name.Trim()[0]</span>}<span>@member.Name</span>@if(member.Id==Model.StudentId){<small>Profili aktiv</small>}</a></td>}
 </tr></tbody></table></div>
 }
-<partial name="_PlayerCard" model="Model"/>
-<partial name="_SportsOverview" model="Model"/>
-<partial name="_PortalPanels" model="Model"/>
+<partial name="_AthleteProfile" model="Model"/>
 @if(Model.Show("Notifications")){<div class="parent-push" id="parent-push" data-status="@Url.Action("Notifications",new{token,actionName="status"})" data-enable="@Url.Action("Notifications",new{token,actionName="enable"})" data-disable="@Url.Action("Notifications",new{token,actionName="disable"})" data-worker="@Url.Content("~/sw.js")">
 @Html.AntiForgeryToken()
 <button class="parking-link" id="push-toggle" type="button" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Aktivizo njoftimet</span></button><p id="push-status" class="empty" role="status" aria-live="polite"></p>
 </div>
 }
-@if(Model.Show("Parking")&&Model.ParkingTicketId != null){
-<footer class="parent-parking-footer"><form asp-action="GenerateParking" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post"><button class="parking-link" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M10 17V7h3a3 3 0 0 1 0 6h-3"/></svg><span>Bileta e parkingut</span></button></form></footer>
-}
+
 </main>
 }
 <script src="~/js/parent-portal-visit.js" asp-append-version="true"></script>
@@ -37,5 +33,6 @@
 <script src="~/js/parent-events.js" asp-append-version="true"></script>
 <script src="~/js/parent-panels.js" asp-append-version="true"></script>
 <script src="~/js/player-photo.js" asp-append-version="true"></script>
+<script src="~/js/parent-athlete-switch.js" asp-append-version="true"></script>
 <script src="~/js/parent-push.js" asp-append-version="true"></script>
 <partial name="_PwaInstall" /><partial name="~/Views/Shared/_ContextHelp.cshtml" /></body></html>

@@ -1,6 +1,7 @@
-(() => {
+window.initParentEvents = () => {
+ window.cleanupParentEvents?.();
  const content=document.querySelector('[data-parent-events-url]');if(!content)return;
- let busy=false,loaded=false;
+ let busy=false,loaded=false,disposed=false;
  const message='Eventet nuk u ngarkuan. Provoni përsëri.';
  async function load(url,options={}){
   if(busy)return;busy=true;content.setAttribute('aria-busy','true');
@@ -8,7 +9,7 @@
   try{
    const response=await fetch(url,{credentials:'same-origin',...options});
    if(!response.ok)throw Error(message);
-   const html=await response.text(),parsed=new DOMParser().parseFromString(html,'text/html');
+   const html=await response.text();if(disposed)return;const parsed=new DOMParser().parseFromString(html,'text/html');
    const panel=parsed.querySelector('.parent-event-content');if(!panel)throw Error(message);
    content.replaceChildren(panel);loaded=true;
    const count=panel.dataset.eventPending;
@@ -23,7 +24,9 @@
    if(!loaded){const retry=document.createElement('button');retry.type='button';retry.className='parent-event-retry';retry.textContent='Provo përsëri';retry.onclick=()=>load(content.dataset.parentEventsUrl);notice.append(document.createElement('br'),retry);}
   }finally{busy=false;content.removeAttribute('aria-busy');controls.filter(button=>button.isConnected).forEach(button=>button.disabled=false);}
  }
- document.addEventListener('portal-panel-open',event=>{if(event.detail.id==='events')load(content.dataset.parentEventsUrl);});
+ const onOpen=event=>{if(event.detail.id==='events')load(content.dataset.parentEventsUrl);};
+ document.addEventListener('portal-panel-open',onOpen);
+ window.cleanupParentEvents=()=>{disposed=true;document.removeEventListener('portal-panel-open',onOpen);};
  content.addEventListener('click',event=>{
   const link=event.target.closest('a');if(!link)return;
   const url=new URL(link.href);const base=new URL(content.dataset.parentEventsUrl,location.href);
@@ -40,4 +43,5 @@
    if(eventId){const item=content.querySelector('#'+CSS.escape(eventId));if(item)item.open=true;}
   });
  });
-})();
+};
+window.initParentEvents();

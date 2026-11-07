@@ -213,6 +213,11 @@ try {
         var image=await Controller(db).Photo(familyToken,familyFixture.SiblingId);
         Check(image is FileContentResult file&&file.FileContents.SequenceEqual(photo),"Family thumbnail route returns the selected child's photo without requiring a finance visit");return true;
     });
+    await WithDb(async db=>{
+        var response=await Controller(db).Index(familyToken,null,continueVisit:true,studentId:familyFixture.SiblingId,profile:true);
+        Check(response is PartialViewResult {ViewName:"_AthleteProfile",Model:ParentPortalModel {Name:"Sibling Test"}},"Family switching returns only the selected child's profile fragment");
+        Check(await Controller(db).Index(familyToken,null,continueVisit:true,studentId:familyFixture.OutsiderId,profile:true) is NotFoundResult,"Profile fragment requests cannot select a child outside the family");return true;
+    });
     Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,false,_=>true,studentId:familyFixture.OutsiderId))==null,"Family token cannot select an unrelated child");
     Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,false,_=>true,studentId:familyFixture.SiblingId))==null,"Existing individual links do not silently grant sibling access");
     var siblingLink=await WithDb(db=>new ParentAccessService(db).LinkFor(familyFixture.SiblingId));

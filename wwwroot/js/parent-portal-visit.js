@@ -5,7 +5,7 @@
     const reopen = () => {
         if (reopening) return;
         reopening = true;
-        window.location.replace(entryUrl);
+        window.location.replace(document.body.dataset.parentReopenUrl || entryUrl);
     };
     // Mobile apps may resume the existing page instead of requesting their start URL.
     let wasHidden = document.visibilityState === 'hidden';
