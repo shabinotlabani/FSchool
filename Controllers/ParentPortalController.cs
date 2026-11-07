@@ -83,7 +83,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     [HttpPost("p/{token}/acknowledge"), ValidateAntiForgeryToken]
     public async Task<IActionResult> Acknowledge(string token, string? month, bool finance = false, int? studentId = null)
     {
-        var model = await new ParentPortalService(db).LoadAsync(token, TariffService.CurrentMonth, false);
+        var model = await new ParentPortalService(db).LoadAsync(token, TariffService.CurrentMonth, true);
         if (model == null) return NotFound();
         if (model.NeedsAcknowledgement)
             Response.Cookies.Append("ParentDebtRead", WarningProtector.Protect(WarningValue(token, model.Debt)), new CookieOptions {
@@ -163,10 +163,10 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     {
         Response.Headers["Referrer-Policy"] = "no-referrer";
         Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
-        Response.Headers["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; img-src 'self'; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
+        Response.Headers["Content-Security-Policy"] = "default-src 'none'; style-src 'self'; img-src 'self' blob:; script-src 'self'; worker-src 'self'; manifest-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
         var selected = TariffService.CurrentMonth;
         if (month != null && (!TariffService.TryMonth(month, out selected) || selected.Year < 2000 || selected > TariffService.CurrentMonth)) return BadRequest();
-        // A fresh launch always shows the notice, even if an earlier visit acknowledged it.
+        // A fresh explicit finance visit requires its own acknowledgement.
         // Only links inside the current visit carry continueVisit.
         if (!continueVisit)
             Response.Cookies.Delete("ParentDebtRead", new CookieOptions { Path = Request.PathBase + "/p/" + token });

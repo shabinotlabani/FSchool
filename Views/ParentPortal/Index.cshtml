@@ -8,14 +8,15 @@
 <main class="blocked warning"><div><span class="notice-label">NJOFTIM PËR PAGESËN</span><h1>Shuma për t’u paguar: @Model.Debt.ToString("N2")</h1><p>Ju lutem kryeni pagesën e mbetur. Shtypni “Po e lexova” për të vazhduar në portal.</p><form asp-action="Acknowledge" asp-route-token="@token" method="post"><input type="hidden" name="studentId" value="@Context.Request.Query["studentId"]"/><input type="hidden" name="month" value="@Model.Month.ToString("yyyy-MM")"/><input type="hidden" name="finance" value="@Model.Finance.ToString().ToLowerInvariant()"/><button class="button" type="submit">Po e lexova</button></form></div></main>
 }else{
 <main class="portal">
-<header class="parent-header"><div class="parent-brand"><img src="@Club.LogoUrl" alt="" width="34" height="40"/><span>@club.Name <small>Portali i prindit</small></span></div><h1>@(Model.FamilyName??Model.Name)</h1></header>
+<header class="parent-header sports-app-header"><div class="parent-brand"><img src="@Club.LogoUrl" alt="" width="34" height="40"/><span>@club.Name <small>AKADEMIA SPORTIVE</small></span></div><time>@Model.Today.ToString("dd MMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</time></header>
 @if(Model.Members.Count>0){
-@if(Model.Show("Finance")){<div class="parent-family-summary"><span>Për t’u paguar · Familja</span><strong>@Model.Debt.ToString("N2")</strong></div>}
-<div class="parent-family-scroll" tabindex="0" role="region" aria-label="Fëmijët e familjes"><table class="parent-family-table"><thead><tr><th>Fëmija</th>@if(Model.Show("Finance")){<th>Për t’u paguar</th><th>Parapagim</th>}</tr></thead><tbody>
-@foreach(var member in Model.Members){<tr class="@(member.Id==Model.StudentId?"selected":"")"><th scope="row"><a asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">@member.Name</a></th>@if(Model.Show("Finance")){<td>@member.Debt.ToString("N2")</td><td>@member.Advance.ToString("N2")</td>}</tr>}
-</tbody></table></div><h2 class="parent-selected-child">@Model.Name</h2>
+<div class="parent-athlete-selector" role="region" aria-label="Zgjidh sportistin"><table><caption>Sportistët e familjes</caption><tbody><tr>
+@foreach(var member in Model.Members){<td><a class="parent-athlete-choice @(member.Id==Model.StudentId?"selected":"")" asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">
+@if(member.HasPhoto){<img src="@Url.Action("Photo",new{token,studentId=member.Id})" alt="" width="48" height="48" loading="lazy"/>}else{<span class="parent-athlete-initial" aria-hidden="true">@member.Name.Trim()[0]</span>}<span>@member.Name</span>@if(member.Id==Model.StudentId){<small>Profili aktiv</small>}</a></td>}
+</tr></tbody></table></div>
 }
 <partial name="_PlayerCard" model="Model"/>
+<partial name="_SportsOverview" model="Model"/>
 <partial name="_PortalPanels" model="Model"/>
 @if(Model.Show("Notifications")){<div class="parent-push" id="parent-push" data-status="@Url.Action("Notifications",new{token,actionName="status"})" data-enable="@Url.Action("Notifications",new{token,actionName="enable"})" data-disable="@Url.Action("Notifications",new{token,actionName="disable"})" data-worker="@Url.Content("~/sw.js")">
 @Html.AntiForgeryToken()
@@ -31,6 +32,7 @@
 <script src="~/js/player-progress.js" asp-append-version="true"></script>
 <link rel="stylesheet" href="~/css/parent-events.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/parent-polish.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/parent-sports.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/table-totals.css" asp-append-version="true"/>
 <script src="~/js/parent-events.js" asp-append-version="true"></script>
 <script src="~/js/parent-panels.js" asp-append-version="true"></script>

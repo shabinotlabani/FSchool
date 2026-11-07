@@ -20,16 +20,21 @@ public class ParentPortalService(ApplicationDbContext db)
             members.Add(new(child.Id,child.FullName,position?.Debt??0,position?.Advance??0));
         }
         var today = currentDate ?? BillingClock.Today;
-        var result = new ParentPortalModel { Debt = members.Sum(x=>x.Debt), Today = today, Month = month, Finance = finance };
-        result.NeedsAcknowledgement = ParentPortalPolicy.NeedsAcknowledgement(result.Debt, acknowledged?.Invoke(result.Debt) ?? false);
-        // The gate is enforced before loading any private data, including parking.
+        var visibleModules=await ParentPortalModules.Load(db);
+        var financeVisit=finance&&visibleModules.Contains("Finance");
+        var result = new ParentPortalModel { Debt = members.Sum(x=>x.Debt), Today = today, Month = month, Finance = financeVisit };
+        result.NeedsAcknowledgement = financeVisit && ParentPortalPolicy.NeedsAcknowledgement(result.Debt, acknowledged?.Invoke(result.Debt) ?? false);
+        // Financial notices belong to an explicit finance visit, not the sports home.
         if (result.NeedsAcknowledgement) return result;
         result.StudentId=student.Id;result.FamilyName=access.Family?.Name;
-        result.VisibleModules=await ParentPortalModules.Load(db);
+        result.VisibleModules=visibleModules;
         result.Events=await db.EventInvitations.AsNoTracking().Include(x=>x.Event).Where(x=>x.StudentId==student.Id&&x.Event.Status!="Draft").OrderBy(x=>x.Event.StartsAt).ToListAsync();
         result.BirthDate=student.DateOfBirth;
         result.Age=today.Year-student.DateOfBirth.Year-(today<student.DateOfBirth.AddYears(today.Year-student.DateOfBirth.Year)?1:0);
-        result.HasPhoto=await db.Set<StudentPhoto>().AnyAsync(p=>p.StudentId==student.Id);
+        var memberIds=access.Students.Select(x=>x.Id).ToList();
+        var photos=await db.Set<StudentPhoto>().Where(x=>memberIds.Contains(x.StudentId)).Select(x=>x.StudentId).ToListAsync();
+        members=members.Select(x=>x with { HasPhoto=photos.Contains(x.Id) }).ToList();
+        result.HasPhoto=photos.Contains(student.Id);
         var sport=await new SportDevelopmentService(db).Sport();
         var profiles=await db.DevelopmentRecords.AsNoTracking().Where(r=>r.StudentId==student.Id&&r.Sport==sport&&r.Kind=="Profile"&&r.Date<=today).OrderByDescending(r=>r.Date).ThenByDescending(r=>r.Id).ToListAsync();
         string? Profile(string key)=>profiles.FirstOrDefault(p=>p.Values.ContainsKey(key))?.Values.GetValueOrDefault(key);
@@ -52,7 +57,7 @@ public class ParentPortalService(ApplicationDbContext db)
         }
         result.Advance = members.Sum(x=>x.Advance);
         result.Month = month;
-        result.Finance = finance;
+        result.Finance = financeVisit;
         if (student.IsActive)
         {
             var weekday = ((int)today.DayOfWeek + 6) % 7 + 1;

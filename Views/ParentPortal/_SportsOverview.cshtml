@@ -1,0 +1,11 @@
+@model ParentPortalModel
+@{var token=Context.Request.RouteValues["token"]?.ToString();var present=Model.Attendance.Count(x=>x.Present);var total=Model.Attendance.Count;var percentage=total==0?(int?)null:(int)Math.Round(100m*present/total);}
+@if(Model.Show("Attendance")){
+<section class="sports-training-summary" aria-label="Stërvitjet dhe prezenca">
+<div class="sports-section-heading"><div><span>PLANI I STËRVITJES</span><h2>@(Model.TodaySessions.Count>0?"Stërvitja e sotme":"Ritmi yt sportiv")</h2></div><a data-portal-target="attendance" asp-action="Index" asp-route-token="@token" asp-route-studentId="@Model.StudentId" asp-route-continueVisit="true" asp-fragment="attendance">Orari <span aria-hidden="true">↗</span></a></div>
+@if(Model.TodaySessions.Count>0){<div class="sports-today-sessions">@foreach(var session in Model.TodaySessions){<div><span>SOT · @Model.Today.ToString("dd/MM")</span><strong>@session.Start.ToString("HH:mm")<small>– @session.End.ToString("HH:mm")</small></strong><p>@Model.TeamName</p></div>}</div>}else{<p class="sports-rest-day">Sot nuk ka stërvitje të planifikuar. Shih orarin javor për seancat e ekipit.</p>}
+<div class="sports-metrics-heading"><span>PREZENCA</span><time>@Model.Month.ToString("MMMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</time></div>
+<table class="sports-metrics"><thead><tr><th>Prezent</th><th>Mungesa</th><th>Pjesëmarrja</th></tr></thead><tbody><tr><td>@present <small>seanca</small></td><td>@(total-present) <small>seanca</small></td><td>@(percentage.HasValue?percentage+"%":"—")</td></tr></tbody></table>
+@if(percentage.HasValue){<progress value="@percentage" max="100" aria-label="Përqindja e prezencës">@percentage%</progress>}else{<p class="sports-empty">Prezenca shfaqet pas regjistrimit të stërvitjeve.</p>}
+</section>
+}

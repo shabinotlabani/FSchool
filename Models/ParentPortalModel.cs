@@ -34,7 +34,10 @@ public class ParentPortalModel
     public List<ParentAttendance> Attendance { get; set; } = [];
     public List<ParentMovement> Movements { get; set; } = [];
 }
-public record ParentFamilyMember(int Id,string Name,decimal Debt,decimal Advance);
+public record ParentFamilyMember(int Id,string Name,decimal Debt,decimal Advance)
+{
+    public bool HasPhoto { get; init; }
+}
 public class ParentLinkView
 {
     public Student Student { get; set; } = null!;

@@ -167,6 +167,12 @@ try{
   var familyReceipt=await client.GetStringAsync("/checks/family");Check(familyReceipt.Contains("/ClubSettings/Logo?clubId=1")&&familyReceipt.Contains("FAM-000123"),"Family receipt includes the current club logo and document number");
   var portalResponse=await client.GetAsync("/checks/parent/"+token);var portal=await portalResponse.Content.ReadAsStringAsync();if(!portalResponse.IsSuccessStatusCode)throw new Exception(portal[..Math.Min(portal.Length,3500)]);Check(portal.Contains("id=\"doctor\"")&&portal.Contains("id=\"psychologist\""),"Existing clubs retain enabled parent modules after migration");
   Check(portal.Contains("class=\"portrait-upload\"")&&!portal.Contains("class=\"portrait-upload\" open"),"Photo uploader stays collapsed and does not cover the portrait");
+  var sportsHome=System.Text.RegularExpressions.Regex.Replace(portal,"<details id=\"finance\"[\\s\\S]*?</details>","");
+  Check(sportsHome.Contains("parent-athlete-selector")&&sportsHome.Contains("sports-training-summary")&&!sportsHome.Contains("111.00")&&!sportsHome.Contains("passport-payment")&&!sportsHome.Contains("parent-family-summary"),"Sports home shows athlete photo selection and training without financial balances outside the finance button");
+  await using(var db=Db()){
+      var home=await new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,false);
+      Check(home is {NeedsAcknowledgement:false}&&home.Members.Count==2,"A family with outstanding fees can open its sports profiles directly");
+  }
   var settingsPage=await client.GetStringAsync("/ClubSettings/ParentPortal");
   var settingsCsrf=System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(settingsPage,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
   var settingsPost=await client.PostAsync("/ClubSettings/ParentPortal",new FormUrlEncodedContent(new[]{new KeyValuePair<string,string>("__RequestVerificationToken",settingsCsrf),new("Enabled","Finance")}));
@@ -197,5 +203,5 @@ public class ReceiptPreviewController(ApplicationDbContext db):Microsoft.AspNetC
  [Microsoft.AspNetCore.Mvc.HttpGet("checks/family")]
  public Microsoft.AspNetCore.Mvc.IActionResult Family()=>View("~/Views/Payments/FamilyReceipt.cshtml",new FamilyPayment{Id=123,FamilyName="Test family",Amount=80,PaymentDate=DateTime.UtcNow,Payments=[new(){Amount=40,Student=new(){FirstName="First",LastName="Child"}},new(){Amount=40,Student=new(){FirstName="Second",LastName="Child"}}]});
  [Microsoft.AspNetCore.Mvc.HttpGet("checks/parent/{token}")]
- public async Task<Microsoft.AspNetCore.Mvc.IActionResult> Parent(string token){RouteData.Values["controller"]="ParentPortal";return View("~/Views/ParentPortal/Index.cshtml",new ParentPortalModel{StudentId=1,Name="Test player",Month=TariffService.CurrentMonth,Today=BillingClock.Today,VisibleModules=await ParentPortalModules.Load(db)});}
+ public async Task<Microsoft.AspNetCore.Mvc.IActionResult> Parent(string token){RouteData.Values["controller"]="ParentPortal";return View("~/Views/ParentPortal/Index.cshtml",new ParentPortalModel{StudentId=1,Name="Test player",FamilyName="Test family",Debt=111,StudentDebt=111,Members=[new(1,"First athlete",111,0){HasPhoto=true},new(2,"Second athlete",0,0)],Month=TariffService.CurrentMonth,Today=BillingClock.Today,VisibleModules=await ParentPortalModules.Load(db)});}
 }

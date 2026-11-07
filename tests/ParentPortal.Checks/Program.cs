@@ -108,7 +108,8 @@ try {
     foreach(var date in new[]{new DateOnly(2026,10,5),new(2026,10,10),new(2026,10,11),new(2026,10,31),new(2026,11,1)})
     foreach(var finance in new[]{false,true}) {
         var warning = await WithDb(db=>new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,finance,currentDate:date));
-        Check(warning is { Debt:50,NeedsAcknowledgement:true,Name:null,TeamName:null,CoachName:null,AssistantCoachName:null,ParkingTicketId:null } && warning.Schedule.Count==0 && warning.Movements.Count==0,$"Warning precedes private data on {date} / finance={finance}");
+        if(finance)Check(warning is { Debt:50,NeedsAcknowledgement:true,Name:null,TeamName:null,CoachName:null,AssistantCoachName:null,ParkingTicketId:null } && warning.Schedule.Count==0 && warning.Movements.Count==0,$"Warning precedes private data on {date} / finance={finance}");
+        else Check(warning is {NeedsAcknowledgement:false,Name:"Test Child"},"Sports home opens without a payment notice");
         var allowed = await WithDb(db=>new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,finance,_=>true,date));
         Check(allowed is { Debt:50,NeedsAcknowledgement:false,Name:"Test Child",TeamName:"Parent test",CoachName:"Arben Test",AssistantCoachName:"Blerim Test" },$"Acknowledged debt allows access on {date} / finance={finance}");
     }
@@ -137,10 +138,10 @@ try {
     }
     var dateText=BillingClock.Today.ToString("yyyy-MM-dd");
     var freshVisit=await WithDb(db=>Controller(db,Cookie(BillingClock.Today,50)).Index(token,null));
-    Check(freshVisit is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true,Name:null}},"A fresh launch shows the payment notice even with a previously valid acknowledgement");
+    Check(freshVisit is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:false,Name:"Test Child"}},"A fresh sports visit opens the athlete profile without a financial interruption");
     var continuingVisit=await WithDb(db=>Controller(db,Cookie(BillingClock.Today,50)).Index(token,null,continueVisit:true));
     Check(continuingVisit is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:false,Name:"Test Child"}},"Internal navigation preserves acknowledgement for the current visit");
-    Check(await WithDb(db=>Controller(db).Index(token,null,continueVisit:true)) is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true}},"A continuation flag alone cannot acknowledge the notice");
+    Check(await WithDb(db=>Controller(db).Index(token,null,finance:true,continueVisit:true)) is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true}},"A continuation flag alone cannot acknowledge the notice");
     await WithDb(async db=> {
         var controller=Controller(db);
         var response=await controller.Acknowledge(token,null);
@@ -148,11 +149,11 @@ try {
         Check(!controller.Response.Headers.SetCookie.ToString().Contains("expires=",StringComparison.OrdinalIgnoreCase),"Acknowledgement is no longer stored as an all-day persistent cookie");
         return true;
     });
-    Check(await WithDb(db=>Controller(db).ParkingQr(token,dateText)) is StatusCodeResult {StatusCode:403},"QR cannot bypass the unread notice");
+    Check(await WithDb(db=>Controller(db).ParkingQr(token,dateText)) is FileContentResult,"Sports parking is available without opening finance");
     var png=await WithDb(db=>Controller(db,Cookie(BillingClock.Today,50)).ParkingQr(token,dateText));
     Check(png is FileContentResult {ContentType:"image/png"} file && file.FileContents.Take(8).SequenceEqual(new byte[]{137,80,78,71,13,10,26,10}),"Acknowledgement allows a real PNG QR even after day 10");
     foreach(var bad in new[]{"forged",Cookie(BillingClock.Today.AddDays(-1),50),Cookie(BillingClock.Today,75),Cookie(BillingClock.Today,50,new string('B',64))})
-        Check(await WithDb(db=>Controller(db,bad).ParkingQr(token,dateText)) is StatusCodeResult {StatusCode:403},"Forged, expired, wrong-debt or other-child acknowledgement rejected");
+        Check(await WithDb(db=>Controller(db,bad).Index(token,null,finance:true,continueVisit:true)) is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true}},"Forged, expired, wrong-debt or other-child acknowledgement rejected");
     Check(await WithDb(db=>Controller(db,Cookie(BillingClock.Today,50)).ParkingQr(token,BillingClock.Today.AddDays(-1).ToString("yyyy-MM-dd"))) is NotFoundResult,"Old ticket URLs cannot serve a current QR");
     Check(!ParentPushService.AllowedEndpoint("https://127.0.0.1/push")&&!ParentPushService.AllowedEndpoint("https://fcm.googleapis.com.evil.test/push")
         &&!ParentPushService.AllowedEndpoint("http://fcm.googleapis.com/push")&&!ParentPushService.AllowedEndpoint("https://user@fcm.googleapis.com/push")
@@ -167,7 +168,7 @@ try {
     var originalKey=await WithDb(db=>db.ParentPushSettings.Select(x=>x.PublicKey).SingleAsync());
     await WithDb(async db=>{await new ParentPushService(db).Configure("https://club.example.test");return true;});
     Check(originalKey==await WithDb(db=>db.ParentPushSettings.Select(x=>x.PublicKey).SingleAsync()),"Configuration keeps stable VAPID keys");
-    Check(await WithDb(db=>Controller(db).Notifications(token,"enable",pushInput)) is StatusCodeResult{StatusCode:403},"Push cannot bypass the payment acknowledgement");
+    Check(await WithDb(db=>Controller(db).Notifications(token,"enable",pushInput)) is JsonResult,"Sports notifications can be enabled without opening finance");
     await WithDb(async db=>{await new ParentPushService(db).Save(childId,token,pushInput,true);return true;});
     await WithDb(async db=>{await new ParentPushService(db).Save(childId,token,pushInput,true);return true;});
     Check(await WithDb(db=>db.ParentPushSubscriptions.CountAsync())==1,"Repeated activation does not duplicate subscriptions");
@@ -200,10 +201,18 @@ try {
         db.StudentTransactions.Add(new(){StudentId=sibling.Id,TransactionType="MonthlyFee",Debit=30,Description="Sibling private charge"});
         await db.SaveChangesAsync();return (FamilyId:family.Id,SiblingId:sibling.Id,OutsiderId:outsider.Id,SinglePlanId:single.Id);
     });
-    var familyWarning=await WithDb(db=>new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,false));
+    var familyWarning=await WithDb(db=>new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,true));
     Check(familyWarning is{Debt:80,NeedsAcknowledgement:true,FamilyName:null}&&familyWarning.Members.Count==0,"Family warning sums obligations without exposing children before acknowledgement");
     var familyPortal=await WithDb(db=>new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,true,_=>true,studentId:familyFixture.SiblingId));
     Check(familyPortal is{Debt:80,StudentDebt:30,Name:"Sibling Test",FamilyName:"Family portal test"}&&familyPortal.Members.Count==2&&familyPortal.Movements.Sum(x=>x.Debit)==30,"Shared portal totals the family while financial movements belong to the selected child");
+    await WithDb(async db=>{
+        var photo=await File.ReadAllBytesAsync(Path.Combine(root,"wwwroot","images","upnext","logo_256.webp"));
+        db.Add(new StudentPhoto{StudentId=familyFixture.SiblingId,Data=photo});await db.SaveChangesAsync();
+        var sports=await new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,false);
+        Check(sports is {NeedsAcknowledgement:false}&&sports.Members.Single(x=>x.Id==familyFixture.SiblingId).HasPhoto&&!sports.Members.Single(x=>x.Id==childId).HasPhoto,"Family sports selector identifies each child's own photo without displaying a financial notice");
+        var image=await Controller(db).Photo(familyToken,familyFixture.SiblingId);
+        Check(image is FileContentResult file&&file.FileContents.SequenceEqual(photo),"Family thumbnail route returns the selected child's photo without requiring a finance visit");return true;
+    });
     Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,false,_=>true,studentId:familyFixture.OutsiderId))==null,"Family token cannot select an unrelated child");
     Check(await WithDb(db=>new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,false,_=>true,studentId:familyFixture.SiblingId))==null,"Existing individual links do not silently grant sibling access");
     var siblingLink=await WithDb(db=>new ParentAccessService(db).LinkFor(familyFixture.SiblingId));
