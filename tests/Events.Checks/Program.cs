@@ -162,6 +162,21 @@ try{
   Check(responsePost.StatusCode==System.Net.HttpStatusCode.Redirect&&(await Invite(reminderId,player)).Status=="Accepted","A real parent form confirms only its selected invitation with valid antiforgery");
   var updated=await client.GetStringAsync(responsePost.Headers.Location!);
   Check(updated.Contains("HTTP Guardian")&&!updated.Contains("<html",StringComparison.OrdinalIgnoreCase),"An event response refreshes inside the popup and retains consent history");
+  var noDiscount=await client.GetStringAsync("/checks/monthly/0");var withDiscount=await client.GetStringAsync("/checks/monthly/5");
+  Check(!noDiscount.Contains("Lirim / zbritje")&&withDiscount.Contains("Lirim / zbritje"),"Monthly printouts show the discount row only for an actual discount");
+  var familyReceipt=await client.GetStringAsync("/checks/family");Check(familyReceipt.Contains("/ClubSettings/Logo?clubId=1")&&familyReceipt.Contains("FAM-000123"),"Family receipt includes the current club logo and document number");
+  var portalResponse=await client.GetAsync("/checks/parent/"+token);var portal=await portalResponse.Content.ReadAsStringAsync();if(!portalResponse.IsSuccessStatusCode)throw new Exception(portal[..Math.Min(portal.Length,3500)]);Check(portal.Contains("id=\"doctor\"")&&portal.Contains("id=\"psychologist\""),"Existing clubs retain enabled parent modules after migration");
+  Check(portal.Contains("class=\"portrait-upload\"")&&!portal.Contains("class=\"portrait-upload\" open"),"Photo uploader stays collapsed and does not cover the portrait");
+  var settingsPage=await client.GetStringAsync("/ClubSettings/ParentPortal");
+  var settingsCsrf=System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(settingsPage,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
+  var settingsPost=await client.PostAsync("/ClubSettings/ParentPortal",new FormUrlEncodedContent(new[]{new KeyValuePair<string,string>("__RequestVerificationToken",settingsCsrf),new("Enabled","Finance")}));
+  Check(settingsPost.StatusCode==System.Net.HttpStatusCode.Redirect,"Administrator can save parent portal module selections");
+  var limited=await client.GetStringAsync("/checks/parent/"+token);
+  Check(limited.Contains("id=\"finance\"")&&!limited.Contains("id=\"doctor\"")&&!limited.Contains("id=\"psychologist\"")&&!limited.Contains("id=\"events\"")&&!limited.Contains("class=\"portrait-upload\""),"Parent portal displays only the club's enabled modules");
+  Check((await client.GetAsync("/p/"+token+"/events")).StatusCode==System.Net.HttpStatusCode.NotFound,"Disabled event module is inaccessible through its direct URL");
+  await using(var db=Db(2)){Check((await ParentPortalModules.Load(db)).Contains("Doctor"),"One club's module choices do not change another club's portal");}
+  await client.PostAsync("/ClubSettings/ParentPortal",new FormUrlEncodedContent(new[]{new KeyValuePair<string,string>("__RequestVerificationToken",settingsCsrf)}));
+  await using(var db=Db()){Check((await ParentPortalModules.Load(db)).Count==0,"Administrator can disable all optional portal modules");}
  }
  await app.StopAsync();
  Console.WriteLine("All event integration checks passed.");
@@ -172,4 +187,15 @@ try{
 sealed class EventTestAuth(IOptionsMonitor<AuthenticationSchemeOptions> options,ILoggerFactory logger,UrlEncoder encoder):AuthenticationHandler<AuthenticationSchemeOptions>(options,logger,encoder)
 {
  protected override Task<AuthenticateResult> HandleAuthenticateAsync()=>Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(new ClaimsIdentity(new[]{new Claim(ClaimTypes.NameIdentifier,"events-admin"),new Claim(ClaimTypes.Name,"events-admin"),new Claim(ClaimTypes.Role,Roles.Admin)},"EventTest")),"EventTest")));
+}
+
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
+public class ReceiptPreviewController(ApplicationDbContext db):Microsoft.AspNetCore.Mvc.Controller
+{
+ [Microsoft.AspNetCore.Mvc.HttpGet("checks/monthly/{discount:decimal}")]
+ public Microsoft.AspNetCore.Mvc.IActionResult Monthly(decimal discount)=>View("~/Views/Payments/Document.cshtml",new PaymentDocumentModel{Number="TEST-1",Date=BillingClock.Today,Student=new(){FirstName="Test",LastName="Player"},Amount=50,Exempted=discount,Due=50-discount,Description="Test month",PreparedBy="Admin"});
+ [Microsoft.AspNetCore.Mvc.HttpGet("checks/family")]
+ public Microsoft.AspNetCore.Mvc.IActionResult Family()=>View("~/Views/Payments/FamilyReceipt.cshtml",new FamilyPayment{Id=123,FamilyName="Test family",Amount=80,PaymentDate=DateTime.UtcNow,Payments=[new(){Amount=40,Student=new(){FirstName="First",LastName="Child"}},new(){Amount=40,Student=new(){FirstName="Second",LastName="Child"}}]});
+ [Microsoft.AspNetCore.Mvc.HttpGet("checks/parent/{token}")]
+ public async Task<Microsoft.AspNetCore.Mvc.IActionResult> Parent(string token){RouteData.Values["controller"]="ParentPortal";return View("~/Views/ParentPortal/Index.cshtml",new ParentPortalModel{StudentId=1,Name="Test player",Month=TariffService.CurrentMonth,Today=BillingClock.Today,VisibleModules=await ParentPortalModules.Load(db)});}
 }

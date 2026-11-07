@@ -11,6 +11,19 @@ namespace _2Korriku.Controllers;
 public class ClubSettingsController(ApplicationDbContext db, ClubBranding branding) : Controller
 {
     public async Task<IActionResult> Index() => View(await branding.Get());
+    [HttpGet] public async Task<IActionResult> ParentPortal()=>View(new ParentPortalSettingsInput{Enabled=(await ParentPortalModules.Load(db)).ToList()});
+    [HttpPost,ValidateAntiForgeryToken]
+    public async Task<IActionResult> ParentPortal(ParentPortalSettingsInput input)
+    {
+        if(input.Enabled.Any(x=>!ParentPortalModules.Catalog.Any(c=>c.Key==x)))return BadRequest();
+        await using var tx=await db.Database.BeginTransactionAsync();
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2021)");
+        var settings=await db.ClubSettings.SingleOrDefaultAsync();
+        if(settings==null){settings=await branding.Get();settings.Id=db.CurrentClubId;db.ClubSettings.Add(settings);}
+        settings.ParentPortalModules=string.Join(",",ParentPortalModules.Catalog.Where(x=>input.Enabled.Contains(x.Key)).Select(x=>x.Key));
+        await db.SaveChangesAsync();await tx.CommitAsync();TempData["Success"]="Modulet e portalit të prindit u ruajtën.";
+        return RedirectToAction(nameof(ParentPortal));
+    }
 
     [HttpPost, ValidateAntiForgeryToken, RequestSizeLimit(2300000)]
     public async Task<IActionResult> Index(

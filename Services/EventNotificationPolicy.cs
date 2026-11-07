@@ -7,6 +7,7 @@ public class EventNotificationPolicy(ApplicationDbContext db)
 {
     public async Task<bool> IsCurrent(ParentPushDelivery delivery)
     {
+        if(!await ParentPortalModules.Enabled(db,"Events"))return false;
         var key=delivery.Message.SourceKey;
         if(key==null||!key.StartsWith("E:")||!int.TryParse(key[2..],out var id))return false;
         var i=await db.EventInvitations.Include(x=>x.Event).SingleOrDefaultAsync(x=>x.ClubEventId==id&&x.StudentId==delivery.Subscription.StudentId);

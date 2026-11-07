@@ -2,6 +2,8 @@ namespace _2Korriku.Models;
 
 public class ParentPortalModel
 {
+    public HashSet<string> VisibleModules { get; set; } = _2Korriku.Services.ParentPortalModules.Parse(_2Korriku.Services.ParentPortalModules.All);
+    public bool Show(string module)=>VisibleModules.Contains(module);
     public List<EventInvitation> Events { get; set; } = [];
     public DateOnly BirthDate { get; set; }
     public int Age { get; set; }

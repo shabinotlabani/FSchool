@@ -10,6 +10,7 @@ namespace _2Korriku.Controllers;
 
 [AllowAnonymous, Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("parent-portal")]
 [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+[ParentModule("Chat")]
 public class ParentChatController(ApplicationDbContext db) : Controller
 {
     private CoachChatService Chat => new(db);

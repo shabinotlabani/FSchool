@@ -27,6 +27,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
         return photo==null?NotFound():File(photo,"image/webp");
     }
     [HttpPost("p/{token}/photo/{studentId:int}"),ValidateAntiForgeryToken,RequestSizeLimit(262144)]
+    [ParentModule("Photo")]
     public async Task<IActionResult> UploadPhoto(string token,int studentId,IFormFile? photo,bool remove=false,bool photoConsent=false)
     {
         var model=await Load(token,TariffService.CurrentMonth,studentId:studentId);
@@ -56,6 +57,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
         => new ParentPortalService(db).LoadAsync(token, month, finance, debt => HasReadWarning(token, debt),studentId:studentId);
 
     [HttpPost("p/{token}/notifications/{actionName}"), ValidateAntiForgeryToken]
+    [ParentModule("Notifications")]
     public async Task<IActionResult> Notifications(string token,string actionName,_2Korriku.Models.ParentPushInput input)
     {
         var model=await Load(token,TariffService.CurrentMonth);
@@ -92,6 +94,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     }
 
     [HttpPost("p/{token}/parking"), ValidateAntiForgeryToken]
+    [ParentModule("Parking")]
     public async Task<IActionResult> GenerateParking(string token, int? studentId = null)
     {
         var model = await Load(token, TariffService.CurrentMonth,studentId:studentId);
@@ -102,6 +105,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     }
 
     [HttpGet("p/{token}/parking/{date}")]
+    [ParentModule("Parking")]
     public async Task<IActionResult> Parking(string token, string date, int? studentId = null)
     {
         if (date != BillingClock.Today.ToString("yyyy-MM-dd")) return NotFound();
@@ -112,6 +116,7 @@ public class ParentPortalController(ApplicationDbContext db) : Controller
     }
 
     [HttpGet("p/{token}/parking/{date}/qr.png")]
+    [ParentModule("Parking")]
     public async Task<IActionResult> ParkingQr(string token, string date, int? studentId = null)
     {
         if (date != BillingClock.Today.ToString("yyyy-MM-dd")) return NotFound();

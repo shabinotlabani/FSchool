@@ -30,6 +30,7 @@ public class ParentPushWorker(IServiceScopeFactory scopes,ILogger<ParentPushWork
                     // Serialize workers across Railway replicas; one delivery is committed at a time.
                     await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2020)",stoppingToken);
                     var settings=await db.ParentPushSettings.SingleOrDefaultAsync(stoppingToken);if(settings==null)break;
+                    if(!await ParentPortalModules.Enabled(db,"Notifications"))break;
                     var delivery=await db.ParentPushDeliveries.Include(x=>x.Message).Include(x=>x.Subscription.Student)
                         .Where(x=>x.SentAt==null&&!x.Failed&&x.NextAttempt<=DateTime.UtcNow).OrderBy(x=>x.Id).FirstOrDefaultAsync(stoppingToken);
                     if(delivery==null)break;

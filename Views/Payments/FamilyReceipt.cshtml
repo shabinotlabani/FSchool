@@ -1,18 +1,19 @@
 @{ var club = await Club.Get(); }
 @model FamilyPayment
 @using _2Korriku.Services
-@{ Layout = "_PrintLayout"; ViewData["Title"] = $"Dëftesa familjare FAM-{Model.Id:000000}"; }
-<div class="print-toolbar"><partial name="_DocumentBack"/><button onclick="window.print()">Printo dëftesën</button></div>
-<main class="stock-sheet">
-<h1>@club.DisplayName</h1><h2>Dëftesë e pagesës familjare</h2>
-<p><strong>FAM-@Model.Id.ToString("000000")</strong> · @BillingClock.LocalDate(Model.PaymentDate).ToString("dd/MM/yyyy")</p>
-<h3>@Model.FamilyName</h3>
+@{ Layout = "_PrintLayout"; ViewData["Title"] = $"Dëftesa familjare FAM-{Model.Id:000000}";var number=$"FAM-{Model.Id:000000}";var staff=Model.CreatedByUser==null?"Administrata":$"{Model.CreatedByUser.FirstName} {Model.CreatedByUser.LastName}".Trim(); }
+<link rel="stylesheet" href="~/css/family-receipt.css" asp-append-version="true"/>
+<div class="print-toolbar"><partial name="_DocumentBack"/><button type="button" onclick="window.print()">Printo dëftesën</button></div>
+<main class="stock-sheet family-receipt">
+<header class="document-header"><div class="document-brand"><img src="@Club.LogoUrl" alt="Logoja e @club.DisplayName" width="56" height="70"/><div><strong>@club.DisplayName</strong><span>SHKOLLA E FUTBOLLIT</span><small>@club.LocationLine</small></div></div><div class="document-heading"><span class="copy-label">PAGESË FAMILJARE</span><h1>Dëftesë arkëtimi</h1><strong>@number</strong></div></header><div class="document-rule"></div>
 @if(Model.CancelledAt.HasValue){<div class="cancelled-notice">ANULUAR · @Model.CancellationReason</div>}
-<table class="document-table"><thead><tr><th>Lojtari</th><th>Pagesa mujore</th></tr></thead><tbody>
-@foreach(var payment in Model.Payments.OrderBy(p => p.StudentId)){<tr><td>@payment.Student?.FullName</td><td>@payment.Amount.ToString("N2")</td></tr>}
-</tbody><tfoot><tr><th>Gjithsej</th><td><strong>@Model.Amount.ToString("N2")</strong></td></tr></tfoot></table>
-<p>Mënyra e pagesës: @BillingService.MethodLabel(Model.PaymentMethod)</p>
-@if(!string.IsNullOrWhiteSpace(Model.Notes)){<p>@Model.Notes</p>}
-<p>Regjistruar nga: @Model.CreatedByUser?.FirstName @Model.CreatedByUser?.LastName</p>
-<div class="document-signatures"><div><span>Prindi / kujdestari</span><i></i></div><div><span>Administrata</span><i></i></div></div>
+<div class="document-metadata"><div><label>Familja</label><strong>@Model.FamilyName</strong></div><div><label>Data e pagesës</label><strong>@BillingClock.LocalDate(Model.PaymentDate).ToString("dd/MM/yyyy")</strong></div><div><label>Mënyra e pagesës</label><span>@BillingService.MethodLabel(Model.PaymentMethod)</span></div><div><label>Regjistruar nga</label><span>@staff</span></div></div>
+<h2 class="family-receipt-section">Ndarja e pagesës sipas fëmijës</h2>
+<table class="document-table"><thead><tr><th>Nr.</th><th>Lojtari</th><th>Shuma e arkëtuar</th></tr></thead><tbody>
+@{var row=0;}@foreach(var payment in Model.Payments.OrderBy(p=>p.StudentId)){<tr><td>@(++row)</td><td>@payment.Student?.FullName</td><td>@payment.Amount.ToString("N2")</td></tr>}
+</tbody><tfoot><tr><th colspan="2">GJITHSEJ ARKËTUAR</th><td>@Model.Amount.ToString("N2")</td></tr></tfoot></table>
+@if(!string.IsNullOrWhiteSpace(Model.Notes)){<p class="document-notes"><strong>Shënim:</strong> @Model.Notes</p>}
+<p class="document-explanation">Kjo dëftesë vërteton pagesën familjare të regjistruar dhe ndarjen e saj sipas fëmijëve të shënuar më sipër.</p>
+<div class="document-signatures"><div><span>Administrata / arkëtari</span><strong>@staff</strong><i></i><small>Nënshkrimi / vula</small></div><div><span>Prindi / kujdestari</span><strong>@Model.FamilyName</strong><i></i><small>Nënshkrimi</small></div></div>
+<footer class="document-footer"><span>@club.DisplayName · Evidenca e pagesave</span><span>@number · @BillingClock.LocalDate(Model.PaymentDate).ToString("dd/MM/yyyy")</span></footer>
 </main>

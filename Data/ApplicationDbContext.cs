@@ -377,6 +377,7 @@ public partial class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<PlayerContractAnnex>().HasOne(c=>c.Actor).WithMany().HasForeignKey(c=>c.ActorId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<SponsorshipBeneficiary>().HasOne(c=>c.Student).WithMany().HasForeignKey(c=>c.StudentId).OnDelete(DeleteBehavior.Restrict);
         builder.Entity<SponsorshipBeneficiary>().HasIndex(c=>c.StudentId).IsUnique().HasFilter("\"StudentId\" IS NOT NULL");
+        builder.Entity<ClubSettings>().Property(x=>x.ParentPortalModules).HasDefaultValue(_2Korriku.Services.ParentPortalModules.All);
         ConfigureEvents(builder);
         ConfigureClubs(builder);
     }

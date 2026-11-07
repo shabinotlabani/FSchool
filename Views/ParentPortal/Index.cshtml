@@ -10,18 +10,19 @@
 <main class="portal">
 <header class="parent-header"><div class="parent-brand"><img src="@Club.LogoUrl" alt="" width="34" height="40"/><span>@club.Name <small>Portali i prindit</small></span></div><h1>@(Model.FamilyName??Model.Name)</h1></header>
 @if(Model.Members.Count>0){
-<div class="parent-family-summary"><span>Për t’u paguar · Familja</span><strong>@Model.Debt.ToString("N2")</strong></div>
-<div class="parent-family-scroll" tabindex="0" role="region" aria-label="Fëmijët e familjes"><table class="parent-family-table"><thead><tr><th>Fëmija</th><th>Për t’u paguar</th><th>Parapagim</th></tr></thead><tbody>
-@foreach(var member in Model.Members){<tr class="@(member.Id==Model.StudentId?"selected":"")"><th scope="row"><a asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">@member.Name</a></th><td>@member.Debt.ToString("N2")</td><td>@member.Advance.ToString("N2")</td></tr>}
+@if(Model.Show("Finance")){<div class="parent-family-summary"><span>Për t’u paguar · Familja</span><strong>@Model.Debt.ToString("N2")</strong></div>}
+<div class="parent-family-scroll" tabindex="0" role="region" aria-label="Fëmijët e familjes"><table class="parent-family-table"><thead><tr><th>Fëmija</th>@if(Model.Show("Finance")){<th>Për t’u paguar</th><th>Parapagim</th>}</tr></thead><tbody>
+@foreach(var member in Model.Members){<tr class="@(member.Id==Model.StudentId?"selected":"")"><th scope="row"><a asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-finance="@Model.Finance" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">@member.Name</a></th>@if(Model.Show("Finance")){<td>@member.Debt.ToString("N2")</td><td>@member.Advance.ToString("N2")</td>}</tr>}
 </tbody></table></div><h2 class="parent-selected-child">@Model.Name</h2>
 }
 <partial name="_PlayerCard" model="Model"/>
 <partial name="_PortalPanels" model="Model"/>
-<div class="parent-push" id="parent-push" data-status="@Url.Action("Notifications",new{token,actionName="status"})" data-enable="@Url.Action("Notifications",new{token,actionName="enable"})" data-disable="@Url.Action("Notifications",new{token,actionName="disable"})" data-worker="@Url.Content("~/sw.js")">
+@if(Model.Show("Notifications")){<div class="parent-push" id="parent-push" data-status="@Url.Action("Notifications",new{token,actionName="status"})" data-enable="@Url.Action("Notifications",new{token,actionName="enable"})" data-disable="@Url.Action("Notifications",new{token,actionName="disable"})" data-worker="@Url.Content("~/sw.js")">
 @Html.AntiForgeryToken()
 <button class="parking-link" id="push-toggle" type="button" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span>Aktivizo njoftimet</span></button><p id="push-status" class="empty" role="status" aria-live="polite"></p>
 </div>
-@if(Model.ParkingTicketId != null){
+}
+@if(Model.Show("Parking")&&Model.ParkingTicketId != null){
 <footer class="parent-parking-footer"><form asp-action="GenerateParking" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post"><button class="parking-link" type="submit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M10 17V7h3a3 3 0 0 1 0 6h-3"/></svg><span>Bileta e parkingut</span></button></form></footer>
 }
 </main>
@@ -29,6 +30,7 @@
 <script src="~/js/parent-portal-visit.js" asp-append-version="true"></script>
 <script src="~/js/player-progress.js" asp-append-version="true"></script>
 <link rel="stylesheet" href="~/css/parent-events.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/parent-polish.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/table-totals.css" asp-append-version="true"/>
 <script src="~/js/parent-events.js" asp-append-version="true"></script>
 <script src="~/js/parent-panels.js" asp-append-version="true"></script>

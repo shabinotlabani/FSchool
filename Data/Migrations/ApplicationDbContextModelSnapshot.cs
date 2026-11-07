@@ -766,6 +766,13 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("ParentPortalModules")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasDefaultValue("Attendance,Finance,Events,Progress,Menu,Doctor,Psychologist,Chat,Parking,Notifications,Photo");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");

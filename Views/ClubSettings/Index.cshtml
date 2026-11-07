@@ -1,6 +1,7 @@
 @model ClubSettings
 @{ ViewData["Title"]="Të dhënat e klubit"; }
 <div class="page-heading"><h1>Të dhënat e klubit</h1></div>
+<a class="btn btn-outline-primary mb-3" asp-action="ParentPortal">Portali i prindit · Modulet</a>
 <a class="btn btn-outline-primary mb-3" asp-controller="DevelopmentSettings" asp-action="Index">Sporti · Matjet dhe vlerësimet</a>
 @if(TempData["Success"] is string message){<div class="alert alert-success">@message</div>}
 <form method="post" enctype="multipart/form-data">

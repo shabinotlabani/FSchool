@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace _2Korriku.Controllers;
 [AllowAnonymous,Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("parent-portal")]
 [ResponseCache(NoStore=true,Location=ResponseCacheLocation.None)]
+[ParentModule("Events")]
 public class ParentEventsController(ApplicationDbContext db):Controller
 {
     [HttpGet("p/{token}/events")]

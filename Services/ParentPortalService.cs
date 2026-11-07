@@ -25,6 +25,7 @@ public class ParentPortalService(ApplicationDbContext db)
         // The gate is enforced before loading any private data, including parking.
         if (result.NeedsAcknowledgement) return result;
         result.StudentId=student.Id;result.FamilyName=access.Family?.Name;
+        result.VisibleModules=await ParentPortalModules.Load(db);
         result.Events=await db.EventInvitations.AsNoTracking().Include(x=>x.Event).Where(x=>x.StudentId==student.Id&&x.Event.Status!="Draft").OrderBy(x=>x.Event.StartsAt).ToListAsync();
         result.BirthDate=student.DateOfBirth;
         result.Age=today.Year-student.DateOfBirth.Year-(today<student.DateOfBirth.AddYears(today.Year-student.DateOfBirth.Year)?1:0);

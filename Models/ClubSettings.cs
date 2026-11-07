@@ -4,6 +4,7 @@ namespace _2Korriku.Models;
 
 public class ClubSettings
 {
+    [MaxLength(500)] public string ParentPortalModules { get; set; } = _2Korriku.Services.ParentPortalModules.All;
     public int Id { get; set; } = 1;
     [Required, MaxLength(100)] public string Name { get; set; } = "2 Korriku";
     [Required, MaxLength(150)] public string DisplayName { get; set; } = "FC 2 Korriku";

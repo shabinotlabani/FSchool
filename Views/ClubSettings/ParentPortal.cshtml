@@ -1,0 +1,7 @@
+@model _2Korriku.Services.ParentPortalSettingsInput
+@using _2Korriku.Services
+@{ViewData["Title"]="Portali i prindit · Modulet";}
+<div class="page-heading"><div><h1>Portali i prindit</h1><p>Zgjidhni modulet që prindërit e klubit tuaj mund t’i hapin.</p></div></div>
+@if(TempData["Success"] is string message){<p class="alert alert-success" role="status">@message</p>}
+<form method="post"><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Shfaq</th><th>Moduli</th><th>Përshkrimi</th></tr></thead><tbody>@foreach(var item in ParentPortalModules.Catalog){<tr><td><input type="checkbox" name="Enabled" value="@item.Key" checked="@Model.Enabled.Contains(item.Key)" id="module-@item.Key" class="form-check-input"/></td><th scope="row"><label for="module-@item.Key">@item.Label</label></th><td>@item.Description</td></tr>}</tbody></table></div><button class="btn btn-primary">Ruaj modulet</button></form>
+@section PageNavigation{<a asp-action="Index" class="btn btn-outline-secondary">Mbrapa te cilësimet e klubit</a>}
