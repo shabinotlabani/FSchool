@@ -12,7 +12,7 @@
 @if(Model.Members.Count>0){
 <div class="parent-athlete-selector" role="region" aria-label="Zgjidh sportistin"><table><caption>Sportistët e familjes</caption><tbody><tr>
 @foreach(var member in Model.Members){<td><a data-student-id="@member.Id" class="parent-athlete-choice @(member.Id==Model.StudentId?"selected":"")" asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">
-@if(member.HasPhoto){<img src="@Url.Action("Photo",new{token,studentId=member.Id})" alt="" width="48" height="48" loading="lazy"/>}else{<span class="parent-athlete-initial" aria-hidden="true">@member.Name.Trim()[0]</span>}<span>@member.Name</span>@if(member.Id==Model.StudentId){<small>Profili aktiv</small>}</a></td>}
+@if(member.HasPhoto){<img src="@Url.Action("Photo",new{token,studentId=member.Id})" alt="" width="48" height="48" loading="lazy"/>}else{<span class="parent-athlete-initial" aria-hidden="true">@member.Name.Trim()[0]</span>}<span>@member.Name</span><small>@(member.Id==Model.StudentId?"Profili aktiv":"Profili")</small></a></td>}
 </tr></tbody></table></div>
 }
 <partial name="_AthleteProfile" model="Model"/>
@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="~/css/parent-events.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/parent-polish.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/parent-sports.css" asp-append-version="true"/>
+<link rel="stylesheet" href="~/css/parent-club-theme.css" asp-append-version="true"/>
 <link rel="stylesheet" href="~/css/table-totals.css" asp-append-version="true"/>
 <script src="~/js/parent-events.js" asp-append-version="true"></script>
 <script src="~/js/parent-panels.js" asp-append-version="true"></script>

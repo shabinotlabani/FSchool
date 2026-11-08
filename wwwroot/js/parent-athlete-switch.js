@@ -34,7 +34,7 @@
     const active=choice===link;choice.classList.toggle('selected',active);
     if(active)choice.setAttribute('aria-current','page');else choice.removeAttribute('aria-current');
     choice.querySelector('small')?.remove();
-    if(active){const label=document.createElement('small');label.textContent='Profili aktiv';choice.append(label);}
+    const label=document.createElement('small');label.textContent=active?'Profili aktiv':'Profili';choice.append(label);
    });
    if(push)history.pushState({parentStudent:target},'',address);
    document.body.dataset.parentReopenUrl=profile.dataset.reopenUrl;
