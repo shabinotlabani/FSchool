@@ -473,7 +473,8 @@ try {
     await WithDb(async db=>{await new NutritionMenuService(db).Save(unchanged,careActors.Nutrition);return true;});
     Check(await WithDb(db=>db.ParentPushMessages.CountAsync(x=>x.AutomaticKind=="Menu"))==messageCount,"Saving unchanged menu content sends no extra notification");
     Check(await WithDb(db=>new MenuNotificationService(db).IsCurrent(development.Player,menuMessage.ScheduleHash)),"Individual menu notification remains current after a shared menu edit");
-    Console.WriteLine("All parent portal, development and care checks passed.");
+    await EquipmentChecks.Run(options,Check);
+    Console.WriteLine("All parent portal, development, care and equipment checks passed.");
 } finally {
     await using var drop = new NpgsqlCommand($"DROP DATABASE \"{database}\" WITH (FORCE)",admin);
     await drop.ExecuteNonQueryAsync();

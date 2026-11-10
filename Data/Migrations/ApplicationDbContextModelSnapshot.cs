@@ -771,7 +771,7 @@ namespace _2Korriku.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
-                        .HasDefaultValue("Attendance,Finance,Events,Progress,Menu,Doctor,Psychologist,Chat,Parking,Notifications,Photo");
+                        .HasDefaultValue("Attendance,Finance,Events,Progress,Menu,Doctor,Psychologist,Chat,Parking,Notifications,Photo,Equipment");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(50)
@@ -4151,6 +4151,9 @@ namespace _2Korriku.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<byte[]>("Photo")
+                        .HasColumnType("bytea");
+
                     b.Property<decimal>("PurchasePrice")
                         .HasColumnType("numeric(18,2)");
 
@@ -4244,6 +4247,12 @@ namespace _2Korriku.Data.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveredById")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("Discount")
                         .HasColumnType("numeric(18,2)");
 
@@ -4254,6 +4263,9 @@ namespace _2Korriku.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsParentOrder")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(400)

@@ -1,5 +1,6 @@
 @{ var club = await Club.Get(); }
 @model StockOverviewModel
+<a asp-controller="Sales" asp-action="Orders" class="btn btn-outline-primary mb-3">Rekuizitat e porositura</a>
 @using _2Korriku.Services
 @{ViewData["Title"]="Rekuizitat dhe stoku";var f=Model.Filter;if(f.Display=="cards"){f.Display="list";}var valid=ViewData.ModelState.IsValid;var writer=User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator);var from=f.From.ToString("yyyy-MM-dd");var to=f.To.ToString("yyyy-MM-dd");}
 <link rel="stylesheet" href="~/css/inventory.css" asp-append-version="true"/><link rel="stylesheet" href="~/css/stock-sizes.css" asp-append-version="true"/>

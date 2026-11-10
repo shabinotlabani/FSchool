@@ -5,6 +5,7 @@ namespace _2Korriku.Models;
 
 public class Product
 {
+    public byte[]? Photo { get; set; }
     public int Id { get; set; }
     [Required, StringLength(20)] public string UnitName { get; set; } = "Copë";
     public ICollection<ProductVariant> Variants { get; set; } = new List<ProductVariant>();

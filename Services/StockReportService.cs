@@ -26,6 +26,7 @@ public class StockReportService(ApplicationDbContext db)
             }
         var products=await query.OrderBy(p=>p.Name).ThenBy(p=>p.Size).ThenBy(p=>p.Id).ToListAsync();
         var ids=products.Select(p=>p.Id).ToList();
+        var reservations=await db.SaleDetails.Where(d=>ids.Contains(d.ProductId)&&d.Sale!.IsParentOrder&&d.Sale.Status=="Reserved").GroupBy(d=>d.ProductId).ToDictionaryAsync(g=>g.Key,g=>g.Sum(d=>d.Quantity));
         var start=BillingClock.UtcDate(filter.From);var end=BillingClock.UtcDate(filter.To.AddDays(1));
         var aggregates=await db.StockMovements.AsNoTracking().Where(m=>ids.Contains(m.ProductId)).GroupBy(m=>m.ProductId)
             .Select(g=>new{Id=g.Key,Total=g.Sum(m=>m.Quantity),Before=g.Sum(m=>m.Date<start?m.Quantity:0),Incoming=g.Sum(m=>m.Date>=start&&m.Date<end&&m.Quantity>0?m.Quantity:0),Outgoing=g.Sum(m=>m.Date>=start&&m.Date<end&&m.Quantity<0?-m.Quantity:0)}).ToDictionaryAsync(g=>g.Id);
@@ -37,6 +38,7 @@ public class StockReportService(ApplicationDbContext db)
             aggregates.TryGetValue(product.Id,out var a);
             var undated=product.CurrentStock-(a?.Total??0);
             var row=new StockSummaryRow{Product=product,UndatedStock=undated,Opening=undated+(a?.Before??0),Incoming=a?.Incoming??0,Outgoing=a?.Outgoing??0};
+            row.Reserved=reservations.GetValueOrDefault(product.Id);
             if(filter.Stock=="empty" && row.Closing>0)continue;
             foreach(var variant in product.Variants.OrderBy(v=>v.Id))
             {
@@ -64,6 +66,7 @@ public class StockReportService(ApplicationDbContext db)
         if(filter.VariantId.HasValue)all=all.Where(m=>m.ProductVariantId==filter.VariantId);
         var total=await all.SumAsync(m=>m.Quantity);var before=await all.Where(m=>m.Date<start).SumAsync(m=>m.Quantity);
         var model=new StockCardModel{Product=product,Filter=filter,UndatedStock=current-total,Opening=current-total+before};
+        model.Reserved=await db.SaleDetails.Where(d=>d.ProductId==id&&(!filter.VariantId.HasValue||d.ProductVariantId==filter.VariantId)&&d.Sale!.IsParentOrder&&d.Sale.Status=="Reserved").SumAsync(d=>(decimal?)d.Quantity)??0;
         foreach(var variant in product.Variants.OrderBy(v=>v.Id))
         {
             sizeTotals.TryGetValue(variant.Id,out var a);

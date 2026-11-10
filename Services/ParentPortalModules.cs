@@ -6,8 +6,9 @@ using Microsoft.EntityFrameworkCore;
 namespace _2Korriku.Services;
 public static class ParentPortalModules
 {
-    public const string All="Attendance,Finance,Events,Progress,Menu,Doctor,Psychologist,Chat,Parking,Notifications,Photo";
+    public const string All="Attendance,Finance,Events,Progress,Menu,Doctor,Psychologist,Chat,Parking,Notifications,Photo,Equipment";
     public static readonly (string Key,string Label,string Description)[] Catalog=[
+        ("Equipment","Rekuizitat","Fotot, porositë, rezervimet dhe dorëzimet e rekuizitave."),
         ("Attendance","Prezenca dhe orari","Orari, stërvitjet dhe përmbledhja e prezencës."),
         ("Finance","Kartela financiare","Gjendja, pagesat dhe historiku financiar."),
         ("Events","Eventet & Lejet","Ftesat dhe autorizimet prindërore."),

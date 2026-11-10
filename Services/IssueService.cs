@@ -37,15 +37,17 @@ public class IssueService(ApplicationDbContext db)
         var products = await db.Products.AsNoTracking().Where(p => ids.Contains(p.Id) && p.IsActive).ToDictionaryAsync(p => p.Id);
         var variantIds = input.Lines.Select(l => l.ProductVariantId).Distinct().ToList();
         var variants = await db.ProductVariants.AsNoTracking().Where(v => variantIds.Contains(v.Id) && v.IsActive).ToDictionaryAsync(v => v.Id);
+        var reserved = await EquipmentOrderService.Reserved(db);
+        var reservedProducts = await db.SaleDetails.Where(d=>d.Sale!.IsParentOrder&&d.Sale.Status=="Reserved").GroupBy(d=>d.ProductId).ToDictionaryAsync(g=>g.Key,g=>g.Sum(d=>d.Quantity));
         foreach (var group in input.Lines.GroupBy(l => l.ProductVariantId))
         {
             if (!variants.TryGetValue(group.Key, out var variant) || group.Any(l => l.ProductId != variant.ProductId))
                 throw new InvalidOperationException("Zgjidhni një madhësi aktive të rekuizitës për Çdo rresht.");
-            if (variant.CurrentStock < group.Sum(l => l.Quantity))
+            if (variant.CurrentStock - reserved.GetValueOrDefault(variant.Id) < group.Sum(l => l.Quantity))
                 throw new InvalidOperationException($"Stoku për madhësinë {variant.Size} nuk mjafton për sasinë totale të rreshtave.");
         }
         foreach (var group in input.Lines.GroupBy(l => l.ProductId))
-            if (!products.TryGetValue(group.Key, out var product) || product.CurrentStock < group.Sum(l => l.Quantity))
+            if (!products.TryGetValue(group.Key, out var product) || product.CurrentStock - reservedProducts.GetValueOrDefault(product.Id) < group.Sum(l => l.Quantity))
                 throw new InvalidOperationException("Stoku i rekuizitës nuk mjafton. Kontrolloni sasitë.");
         var sale = new Sale { RequestId = input.RequestId, InvoiceNumber = "DAL-" + Guid.NewGuid().ToString("N"), StudentId = student.Id, PlayerName = student.FullName, ParentName = student.ParentName, UserId = actorId, PaymentMethod = input.PaymentMethod, Notes = input.Notes?.Trim(), WaiverReason = input.WaivePayment ? input.WaiverReason!.Trim() : null };
         foreach (var line in input.Lines)

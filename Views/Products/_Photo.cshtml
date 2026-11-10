@@ -1,0 +1,9 @@
+@model Product
+<section class="panel p-4 my-3"><h2 class="h5">Fotografia e rekuizitës</h2>
+@if(Model.Photo!=null){<img src="@Url.Action("Photo","Products",new{id=Model.Id})" alt="@Model.Name" width="140" height="140" style="object-fit:contain"/>}
+@if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator)){
+<form asp-controller="Products" asp-action="SavePhoto" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" class="player-photo-form">
+<label class="form-label">Zgjidh foton<input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="form-control" required/></label><div class="photo-preview my-3" hidden><img alt="Parapamja" width="160" height="160" style="object-fit:contain;max-width:100%"/></div><div class="photo-form-actions d-flex gap-2 mt-3"><button type="submit" class="btn btn-primary" disabled>Ruaj foton</button>@if(Model.Photo!=null){<button type="button" class="btn btn-outline-secondary" data-remove-photo>Hiq foton</button>}</div><p class="photo-hint small text-secondary mt-2">JPG, PNG ose WebP deri në 10 MB. Fotoja optimizohet automatikisht.</p><p class="photo-status" role="status"></p></form>
+<script src="~/js/player-photo.js" asp-append-version="true"></script>
+}
+</section>

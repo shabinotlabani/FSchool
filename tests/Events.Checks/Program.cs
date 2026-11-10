@@ -101,6 +101,7 @@ try{
  var familyToken=new string('C',64);
  await using(var db=Db()){
   var family=new PlayerFamily{Name="Family",ParentLinkToken=familyToken};var plan=new FeePlan{Name="Family events test",IsFamily=true};db.AddRange(family,plan);await db.SaveChangesAsync();
+  db.FeePlanPrices.Add(new(){FeePlanId=plan.Id,EffectiveMonth=TariffService.CurrentMonth,Amount=40,FamilyFirstAmount=40,FamilyAdditionalAmount=35,SingleUsesStandard=false,CreatedByUserId=actor,Reason="Test fixture"});
   db.StudentFeeAssignments.AddRange(new(){StudentId=player,FamilyId=family.Id,FeePlanId=plan.Id,EffectiveMonth=TariffService.CurrentMonth},new(){StudentId=sibling,FamilyId=family.Id,FeePlanId=plan.Id,EffectiveMonth=TariffService.CurrentMonth});await db.SaveChangesAsync();
  }
  var familyEvent=await Run(s=>s.Save(Input("Family activity",9),null,actor));ev=await Event(familyEvent);await Run(s=>s.State(familyEvent,ev.Revision,"Publish",actor));var siblingInvite=await Invite(familyEvent,sibling);var playerInvite=await Invite(familyEvent,player);
@@ -137,6 +138,7 @@ try{
  builder.Services.AddDefaultIdentity<ApplicationUser>().AddRoles<IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
  builder.Services.AddAuthentication("EventTest").AddScheme<AuthenticationSchemeOptions,EventTestAuth>("EventTest",_=>{});
  builder.Services.AddAuthorization();builder.Services.AddScoped<ClubBranding>();builder.Services.AddScoped<BillingService>();builder.Services.AddSingleton<HelpCatalog>();
+ builder.Services.AddScoped<InventoryService>();builder.Services.AddScoped<IssueService>();
  builder.Services.AddControllersWithViews().AddApplicationPart(typeof(_2Korriku.Controllers.EventsController).Assembly);
  builder.Services.AddRateLimiter(options=>options.AddPolicy("parent-portal",context=>System.Threading.RateLimiting.RateLimitPartition.GetNoLimiter("test")));
  await using var app=builder.Build();app.UseStaticFiles();app.UseRouting();app.UseAuthentication();app.UseAuthorization();app.UseRateLimiter();app.MapControllerRoute("default","{controller=Events}/{action=Index}/{id?}");await app.StartAsync();
@@ -173,6 +175,7 @@ try{
       var home=await new ParentPortalService(db).LoadAsync(familyToken,TariffService.CurrentMonth,false);
       Check(home is {NeedsAcknowledgement:false}&&home.Members.Count==2,"A family with outstanding fees can open its sports profiles directly");
   }
+  await EquipmentHttpChecks.Run(client,options,player,token,root,Check);
   var settingsPage=await client.GetStringAsync("/ClubSettings/ParentPortal");
   var settingsCsrf=System.Net.WebUtility.HtmlDecode(System.Text.RegularExpressions.Regex.Match(settingsPage,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
   var settingsPost=await client.PostAsync("/ClubSettings/ParentPortal",new FormUrlEncodedContent(new[]{new KeyValuePair<string,string>("__RequestVerificationToken",settingsCsrf),new("Enabled","Finance")}));

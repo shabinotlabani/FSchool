@@ -1,5 +1,6 @@
 @{ var club = await Club.Get(); }
 @model StockOverviewModel
+<a asp-controller="Sales" asp-action="Orders" class="btn btn-outline-primary mb-3">Rekuizitat e porositura</a>
 @{
     ViewData["Title"] = "Rekuizitat";
     var f = Model.Filter;
@@ -44,12 +45,12 @@
         <div class="shop-grid">
         @foreach(var row in Model.Rows){
             var p = row.Product;
-            var available = p.IsActive && p.CurrentStock > 0 && (p.Variants.Count == 0 || p.Variants.Any(v => v.IsActive && v.CurrentStock > 0));
+            var available = p.IsActive && row.Available > 0 && (p.Variants.Count == 0 || p.Variants.Any(v => v.IsActive && v.CurrentStock > 0));
             var sizes = p.Variants.Where(v => v.IsActive).OrderBy(v => v.Id).ToList();
             <article class="shop-product">
                 <a asp-action="Card" asp-route-id="@p.Id" class="shop-product-visual" aria-label="Shiko @p.Name">
                     <span class="shop-availability @(!available ? "unavailable" : "")">@(!p.IsActive ? "Joaktive" : available ? "Në stok" : "Pa stok")</span>
-                    <svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 16 83 33v35L50 86 17 68V33Z" fill="currentColor" opacity=".08"/><path d="m17 33 33 18 33-18M50 51v35M17 33l33-17 33 17v35L50 86 17 68V33Zm16-9 34 18v14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+                    @if(p.Photo!=null){<img src="@Url.Action("Photo",new{id=p.Id})" alt="@p.Name" width="160" height="160" style="object-fit:contain"/>}else{<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><path d="M50 16 83 33v35L50 86 17 68V33Z" fill="currentColor" opacity=".08"/><path d="m17 33 33 18 33-18M50 51v35M17 33l33-17 33 17v35L50 86 17 68V33Zm16-9 34 18v14" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>}
                     <span class="shop-product-code">@p.Code</span>
                 </a>
                 <div class="shop-product-body">
@@ -62,7 +63,7 @@
                         @if(sizes.Count == 0 && !string.IsNullOrEmpty(p.Size)){<span>@p.Size</span>}
                     </div>
                     <div class="shop-product-bottom">
-                        <span>@p.CurrentStock.ToString("0.##") @p.UnitName.ToLowerInvariant() në stok</span>
+                        <span>@row.Available.ToString("0.##") @p.UnitName.ToLowerInvariant() të lira · @row.Reserved.ToString("0.##") të rezervuara</span>
                         @if(writer && available){<a asp-controller="Sales" asp-action="Create" asp-route-productId="@p.Id" class="btn btn-primary" aria-label="Jep lojtarit: @p.Name">Jep lojtarit</a>}
                         else{<a asp-action="Card" asp-route-id="@p.Id" class="shop-detail-link">Shiko →</a>}
                     </div>

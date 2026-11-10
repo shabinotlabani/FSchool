@@ -1,0 +1,11 @@
+@model List<Sale>
+@using _2Korriku.Services
+@{ViewData["Title"]="Rekuizitat e porositura";}
+<div class="page-heading"><div><p class="eyebrow">PORTALI I PRINDIT / MAGAZINA</p><h1>Rekuizitat e porositura</h1><p>Porositë rezervojnë stokun dhe ngarkohen si borxh. Konfirmoni vetëm kur prindi e merr rekuizitën.</p></div><a asp-action="Index" class="btn btn-outline-secondary">Daljet</a></div>
+<section class="panel"><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Porosia / data</th><th>Lojtari</th><th>Rekuizita / madhësia</th><th>Sasia</th><th>Vlera</th><th>Statusi</th><th>Veprimet</th></tr></thead><tbody>
+@foreach(var order in Model){<tr><td><a asp-action="Details" asp-route-id="@order.Id">@order.InvoiceNumber</a><small class="d-block">@BillingClock.LocalDate(order.Date).ToString("dd/MM/yyyy")</small></td><td>@order.PlayerName<small class="d-block">@order.ParentName</small></td><td>@foreach(var d in order.Details){<div>@d.ProductName · @d.ProductSize</div>}</td><td>@order.Details.Sum(d=>d.Quantity).ToString("0.##")</td><td>@order.GrandTotal.ToString("N2")<small class="d-block">Borxh: @order.Due.ToString("N2")</small></td><td>@(order.Status=="Reserved"?"E rezervuar":order.Status=="Cancelled"?"E anuluar":"E dorëzuar")@if(order.DeliveredAt.HasValue){<small class="d-block">@BillingClock.LocalDate(order.DeliveredAt.Value).ToString("dd/MM/yyyy")</small>}</td><td>
+@if(order.Status=="Reserved"&&User.IsInRole(Roles.Admin)){<form asp-action="Deliver" asp-route-id="@order.Id" method="post" data-financial-confirm><button class="btn btn-primary btn-sm">E mori · konfirmo dhe printo</button></form><form asp-action="CancelOrder" asp-route-id="@order.Id" method="post" class="mt-2" data-financial-confirm><button class="btn btn-outline-danger btn-sm">Anulo porosinë</button></form>}
+@if(order.Status=="Completed"){<a asp-action="Print" asp-route-id="@order.Id">Printo fletëdaljen</a>}
+</td></tr>}
+@if(Model.Count==0){<tr><td colspan="7">Ende nuk ka porosi nga prindërit.</td></tr>}
+</tbody><tfoot><tr><th colspan="4">Gjithsej</th><td>@Model.Sum(s=>s.GrandTotal).ToString("N2")</td><td colspan="2">@Model.Count(s=>s.Status=="Reserved") porosi të rezervuara</td></tr></tfoot></table></div></section>

@@ -5,6 +5,9 @@ namespace _2Korriku.Models;
 
 public class Sale
 {
+    public bool IsParentOrder { get; set; }
+    public DateTime? DeliveredAt { get; set; }
+    public string? DeliveredById { get; set; }
     public int Id { get; set; }
     public Guid? RequestId { get; set; }
     [StringLength(200)] public string? WaiverReason { get; set; }

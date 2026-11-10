@@ -1,6 +1,7 @@
 @model CreateStockEntryModel
 @{ ViewData["Title"] = "Hyrje në stok"; }
 <div class="page-heading mt-3"><div><p class="eyebrow">FURNIZIM I RI</p><h1>Hyrje në stok</h1></div><a asp-action="Entries" class="btn btn-outline-primary">Hyrjet ekzistuese</a></div>
+@if(Model.Lines.FirstOrDefault()?.ProductId is int photoProductId && Model.Products.FirstOrDefault(p=>p.Id==photoProductId) is Product photoProduct){<partial name="_Photo" model="photoProduct"/>}
 @if(TempData["Success"] is string message){<div class="alert alert-success" role="status">@message</div>}
 @if(Model.Products.Count == 0){<div class="billing-note">Nuk ka rekuizita aktive. @if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator)){<a asp-action="Create">Krijoni rekuizitën e parë</a>} për të vazhduar.</div>}
 <form asp-action="Receive" method="post" data-financial-confirm class="card p-3 p-md-4 billing-form" id="stock-entry-form"><div asp-validation-summary="All" class="text-danger" role="alert"></div><input asp-for="RequestId" type="hidden"/>

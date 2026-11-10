@@ -21,6 +21,8 @@ public class StockFilter : IValidatableObject
 }
 public class StockSummaryRow
 {
+    public decimal Reserved { get; set; }
+    public decimal Available => Math.Max(0,Product.CurrentStock-Reserved);
     public List<VariantStockRow> Sizes { get; set; } = [];
     public decimal UnassignedStock => Closing - Sizes.Sum(s => s.Closing);
     public Product Product { get; set; } = new();
@@ -63,6 +65,7 @@ public class VariantStockRow
 }
 public class StockCardModel
 {
+    public decimal Reserved { get; set; }
     public List<VariantStockRow> Sizes { get; set; } = [];
     public string SelectedSize => Filter.VariantId.HasValue ? Product.Variants.FirstOrDefault(v=>v.Id==Filter.VariantId)?.Size ?? "—" : "Të gjitha";
     public Product Product { get; set; } = new();

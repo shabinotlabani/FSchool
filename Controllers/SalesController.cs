@@ -12,6 +12,19 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles = Roles.Read)]
 public class SalesController(ApplicationDbContext db, IssueService issues) : Controller
 {
+    [Authorize(Roles=Roles.Write)]
+    public async Task<IActionResult> Orders()=>View(await db.Sales.AsNoTracking().Include(s=>s.Details).Where(s=>s.IsParentOrder).OrderBy(s=>s.Status!="Reserved").ThenByDescending(s=>s.Id).ToListAsync());
+    [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Admin)]
+    public async Task<IActionResult> Deliver(int id){
+        try{await new EquipmentOrderService(db).Deliver(id,Actor);return RedirectToAction(nameof(Print),new{id,autoPrint=true});}
+        catch(InvalidOperationException e){TempData["Error"]=e.Message;return RedirectToAction(nameof(Orders));}
+    }
+    [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Admin)]
+    public async Task<IActionResult> CancelOrder(int id){
+        try{await new EquipmentOrderService(db).Cancel(id,Actor);TempData["Success"]="Porosia u anulua. Rezervimi dhe borxhi u liruan.";}
+        catch(InvalidOperationException e){TempData["Error"]=e.Message;}
+        return RedirectToAction(nameof(Orders));
+    }
     private string Actor => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new InvalidOperationException("Hyni përsëri.");
     public async Task<IActionResult> Index(string? search, int? studentId, bool debtOnly = false)
     {
@@ -49,7 +62,7 @@ public class SalesController(ApplicationDbContext db, IssueService issues) : Con
     }
     private Task<Sale?> Load(int id) => db.Sales.AsNoTracking().Include(s => s.Student).Include(s => s.User).Include(s => s.Details).ThenInclude(d => d.Product).Include(s => s.Payments).SingleOrDefaultAsync(s => s.Id == id);
     public async Task<IActionResult> Details(int id) { var sale = await Load(id); return sale == null ? NotFound() : View(sale); }
-    public async Task<IActionResult> Print(int id) { var sale = await Load(id); return sale == null ? NotFound() : View(sale); }
+    public async Task<IActionResult> Print(int id) { var sale = await Load(id); if(sale==null)return NotFound();if(sale.IsParentOrder&&sale.Status!="Completed")return BadRequest("Fletëdalja printohet pas konfirmimit të dorëzimit.");return View(sale); }
     [HttpGet, Authorize(Roles = Roles.Write)]
     public async Task<IActionResult> Pay(int id)
     {

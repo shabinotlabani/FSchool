@@ -11,6 +11,16 @@ namespace _2Korriku.Controllers;
 [Authorize(Roles = Roles.Read)]
 public class ProductsController(ApplicationDbContext db, InventoryService inventory) : Controller
 {
+    public async Task<IActionResult> Photo(int id){var bytes=await db.Products.Where(p=>p.Id==id).Select(p=>p.Photo).SingleOrDefaultAsync();Response.Headers["X-Content-Type-Options"]="nosniff";return bytes==null?NotFound():File(bytes,"image/webp");}
+    [HttpPost,ValidateAntiForgeryToken,Authorize(Roles=Roles.Write),RequestSizeLimit(300000)]
+    public async Task<IActionResult> SavePhoto(int id,IFormFile? photo,bool remove=false){
+        var product=await db.Products.SingleOrDefaultAsync(p=>p.Id==id);if(product==null)return NotFound();
+        try{
+            byte[]? bytes=null;
+            if(!remove){if(photo==null||photo.Length>204800)throw new System.ComponentModel.DataAnnotations.ValidationException("Zgjidhni një foto të vlefshme.");using var stream=new MemoryStream();await photo.CopyToAsync(stream);bytes=stream.ToArray();StudentPhotoService.Validate(bytes);}
+            product.Photo=bytes;await db.SaveChangesAsync();return Json(new{success=true});
+        }catch(System.ComponentModel.DataAnnotations.ValidationException e){return BadRequest(new{message=e.Message});}
+    }
     public async Task<IActionResult> Index(string? search, string? category, bool inactive = false)
     {
         var filter = new StockFilter { Search = search, Category = category, Status = inactive ? "inactive" : "active", Display = "cards" };
