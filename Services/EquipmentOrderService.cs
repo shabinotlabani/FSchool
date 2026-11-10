@@ -33,7 +33,7 @@ public class EquipmentOrderService(ApplicationDbContext db)
         if(product.SalePrice<=0||product.SalePrice!=input.ExpectedPrice)throw new ValidationException("Çmimi ka ndryshuar. Rihapni rekuizitat para porosisë.");
         var reserved=await Reserved(db);
         var productReserved=await db.SaleDetails.Where(d=>d.ProductId==product.Id&&d.Sale!.IsParentOrder&&d.Sale.Status=="Reserved").SumAsync(d=>(decimal?)d.Quantity)??0;
-        if(variant.CurrentStock-reserved.GetValueOrDefault(variant.Id)<input.Quantity||product.CurrentStock-productReserved<input.Quantity)
+        if(variant.CurrentStock-reserved.GetValueOrDefault(variant.Id)<=1||variant.CurrentStock-reserved.GetValueOrDefault(variant.Id)<input.Quantity||product.CurrentStock-productReserved<input.Quantity)
             throw new ValidationException("Sasia nuk është më në dispozicion. Zgjidhni një sasi tjetër.");
         var total=decimal.Round(product.SalePrice*input.Quantity,2,MidpointRounding.AwayFromZero);
         var sale=new Sale{RequestId=input.RequestId,IsParentOrder=true,Status="Reserved",StudentId=child.Id,PlayerName=child.FullName,ParentName=child.ParentName,

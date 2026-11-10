@@ -12,8 +12,8 @@ static class EquipmentHttpChecks
   ApplicationDbContext Db()=>new(options,new ClubContext{ClubId=1,IsOwner=true});
   int productId,variantId;var image=await File.ReadAllBytesAsync(Path.Combine(root,"wwwroot/images/upnext/logo_256.webp"));
   await using(var db=Db()){
-   var product=new Product{Code="HTTP-EQ",Name="HTTP jersey",SalePrice=20,CurrentStock=2,Variants=[new(){Size="M",CurrentStock=2}]};
-   db.Products.Add(product);await db.SaveChangesAsync();productId=product.Id;variantId=product.Variants.Single().Id;
+   var product=new Product{Code="HTTP-EQ",Name="HTTP jersey",SalePrice=20,CurrentStock=3,Variants=[new(){Size="M",CurrentStock=2},new(){Size="ONE-HIDDEN",CurrentStock=1},new(){Size="ZERO-HIDDEN",CurrentStock=0}]};
+   db.Products.Add(product);await db.SaveChangesAsync();productId=product.Id;variantId=product.Variants.First().Id;
   }
   var edit=await client.GetStringAsync("/Products/Edit/"+productId);
   string Csrf(string html)=>WebUtility.HtmlDecode(Regex.Match(html,"name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"").Groups[1].Value);
@@ -25,6 +25,7 @@ static class EquipmentHttpChecks
   check(photo.IsSuccessStatusCode&&(await photo.Content.ReadAsByteArrayAsync()).SequenceEqual(image),"Private parent equipment photo route serves the saved image");
   var path=$"/p/{token}/equipment?studentId={player}";
   var full=await client.GetStringAsync(path);var panel=await client.GetStringAsync(path+"&panel=true");
+  check(!panel.Contains("ONE-HIDDEN")&&!panel.Contains("ZERO-HIDDEN"),"Parent catalogue hides sizes with zero or one free unit");
   check(full.Contains("<html")&&panel.Contains("HTTP jersey")&&!panel.Contains("<html"),"Equipment renders a full page or a popup fragment as requested");
   check((await client.PostAsync($"/p/{token}/equipment/order",new FormUrlEncodedContent(new Dictionary<string,string>()))).StatusCode==HttpStatusCode.BadRequest,"Equipment orders require antiforgery protection");
   var request=Regex.Match(panel,"name=\"RequestId\" value=\"([^\"]+)\"").Groups[1].Value;
@@ -33,6 +34,7 @@ static class EquipmentHttpChecks
   check(post.StatusCode==HttpStatusCode.Redirect,"The real parent equipment form creates a reservation");
   var thanks=await client.GetStringAsync(post.Headers.Location!);
   check(thanks.Contains("Faleminderit")&&thanks.Contains("HTTP jersey")&&!thanks.Contains("<html"),"Order confirmation thanks the parent inside the equipment popup");
+  check(!thanks.Contains("equipment-product\""),"Reserved stock of one disappears from the product selector");
   int orderId;await using(var db=Db()){orderId=await db.Sales.Where(s=>s.RequestId==Guid.Parse(request)).Select(s=>s.Id).SingleAsync();}
   check((await client.GetAsync("/Sales/Print/"+orderId)).StatusCode==HttpStatusCode.BadRequest,"A reserved order cannot print as a delivered stock exit");
   foreach(var url in new[]{"/Products/Stock","/Products/Card/"+productId,"/Sales/Orders","/Sales/Details/"+orderId,"/Payments/Account/"+player}){

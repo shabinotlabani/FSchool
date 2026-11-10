@@ -20,7 +20,7 @@ public class ParentEquipmentController(ApplicationDbContext db):Controller
         var products=await db.ProductVariants.AsNoTracking().Where(v=>v.IsActive&&v.Product!.IsActive&&v.Product.SalePrice>0)
             .OrderBy(v=>v.Product!.Name).ThenBy(v=>v.Id)
             .Select(v=>new EquipmentOption(v.Id,v.ProductId,v.Product!.Name,v.Size,v.Product.UnitName,v.Product.SalePrice,v.CurrentStock,v.Product.Photo!=null)).ToListAsync();
-        products=products.Select(p=>p with{Available=Math.Max(0,p.Available-reserved.GetValueOrDefault(p.Id))}).ToList();
+        products=products.Select(p=>p with{Available=Math.Max(0,p.Available-reserved.GetValueOrDefault(p.Id))}).Where(p=>p.Available>1).ToList();
         var orders=await db.Sales.AsNoTracking().Include(s=>s.Details).Where(s=>s.StudentId==child.Id&&s.IsParentOrder).OrderByDescending(s=>s.Id).ToListAsync();
         var model=new ParentEquipment(token,child.Id,child.FullName,products,orders);
         ViewData["EquipmentPanel"]=panel;

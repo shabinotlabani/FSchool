@@ -1,19 +1,31 @@
 @model ParentEquipment
 <div class="parent-equipment-content">
-<p class="equipment-intro">Rekuizitat për <strong>@Model.Name</strong>. Porosia rezervon sasinë; vlera ngarkohet si borxh në kartelën financiare.</p>
-<p class="equipment-hint">Rrëshqit tabelën anash për të zgjedhur sasinë dhe për të porositur →</p>
+<div class="equipment-welcome"><span>PAJISJET E LOJTARIT</span><h3>Zgjidh për @Model.Name</h3><p>Prek rekuizitën, zgjidh madhësinë dhe porosit.</p></div>
 @if(TempData["Success"] is string success){<p class="equipment-success" role="status">@success</p>}
 @if(TempData["Error"] is string error){<p class="equipment-error" role="alert">@error</p>}
-<div class="equipment-scroll"><table class="equipment-table"><thead><tr><th>Rekuizita</th><th>Madhësia</th><th>Çmimi</th><th>E lirë</th><th>Porosit</th></tr></thead><tbody>
-@foreach(var item in Model.Products){<tr><td>@if(item.HasPhoto){<img src="@Url.Action("Photo","ParentEquipment",new{token=Model.Token,id=item.ProductId})" alt="@item.Name" width="64" height="64" loading="lazy"/>}<strong>@item.Name</strong></td><td>@item.Size</td><td>@item.Price.ToString("N2")</td><td>@item.Available.ToString("0.##") @item.Unit</td><td>
-@if(item.Available>=1){<form asp-controller="ParentEquipment" asp-action="Order" asp-route-token="@Model.Token" method="post" class="equipment-order-form">
-<input type="hidden" name="panel" value="@((bool?)ViewData["EquipmentPanel"]==true?"true":"false")"/><input type="hidden" name="StudentId" value="@Model.StudentId"/><input type="hidden" name="VariantId" value="@item.Id"/><input type="hidden" name="RequestId" value="@Guid.NewGuid()"/><input type="hidden" name="ExpectedPrice" value="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"/>
-<label>Sasia <input type="number" name="Quantity" value="1" min="1" max="@Math.Min(100,decimal.Floor(item.Available))" step="1" required/></label>
-<label class="equipment-consent"><input type="checkbox" name="AcceptDebt" value="true" required/> Pranoj ngarkimin si borxh: @item.Price.ToString("N2") për @item.Unit.ToLower()</label><button type="submit">Porosit</button></form>}else{<span>Pa stok të lirë</span>}
-</td></tr>}
-@if(Model.Products.Count==0){<tr><td colspan="5">Ende pa rekuizita për porosi.</td></tr>}
-</tbody></table></div>
-<h3>Porositë e @Model.Name</h3><div class="equipment-scroll"><table class="equipment-table"><thead><tr><th>Porosia</th><th>Rekuizita</th><th>Statusi</th><th>Vlera</th><th>Borxhi</th></tr></thead><tbody>
-@foreach(var order in Model.Orders){<tr><td>@order.InvoiceNumber<small>@_2Korriku.Services.BillingClock.LocalDate(order.Date).ToString("dd/MM/yyyy")</small></td><td>@foreach(var line in order.Details){<div>@line.ProductName · @line.ProductSize · @line.Quantity.ToString("0.##") @line.UnitName</div>}</td><td>@(order.Status=="Reserved"?"E rezervuar · në pritje të dorëzimit":order.Status=="Cancelled"?"E anuluar":"E dorëzuar")</td><td>@order.GrandTotal.ToString("N2")</td><td>@order.Due.ToString("N2")</td></tr>}
-@if(Model.Orders.Count==0){<tr><td colspan="5">Nuk keni porosi ende.</td></tr>}
-</tbody></table></div></div>
+<div class="equipment-catalog">
+@foreach(var product in Model.Products.Where(p=>p.Available>1).GroupBy(p=>p.ProductId)){
+var item=product.First();
+<details class="equipment-product" name="equipment-product">
+<summary>
+<span class="equipment-product-image">@if(item.HasPhoto){<img src="@Url.Action("Photo","ParentEquipment",new{token=Model.Token,id=item.ProductId})" alt="" width="80" height="80" loading="lazy"/>}else{<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m16 7-11 7 5 10 6-3v21h16V21l6 3 5-10-11-7-8 6Z"/></svg>}</span>
+<span class="equipment-product-title"><strong>@item.Name</strong><span>@item.Price.ToString("N2") <small>/ @item.Unit.ToLower()</small></span><small>@product.Count() madhësi në dispozicion</small></span><span class="equipment-expand" aria-hidden="true">+</span>
+</summary>
+<form asp-controller="ParentEquipment" asp-action="Order" asp-route-token="@Model.Token" method="post" class="equipment-order-form" data-unit-price="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+<input type="hidden" name="panel" value="@((bool?)ViewData["EquipmentPanel"]==true?"true":"false")"/><input type="hidden" name="StudentId" value="@Model.StudentId"/><input type="hidden" name="RequestId" value="@Guid.NewGuid()"/><input type="hidden" name="ExpectedPrice" value="@item.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"/>
+<fieldset class="equipment-size-picker"><legend>Zgjidh madhësinë</legend><div class="equipment-sizes">
+@foreach(var size in product){<label class="equipment-size"><input type="radio" name="VariantId" value="@size.Id" data-available="@Math.Min(100,decimal.Floor(size.Available))" required/><span>@size.Size</span></label>}
+</div></fieldset>
+<div class="equipment-quantity-total"><div><label for="quantity-@item.ProductId">Sasia</label><div class="equipment-quantity"><button type="button" data-quantity-step="-1" aria-label="Zvogëlo sasinë">−</button><input id="quantity-@item.ProductId" type="number" name="Quantity" value="1" min="1" max="100" step="1" inputmode="numeric" required/><button type="button" data-quantity-step="1" aria-label="Rrit sasinë">+</button></div></div><div class="equipment-total"><span>Gjithsej</span><output>@item.Price.ToString("N2")</output></div></div>
+<label class="equipment-consent"><input type="checkbox" name="AcceptDebt" value="true" required/><span>Pranoj që vlera e porosisë të ngarkohet si borxh në kartelën time.</span></label>
+<button type="submit" class="equipment-submit">Porosit rekuizitën <span aria-hidden="true">→</span></button>
+<p class="equipment-order-note">Rekuizita rezervohet për ty. Dorëzimi konfirmohet nga klubi.</p>
+</form></details>
+}
+@if(!Model.Products.Any(p=>p.Available>1)){<div class="equipment-empty"><strong>Aktualisht nuk ka rekuizita për porosi.</strong><p>Rekuizitat shfaqen sapo të ketë stok të lirë në dispozicion.</p></div>}
+</div>
+<details class="equipment-history" open="@(Model.Orders.Count>0)"><summary>Porositë e mia <span>@Model.Orders.Count</span></summary>
+<table class="equipment-history-table"><thead><tr><th>Porosia</th><th>Statusi</th><th>Vlera</th></tr></thead><tbody>
+@foreach(var order in Model.Orders){<tr><td>@foreach(var line in order.Details){<strong>@line.ProductName</strong><small>@line.ProductSize · @line.Quantity.ToString("0.##") @line.UnitName</small>}<small>@order.InvoiceNumber · @_2Korriku.Services.BillingClock.LocalDate(order.Date).ToString("dd/MM")</small></td><td><span class="equipment-order-state @(order.Status=="Reserved"?"reserved":"")">@(order.Status=="Reserved"?"E rezervuar":order.Status=="Cancelled"?"E anuluar":"E dorëzuar")</span></td><td><strong>@order.GrandTotal.ToString("N2")</strong><small>Borxh @order.Due.ToString("N2")</small></td></tr>}
+@if(Model.Orders.Count==0){<tr><td colspan="3">Porositë e tua do të shfaqen këtu.</td></tr>}
+</tbody></table></details></div>
