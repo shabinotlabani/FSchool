@@ -38,6 +38,15 @@ public class ParentEquipmentController(ApplicationDbContext db):Controller
         }catch(Exception e)when(e is InvalidOperationException or ValidationException){TempData["Error"]=e.Message;}
         return RedirectToAction(nameof(Index),new{token,studentId=input.StudentId,panel});
     }
+    [HttpPost("p/{token}/equipment/cancel"),ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cancel(string token,int id,int studentId,bool panel=false)
+    {
+        var access=await new ParentAccessService(db).Resolve(token);
+        if(access==null||!access.Students.Any(s=>s.Id==studentId)||!await db.Sales.AnyAsync(s=>s.Id==id&&s.IsParentOrder&&s.StudentId==studentId))return NotFound();
+        try{await new EquipmentOrderService(db).CancelByParent(token,id,studentId);TempData["Success"]="Porosia u anulua. Rezervimi u lirua dhe borxhi i porosisë u hoq.";}
+        catch(InvalidOperationException e){TempData["Error"]=e.Message;}
+        return RedirectToAction(nameof(Index),new{token,studentId,panel});
+    }
     [HttpGet("p/{token}/equipment/{id:int}/photo")]
     public async Task<IActionResult> Photo(string token,int id)
     {

@@ -25,6 +25,7 @@ public class EquipmentOrderService(ApplicationDbContext db)
         if(existing!=null){
             if(!existing.IsParentOrder||existing.StudentId!=child.Id||existing.Details.Count!=1||existing.Details.Single().ProductVariantId!=input.VariantId||existing.Details.Single().Quantity!=input.Quantity||existing.Details.Single().Price!=input.ExpectedPrice)
                 throw new ValidationException("Formulari është përdorur. Rihapni rekuizitat.");
+            if(existing.Status=="Cancelled")throw new ValidationException("Kjo porosi është anuluar. Rihapni rekuizitat për një porosi të re.");
             return existing.Id;
         }
         var variant=await db.ProductVariants.AsNoTracking().Include(v=>v.Product).SingleOrDefaultAsync(v=>v.Id==input.VariantId&&v.IsActive&&v.Product!.IsActive);
@@ -64,16 +65,24 @@ public class EquipmentOrderService(ApplicationDbContext db)
         sale.Status="Completed";sale.DeliveredAt=DateTime.UtcNow;sale.DeliveredById=actor;
         await db.SaveChangesAsync();await tx.CommitAsync();
     }
-    public async Task Cancel(int id,string actor)
+    public Task Cancel(int id,string actor)=>CancelCore(id,actor,null,null);
+    public Task CancelByParent(string token,int id,int studentId)=>CancelCore(id,null,token,studentId);
+    private async Task CancelCore(int id,string? actor,string? token,int? studentId)
     {
         await using var tx=await db.Database.BeginTransactionAsync();
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20260929, 2002)");
         await db.Database.ExecuteSqlRawAsync(InventoryService.LockSql);
+        if(token!=null){
+            var access=await new ParentAccessService(db).Resolve(token);
+            if(access==null||!access.Students.Any(s=>s.Id==studentId))throw new InvalidOperationException("Porosia nuk u gjet.");
+        }
         var sale=await db.Sales.SingleOrDefaultAsync(s=>s.Id==id&&s.IsParentOrder)??throw new InvalidOperationException("Porosia nuk u gjet.");
+        if(token!=null&&sale.StudentId!=studentId)throw new InvalidOperationException("Porosia nuk u gjet.");
         await db.Entry(sale).ReloadAsync();if(sale.Status=="Cancelled")return;
+        if(sale.Status=="Completed")throw new InvalidOperationException("Porosia është konfirmuar nga administrata dhe nuk mund të anulohet.");
         if(sale.Status!="Reserved"||sale.AmountPaid!=0||await db.PendingBankPayments.AnyAsync(p=>p.Kind=="Sale"&&p.TargetId==sale.Id&&p.ReviewedAt==null))throw new InvalidOperationException("Anulohen vetëm porositë e padorëzuara dhe pa pagesa në pritje.");
         sale.Status="Cancelled";sale.Discount=sale.Total;sale.GrandTotal=0;
-        db.StudentTransactions.Add(new(){StudentId=sale.StudentId!.Value,TransactionType="SaleCancellation",Description="Anulim porosie "+sale.InvoiceNumber,Credit=sale.Total,ReferenceType="Sale",ReferenceId=sale.Id,CreatedByUserId=actor,Year=BillingClock.Today.Year,Month=BillingClock.Today.Month});
+        db.StudentTransactions.Add(new(){StudentId=sale.StudentId!.Value,TransactionType="SaleCancellation",Description=(token==null?"Anulim porosie ":"Anulim nga prindi ")+sale.InvoiceNumber,Credit=sale.Total,ReferenceType="Sale",ReferenceId=sale.Id,CreatedByUserId=actor,Year=BillingClock.Today.Year,Month=BillingClock.Today.Month});
         await db.SaveChangesAsync();await tx.CommitAsync();
     }
 }

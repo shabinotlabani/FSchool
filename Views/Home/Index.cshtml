@@ -1,5 +1,6 @@
 @model DashboardViewModel
 @{ ViewData["Title"] = "Përmbledhja"; }
+<partial name="_EquipmentOrderNotification"/>
 @if(ViewData["RegistrationTrend"] is _2Korriku.Services.RegistrationTrend trend){<partial name="_RegistrationTrend" model="trend"/>}
 @if(User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Operator))
 {

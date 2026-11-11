@@ -1,0 +1,7 @@
+@if(ViewData["PendingEquipmentOrders"] is int count && count>0 && (User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator))){
+<div class="d-flex justify-content-end mb-3">
+<a asp-controller="Sales" asp-action="Orders" class="d-inline-flex align-items-center gap-3 border rounded-3 bg-white px-3 py-2 text-decoration-none" aria-label="@count porosi rekuizitash nga prindërit në pritje të dorëzimit">
+<span class="position-relative d-inline-flex p-2 text-primary" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">@count</span></span>
+<span><strong class="d-block small">Rekuizita të porositura</strong><small class="text-secondary">Nga prindërit · në pritje të dorëzimit</small></span><span class="text-secondary" aria-hidden="true">→</span>
+</a></div>
+}

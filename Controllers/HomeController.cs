@@ -21,6 +21,8 @@ public class HomeController : Controller
     [Authorize]
     public async Task<IActionResult> Index(int? teamId,int? year)
     {
+        if(User.IsInRole(Roles.Admin)||User.IsInRole(Roles.Operator))
+            ViewData["PendingEquipmentOrders"]=await _context.Sales.AsNoTracking().CountAsync(s=>s.IsParentOrder&&s.Status=="Reserved");
         if(User.IsInRole(_2Korriku.Models.Roles.Admin)||User.IsInRole(_2Korriku.Models.Roles.SuperAdmin)){
             var today=BillingClock.Today;
             if(User.IsInRole(Roles.SuperAdmin))ViewData["ExpiringContracts"]=await _context.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Where(c=>c.Status!="Draft"&&(c.StudentId.HasValue||c.Beneficiary!.StaffCategory=="ContractPlayer")&&(c.EndedOn??c.EndsOn)>=today&&(c.EndedOn??c.EndsOn)<=today.AddMonths(1)).OrderBy(c=>c.EndedOn??c.EndsOn).ToListAsync();

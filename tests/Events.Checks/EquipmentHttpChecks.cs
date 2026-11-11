@@ -46,5 +46,19 @@ static class EquipmentHttpChecks
   check(delivered.StatusCode==HttpStatusCode.Redirect&&delivered.Headers.Location!.ToString().Contains("autoPrint=True",StringComparison.OrdinalIgnoreCase),"Admin delivery confirmation opens automatic printing");
   var printed=await client.GetStringAsync(delivered.Headers.Location!);
   check(printed.Contains("HTTP jersey")&&printed.Contains("issue-print.js")&&printed.Contains("KOPJA"),"Confirmed equipment renders the existing two-copy handover document");
+  var cancelDelivered=await client.PostAsync($"/p/{token}/equipment/cancel",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",Csrf(orders)},{"id",orderId.ToString()},{"studentId",player.ToString()},{"panel","true"}}));
+  await using(var db=Db()){check((await db.Sales.SingleAsync(s=>s.Id==orderId)).Status=="Completed","Parent cancellation cannot reverse an administrator-confirmed delivery");}
+  await using(var db=Db()){
+   await db.Products.Where(p=>p.Id==productId).ExecuteUpdateAsync(p=>p.SetProperty(x=>x.CurrentStock,3));await db.ProductVariants.Where(v=>v.Id==variantId).ExecuteUpdateAsync(v=>v.SetProperty(x=>x.CurrentStock,2));
+  }
+  var secondForm=await client.GetStringAsync(path+"&panel=true");fields["RequestId"]=Regex.Match(secondForm,"name=\"RequestId\" value=\"([^\"]+)\"").Groups[1].Value;
+  fields["__RequestVerificationToken"]=Csrf(secondForm);await client.PostAsync($"/p/{token}/equipment/order",new FormUrlEncodedContent(fields));
+  int secondId;await using(var db=Db()){secondId=await db.Sales.Where(s=>s.RequestId==Guid.Parse(fields["RequestId"])).Select(s=>s.Id).SingleAsync();}
+  var pending=await client.GetStringAsync(path+"&panel=true");check(pending.Contains("equipment-cancel-form"),"The parent sees a cancellation button for an unconfirmed order");
+  var cancelled=await client.PostAsync($"/p/{token}/equipment/cancel",new FormUrlEncodedContent(new Dictionary<string,string>{{"__RequestVerificationToken",Csrf(secondForm)},{"id",secondId.ToString()},{"studentId",player.ToString()},{"panel","true"}}));
+  check(cancelled.StatusCode==HttpStatusCode.Redirect&&(await client.GetStringAsync(cancelled.Headers.Location!)).Contains("Porosia u anulua"),"The parent cancels an unconfirmed order inside the popup");
+  int periodId;await using(var db=Db()){var period=await db.MonthlyFeePeriods.FirstAsync(p=>p.StudentId==player);period.FirstMonthWeeks=3;period.FirstMonthSuggested=38;period.FirstMonthFinal=50;await db.SaveChangesAsync();periodId=period.Id;}
+  var adminAccount=await client.GetStringAsync("/Payments/Account/"+player);var invoice=await client.GetStringAsync("/Payments/Invoice/"+periodId);
+  check(adminAccount.Contains("Propozimi")&&!invoice.Contains("Propozimi")&&!invoice.Contains("Rrumbullakim"),"First-month proposals remain visible to administration and are excluded from the client invoice");
  }
 }
