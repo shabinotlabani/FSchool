@@ -107,6 +107,21 @@ public class PlayerContractsController(ApplicationDbContext db):Controller
   var previous=row.Number;if(previous==next){TempData["Success"]="Numri i kontratës është i njëjtë.";return RedirectToAction(nameof(Details),new{id});}
   row.Number=next;row.Revision=Guid.NewGuid();row.UpdatedAt=DateTime.UtcNow;db.PlayerContractAudits.Add(new(){PlayerContractId=id,ActorId=Actor,Action="Ndryshim i numrit të kontratës",Snapshot=System.Text.Json.JsonSerializer.Serialize(new{Previous=previous,Current=next,Automatic=automatic})});await db.SaveChangesAsync();await tx.CommitAsync();TempData["Success"]=$"Numri u ndryshua në {next}.";return RedirectToAction(nameof(Details),new{id});
  }
+ [HttpPost,ValidateAntiForgeryToken]
+ public async Task<IActionResult> ChangeSalary(int id,Guid revision,decimal grossSalary)
+ {
+  var row=await db.PlayerContracts.Include(c=>c.Annexes).SingleOrDefaultAsync(c=>c.Id==id);if(row==null)return NotFound();
+  if(!ModelState.IsValid||grossSalary<0.01m||grossSalary>99999999.99m||decimal.Round(grossSalary,2)!=grossSalary){TempData["Error"]="Shkruani një pagë bruto të vlefshme me deri në dy shifra dhjetore.";return RedirectToAction(nameof(Details),new{id});}
+  if(row.Revision!=revision){TempData["Error"]="Kontrata ndryshoi. Rihapeni.";return RedirectToAction(nameof(Details),new{id});}
+  var previous=row.SalaryOn(BillingClock.Today);
+  if(previous==grossSalary)return RedirectToAction(nameof(Details),new{id});
+  var annex=row.Annexes.Where(a=>a.Status=="Active"&&a.EffectiveOn<=BillingClock.Today).OrderBy(a=>a.EffectiveOn).ThenBy(a=>a.Id).LastOrDefault();
+  if(annex==null)row.GrossSalary=grossSalary;else{annex.NewGrossSalary=grossSalary;annex.Revision=Guid.NewGuid();}
+  row.Revision=Guid.NewGuid();row.UpdatedAt=DateTime.UtcNow;
+  db.PlayerContractAudits.Add(new(){PlayerContractId=id,ActorId=Actor,Action="Korrigjim i pagës bruto",Snapshot=System.Text.Json.JsonSerializer.Serialize(new{Previous=previous,Current=grossSalary,AnnexId=annex?.Id})});
+  try{await db.SaveChangesAsync();TempData["Success"]="Paga bruto u ndryshua.";}catch(DbUpdateConcurrencyException){TempData["Error"]="Kontrata ndryshoi. Rihapeni.";}
+  return RedirectToAction(nameof(Details),new{id});
+ }
  public async Task<IActionResult> Document(int id)
  {
   var row=await db.PlayerContracts.AsNoTracking().Where(c=>c.Id==id).Select(c=>new{c.SignedPdf,c.FileName}).SingleOrDefaultAsync();

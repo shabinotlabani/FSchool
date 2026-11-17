@@ -18,10 +18,10 @@ var subIndex=0;
 @if(!Model.Movements.Any(x=>x.Group=="Shpenzime")){<tr><td colspan="@columns">Nuk ka shpenzime në këtë periudhë.</td></tr>}
 </tbody><tfoot><tr><th data-label="Kategoria / nënkategoria">GJITHSEJ SHPENZIME</th><td data-label="Shpenzuar bruto">@expenses.Where(x=>x.Outgoing>0).Sum(x=>x.Outgoing).ToString("N2")</td><td class="cash-reversed" data-label="Anulime">@((-expenses.Where(x=>x.Outgoing<0).Sum(x=>x.Outgoing)).ToString("N2"))</td><td data-label="Cash neto">@expenses.Where(x=>x.Method=="Cash").Sum(x=>x.Outgoing).ToString("N2")</td><td data-label="Bankë neto">@expenses.Where(x=>x.Method=="Bank").Sum(x=>x.Outgoing).ToString("N2")</td>@if(Model.HasOtherMethod){<td data-label="Tjetër neto">@expenses.Where(x=>x.Method=="Other").Sum(x=>x.Outgoing).ToString("N2")</td>}<td data-label="Gjithsej neto"><strong>@expenses.Sum(x=>x.Outgoing).ToString("N2")</strong></td></tr></tfoot></table></div>
 <script>document.addEventListener('click',event=>{const button=event.target.closest('[data-cash-toggle]');if(!button)return;const key=button.dataset.cashToggle,opening=button.getAttribute('aria-expanded')!=='true';button.setAttribute('aria-expanded',String(opening));button.querySelector('span').textContent=opening?'−':'+';document.querySelectorAll(`[data-cash-parent="${key}"]`).forEach(row=>row.hidden=!opening);if(!opening){document.querySelectorAll(`[data-cash-ancestor="${key}"]`).forEach(row=>row.hidden=true);document.querySelectorAll(`[data-cash-parent="${key}"] [data-cash-toggle]`).forEach(child=>{child.setAttribute('aria-expanded','false');child.querySelector('span').textContent='+';});}});</script>
-@if(Model.Movements.Any(x=>x.Group==TreasuryEntry.OpeningGroup || x.Group==TreasuryEntry.WithdrawalGroup)){
+@if(Model.Movements.Any(x=>x.Group==TreasuryEntry.WithdrawalGroup)){
 <div class="table-responsive mt-4"><table class="table document-table cash-report-table cash-breakdown"><thead><tr><th>Veprimi</th><th>Bruto</th><th>Anulime</th><th>Cash neto</th><th>Bankë neto</th>@if(Model.HasOtherMethod){<th>Tjetër neto</th>}<th>Gjithsej neto</th></tr></thead><tbody>
 @{var treasuryIndex=0;}
-@foreach(var name in new[]{TreasuryEntry.OpeningGroup,TreasuryEntry.WithdrawalGroup}){
+@foreach(var name in new[]{TreasuryEntry.WithdrawalGroup}){
     var entries=Model.Movements.Where(x=>x.Group==name).ToList();
     if(entries.Count==0){continue;}
     var treasuryKey=$"cash-treasury-{treasuryIndex++}";
@@ -31,13 +31,10 @@ var subIndex=0;
 </tbody></table></div>
 }
 <div class="table-responsive mt-4"><table class="table document-table cash-report-table cash-balances"><thead><tr><th>Përmbledhja</th>@foreach(var m in Model.MethodBalances){<th>@m.Name</th>}<th>Gjithsej</th></tr></thead><tbody>
-<tr><th>Gjendja në fillim</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@m.Opening.ToString("N2")</td>}<td data-label="Gjithsej">@Model.Opening.ToString("N2")</td></tr>
-@if(Model.Movements.Any(x=>x.Group==TreasuryEntry.OpeningGroup)){
-<tr><th>Gjendje fillestare e regjistruar (neto)</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@m.InitialFunds.ToString("N2")</td>}<td data-label="Gjithsej">@Model.InitialFunds.ToString("N2")</td></tr>
-}
+<tr><th>Gjendja fillestare</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@((m.Opening+m.InitialFunds).ToString("N2"))</td>}<td data-label="Gjithsej">@((Model.Opening+Model.InitialFunds).ToString("N2"))</td></tr>
 <tr><th>Hyrjet neto</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@m.Income.ToString("N2")</td>}<td data-label="Gjithsej">@Model.Income.ToString("N2")</td></tr>
 <tr><th>Daljet neto</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@m.Outgoing.ToString("N2")</td>}<td data-label="Gjithsej">@Model.Outgoing.ToString("N2")</td></tr>
-<tr><th>Diferenca e periudhës</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@m.Net.ToString("N2")</td>}<td data-label="Gjithsej">@Model.Net.ToString("N2")</td></tr>
+<tr><th>Diferenca e periudhës</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name">@((m.Income-m.Outgoing).ToString("N2"))</td>}<td data-label="Gjithsej">@((Model.Income-Model.Outgoing).ToString("N2"))</td></tr>
 </tbody><tfoot><tr><th>GJENDJA NË FUND</th>@foreach(var m in Model.MethodBalances){<td data-label="@m.Name"><strong>@m.Closing.ToString("N2")</strong></td>}<td data-label="Gjithsej"><strong>@Model.Closing.ToString("N2")</strong></td></tr></tfoot></table></div>
 <dialog class="cash-document-dialog" data-cash-document-dialog aria-label="Dokumenti i kalimit"><button type="button" class="cash-document-close" data-cash-document-close aria-label="Mbyll dokumentin">×</button><iframe title="Dokumenti i kalimit" data-cash-document-frame></iframe></dialog>
 <script>document.addEventListener('click',event=>{const link=event.target.closest('.cash-entry-link');if(!link)return;const dialog=document.querySelector('[data-cash-document-dialog]'),frame=dialog?.querySelector('[data-cash-document-frame]');if(!dialog||!frame||typeof dialog.showModal!=='function')return;event.preventDefault();frame.src=link.href;dialog.showModal();});document.addEventListener('click',event=>{if(!event.target.closest('[data-cash-document-close]'))return;const dialog=document.querySelector('[data-cash-document-dialog]');dialog?.close();});document.addEventListener('close',event=>{if(!event.target.matches?.('[data-cash-document-dialog]'))return;const frame=event.target.querySelector('[data-cash-document-frame]');if(frame)frame.src='about:blank';},true);window.addEventListener('message',event=>{if(event.origin!==location.origin||event.data!=='close-report-document')return;document.querySelector('[data-cash-document-dialog]')?.close();});</script>
