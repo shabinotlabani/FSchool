@@ -33,7 +33,7 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
         var y=year??BillingClock.Today.Year;
         if(y<2020||y>2100)return BadRequest();
         return View(new SponsorshipInvoiceList {
-            PlayerContracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Where(c=>c.Status!="Draft"&&c.StartsOn.Year<=y&&(c.EndedOn??c.EndsOn).Year>=y).ToListAsync(),
+            PlayerContracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Student).Include(c=>c.Beneficiary).Include(c=>c.Annexes).Where(c=>c.Status!="Draft"&&c.StartsOn.Year<=y&&(c.EndedOn??c.EndsOn).Year>=y).ToListAsync(),
             Year=y,Years=await db.SponsorshipPlans.OrderByDescending(x=>x.Year).Select(x=>x.Year).ToListAsync(),
             Invoices=await db.SponsorshipSpending.AsNoTracking().Include(x=>x.Beneficiary).Include(x=>x.Allocation.Contract)
                 .Where(x=>x.Allocation.Contract.Plan.Year==y&&x.SalaryMonth!=null&&x.CancelledAt==null)
@@ -68,12 +68,13 @@ public class SponsorshipsController(ApplicationDbContext db) : Controller
         if(m.PlanLineId>0&&m.Amount>0)try {m.Suggestions=await Service.SuggestBudgets(m.PlanLineId,m.Date,m.Amount);}
         catch(ValidationException e){ModelState.AddModelError("",e.Message);}
     }
-    [HttpGet] public async Task<IActionResult> Invoice(int? beneficiaryId,string? salaryMonth)
+    [HttpGet] public async Task<IActionResult> Invoice(int? beneficiaryId,string? salaryMonth,string salaryBasis="Net")
     {
+        if(salaryBasis is not ("Gross" or "Net"))return BadRequest();
         var m=new SponsorshipInvoiceInput{BeneficiaryId=beneficiaryId??0};
         if(beneficiaryId.HasValue&&TariffService.TryMonth(salaryMonth,out var month)){
             var contracts=await db.PlayerContracts.AsNoTracking().Include(c=>c.Beneficiary).Include(c=>c.Annexes).Where(c=>c.BeneficiaryId==beneficiaryId&&c.Status!="Draft"&&c.StartsOn<month.AddMonths(1)&&(c.EndedOn??c.EndsOn)>=month).ToListAsync();
-            if(contracts.Count>0){m.SalaryMonth=salaryMonth;m.SalaryRole=contracts[0].SalaryRole;m.Amount=PlayerContractService.MonthPayroll(contracts,month).Net;m.Description="Paga neto "+salaryMonth;m.DocumentReference="PAGA-"+beneficiaryId+"-"+salaryMonth;m.PlanLineId=await db.SponsorshipPlanLines.Where(l=>l.IsSalary&&l.Plan.Year==month.Year).Select(l=>l.Id).FirstOrDefaultAsync();}
+            if(contracts.Count>0){var payroll=PlayerContractService.MonthPayroll(contracts,month);m.SalaryMonth=salaryMonth;m.SalaryRole=contracts[0].SalaryRole;m.Amount=salaryBasis=="Gross"?payroll.Gross:payroll.Net;m.Description=(salaryBasis=="Gross"?"Paga bruto ":"Paga neto ")+salaryMonth;m.DocumentReference="PAGA-"+beneficiaryId+"-"+salaryMonth;m.PlanLineId=await db.SponsorshipPlanLines.Where(l=>l.IsSalary&&l.Plan.Year==month.Year).Select(l=>l.Id).FirstOrDefaultAsync();}
         }
         await InvoiceChoices(m);return View(m);
     }
