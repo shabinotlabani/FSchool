@@ -83,7 +83,7 @@ public class PaymentsController(ApplicationDbContext db, BillingService billing)
         {
             foreach (var term in search.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
             {
-                rows=rows.Where(r=>r.Name.Contains(term,StringComparison.OrdinalIgnoreCase)||(r.Family?.Phone?.Contains(term)??false)||r.Students.Any(s=>s.FullName.Contains(term,StringComparison.OrdinalIgnoreCase)||(s.ParentPhone?.Contains(term)??false))).ToList();
+                rows=rows.Where(r=>r.Name.Contains(term,StringComparison.OrdinalIgnoreCase)||(r.Family?.Phone?.Contains(term)??false)||r.Students.Any(s=>s.FullName.Contains(term,StringComparison.OrdinalIgnoreCase)||s.DateOfBirth.Year.ToString()==term||(s.ParentPhone?.Contains(term)??false))).ToList();
             }
         }
         var pendingBank=await db.PendingBankPayments.AsNoTracking().Where(x=>x.ReviewedAt==null).Select(x=>new{x.StudentId,x.Kind,x.TargetId,x.Amount}).ToListAsync();

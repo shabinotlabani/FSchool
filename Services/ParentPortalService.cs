@@ -6,12 +6,16 @@ namespace _2Korriku.Services;
 
 public class ParentPortalService(ApplicationDbContext db)
 {
-    public async Task<ParentPortalModel?> LoadAsync(string token, DateOnly month, bool finance, Func<decimal, bool>? acknowledged = null, DateOnly? currentDate = null, int? studentId = null)
+    public async Task<ParentPortalModel?> LoadAsync(string token, DateOnly month, bool finance, Func<decimal, bool>? acknowledged = null, DateOnly? currentDate = null, int? studentId = null, bool showDebtWarning = false)
     {
         if (token.Length != 64 || token.Any(c => !char.IsAsciiHexDigit(c))) return null;
-        await using var snapshot = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
         var access=await new ParentAccessService(db).Resolve(token);
         if(access==null)return null;
+        if(showDebtWarning || finance){
+            foreach(var child in access.Students.Where(x=>x.IsActive))
+                await new BillingService(db).GenerateDueFeesAsync(asOf:currentDate,studentId:child.Id);
+        }
+        await using var snapshot = await db.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead);
         var student=studentId.HasValue?access.Students.SingleOrDefault(x=>x.Id==studentId):access.Students.FirstOrDefault(x=>x.IsActive)??access.Students.FirstOrDefault();
         if (student == null) return null;
         var members=new List<ParentFamilyMember>();
@@ -23,8 +27,8 @@ public class ParentPortalService(ApplicationDbContext db)
         var visibleModules=await ParentPortalModules.Load(db);
         var financeVisit=finance&&visibleModules.Contains("Finance");
         var result = new ParentPortalModel { Debt = members.Sum(x=>x.Debt), Today = today, Month = month, Finance = financeVisit };
-        result.NeedsAcknowledgement = financeVisit && ParentPortalPolicy.NeedsAcknowledgement(result.Debt, acknowledged?.Invoke(result.Debt) ?? false);
-        // Financial notices belong to an explicit finance visit, not the sports home.
+        result.NeedsAcknowledgement = (financeVisit || showDebtWarning) && ParentPortalPolicy.NeedsAcknowledgement(result.Debt, acknowledged?.Invoke(result.Debt) ?? false);
+        // Portal entry shows outstanding debt before opening the player's card.
         if (result.NeedsAcknowledgement) return result;
         result.StudentId=student.Id;result.FamilyName=access.Family?.Name;
         result.VisibleModules=visibleModules;

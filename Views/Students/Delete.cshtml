@@ -1,0 +1,7 @@
+@model Student
+@{ViewData["Title"]="Fshi regjistrimin e gabuar";}
+<h1>Fshi regjistrimin e gabuar</h1>
+@if(TempData["Error"] is string error){<div class="alert alert-danger">@error</div>}
+<div class="table-responsive"><table class="table"><thead><tr><th>Lojtari</th><th>Datëlindja</th><th>Numri</th></tr></thead><tbody><tr><td>@Model.FullName</td><td>@Model.DateOfBirth.ToString("dd/MM/yyyy")</td><td>@Model.Id</td></tr></tbody></table></div>
+<p>Fshirja është përfundimtare. Fshihen regjistrimi dhe faturat mujore të papaguara të tij. Lojtarët me pagesa ose veprimtari të lidhur duhet të çaktivizohen.</p>
+<form asp-action="Delete" method="post"><input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="revision" value="@Model.Revision"/><button class="btn btn-danger">Fshi përfundimisht</button> <a asp-action="Index" class="btn btn-outline-secondary">Anulo</a></form>

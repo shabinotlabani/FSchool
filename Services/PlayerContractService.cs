@@ -99,11 +99,43 @@ public class PlayerContractService(ApplicationDbContext db)
   await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();
   if(tx!=null)await tx.CommitAsync();return row.Id;
  }
+ public static void ValidateDates(PlayerContract row,DateOnly startsOn,DateOnly endsOn)
+ {
+  if(startsOn.Year<1900||endsOn.Year>2200||endsOn<startsOn)throw new ValidationException("Data e skadimit duhet të jetë pas ose e njëjtë me datën e fillimit (1900–2200).");
+  if(row.EndedOn.HasValue&&(row.EndedOn<startsOn||row.EndedOn>endsOn))throw new ValidationException("Afati duhet të përfshijë datën e përfundimit të kontratës.");
+  var end=row.EndedOn??endsOn;
+  if(row.Annexes.Any(a=>a.EffectiveOn<startsOn||a.EffectiveOn>end))throw new ValidationException("Afati i ri duhet të përfshijë datat e të gjitha anekseve.");
+ }
+ public async Task ChangeDates(int id,Guid revision,DateOnly startsOn,DateOnly endsOn,string actor)
+ {
+  await using var tx=await db.Database.BeginTransactionAsync();
+  await db.Database.ExecuteSqlRawAsync(FamilyService.BillingLock);
+  await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(20261017, 2010)");
+  var row=await db.PlayerContracts.Include(c=>c.Annexes).SingleOrDefaultAsync(c=>c.Id==id)??throw new UnauthorizedAccessException();
+  if(row.Revision!=revision)throw new ValidationException("Kontrata ndryshoi. Rihapeni.");
+  ValidateDates(row,startsOn,endsOn);
+  var effectiveEnd=row.EndedOn??endsOn;
+  if(row.Status!="Draft"&&await db.PlayerContracts.AnyAsync(c=>c.Id!=id&&c.Status!="Draft"&&(row.StudentId.HasValue?c.StudentId==row.StudentId:c.StudentId==null&&c.BeneficiaryId==row.BeneficiaryId)&&c.StartsOn<=effectiveEnd&&(c.EndedOn??c.EndsOn)>=startsOn))throw new ValidationException("Personi ka kontratë tjetër në këtë periudhë.");
+  if(row.StartsOn==startsOn&&row.EndsOn==endsOn)return;
+  if(row.Status!="Draft"&&row.StudentId.HasValue){
+   var studentId=row.StudentId.Value;var first=new DateOnly(startsOn.Year,startsOn.Month,1);
+   await new BillingService(db).EnsureNoSeasonalChangeAsync([studentId],first);
+   if(await db.PendingBankPayments.AnyAsync(p=>p.StudentId==studentId&&p.Kind=="Seasonal"&&p.ReviewedAt==null))throw new ValidationException("Zgjidhni pagesën sezonale në pritje para ndryshimit të afatit.");
+   if(await new FamilyService(db).Latest(first).AnyAsync(a=>a.StudentId==studentId&&a.FamilyId!=null)||await db.StudentFeeAssignments.AnyAsync(a=>a.StudentId==studentId&&a.FamilyId!=null&&a.EffectiveMonth>first&&a.EffectiveMonth<=effectiveEnd))throw new ValidationException("Periudha përfshin paketë familjare. Kontrolloni caktimin e familjes.");
+   var waived=await db.StudentTransactions.Where(t=>t.StudentId==studentId&&!t.IsCancelled&&t.ReferenceType=="PlayerContract"&&t.ReferenceId==id).Select(t=>new{t.Year,t.Month}).ToListAsync();
+   if(waived.Any(p=>new DateOnly(p.Year,p.Month,1)>effectiveEnd||new DateOnly(p.Year,p.Month,1).AddMonths(1)<=startsOn))throw new ValidationException("Afati i ri përjashton muaj të liruar nga pagesa. Korrigjoni faturimin e atyre muajve para ndryshimit.");
+  }
+  var previous=new{row.StartsOn,row.EndsOn};
+  row.StartsOn=startsOn;row.EndsOn=endsOn;row.Revision=Guid.NewGuid();row.UpdatedAt=DateTime.UtcNow;
+  db.PlayerContractAudits.Add(new(){PlayerContractId=id,ActorId=actor,Action="Ndryshim i datave të kontratës",Snapshot=JsonSerializer.Serialize(new{Previous=previous,Current=new{startsOn,endsOn}})});
+  if(row.Status!="Draft"&&row.StudentId.HasValue)await WaiveExisting(row,actor);
+  await db.SaveChangesAsync();await new BankVerificationService(db).SyncAutomaticAsync();await tx.CommitAsync();
+ }
  static string Value(string? value,string fallback="-")=>string.IsNullOrWhiteSpace(value)?fallback:value.Trim();
  private async Task WaiveExisting(PlayerContract row,string actor)
  {
   var periods=await db.MonthlyFeePeriods.Where(p=>p.StudentId==row.StudentId).ToListAsync();
-  foreach(var p in periods.Where(p=>new DateOnly(p.Year,p.Month,1)<=row.EndsOn&&new DateOnly(p.Year,p.Month,1).AddMonths(1)>row.StartsOn)){
+  foreach(var p in periods.Where(p=>new DateOnly(p.Year,p.Month,1)<=row.EffectiveEnd&&new DateOnly(p.Year,p.Month,1).AddMonths(1)>row.StartsOn)){
    var entries=await db.StudentTransactions.Where(t=>t.StudentId==row.StudentId&&t.Year==p.Year&&t.Month==p.Month&&!t.IsCancelled&&(t.TransactionType=="MonthlyFee"||t.TransactionType=="MonthlyFeeAdjustment"||t.TransactionType=="Exemption"||t.TransactionType=="ExemptionReversal")).ToListAsync();
    var amount=Math.Max(0,entries.Sum(t=>t.Debit-t.Credit));
    if(amount>0)db.StudentTransactions.Add(new(){StudentId=row.StudentId!.Value,Year=p.Year,Month=p.Month,TransactionType="MonthlyFeeAdjustment",Description="Lirim mujor · Kontrata "+row.Number,Debit=0,Credit=amount,ReferenceType="PlayerContract",ReferenceId=row.Id,CreatedByUserId=actor,CreatedAt=DateTime.UtcNow,TransactionDate=DateTime.UtcNow});

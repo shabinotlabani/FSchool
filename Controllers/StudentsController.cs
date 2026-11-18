@@ -238,6 +238,20 @@ public class StudentsController : Controller
         model.History=await _context.StudentChanges.AsNoTracking().Include(c=>c.Actor).Where(c=>c.StudentId==model.Id).OrderByDescending(c=>c.CreatedAt).ThenByDescending(c=>c.Id).ToListAsync();
     }
 
+    [HttpGet,Authorize(Roles=Roles.Admin)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var student=await _context.Students.AsNoTracking().SingleOrDefaultAsync(s=>s.Id==id);
+        return student==null?NotFound():View(student);
+    }
+    [HttpPost,ActionName("Delete"),ValidateAntiForgeryToken,Authorize(Roles=Roles.Admin)]
+    public async Task<IActionResult> DeleteConfirmed(int id,Guid revision)
+    {
+        try{await new StudentDeletionService(_context).Delete(id,revision);TempData["Success"]="Regjistrimi i gabuar u fshi përfundimisht.";return RedirectToAction(nameof(Index));}
+        catch(System.ComponentModel.DataAnnotations.ValidationException ex){TempData["Error"]=ex.Message;}
+        catch(DbUpdateException){TempData["Error"]="Lojtari ka të dhëna të lidhura ose ndryshoi ndërkohë. Asnjë e dhënë nuk u fshi.";}
+        return RedirectToAction(nameof(Delete),new{id});
+    }
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 

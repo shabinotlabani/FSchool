@@ -105,6 +105,7 @@ try {
         Check(await Photos("unassigned-coach").Save(childId,null,true) is NotFoundResult,"Unassigned coach cannot remove another player's photo");
         await Photos(team.CoachId!).Save(childId,null,true);return true;
     });
+    await StudentDeletionChecks.Run(options);
     foreach(var date in new[]{new DateOnly(2026,10,5),new(2026,10,10),new(2026,10,11),new(2026,10,31),new(2026,11,1)})
     foreach(var finance in new[]{false,true}) {
         var warning = await WithDb(db=>new ParentPortalService(db).LoadAsync(token,TariffService.CurrentMonth,finance,currentDate:date));
@@ -138,9 +139,10 @@ try {
     }
     var dateText=BillingClock.Today.ToString("yyyy-MM-dd");
     var freshVisit=await WithDb(db=>Controller(db,Cookie(BillingClock.Today,50)).Index(token,null));
-    Check(freshVisit is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:false,Name:"Test Child"}},"A fresh sports visit opens the athlete profile without a financial interruption");
+    Check(freshVisit is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true,Name:null}},"A fresh portal visit shows unpaid debt even with a previous acknowledgement");
     var continuingVisit=await WithDb(db=>Controller(db,Cookie(BillingClock.Today,50)).Index(token,null,continueVisit:true));
     Check(continuingVisit is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:false,Name:"Test Child"}},"Internal navigation preserves acknowledgement for the current visit");
+    Check(await WithDb(db=>Controller(db).Index(token,null,continueVisit:true)) is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true}},"Sports continuation cannot bypass the debt notice without acknowledgement");
     Check(await WithDb(db=>Controller(db).Index(token,null,finance:true,continueVisit:true)) is ViewResult {Model:ParentPortalModel {NeedsAcknowledgement:true}},"A continuation flag alone cannot acknowledge the notice");
     await WithDb(async db=> {
         var controller=Controller(db);

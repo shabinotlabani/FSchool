@@ -122,6 +122,16 @@ public class PlayerContractsController(ApplicationDbContext db):Controller
   try{await db.SaveChangesAsync();TempData["Success"]="Paga bruto u ndryshua.";}catch(DbUpdateConcurrencyException){TempData["Error"]="Kontrata ndryshoi. Rihapeni.";}
   return RedirectToAction(nameof(Details),new{id});
  }
+ [HttpPost,ValidateAntiForgeryToken]
+ public async Task<IActionResult> ChangeDates(int id,Guid revision,DateOnly startsOn,DateOnly endsOn)
+ {
+  if(!ModelState.IsValid){TempData["Error"]="Plotësoni datën e fillimit dhe të skadimit.";return RedirectToAction(nameof(Details),new{id});}
+  try{await new PlayerContractService(db).ChangeDates(id,revision,startsOn,endsOn,Actor);TempData["Success"]="Datat e kontratës u ndryshuan.";}
+  catch(UnauthorizedAccessException){return NotFound();}
+  catch(ValidationException ex){TempData["Error"]=ex.Message;}
+  catch(DbUpdateConcurrencyException){TempData["Error"]="Kontrata ndryshoi. Rihapeni.";}
+  return RedirectToAction(nameof(Details),new{id});
+ }
  public async Task<IActionResult> Document(int id)
  {
   var row=await db.PlayerContracts.AsNoTracking().Where(c=>c.Id==id).Select(c=>new{c.SignedPdf,c.FileName}).SingleOrDefaultAsync();

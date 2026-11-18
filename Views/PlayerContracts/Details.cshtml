@@ -16,6 +16,13 @@
 <p class="text-secondary">Neto llogaritet sipas kushteve të kontratës. Kontrata A4 ruan pagën bruto. Në sponsorizime shuma llogaritet për muajin e zgjedhur.</p>
 </form>
 <div id="contract-salary-values" data-gross="@currentSalary.ToString("N2")" data-net="@PlayerContractService.Payroll(currentSalary,Model.Terms).Net.ToString("N2")" hidden></div>
+<details class="contract-number-editor"><summary>Ndrysho datat e kontratës</summary>
+<form asp-action="ChangeDates" method="post" class="contract-number-form">
+<input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="revision" value="@Model.Revision"/>
+<label>Data e fillimit<input type="date" name="startsOn" value="@Model.StartsOn.ToString("yyyy-MM-dd")" min="1900-01-01" max="2200-12-31" required class="form-control"/></label>
+<label>Data e skadimit<input type="date" name="endsOn" value="@Model.EndsOn.ToString("yyyy-MM-dd")" min="1900-01-01" max="2200-12-31" required class="form-control"/></label>
+<div><button class="btn btn-outline-primary">Ruaj datat</button></div>
+</form></details>
 <details class="contract-number-editor"><summary>Ndrysho pagën bruto</summary>
 <form asp-action="ChangeSalary" method="post" class="contract-number-form">
 <input type="hidden" name="id" value="@Model.Id"/><input type="hidden" name="revision" value="@Model.Revision"/>

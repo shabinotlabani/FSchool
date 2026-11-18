@@ -20,12 +20,12 @@ public partial class BillingService(ApplicationDbContext db)
         return result;
     }
 
-    public Task<int> GenerateDueFeesAsync(string? actorId = null, DateOnly? asOf = null, CancellationToken ct = default) => WriteAsync(async () =>
+    public Task<int> GenerateDueFeesAsync(string? actorId = null, DateOnly? asOf = null, CancellationToken ct = default, int? studentId = null) => WriteAsync(async () =>
     {
         var today = asOf ?? BillingClock.Today;
         var currentMonth = new DateOnly(today.Year, today.Month, 1);
-        var students = await db.Students.Where(s => s.IsActive).ToListAsync(ct);
-        var periods = await db.MonthlyFeePeriods.AsNoTracking().ToListAsync(ct);
+        var students = await db.Students.Where(s => s.IsActive && (!studentId.HasValue || s.Id==studentId)).ToListAsync(ct);
+        var periods = await db.MonthlyFeePeriods.AsNoTracking().Where(p=>!studentId.HasValue || p.StudentId==studentId).ToListAsync(ct);
         var count = 0;
         foreach (var student in students)
         {
@@ -45,7 +45,7 @@ public partial class BillingService(ApplicationDbContext db)
                 count++;
             }
         }
-        count += await new PersonalTrainingService(db).GenerateAsync(actorId, today, ct);
+        if(!studentId.HasValue)count += await new PersonalTrainingService(db).GenerateAsync(actorId, today, ct);
         return count;
     }, ct);
 
