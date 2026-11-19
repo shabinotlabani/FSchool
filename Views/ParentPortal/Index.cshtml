@@ -8,8 +8,8 @@
 <main class="blocked warning"><div><span class="notice-label">NJOFTIM PËR PAGESËN</span><h1>Shuma për t’u paguar: @Model.Debt.ToString("N2")</h1><p>Ju lutem kryeni pagesën e mbetur. Shtypni “Po e lexova” për të vazhduar në portal.</p><form asp-action="Acknowledge" asp-route-token="@token" method="post"><input type="hidden" name="studentId" value="@Context.Request.Query["studentId"]"/><input type="hidden" name="month" value="@Model.Month.ToString("yyyy-MM")"/><input type="hidden" name="finance" value="@Model.Finance.ToString().ToLowerInvariant()"/><button class="button" type="submit">Po e lexova</button></form></div></main>
 }else{
 <main class="portal">
-<header class="parent-header sports-app-header"><div class="parent-brand"><img src="@Club.LogoUrl" alt="" width="34" height="40"/><span>@club.Name <small>AKADEMIA SPORTIVE</small></span></div><time>@Model.Today.ToString("dd MMM yyyy",System.Globalization.CultureInfo.GetCultureInfo("sq-AL"))</time></header>
-@if(Model.Members.Count>0){
+<partial name="_CardHeader"/>
+@if(Model.Members.Count>1){
 <div class="parent-athlete-selector" role="region" aria-label="Zgjidh sportistin"><table><caption>Sportistët e familjes</caption><tbody><tr>
 @foreach(var member in Model.Members){<td><a data-student-id="@member.Id" class="parent-athlete-choice @(member.Id==Model.StudentId?"selected":"")" asp-action="Index" asp-route-token="@token" asp-route-studentId="@member.Id" asp-route-continueVisit="true" asp-route-month="@Model.Month.ToString("yyyy-MM")" aria-current="@(member.Id==Model.StudentId?"page":null)">
 @if(member.HasPhoto){<img src="@Url.Action("Photo",new{token,studentId=member.Id})" alt="" width="48" height="48" loading="lazy"/>}else{<span class="parent-athlete-initial" aria-hidden="true">@member.Name.Trim()[0]</span>}<span>@member.Name</span><small>@(member.Id==Model.StudentId?"Profili aktiv":"Profili")</small></a></td>}

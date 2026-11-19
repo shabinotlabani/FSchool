@@ -83,3 +83,53 @@
 }
 @media(max-width:360px){.poster-passport .passport-facts dd{font-size:19px}.poster-passport .passport-facts .passport-name dd{font-size:30px}.poster-passport .passport-facts dt{font-size:11px}.poster-passport .passport-heading h2{font-size:26px}.poster-passport .passport-section-title h3,.poster-passport .passport-section-title>span{font-size:18px}.poster-passport .passport-motto{font-size:14px}}
 @media print{.poster-passport{print-color-adjust:exact;-webkit-print-color-adjust:exact}.poster-passport .portrait-upload{display:none}.poster-passport .passport-rating{break-inside:avoid}}
+
+/* One page heading, followed by a compact profile and only completed fields. */
+.player-card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#042348;border-bottom:3px solid #ffda32;margin:0 -18px 16px;padding:14px 20px;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif}
+.player-card-header h1{font:700 clamp(25px,4.5vw,34px)/1.1 'Barlow Condensed','Arial Narrow',Arial,sans-serif;letter-spacing:.2px;margin:0;color:#fff}
+.player-card-header em{font-style:normal;color:#ffda32}
+.player-card-header img{width:44px;height:56px;object-fit:contain;flex-shrink:0}
+.parent-athlete-selector{margin-bottom:12px}
+.parent-athlete-selector caption{font-size:14px;padding-bottom:8px}
+.parent-athlete-selector .parent-athlete-choice{height:auto;min-height:82px;padding:8px;gap:5px;border-radius:8px}
+.parent-athlete-selector .parent-athlete-choice img,.parent-athlete-selector .parent-athlete-initial{width:36px;height:36px}
+.parent-athlete-selector .parent-athlete-choice.selected:after{display:none}
+.parent-athlete-selector .parent-athlete-choice>span:not(.parent-athlete-initial){font-size:12px}
+.parent-athlete-selector .parent-athlete-choice>small{font-size:9px;padding:2px 7px}
+.poster-passport .passport-main{grid-template-columns:minmax(110px,.48fr) minmax(0,1fr);gap:16px;margin:16px;align-items:start}
+.poster-passport .passport-main.passport-without-photo{grid-template-columns:minmax(0,1fr)}
+.poster-passport .passport-portrait{padding:10px 8px;border-width:2px;border-radius:14px;gap:10px}
+.poster-passport .player-portrait{max-height:240px;border-width:2px}
+.poster-passport .portrait-club-label{font-size:14px;padding:5px 10px}
+.poster-passport .passport-facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+.poster-passport .passport-facts>div,.poster-passport .passport-facts .passport-coach{background:none;border:0;border-bottom:1px solid #dce3e8;border-radius:0;padding:9px 0}
+.poster-passport .passport-facts dt{font-size:14px;margin-bottom:4px}
+.poster-passport .passport-facts dt:after{display:none}
+.poster-passport .passport-facts dd{font-size:22px;line-height:1.15;letter-spacing:0}
+.poster-passport .passport-facts .passport-birthdate dd{font-size:22px}
+.poster-passport .passport-facts .passport-name{padding:0 0 8px}
+.poster-passport .passport-name:before{display:none}
+.poster-passport .passport-facts .passport-name dd{font-size:34px;letter-spacing:-.4px}
+.poster-passport .passport-facts .passport-position{padding:0 0 8px}
+.poster-passport .passport-position dd{font-size:15px;padding:4px 10px}
+.poster-passport>.portrait-upload{margin:0 16px 12px;width:calc(100% - 32px);background:#f2f5f7;border-color:#dce3e8;color:#29465e}
+.poster-passport>.portrait-upload>summary{color:#29465e;justify-content:flex-start;padding:8px 10px;font-size:14px}
+.poster-passport>.portrait-upload .photo-picker>span,.poster-passport>.portrait-upload .photo-hint,.poster-passport>.portrait-upload .photo-status{color:#52677d}
+.poster-passport>.portrait-upload .photo-picker input{background:white;border-color:#cad5df;color:#17344f}
+.poster-passport>.portrait-upload .photo-remove{background:white;border-color:#cad5df;color:#973d3d}
+.poster-passport .passport-ratings{margin:0 16px;padding:15px 0}
+.poster-passport .passport-section-title{margin-bottom:14px;gap:12px}
+.poster-passport .passport-section-title h3{font-size:24px}
+.poster-passport .passport-section-title>span{font-size:16px;color:#52677d}
+.poster-passport .passport-rings{gap:12px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.poster-passport .passport-rating{padding:8px;border-radius:10px;box-shadow:none}
+.poster-passport .rating-ring{max-width:100px;margin-bottom:7px;background:none}
+.poster-passport .rating-ring strong{font-size:34px}
+.poster-passport .passport-rating>span{font-size:19px;min-height:2.1em}
+.poster-passport .passport-rating>small{display:none}
+.poster-passport .passport-rating time{font-size:11px;margin-top:5px}
+.poster-passport .passport-motto{padding:8px 3px;margin:0 16px;font-size:17px;border-radius:9px}
+.poster-passport .passport-motto svg{width:20px;height:23px}
+.poster-passport .passport-updated{font-size:13px;margin:10px 0 0}
+@media(max-width:540px){.player-card-header{padding:12px 16px;margin-bottom:12px}.player-card-header img{width:36px;height:46px}.poster-passport .passport-main{margin:12px;gap:12px;grid-template-columns:minmax(90px,.43fr) minmax(0,1fr)}.poster-passport .passport-facts{gap:0 10px}.poster-passport .passport-facts>div{padding:7px 0}.poster-passport .passport-facts dt{font-size:12px}.poster-passport .passport-facts dd,.poster-passport .passport-facts .passport-birthdate dd{font-size:18px}.poster-passport .passport-facts .passport-name dd{font-size:28px}.poster-passport .passport-position dd{font-size:13px}.poster-passport .passport-rings{gap:8px}.poster-passport .passport-rating{padding:6px 4px}.poster-passport .rating-ring{max-width:78px}.poster-passport .rating-ring strong{font-size:29px}.poster-passport .passport-rating>span{font-size:16px}.poster-passport .passport-motto{font-size:15px;margin:0 12px}.poster-passport .passport-motto svg{width:17px;height:20px}}
+@media(max-width:360px){.poster-passport .passport-main{grid-template-columns:90px minmax(0,1fr);gap:10px}.poster-passport .passport-facts dd,.poster-passport .passport-facts .passport-birthdate dd{font-size:16px}.poster-passport .passport-facts .passport-name dd{font-size:25px}.poster-passport .passport-facts dt{font-size:11px}.poster-passport .passport-motto{font-size:13px}}
