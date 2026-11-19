@@ -133,3 +133,46 @@
 .poster-passport .passport-updated{font-size:13px;margin:10px 0 0}
 @media(max-width:540px){.player-card-header{padding:12px 16px;margin-bottom:12px}.player-card-header img{width:36px;height:46px}.poster-passport .passport-main{margin:12px;gap:12px;grid-template-columns:minmax(90px,.43fr) minmax(0,1fr)}.poster-passport .passport-facts{gap:0 10px}.poster-passport .passport-facts>div{padding:7px 0}.poster-passport .passport-facts dt{font-size:12px}.poster-passport .passport-facts dd,.poster-passport .passport-facts .passport-birthdate dd{font-size:18px}.poster-passport .passport-facts .passport-name dd{font-size:28px}.poster-passport .passport-position dd{font-size:13px}.poster-passport .passport-rings{gap:8px}.poster-passport .passport-rating{padding:6px 4px}.poster-passport .rating-ring{max-width:78px}.poster-passport .rating-ring strong{font-size:29px}.poster-passport .passport-rating>span{font-size:16px}.poster-passport .passport-motto{font-size:15px;margin:0 12px}.poster-passport .passport-motto svg{width:17px;height:20px}}
 @media(max-width:360px){.poster-passport .passport-main{grid-template-columns:90px minmax(0,1fr);gap:10px}.poster-passport .passport-facts dd,.poster-passport .passport-facts .passport-birthdate dd{font-size:16px}.poster-passport .passport-facts .passport-name dd{font-size:25px}.poster-passport .passport-facts dt{font-size:11px}.poster-passport .passport-motto{font-size:13px}}
+
+/* Compact parent app: photo tools stay beside the portrait; schedule is a flat summary. */
+.poster-passport .passport-photo-column{min-width:0;align-self:start;display:flex;flex-direction:column;gap:7px}
+.poster-passport .passport-photo-column>.passport-portrait{width:100%;align-self:start}
+.poster-passport .passport-photo-column>.portrait-upload{position:static;inset:auto;align-self:center;width:auto;max-width:100%;margin:0;background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none}
+.poster-passport .passport-photo-column>.portrait-upload>summary{display:flex;align-items:center;justify-content:center;gap:5px;min-height:34px;padding:5px 10px;border:1px solid #d9e2ea;border-radius:7px;background:#fff;color:var(--poster-navy);font:600 12px/1.2 Arial,sans-serif;list-style:none;cursor:pointer}
+.poster-passport .passport-photo-column>.portrait-upload>summary::-webkit-details-marker{display:none}
+.poster-passport .passport-photo-column>.portrait-upload>summary svg{width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.6}
+.poster-passport .passport-photo-column>.portrait-upload>summary:focus-visible{outline:3px solid var(--poster-yellow);outline-offset:3px}
+.poster-passport .passport-photo-column:has(.portrait-upload[open]){grid-column:1/-1}
+.poster-passport .passport-photo-column:has(.portrait-upload[open])>.passport-portrait{display:none}
+.poster-passport .passport-photo-column:has(.portrait-upload[open])~.passport-facts{grid-column:1/-1}
+.poster-passport .passport-photo-column>.portrait-upload[open]{width:100%;padding:12px;border:1px solid #d9e2ea;border-radius:8px;background:#f5f8fa}
+.poster-passport .passport-photo-column>.portrait-upload[open]>summary{width:max-content;margin-bottom:10px;background:var(--poster-navy);color:white}
+.poster-passport .passport-photo-column .photo-picker>span,.poster-passport .passport-photo-column .photo-hint,.poster-passport .passport-photo-column .photo-status{color:#52677d}
+.poster-passport .passport-photo-column .photo-picker input{width:100%;background:white;border-color:#cad5df;color:#17344f}
+.poster-passport .passport-photo-column .photo-remove{background:white;border-color:#cad5df;color:#973d3d}
+.poster-passport .passport-without-photo .passport-photo-column:empty{display:none}
+.poster-passport .passport-without-photo .passport-photo-column{grid-column:1/-1;align-items:flex-start}
+.poster-passport .passport-without-photo .portrait-upload{align-self:flex-start}
+.sports-training-summary.sports-training-compact{padding:12px 16px!important;margin:0 0 14px!important;border-radius:8px!important;box-shadow:none}
+.sports-compact-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 4px}
+.sports-compact-heading h2{margin:0;font-size:15px;line-height:1.3;font-weight:750;letter-spacing:-.2px;color:#092c50}
+.sports-compact-heading>a{display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:4px 0 4px 10px;font-size:12px;font-weight:600;color:#244966;text-decoration:none}
+.sports-compact-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;color:#163c65}
+.sports-compact-table tr+tr{border-top:1px solid #e9eef2}
+.sports-compact-table th,.sports-compact-table td{padding:8px 0;border:0;background:transparent;vertical-align:middle;text-align:left}
+.sports-compact-table th{width:76px;font-size:12px;font-weight:650}
+.sports-compact-table th small{display:block;margin-top:3px;color:#778796;font-size:10px;font-weight:400;text-transform:capitalize}
+.sports-compact-muted{font-size:12px;color:#6b7b89}
+.sports-session-times{display:flex;flex-wrap:wrap;gap:5px}
+.sports-session-times time{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sports-session-times time+time{border-left:1px solid #cdd8e1;padding-left:7px;margin-left:2px}
+.sports-session-times time span{padding:0 4px;color:#8093a4}
+.sports-compact-attendance{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sports-compact-attendance>span{font-size:12px;color:#52677d}
+.sports-compact-attendance strong{font-size:16px;color:#092c50;font-variant-numeric:tabular-nums}
+.sports-compact-attendance small{margin-left:8px;font-size:10px;color:#778796;white-space:nowrap}
+.sports-compact-attendance>b{font-size:12px;font-variant-numeric:tabular-nums;padding:4px 8px;border-radius:5px;background:#fff3a7;color:#17344f;white-space:nowrap}
+@media(max-width:380px){.sports-training-summary.sports-training-compact{padding:10px 12px!important}.sports-compact-table th{width:65px}.sports-compact-attendance small{display:block;margin:2px 0 0}}
+@media print{.poster-passport .passport-photo-column>.portrait-upload{display:none!important}}
+
+@media(max-width:370px){.player-card-header{margin-left:-12px;margin-right:-12px}}

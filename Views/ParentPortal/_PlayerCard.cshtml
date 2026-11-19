@@ -5,11 +5,21 @@ bool Filled(string? value)=>!string.IsNullOrWhiteSpace(value)&&!new[]{"Pa caktua
 }
 <section class="player-passport poster-passport" aria-label="Kartela e lojtarit">
 <div class="passport-main @(Model.HasPhoto?"":"passport-without-photo")">
+<div class="passport-photo-column">
 @if(Model.HasPhoto){<div class="passport-portrait">
 <img class="player-portrait" src="@Url.Action("Photo",new{token,studentId=Model.StudentId})" alt="@Model.Name" width="480" height="600" fetchpriority="high"/>
 @if(Filled(Model.TeamName)){<div class="portrait-club-label">@Model.TeamName</div>}
 
 </div>}
+@if(Model.Show("Photo")){<details class="portrait-upload"><summary aria-label="@(Model.HasPhoto?"Ndrysho foton e lojtarit":"Ngarko foton e lojtarit")"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="12" r="4"/></svg><span>@(Model.HasPhoto?"Foto":"Shto foto")</span></summary>
+<form asp-action="UploadPhoto" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post" enctype="multipart/form-data" class="player-photo-form" data-parent-consent="true">
+    <label class="photo-picker"><span>Zgjidh foton e @Model.Name</span><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required/></label>
+    <div class="photo-preview" hidden><img alt="Parapamja e fotos"/><span>Parapamja</span></div>
+    <div class="photo-form-actions"><button type="submit" disabled>Ruaj foton</button>@if(Model.HasPhoto){<button type="button" class="photo-remove" data-remove-photo>Hiq foton</button>}</div>
+    <p class="photo-hint">Zgjidhni foton nga telefoni ose kompjuteri dhe shtypni “Ruaj foton”. JPG, PNG ose WebP deri në 10 MB. Fotoja zvogëlohet automatikisht.</p>
+    <p class="photo-status" role="status" aria-live="polite"></p>
+</form></details>}
+</div>
 <dl class="passport-facts">
 @if(Filled(Model.Name)){<div class="passport-name"><dt>Emri</dt><dd>@Model.Name</dd></div>}
 @if(Filled(Model.Position)){<div class="passport-position"><dt>Pozita</dt><dd>@Model.Position</dd></div>}
@@ -19,14 +29,6 @@ bool Filled(string? value)=>!string.IsNullOrWhiteSpace(value)&&!new[]{"Pa caktua
 @if(Filled(Model.Foot)){<div><dt>Këmba e preferuar</dt><dd>@Model.Foot</dd></div>}
 @if(Filled(Model.CoachName)){<div class="passport-coach"><dt>Trajneri</dt><dd>@Model.CoachName</dd></div>}
 </dl></div>
-@if(Model.Show("Photo")){<details class="portrait-upload"><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="12" r="4"/></svg>@(Model.HasPhoto?"Ndrysho foton":"Ngarko foton e lojtarit")</summary>
-<form asp-action="UploadPhoto" asp-route-token="@token" asp-route-studentId="@Model.StudentId" method="post" enctype="multipart/form-data" class="player-photo-form" data-parent-consent="true">
-    <label class="photo-picker"><span>Zgjidh foton e @Model.Name</span><input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required/></label>
-    <div class="photo-preview" hidden><img alt="Parapamja e fotos"/><span>Parapamja</span></div>
-    <div class="photo-form-actions"><button type="submit" disabled>Ruaj foton</button>@if(Model.HasPhoto){<button type="button" class="photo-remove" data-remove-photo>Hiq foton</button>}</div>
-    <p class="photo-hint">Zgjidhni foton nga telefoni ose kompjuteri dhe shtypni “Ruaj foton”. JPG, PNG ose WebP deri në 10 MB. Fotoja zvogëlohet automatikisht.</p>
-    <p class="photo-status" role="status" aria-live="polite"></p>
-</form></details>}
 @if(Model.Show("Progress")&&ratings.Count>0){<div class="passport-ratings"><div class="passport-section-title"><h3>VLERËSIMET</h3><span>NGA 100</span></div>
 <div class="passport-rings">@foreach(var rating in ratings){var point=rating.Points.OrderBy(p=>p.Date).Last();var score=Math.Clamp((int)Math.Round(point.Value),0,100);<div class="passport-rating"><div class="rating-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-track" cx="50" cy="50" r="37"/><circle class="ring-value" cx="50" cy="50" r="37" pathLength="100" stroke-dasharray="@score 100"/></svg><strong>@score</strong></div><span>@rating.Title</span><small>Vlerësimi @score/100</small><time>@point.Date.ToString("dd/MM/yyyy")</time></div>}</div>
 </div>
